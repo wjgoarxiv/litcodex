@@ -82,7 +82,7 @@ describe("doctor — agentsInstalled probe", () => {
 				[codexBin, sentinelPath],
 				"model_context_window = 372000\nmodel_auto_compact_token_limit = 334800\n",
 				undefined,
-				"1.0.8",
+				"1.0.9",
 				"0.145.0",
 			),
 		);

@@ -1,6 +1,6 @@
 {
 	"name": "@litcodex/start-work-continuation",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"description": "LitCodex Start-Work continuation hook: resumes in-flight start-work state on root Stop.",
 	"type": "module",
 	"private": true,
