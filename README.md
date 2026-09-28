@@ -35,7 +35,7 @@ LIT · codex
 <p align="center"><img src="./docs/assets/clay-icon.png" width="160" alt="LitCodex clay mark" /></p>
 
 <p align="center">
-<a href="#install"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.7" /></a>
+<a href="#install"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.8" /></a>
 <a href="./LICENSE"><img src="./docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
 </p>
 
@@ -55,12 +55,12 @@ LitCodex adds planning, review, research, and a durable execution loop to Codex 
 
 ## Install
 
-> Install `@litfamily/litcodex@1.0.7` with the scoped command below. See [migration guidance](./docs/npm-migration.md).
+> Install `@litfamily/litcodex@1.0.8` with the scoped command below. See [migration guidance](./docs/npm-migration.md).
 
 With **Node.js 22+** and **Codex CLI** installed, run:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install
 ```
 
 The installer registers the plugin, hooks, and agents, then updates managed keys in `~/.codex/config.toml`.
@@ -69,8 +69,8 @@ when you run model work; installation itself does not require GitHub credentials
 
 Fresh installs default to `gpt-6-astra` at `xhigh` for the lead route and `gpt-6-luna` at `max` for ordinary helpers. The installer also accepts supported model and effort choices.
 
-Preview changes with `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex --dry-run install`. For unattended setup, use
-`npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex install --yes`. An explicit `--style <id>` still applies.
+Preview changes with `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex --dry-run install`. For unattended setup, use
+`npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install --yes`. An explicit `--style <id>` still applies.
 
 For a persistent command:
 
@@ -79,7 +79,7 @@ npm install -g @litfamily/litcodex
 litcodex install
 ```
 
-> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex doctor`.
+> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex doctor`.
 
 For an isolated trial apart from existing settings, follow the [isolated trial guide](./docs/npm-migration.md#isolated-local-trial).
 Changing only `CODEX_HOME` can still discover settings in your existing home.
@@ -559,7 +559,7 @@ See [state and recovery](./docs/usage.md#loop-state).
 ## Verify it worked
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex doctor
 ```
 
 `litcodex doctor` checks registration, hooks, config, and host capabilities. `litcodex loop doctor` checks
@@ -624,7 +624,7 @@ export TYPESAFE_API_KEY=<your own TypeSafe key>
 ## Uninstall
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex uninstall
 ```
 
 `litcodex uninstall` removes the plugin and LitCodex-managed config while preserving unrelated settings.

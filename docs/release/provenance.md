@@ -42,7 +42,7 @@ registry query must return `E404`, followed by successful authentication gates, 
 publication lifecycle may begin.
 
 Before either publication path is considered, the candidate must have exact version lockstep, a
-clean tree, local/remote/live HEAD alignment on `master`, a clean legacy-token scan, tracked
+clean tree, local/remote/live HEAD alignment on `main`, a clean legacy-token scan, tracked
 marketplace verification, a complete pack payload, and registry evidence that the exact
 `@litfamily/litcodex@<VERSION>` target is absent.
 

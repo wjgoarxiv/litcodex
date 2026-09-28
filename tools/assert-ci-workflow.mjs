@@ -444,11 +444,11 @@ export function runCiCheck(opts) {
 		!Object.hasOwn(on, "pull_request_target") &&
 		on.push &&
 		on.pull_request &&
-		JSON.stringify(on.push.branches) === JSON.stringify(["master"]) &&
-		JSON.stringify(on.pull_request.branches) === JSON.stringify(["master"]) &&
+		JSON.stringify(on.push.branches) === JSON.stringify(["main"]) &&
+		JSON.stringify(on.pull_request.branches) === JSON.stringify(["main"]) &&
 		onKeys.every((k) => k === "push" || k === "pull_request");
 	if (!triggerOk) {
-		push("LITCODEX_CI_TRIGGER_INVALID", "on: must be exactly push+pull_request to [master]", {
+		push("LITCODEX_CI_TRIGGER_INVALID", "on: must be exactly push+pull_request to [main]", {
 			onKeys,
 		});
 	}

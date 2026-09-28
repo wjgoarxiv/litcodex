@@ -102,18 +102,18 @@ This removes old skill directories even at the same package version and preserve
 The recommended path is one command:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install
 ```
 
 This registers the marketplace and plugin, wires `UserPromptSubmit`, installs the litwork agents, and makes a
 non-destructive update to `~/.codex/config.toml`. Preview the plan first:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex --dry-run install
+npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex --dry-run install
 ```
 
-> Without a global install, run later commands as `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex <command>`, for example
-> `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex doctor`.
+> Without a global install, run later commands as `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex <command>`, for example
+> `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex doctor`.
 
 For a persistent `litcodex` command, install globally and then install the plugin:
 
@@ -122,7 +122,7 @@ npm install -g @litfamily/litcodex
 litcodex install
 ```
 
-For an unattended install, use `litcodex install --yes` (or `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex install --yes`).
+For an unattended install, use `litcodex install --yes` (or `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install --yes`).
 Model, style, and confirmation prompts are skipped with `--yes`, `CI` (even empty), non-TTY input/output,
 `--no-tui`, `--json`, or `--dry-run`. An explicit `--style <id>` still applies on installation.
 `NO_COLOR` (even empty) keeps interactive choices available with plain prompts and no ANSI escapes.
@@ -138,11 +138,11 @@ fails with `LITCODEX_INSTALL_CODEX_VERSION_UNSUPPORTED · codex-version-unrecogn
 certainly running a pre-0.3.66 copy from the npx cache; run the pinned recovery command:
 
 ```powershell
-npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install
 ```
 
 > `npx` caches packages, so a bare `npm exec --package @litfamily/litcodex -- litcodex` can keep executing an older cached version.
-> Pinning the version (`@1.0.7` or `@latest`) forces npx past the stale cache entry.
+> Pinning the version (`@1.0.8` or `@latest`) forces npx past the stale cache entry.
 
 Lit-loop's descriptor-bound filesystem guarantees are POSIX-only. Node does not expose the Windows
 directory-descriptor and `openat`/`dir_fd` contract these checks require, and Python's `dir_fd` APIs

@@ -93,14 +93,14 @@ Proceed only when it prints `release:check: READY at <VERSION>` with `publishAtt
 ## Manual repository and registry gates
 
 9. Confirm factual repository metadata and exact refs. The configured remote must be
-   `https://github.com/wjgoarxiv/litcodex.git`, the branch must be `master`, and all three hashes must
+   `https://github.com/wjgoarxiv/litcodex.git`, the branch must be `main`, and all three hashes must
    match. `git status --short` must print nothing.
 
    ```bash
    git status --short
    git rev-parse HEAD
-   git rev-parse origin/master
-   git ls-remote origin refs/heads/master
+   git rev-parse origin/main
+   git ls-remote origin refs/heads/main
    ```
 
 10. Confirm the dated `CHANGELOG.md` section matches `VERSION`, then prove the exact registry target

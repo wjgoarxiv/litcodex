@@ -6,11 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Add an optional Jev skill hint. With `LITCODEX_JEV=1` and your own `TYPESAFE_API_KEY`, the
-  prompt hook sends each eligible prompt, redacted and truncated, to TypeSafe and may add one advisory
-  skill line. It is off by default, and `litcodex doctor` shows its state. `LITCODEX_JEV_SHOW=1` also
-  shows a hinted turn's skill id and latency in the Codex transcript. While it is on, each session shows
-  `✦ Jev skill hint ON` once.
+## [1.0.8] - 2026-09-28
+
+### Added
+
+- Add an optional Jev skill hint. It is off by default. With `LITCODEX_JEV=1` and your own
+  `TYPESAFE_API_KEY`, the prompt hook sends each eligible prompt to TypeSafe and may add one advisory
+  line that names a bundled skill. Slash commands, `$skill` mentions and prompts that already start a
+  `lit` route are not sent.
+- The request holds the prompt, cut to 2,000 characters with home paths, email addresses and
+  token-shaped strings redacted, plus the names and short descriptions of the bundled skills. It holds
+  no files, tool output or history. Other text, such as hostnames, is sent as written. Codex's own
+  tools can read the key too, so use a key made for this feature. `docs/privacy.md` has the details.
+- While the hint is on, each session shows `✦ Jev skill hint ON` once. `LITCODEX_JEV_SHOW=1` also
+  shows the skill id and latency of each hinted turn in the Codex transcript, and `litcodex doctor`
+  shows whether the hint is on. Unset `LITCODEX_JEV` and restart Codex to turn it off.
 
 ## [1.0.7] - 2026-09-28
 

@@ -438,7 +438,7 @@ describe("#given published surfaces #when scanned #then they are LitCodex-native
 		const metadata = read(".github/REPO_METADATA.md");
 		expect(metadata).toContain("https://github.com/wjgoarxiv/litcodex");
 		expect(metadata).toContain("**Owner**: `wjgoarxiv`");
-		expect(metadata).toContain("**Default branch**: `master`");
+		expect(metadata).toContain("**Default branch**: `main`");
 		expect(metadata).not.toMatch(/<[^>]*PLACEHOLDER[^>]*>/i);
 	});
 });

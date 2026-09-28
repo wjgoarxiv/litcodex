@@ -26,4 +26,4 @@ cli
 - **Owner**: `wjgoarxiv`
 - **Website**: `https://github.com/wjgoarxiv/litcodex`
 - **Repository URL**: `https://github.com/wjgoarxiv/litcodex`
-- **Default branch**: `master`
+- **Default branch**: `main`

@@ -35,7 +35,7 @@ LIT · codex
 <p align="center"><img src="./docs/assets/clay-icon.png" width="160" alt="LitCodex 클레이 마크" /></p>
 
 <p align="center">
-<a href="#설치"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.7" /></a>
+<a href="#설치"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.8" /></a>
 <a href="./LICENSE"><img src="./docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
 </p>
 
@@ -55,12 +55,12 @@ LitCodex는 Codex CLI에 계획, 검토, 연구, 실행 루프를 더합니다.
 
 ## 설치
 
-> `@litfamily/litcodex@1.0.7` scoped package를 아래 명령으로 설치하세요. [기존 설치 이전](./docs/npm-migration.md).
+> `@litfamily/litcodex@1.0.8` scoped package를 아래 명령으로 설치하세요. [기존 설치 이전](./docs/npm-migration.md).
 
 Node.js 22 이상과 Codex CLI가 설치되어 있으면 아래 명령을 실행하세요.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install
 ```
 
 플러그인·훅·에이전트를 등록하고 `~/.codex/config.toml`의 관리 항목을 갱신합니다. 설치 중 리드 모델,
@@ -69,8 +69,8 @@ npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex install
 
 새 설치의 기본값은 리드 경로에서 `gpt-6-astra`/`xhigh`, 일반 헬퍼에서 `gpt-6-luna`/`max`입니다. 설치기에서는 지원되는 모델과 추론 수준을 고를 수 있습니다.
 
-변경할 내용은 `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex --dry-run install`로 미리 확인하세요. 무인 설치는
-`npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex install --yes`로 실행하며, 명시한 `--style <id>`는 그대로 적용됩니다.
+변경할 내용은 `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex --dry-run install`로 미리 확인하세요. 무인 설치는
+`npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install --yes`로 실행하며, 명시한 `--style <id>`는 그대로 적용됩니다.
 
 전역 명령이 필요하면 다음을 실행하세요.
 
@@ -79,7 +79,7 @@ npm install -g @litfamily/litcodex
 litcodex install
 ```
 
-> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex doctor`.
+> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex doctor`.
 
 기존 설정과 분리해서 체험하려면 [격리된 체험 안내](./docs/npm-migration.md#isolated-local-trial)를 먼저 읽으세요.
 `CODEX_HOME`만 바꾸면 기존 홈의 설정까지 검색할 수 있습니다.
@@ -551,8 +551,8 @@ hook 표시는 진입 신호이며 모델 결과나 화면 확인이 끝났다�
 | `litcodex loop checkpoint` | 모든 기준 통과 시 목표 완료 처리 |
 | `litcodex loop doctor` | 루프 상태 진단 또는 복구 |
 
-전역 설치가 없다면 이후 명령도 `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex <command>` 형식으로 실행하세요. 예를 들어
-`npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex doctor`를 사용합니다.
+전역 설치가 없다면 이후 명령도 `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex <command>` 형식으로 실행하세요. 예를 들어
+`npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex doctor`를 사용합니다.
 
 전체 스킬은 Codex skill picker에서 선택할 수 있습니다. 이전 스킬 이름은 한 릴리스 동안 새 이름으로 연결됩니다.
 [이름 전환 정책](./docs/usage-Ko-KR.md#스킬-이름-전환)과 [CHANGELOG.md](./CHANGELOG.md)를 참고하세요.
@@ -566,7 +566,7 @@ hook 표시는 진입 신호이며 모델 결과나 화면 확인이 끝났다�
 ## 동작 확인
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex doctor
 ```
 
 `litcodex doctor`는 등록·훅·설정·호스트 기능을, `litcodex loop doctor`는 프로젝트 루프 상태를 확인합니다.
@@ -627,7 +627,7 @@ export TYPESAFE_API_KEY=<본인의 TypeSafe 키>
 ## 제거
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex uninstall
 ```
 
 `litcodex uninstall`은 플러그인과 LitCodex 관리 설정을 제거하며 관련 없는 설정은 남깁니다.

@@ -37,9 +37,9 @@ const CANONICAL_WORKFLOW = `name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 permissions:
   contents: read
@@ -293,7 +293,7 @@ describe("assert-ci-workflow validator", () => {
 	});
 
 	it("rejects a trigger that omits the real default branch", () => {
-		const wrongBranch = CANONICAL_WORKFLOW.replaceAll("[master]", "[main]");
+		const wrongBranch = CANONICAL_WORKFLOW.replaceAll("[main]", "[master]");
 		const root = makeFixture(wrongBranch);
 		const report = runCiCheck({ repoRoot: root });
 		assert.equal(report.ok, false);

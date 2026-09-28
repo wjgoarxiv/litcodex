@@ -1,6 +1,6 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: five armored robots power on one by one, the LitCodex robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: five armored robots power on one by one, the LitCodex robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
 
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ascii-readme.svg" width="480" alt="LIT ASCII B mark" /></p>
+<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ascii-readme.svg" width="480" alt="LIT ASCII B mark" /></p>
 
 <details>
 <summary>Copy ASCII logo</summary>
@@ -31,16 +31,16 @@ LIT · codex
 
 </details>
 
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/litcodex-wordmark.svg" width="480" alt="LITCODEX display type" /></p>
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/clay-icon.png" width="160" alt="LitCodex clay mark" /></p>
+<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/litcodex-wordmark.svg" width="480" alt="LITCODEX display type" /></p>
+<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/clay-icon.png" width="160" alt="LitCodex clay mark" /></p>
 
 <p align="center">
-<a href="#install"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/badge-version.svg" alt="1.0.7" /></a>
-<a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/badge-license.svg" alt="MIT license" /></a>
+<a href="#install"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/badge-version.svg" alt="1.0.8" /></a>
+<a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/badge-license.svg" alt="MIT license" /></a>
 </p>
 
 <p align="center">
-<a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/usage.md"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/lucide-book-open.svg" width="16" alt="" /> Docs</a> &nbsp; <a href="#install">Install</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/lucide-play.svg" width="16" alt="" /> Ignition</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/lucide-shield-check.svg" width="16" alt="" /> MIT</a>
+<a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/usage.md"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/lucide-book-open.svg" width="16" alt="" /> Docs</a> &nbsp; <a href="#install">Install</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/lucide-play.svg" width="16" alt="" /> Ignition</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/lucide-shield-check.svg" width="16" alt="" /> MIT</a>
 </p>
 
 # @litfamily/litcodex
@@ -55,12 +55,12 @@ LitCodex adds planning, review, research, and a durable execution loop to Codex 
 
 ## Install
 
-> Install `@litfamily/litcodex@1.0.7` with the scoped command below. See [migration guidance](https://github.com/wjgoarxiv/litcodex/blob/main/docs/npm-migration.md).
+> Install `@litfamily/litcodex@1.0.8` with the scoped command below. See [migration guidance](https://github.com/wjgoarxiv/litcodex/blob/main/docs/npm-migration.md).
 
 With **Node.js 22+** and **Codex CLI** installed, run:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install
 ```
 
 The installer registers the plugin, hooks, and agents, then updates managed keys in `~/.codex/config.toml`.
@@ -69,8 +69,8 @@ when you run model work; installation itself does not require GitHub credentials
 
 Fresh installs default to `gpt-6-astra` at `xhigh` for the lead route and `gpt-6-luna` at `max` for ordinary helpers. The installer also accepts supported model and effort choices.
 
-Preview changes with `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex --dry-run install`. For unattended setup, use
-`npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex install --yes`. An explicit `--style <id>` still applies.
+Preview changes with `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex --dry-run install`. For unattended setup, use
+`npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install --yes`. An explicit `--style <id>` still applies.
 
 For a persistent command:
 
@@ -79,7 +79,7 @@ npm install -g @litfamily/litcodex
 litcodex install
 ```
 
-> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex doctor`.
+> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex doctor`.
 
 For an isolated trial apart from existing settings, follow the [isolated trial guide](https://github.com/wjgoarxiv/litcodex/blob/main/docs/npm-migration.md#isolated-local-trial).
 Changing only `CODEX_HOME` can still discover settings in your existing home.
@@ -158,7 +158,7 @@ Host limit: Codex CLI owns hook and agent execution, while authentication, model
 and any visual check remain host capabilities. A route mark or static editorial image is not completion
 evidence.
 
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/litcodex-ignition-1600.webp" width="49%" alt="LitCodex ignition editorial cue" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/litcodex-continuity-1600.webp" width="49%" alt="LitCodex continuity editorial cue" /></p>
+<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/litcodex-ignition-1600.webp" width="49%" alt="LitCodex ignition editorial cue" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/litcodex-continuity-1600.webp" width="49%" alt="LitCodex continuity editorial cue" /></p>
 
 ### How it fits together
 
@@ -191,207 +191,207 @@ Each row is a skill you can start by name or route, with how to start it and wha
 <table>
 <tr><th>What it looks like</th><th>Skill</th><th>What you get</th></tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-loop.webp" width="240" alt="Add lit to a request. Codex binds the scope, works with evidence and records what it could not verify." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-loop.webp" width="240" alt="Add lit to a request. Codex binds the scope, works with evidence and records what it could not verify." /></td>
 <td><code>lit-loop</code><br /><sub><code>lit</code> · <code>$litcodex:lit-loop</code></sub></td>
 <td>Add <code>lit</code> to a request. Codex binds the scope, works with evidence and records what it could not verify.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/litwork.webp" width="240" alt="Careful end-to-end build or fix: RED first, then proof on the real surface." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/litwork.webp" width="240" alt="Careful end-to-end build or fix: RED first, then proof on the real surface." /></td>
 <td><code>litwork</code><br /><sub><code>litwork</code> · <code>$litcodex:litwork</code></sub></td>
 <td>Careful end-to-end build or fix: RED first, then proof on the real surface.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-plan.webp" width="240" alt="An approved plan in .litcodex/plans/ with numbered rows. Planning only." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-plan.webp" width="240" alt="An approved plan in .litcodex/plans/ with numbered rows. Planning only." /></td>
 <td><code>lit-plan</code><br /><sub><code>lit plan</code> · <code>$litcodex:lit-plan</code></sub></td>
 <td>An approved plan in <code>.litcodex/plans/</code> with numbered rows. Planning only.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/start-approved-plan.webp" width="240" alt="Runs an approved plan through five gates. All five review lanes must pass at the end." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/start-approved-plan.webp" width="240" alt="Runs an approved plan through five gates. All five review lanes must pass at the end." /></td>
 <td>Start Work<br /><sub><code>lit start work &lt;approved-plan&gt;</code></sub></td>
 <td>Runs an approved plan through five gates. All five review lanes must pass at the end.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/review-work.webp" width="240" alt="Five blocking review lanes. One failing lane blocks approval." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/review-work.webp" width="240" alt="Five blocking review lanes. One failing lane blocks approval." /></td>
 <td><code>review-work</code><br /><sub><code>lit review</code> · <code>$litcodex:review-work</code></sub></td>
 <td>Five blocking review lanes. One failing lane blocks approval.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/litgoal.webp" width="240" alt="Binds one goal with observable criteria to the durable lit-loop." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/litgoal.webp" width="240" alt="Binds one goal with observable criteria to the durable lit-loop." /></td>
 <td><code>litgoal</code><br /><sub><code>lit goal</code> · <code>$litcodex:litgoal</code></sub></td>
 <td>Binds one goal with observable criteria to the durable lit-loop.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-recap.webp" width="240" alt="A read-only summary: done, in progress, blocked, where the evidence is, what comes next." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-recap.webp" width="240" alt="A read-only summary: done, in progress, blocked, where the evidence is, what comes next." /></td>
 <td><code>lit-recap</code><br /><sub><code>lit recap</code> · <code>$litcodex:lit-recap</code></sub></td>
 <td>A read-only summary: done, in progress, blocked, where the evidence is, what comes next.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-handoff.webp" width="240" alt="Type handoff to get a continuation file the next session can read and resume from." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-handoff.webp" width="240" alt="Type handoff to get a continuation file the next session can read and resume from." /></td>
 <td><code>lit-handoff</code><br /><sub><code>handoff</code> · <code>/lit-handoff</code></sub></td>
 <td>Type <code>handoff</code> to get a continuation file the next session can read and resume from.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/deep-interview.webp" width="240" alt="One question at a time until the idea is clear enough to build. Quick, Standard and Deep set the target." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/deep-interview.webp" width="240" alt="One question at a time until the idea is clear enough to build. Quick, Standard and Deep set the target." /></td>
 <td><code>deep-interview</code><br /><sub><code>deep-interview</code> · <code>$litcodex:deep-interview</code></sub></td>
 <td>One question at a time until the idea is clear enough to build. Quick, Standard and Deep set the target.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/litresearch.webp" width="240" alt="Parallel evidence gathering and a cited synthesis, only when you ask for research." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/litresearch.webp" width="240" alt="Parallel evidence gathering and a cited synthesis, only when you ask for research." /></td>
 <td><code>litresearch</code><br /><sub><code>lit research</code> · <code>$litcodex:litresearch</code></sub></td>
 <td>Parallel evidence gathering and a cited synthesis, only when you ask for research.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-crucible.webp" width="240" alt="Pressure-tests a brief before planning. Only the risks that survive critique reach the plan." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-crucible.webp" width="240" alt="Pressure-tests a brief before planning. Only the risks that survive critique reach the plan." /></td>
 <td><code>lit-crucible</code><br /><sub><code>lit-crucible</code> · <code>$litcodex:lit-crucible</code></sub></td>
 <td>Pressure-tests a brief before planning. Only the risks that survive critique reach the plan.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-init.webp" width="240" alt="Sparse AGENTS.md guidance backed by what is in the repository." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-init.webp" width="240" alt="Sparse AGENTS.md guidance backed by what is in the repository." /></td>
 <td><code>lit-init</code><br /><sub><code>lit-init</code> · <code>$litcodex:lit-init</code></sub></td>
 <td>Sparse AGENTS.md guidance backed by what is in the repository.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-comprehend.webp" width="240" alt="An explainer page for agent-written work: intuition first, then the walkthrough, then a short quiz." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-comprehend.webp" width="240" alt="An explainer page for agent-written work: intuition first, then the walkthrough, then a short quiz." /></td>
 <td><code>lit-comprehend</code><br /><sub><code>lit-comprehend</code> · <code>$litcodex:lit-comprehend</code></sub></td>
 <td>An explainer page for agent-written work: intuition first, then the walkthrough, then a short quiz.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-humanizer.webp" width="240" alt="Rewrites stiff model prose in English or Korean. Facts and hedges stay; filler goes." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-humanizer.webp" width="240" alt="Rewrites stiff model prose in English or Korean. Facts and hedges stay; filler goes." /></td>
 <td><code>lit-humanizer</code><br /><sub><code>$litcodex:lit-humanizer</code></sub></td>
 <td>Rewrites stiff model prose in English or Korean. Facts and hedges stay; filler goes.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-diagram-drawer.webp" width="240" alt="A checked, editable diagram for slides and documents, with PNG and Office-safe SVG exports." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-diagram-drawer.webp" width="240" alt="A checked, editable diagram for slides and documents, with PNG and Office-safe SVG exports." /></td>
 <td><code>lit-diagram-drawer</code><br /><sub><code>$litcodex:lit-diagram-drawer</code></sub></td>
 <td>A checked, editable diagram for slides and documents, with PNG and Office-safe SVG exports.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-pptx.webp" width="240" alt="Ask for slides with lit and get an editable PowerPoint deck with its Markdown source, AZURE-PRO and Pretendard by default. Layout QA runs on the file; rendered slides are inspected when LibreOffice is present." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-pptx.webp" width="240" alt="Ask for slides with lit and get an editable PowerPoint deck with its Markdown source, AZURE-PRO and Pretendard by default. Layout QA runs on the file; rendered slides are inspected when LibreOffice is present." /></td>
 <td><code>lit-pptx</code><br /><sub><code>$litcodex:lit-pptx</code></sub></td>
 <td>Ask for slides with <code>lit</code> and get an editable PowerPoint deck with its Markdown source, AZURE-PRO and Pretendard by default. Layout QA runs on the file; rendered slides are inspected when LibreOffice is present.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-docx.webp" width="240" alt="Ask for a report with lit and get a styled Word file with its Markdown source; Korean text uses korean-generic. The file is reopened and linted, and pages are inspected when LibreOffice is present." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-docx.webp" width="240" alt="Ask for a report with lit and get a styled Word file with its Markdown source; Korean text uses korean-generic. The file is reopened and linted, and pages are inspected when LibreOffice is present." /></td>
 <td><code>lit-docx</code><br /><sub><code>$litcodex:lit-docx</code></sub></td>
 <td>Ask for a report with <code>lit</code> and get a styled Word file with its Markdown source; Korean text uses korean-generic. The file is reopened and linted, and pages are inspected when LibreOffice is present.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-fetch.webp" width="240" alt="Reads a public page with URL, DNS and text-safety checks when ordinary retrieval falls short." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-fetch.webp" width="240" alt="Reads a public page with URL, DNS and text-safety checks when ordinary retrieval falls short." /></td>
 <td><code>lit-fetch</code><br /><sub><code>$litcodex:lit-fetch</code></sub></td>
 <td>Reads a public page with URL, DNS and text-safety checks when ordinary retrieval falls short.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-scientific-visualization.webp" width="240" alt="A journal-sized figure with vector and 600 DPI exports. The chart type follows the data." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-scientific-visualization.webp" width="240" alt="A journal-sized figure with vector and 600 DPI exports. The chart type follows the data." /></td>
 <td><code>lit-scientific-visualization</code><br /><sub><code>lit-scientific-visualization</code> · <code>$litcodex:lit-scientific-visualization</code></sub></td>
 <td>A journal-sized figure with vector and 600 DPI exports. The chart type follows the data.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-team.webp" width="240" alt="Coordinates several workers with separate slices, each reporting back with evidence." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-team.webp" width="240" alt="Coordinates several workers with separate slices, each reporting back with evidence." /></td>
 <td><code>lit-team</code><br /><sub><code>lit team</code> · <code>$litcodex:lit-team</code></sub></td>
 <td>Coordinates several workers with separate slices, each reporting back with evidence.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/litcodex-doctor.webp" width="240" alt="Checks LitCodex and Codex install health after an update, drift or a failed setup." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/litcodex-doctor.webp" width="240" alt="Checks LitCodex and Codex install health after an update, drift or a failed setup." /></td>
 <td><code>litcodex-doctor</code><br /><sub><code>$litcodex:litcodex-doctor</code></sub></td>
 <td>Checks LitCodex and Codex install health after an update, drift or a failed setup.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/litcodex-report-bug.webp" width="240" alt="Drafts a bug report for LitCodex or Codex, backed by sources." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/litcodex-report-bug.webp" width="240" alt="Drafts a bug report for LitCodex or Codex, backed by sources." /></td>
 <td><code>litcodex-report-bug</code><br /><sub><code>$litcodex:litcodex-report-bug</code></sub></td>
 <td>Drafts a bug report for LitCodex or Codex, backed by sources.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/litcodex-contribute-bug-fix.webp" width="240" alt="Turns a diagnosed defect into a tested bug-fix PR." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/litcodex-contribute-bug-fix.webp" width="240" alt="Turns a diagnosed defect into a tested bug-fix PR." /></td>
 <td><code>litcodex-contribute-bug-fix</code><br /><sub><code>$litcodex:litcodex-contribute-bug-fix</code></sub></td>
 <td>Turns a diagnosed defect into a tested bug-fix PR.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/coding-session-audit.webp" width="240" alt="Reads a past Codex session from its evidence and shows where it stopped." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/coding-session-audit.webp" width="240" alt="Reads a past Codex session from its evidence and shows where it stopped." /></td>
 <td><code>coding-session-audit</code><br /><sub><code>$litcodex:coding-session-audit</code></sub></td>
 <td>Reads a past Codex session from its evidence and shows where it stopped.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/debugging.webp" width="240" alt="Reproduces the bug, tests at least three explanations, and fixes only the confirmed cause." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/debugging.webp" width="240" alt="Reproduces the bug, tests at least three explanations, and fixes only the confirmed cause." /></td>
 <td><code>debugging</code><br /><sub><code>$litcodex:debugging</code></sub></td>
 <td>Reproduces the bug, tests at least three explanations, and fixes only the confirmed cause.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/refactor.webp" width="240" alt="Restructures code while tests pin its behavior before and after every step." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/refactor.webp" width="240" alt="Restructures code while tests pin its behavior before and after every step." /></td>
 <td><code>refactor</code><br /><sub><code>$litcodex:refactor</code></sub></td>
 <td>Restructures code while tests pin its behavior before and after every step.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-code.webp" width="240" alt="Strict implementation rules: tests first, typed boundaries, small files." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-code.webp" width="240" alt="Strict implementation rules: tests first, typed boundaries, small files." /></td>
 <td><code>lit-code</code><br /><sub><code>$litcodex:lit-code</code></sub></td>
 <td>Strict implementation rules: tests first, typed boundaries, small files.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-commit.webp" width="240" alt="Splits your changes into atomic commits in the repo's own style and leaves unrelated work alone." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-commit.webp" width="240" alt="Splits your changes into atomic commits in the repo's own style and leaves unrelated work alone." /></td>
 <td><code>lit-commit</code><br /><sub><code>$litcodex:lit-commit</code></sub></td>
 <td>Splits your changes into atomic commits in the repo's own style and leaves unrelated work alone.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lsp-setup.webp" width="240" alt="Checks language-server setup and runs a real diagnostics check on demand." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lsp-setup.webp" width="240" alt="Checks language-server setup and runs a real diagnostics check on demand." /></td>
 <td><code>lsp-setup</code><br /><sub><code>$litcodex:lsp-setup</code></sub></td>
 <td>Checks language-server setup and runs a real diagnostics check on demand.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/readme-studio.webp" width="240" alt="A factual README with a moving cover, checked at phone and desktop widths in light and dark." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/readme-studio.webp" width="240" alt="A factual README with a moving cover, checked at phone and desktop widths in light and dark." /></td>
 <td><code>readme-studio</code><br /><sub><code>$litcodex:readme-studio</code></sub></td>
 <td>A factual README with a moving cover, checked at phone and desktop widths in light and dark.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-typographic-motion.webp" width="240" alt="Ask for a video with lit. A treatment comes first, then an authored stage page or the type engine, a sound bed, and look rounds on the rendered stills." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-typographic-motion.webp" width="240" alt="Ask for a video with lit. A treatment comes first, then an authored stage page or the type engine, a sound bed, and look rounds on the rendered stills." /></td>
 <td><code>lit-typographic-motion</code><br /><sub><code>$litcodex:lit-typographic-motion</code></sub></td>
 <td>Ask for a video with <code>lit</code>. A treatment comes first, then an authored stage page or the type engine, a sound bed, and look rounds on the rendered stills.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/structural-search.webp" width="240" alt="Finds code by its syntax shape, not its text, and previews rewrites before applying them." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/structural-search.webp" width="240" alt="Finds code by its syntax shape, not its text, and previews rewrites before applying them." /></td>
 <td><code>structural-search</code><br /><sub><code>$litcodex:structural-search</code></sub></td>
 <td>Finds code by its syntax shape, not its text, and previews rewrites before applying them.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/visual-qa.webp" width="240" alt="Checks a real screen at each viewport and returns an honest verdict, or names exactly what blocked it." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/visual-qa.webp" width="240" alt="Checks a real screen at each viewport and returns an honest verdict, or names exactly what blocked it." /></td>
 <td><code>visual-qa</code><br /><sub><code>$litcodex:visual-qa</code></sub></td>
 <td>Checks a real screen at each viewport and returns an honest verdict, or names exactly what blocked it.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/browser-drive.webp" width="240" alt="Drives a real page after verifying the browser driver. If there is none, it says so." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/browser-drive.webp" width="240" alt="Drives a real page after verifying the browser driver. If there is none, it says so." /></td>
 <td><code>browser-drive</code><br /><sub><code>browser-drive</code> · <code>$litcodex:browser-drive</code></sub></td>
 <td>Drives a real page after verifying the browser driver. If there is none, it says so.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/frontend-ui-ux.webp" width="240" alt="Builds a working interface, then a measured probe renders it in seven views: four widths, dark, reduced motion and 200% zoom." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/frontend-ui-ux.webp" width="240" alt="Builds a working interface, then a measured probe renders it in seven views: four widths, dark, reduced motion and 200% zoom." /></td>
 <td><code>frontend-ui-ux</code><br /><sub><code>$litcodex:frontend-ui-ux</code></sub></td>
 <td>Builds a working interface, then a measured probe renders it in seven views: four widths, dark, reduced motion and 200% zoom.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-burnoff.webp" width="240" alt="Cleans AI-written bloat out of a change set after tests lock what it does." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-burnoff.webp" width="240" alt="Cleans AI-written bloat out of a change set after tests lock what it does." /></td>
 <td><code>lit-burnoff</code><br /><sub><code>$litcodex:lit-burnoff</code></sub></td>
 <td>Cleans AI-written bloat out of a change set after tests lock what it does.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/lit-burnoff-file.webp" width="240" alt="The same cleanup for one file: fewer narrating comments, less defensive noise, flatter code." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/lit-burnoff-file.webp" width="240" alt="The same cleanup for one file: fewer narrating comments, less defensive noise, flatter code." /></td>
 <td><code>lit-burnoff-file</code><br /><sub><code>$litcodex:lit-burnoff-file</code></sub></td>
 <td>The same cleanup for one file: fewer narrating comments, less defensive noise, flatter code.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/wikify.webp" width="240" alt="Keeps reviewed project knowledge on disk and answers later questions from it, with sources." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/wikify.webp" width="240" alt="Keeps reviewed project knowledge on disk and answers later questions from it, with sources." /></td>
 <td><code>wikify</code><br /><sub><code>$litcodex:wikify</code></sub></td>
 <td>Keeps reviewed project knowledge on disk and answers later questions from it, with sources.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/autoresearch.webp" width="240" alt="An approved, budgeted experiment loop. Each round changes one thing and keeps or reverts it." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/autoresearch.webp" width="240" alt="An approved, budgeted experiment loop. Each round changes one thing and keeps or reverts it." /></td>
 <td><code>autoresearch</code><br /><sub><code>$litcodex:autoresearch</code></sub></td>
 <td>An approved, budgeted experiment loop. Each round changes one thing and keeps or reverts it.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/autoconference.webp" width="240" alt="A budgeted research conference: separate researchers, reviewers, and a synthesis that keeps disagreement." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/autoconference.webp" width="240" alt="A budgeted research conference: separate researchers, reviewers, and a synthesis that keeps disagreement." /></td>
 <td><code>autoconference</code><br /><sub><code>$litcodex:autoconference</code></sub></td>
 <td>A budgeted research conference: separate researchers, reviewers, and a synthesis that keeps disagreement.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/skills/automatic-checks.webp" width="240" alt="Runs on its own: project rules on each prompt, LSP and comment checks after edits." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/skills/automatic-checks.webp" width="240" alt="Runs on its own: project rules on each prompt, LSP and comment checks after edits." /></td>
 <td><code>rules</code> · <code>lsp</code> · <code>comment-checker</code><br /><sub>runs on its own</sub></td>
 <td>Runs on its own: project rules on each prompt, LSP and comment checks after edits.</td>
 </tr>
@@ -438,49 +438,49 @@ In the interface round the Codex sandbox blocked the browser, so the lit arm's i
 
 **S3, budget dashboard (baseline left, LitCodex right).**
 
-<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s3-baseline-desktop.webp" width="49%" alt="Baseline budget dashboard at desktop width" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s3-lit-desktop.webp" width="49%" alt="LitCodex budget dashboard at desktop width" /></p>
+<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s3-baseline-desktop.webp" width="49%" alt="Baseline budget dashboard at desktop width" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s3-lit-desktop.webp" width="49%" alt="LitCodex budget dashboard at desktop width" /></p>
 
 <details><summary>S3 on a phone</summary>
 
-<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s3-baseline-phone.webp" width="240" alt="Baseline budget dashboard on a phone" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s3-lit-phone.webp" width="240" alt="LitCodex budget dashboard on a phone" /></p>
+<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s3-baseline-phone.webp" width="240" alt="Baseline budget dashboard on a phone" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s3-lit-phone.webp" width="240" alt="LitCodex budget dashboard on a phone" /></p>
 
 </details>
 
 **S4, café landing page (baseline left, LitCodex right).**
 
-<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s4-baseline-desktop.webp" width="49%" alt="Baseline café landing page at desktop width" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s4-lit-desktop.webp" width="49%" alt="LitCodex café landing page at desktop width" /></p>
+<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s4-baseline-desktop.webp" width="49%" alt="Baseline café landing page at desktop width" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s4-lit-desktop.webp" width="49%" alt="LitCodex café landing page at desktop width" /></p>
 
 <details><summary>S4 on a phone</summary>
 
-<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s4-baseline-phone.webp" width="240" alt="Baseline café landing page on a phone" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s4-lit-phone.webp" width="240" alt="LitCodex café landing page on a phone" /></p>
+<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s4-baseline-phone.webp" width="240" alt="Baseline café landing page on a phone" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s4-lit-phone.webp" width="240" alt="LitCodex café landing page on a phone" /></p>
 
 </details>
 
 **S5, first five slides (baseline above, LitCodex below).**
 
-<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s5-baseline-slides.webp" width="100%" alt="Baseline slides for the report-and-slides task" /></p>
-<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s5-lit-slides.webp" width="100%" alt="LitCodex slides for the report-and-slides task" /></p>
+<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s5-baseline-slides.webp" width="100%" alt="Baseline slides for the report-and-slides task" /></p>
+<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s5-lit-slides.webp" width="100%" alt="LitCodex slides for the report-and-slides task" /></p>
 
 **S7, the LitCodex diagram.** The baseline returned Mermaid code without a rendered file.
 
-<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s7-lit-diagram.webp" width="720" alt="LitCodex order, payment and shipping service diagram" /></p>
+<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s7-lit-diagram.webp" width="720" alt="LitCodex order, payment and shipping service diagram" /></p>
 
 **S8, first five slides (baseline above, LitCodex below).**
 
-<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s8-baseline-slides.webp" width="100%" alt="Baseline quarterly results template slides" /></p>
-<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s8-lit-slides.webp" width="100%" alt="LitCodex quarterly results slides with sample figures" /></p>
+<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s8-baseline-slides.webp" width="100%" alt="Baseline quarterly results template slides" /></p>
+<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s8-lit-slides.webp" width="100%" alt="LitCodex quarterly results slides with sample figures" /></p>
 
 **S9, first three pages of the LitCodex plan.** The baseline answered in chat and made no file.
 
-<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s9-lit-pages.webp" width="100%" alt="LitCodex new product plan, first three pages" /></p>
+<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s9-lit-pages.webp" width="100%" alt="LitCodex new product plan, first three pages" /></p>
 
 **S11, meeting-room booking app (baseline left, LitCodex right).**
 
-<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s11-baseline-desktop.webp" width="49%" alt="Baseline meeting-room booking app at desktop width" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s11-lit-desktop.webp" width="49%" alt="LitCodex meeting-room booking app at desktop width" /></p>
+<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s11-baseline-desktop.webp" width="49%" alt="Baseline meeting-room booking app at desktop width" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s11-lit-desktop.webp" width="49%" alt="LitCodex meeting-room booking app at desktop width" /></p>
 
 <details><summary>S11 on a phone</summary>
 
-<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s11-baseline-phone.webp" width="240" alt="Baseline meeting-room booking app on a phone" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ab-simple/assets/s11-lit-phone.webp" width="240" alt="LitCodex meeting-room booking app on a phone" /></p>
+<p><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s11-baseline-phone.webp" width="240" alt="Baseline meeting-room booking app on a phone" /> <img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ab-simple/assets/s11-lit-phone.webp" width="240" alt="LitCodex meeting-room booking app on a phone" /></p>
 
 </details>
 
@@ -501,7 +501,7 @@ Append `lit` to a prompt to activate the Codex CLI hook. It routes the request i
 
 The hook is an entry signal; it does not prove that a model result or visual check completed.
 
-<p align="center"><a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ignition-poster.png" width="720" alt="Ignition motion poster" /></a></p>
+<p align="center"><a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ignition-poster.png" width="720" alt="Ignition motion poster" /></a></p>
 
 Select the poster for the optional film; this README keeps motion opt-in.
 
@@ -559,7 +559,7 @@ See [state and recovery](https://github.com/wjgoarxiv/litcodex/blob/main/docs/us
 ## Verify it worked
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex doctor
 ```
 
 `litcodex doctor` checks registration, hooks, config, and host capabilities. `litcodex loop doctor` checks
@@ -624,7 +624,7 @@ export TYPESAFE_API_KEY=<your own TypeSafe key>
 ## Uninstall
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex uninstall
 ```
 
 `litcodex uninstall` removes the plugin and LitCodex-managed config while preserving unrelated settings.
@@ -653,7 +653,7 @@ Tests, fixtures, test helpers, and Vitest configuration remain tracked repositor
 
 ### LITFAMILY
 
-![LITFAMILY editorial illustration with five armored machines against a dark background](https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/litfamily-machines.png)
+![LITFAMILY editorial illustration with five armored machines against a dark background](https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/litfamily-machines.png)
 
 Five armored machines, one for each product in the LIT family.
 
@@ -661,6 +661,6 @@ Five armored machines, one for each product in the LIT family.
 
 Select the poster to watch the 10-second film.
 
-<p align="center"><a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.7/readme-assets/ignition-poster.png" width="720" alt="Ignition motion graphic poster" /></a></p>
+<p align="center"><a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets/ignition-poster.png" width="720" alt="Ignition motion graphic poster" /></a></p>
 
 [Animated GIF](https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-readme.gif) · [Media and icon credits](https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/README.md)
