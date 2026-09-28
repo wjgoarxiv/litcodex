@@ -1,0 +1,1 @@
+{"name":"brownfield-design-system","tier":"full","expected":"FAIL","finding_codes":["FINDING_TOKEN_BYPASS","FINDING_DUPLICATED_PRIMITIVE"],"blocked_codes":[],"review_rounds":2}

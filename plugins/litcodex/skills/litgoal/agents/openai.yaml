@@ -1,0 +1,6 @@
+interface:
+  display_name: "Lit Goal"
+  short_description: "Bind one objective with observable success criteria"
+  default_prompt: "Use $litcodex:litgoal to bind this objective before implementation."
+policy:
+  allow_implicit_invocation: false

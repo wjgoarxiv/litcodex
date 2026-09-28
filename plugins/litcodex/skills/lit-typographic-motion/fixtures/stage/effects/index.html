@@ -1,0 +1,36 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="/lit/fonts.css"><script src="/lit/stage-kit.js"></script>
+<style>
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: linear-gradient(135deg, #1B2A41, #3C1F3C); }
+.blur { position: absolute; left: 120px; top: 120px; width: 300px; height: 300px; border-radius: 50%; background: #F29E4C; filter: blur(18px); }
+.glass { position: absolute; left: 260px; top: 220px; width: 420px; height: 260px; backdrop-filter: blur(12px) saturate(1.4); background: rgba(255,255,255,0.12); border-radius: 24px; }
+.blend { position: absolute; left: 820px; top: 160px; width: 320px; height: 320px; background: #3FA7D6; mix-blend-mode: screen; border-radius: 40px; }
+.blend2 { position: absolute; left: 960px; top: 260px; width: 320px; height: 320px; background: #F25F5C; mix-blend-mode: multiply; border-radius: 40px; }
+.shadow { position: absolute; left: 1400px; top: 180px; width: 280px; height: 200px; background: #EEE; box-shadow: 0 30px 60px rgba(0,0,0,0.55), 0 0 0 8px #FFE066; }
+</style></head>
+<body>
+<p id="copy" style="position:absolute;left:760px;top:60px;margin:0;font:700 64px Archivo;color:#FFFFFF;text-shadow:0 2px 12px #000">Tide pool at noon</p>
+<div class="blur"></div><div class="glass"></div><div class="blend"></div><div class="blend2"></div><div class="shadow"></div>
+<svg width="600" height="400" style="position:absolute;left:120px;top:600px"><defs><filter id="g"><feGaussianBlur stdDeviation="9"/></filter></defs><rect id="r" x="60" y="80" width="260" height="200" fill="#7BD389" filter="url(#g)"/></svg>
+<canvas id="c2" width="500" height="360" style="position:absolute;left:800px;top:640px"></canvas>
+<canvas id="gl" width="480" height="360" style="position:absolute;left:1360px;top:640px"></canvas>
+<script>
+const c2 = document.getElementById("c2").getContext("2d");
+const gl = document.getElementById("gl").getContext("webgl");
+const vs = "attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }";
+const fs = "precision mediump float; uniform float t; void main(){ vec2 uv = gl_FragCoord.xy / vec2(480.0, 360.0); gl_FragColor = vec4(uv.x, 0.5 + 0.5 * sin(t * 3.0 + uv.y * 6.0), uv.y, 1.0); }";
+function sh(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+const prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(prog); gl.useProgram(prog);
+const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+const tl = gl.getUniformLocation(prog, "t");
+const rect = document.getElementById("r");
+LitStage.define({ width: 1920, height: 1080, fps: 30, duration: 4, render(t) {
+	document.querySelector(".blur").style.transform = `translateX(${200 * LitStage.ease.inOutSine(t / 4)}px)`;
+	rect.setAttribute("x", String(60 + 120 * Math.sin(t)));
+	c2.clearRect(0, 0, 500, 360);
+	c2.shadowBlur = 30; c2.shadowColor = "rgba(0,0,0,0.8)"; c2.fillStyle = "#FFD166";
+	c2.beginPath(); c2.arc(120 + 240 * (t / 4), 180, 90, 0, Math.PI * 2); c2.fill();
+	gl.uniform1f(tl, t); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+} });
+</script></body></html>

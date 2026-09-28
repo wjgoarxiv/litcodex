@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fixture: rough layout</title>
+<style>
+  body { margin: 0; font: 16px/1.5 Arial, sans-serif; color: #bbb; background: #fff; }
+  main { width: 460px; padding: 24px; }
+  .cut { width: 130px; overflow: hidden; white-space: nowrap; }
+  button { width: 18px; height: 18px; padding: 0; border: 0; }
+  @keyframes appear { from { transform: scale(0); } to { transform: scale(1); } }
+  h1 { animation: appear 300ms ease-out; }
+  .tile-grid { display: grid; grid-template-columns: repeat(4, 100px); gap: 8px; }
+  .tile { height: 120px; padding: 4px; }
+  .tile svg { width: 16px; height: 16px; }
+  .tile h2 { font-size: 14px; margin: 0; }
+  .tile p { font-size: 12px; margin: 0; }
+  .busy-mask { clip-path: polygon(3% 7%, 19% 4%, 31% 9%, 46% 2%, 59% 6%, 73% 3%, 91% 8%, 97% 23%, 92% 79%, 81% 94%, 63% 97%, 47% 91%); }
+</style>
+<main>
+  <h1>Example panel</h1>
+  <p class="cut">This sentence is intentionally clipped in the test page.</p>
+  <button aria-label="Open">+</button>
+  <a href="#">View detail</a>
+  <section class="tile-grid" aria-label="Repeated examples">
+    <article class="tile busy-mask"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/></svg><h2>Item one</h2><p>Repeated detail</p></article>
+    <article class="tile"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/></svg><h2>Item two</h2><p>Repeated detail</p></article>
+    <article class="tile"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/></svg><h2>Item three</h2><p>Repeated detail</p></article>
+    <article class="tile"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/></svg><h2>Item four</h2><p>Repeated detail</p></article>
+  </section>
+</main>
+</html>

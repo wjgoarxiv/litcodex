@@ -1,0 +1,1 @@
+{"name":"cjk-terminal-dashboard","tier":"full","expected":"FAIL","finding_codes":["FINDING_ZWJ_WIDTH_DRIFT","FINDING_BORDER_TOPOLOGY"],"blocked_codes":[],"review_rounds":2}

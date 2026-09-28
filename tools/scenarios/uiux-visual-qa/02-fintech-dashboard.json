@@ -1,0 +1,1 @@
+{"name":"fintech-dashboard","tier":"full","expected":"FAIL","finding_codes":["FINDING_COLOR_ONLY_STATE","FINDING_NONVISUAL_FALLBACK_MISSING"],"blocked_codes":[],"review_rounds":2}

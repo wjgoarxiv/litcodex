@@ -1,0 +1,195 @@
+{
+	"version": "2026-09-05.gpt-6-astra-xhigh",
+	"current": {
+		"model": "gpt-6-astra",
+		"model_reasoning_effort": "xhigh"
+	},
+	"models": [
+		{
+			"id": "gpt-6-astra",
+			"config_profile": "astra",
+			"display_name": "GPT-6 Astra",
+			"generation": "gpt-6",
+			"priority": 1,
+			"visibility": "list",
+			"supported_in_api": true,
+			"speed_tier": "fast",
+			"aliases": ["astra"],
+			"supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"configurable_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"installer_menu": {
+				"lead": ["xhigh", "low", "medium", "high", "max", "ultra"],
+				"helper": ["low", "medium", "high", "xhigh", "max", "ultra"]
+			},
+			"default_effort": "medium",
+			"recommended_role": "lead",
+			"recommended_effort": "xhigh"
+		},
+		{
+			"id": "gpt-6-sol",
+			"config_profile": "sol",
+			"display_name": "GPT-6 Sol",
+			"generation": "gpt-6",
+			"priority": 2,
+			"visibility": "list",
+			"supported_in_api": true,
+			"speed_tier": "fast",
+			"aliases": [],
+			"supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"configurable_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"installer_menu": {
+				"lead": ["xhigh", "low", "medium", "high", "max", "ultra"],
+				"helper": ["low", "medium", "high", "xhigh", "max", "ultra"]
+			},
+			"default_effort": "medium",
+			"recommended_role": "coding-lead",
+			"recommended_effort": "xhigh"
+		},
+		{
+			"id": "gpt-6-luna",
+			"config_profile": "luna",
+			"display_name": "GPT-6 Luna",
+			"generation": "gpt-6",
+			"priority": 3,
+			"visibility": "list",
+			"supported_in_api": true,
+			"speed_tier": "fast",
+			"aliases": [],
+			"supported_efforts": ["low", "medium", "high", "xhigh", "max"],
+			"configurable_efforts": ["low", "medium", "high", "xhigh", "max"],
+			"installer_menu": {
+				"lead": ["max", "low", "medium", "high", "xhigh"],
+				"helper": ["max", "high", "low", "medium", "xhigh"]
+			},
+			"default_effort": "medium",
+			"recommended_role": "helper",
+			"recommended_effort": "max"
+		},
+		{
+			"id": "gpt-5.6-sol",
+			"config_profile": "sol",
+			"display_name": "GPT-5.6 Sol",
+			"generation": "gpt-5.6",
+			"priority": 4,
+			"visibility": "list",
+			"supported_in_api": true,
+			"speed_tier": "standard",
+			"aliases": ["sol"],
+			"supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"configurable_efforts": ["high", "xhigh", "max"],
+			"installer_menu": { "lead": ["xhigh"], "helper": ["high"] },
+			"default_effort": "low",
+			"recommended_role": "previous-generation",
+			"recommended_effort": "xhigh"
+		},
+		{
+			"id": "gpt-5.6",
+			"config_profile": "sol",
+			"legacy_profile": "sol",
+			"context_probe": true,
+			"display_name": "GPT-5.6",
+			"generation": "gpt-5.6",
+			"priority": 5,
+			"visibility": "list",
+			"supported_in_api": true,
+			"speed_tier": "standard",
+			"aliases": [],
+			"supported_efforts": ["high", "xhigh", "max"],
+			"configurable_efforts": ["high", "xhigh", "max"],
+			"installer_menu": { "lead": [], "helper": [] },
+			"default_effort": "high",
+			"recommended_role": "previous-generation",
+			"recommended_effort": "high"
+		},
+		{
+			"id": "gpt-5.6-terra",
+			"config_profile": "terra",
+			"legacy_profile": "terra",
+			"context_probe": true,
+			"display_name": "GPT-5.6 Terra",
+			"generation": "gpt-5.6",
+			"priority": 7,
+			"visibility": "list",
+			"supported_in_api": true,
+			"speed_tier": "standard",
+			"aliases": ["terra"],
+			"supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"configurable_efforts": ["high", "xhigh"],
+			"safe_existing_efforts": ["high", "xhigh"],
+			"installer_menu": { "lead": ["xhigh"], "helper": ["xhigh"] },
+			"default_effort": "medium",
+			"recommended_role": "previous-generation",
+			"recommended_effort": "xhigh"
+		},
+		{
+			"id": "gpt-5.6-luna",
+			"config_profile": "luna",
+			"legacy_profile": "luna",
+			"context_probe": true,
+			"display_name": "GPT-5.6 Luna",
+			"generation": "gpt-5.6",
+			"priority": 8,
+			"visibility": "list",
+			"supported_in_api": true,
+			"speed_tier": "standard",
+			"aliases": ["luna"],
+			"supported_efforts": ["low", "medium", "high", "xhigh", "max"],
+			"configurable_efforts": ["high", "max"],
+			"safe_existing_efforts": ["high", "max"],
+			"installer_menu": { "lead": ["max"], "helper": ["max"] },
+			"default_effort": "medium",
+			"recommended_role": "previous-generation",
+			"recommended_effort": "max"
+		},
+		{
+			"id": "gpt-5.5",
+			"config_profile": "sol",
+			"display_name": "GPT-5.5",
+			"generation": "gpt-5.5",
+			"priority": 12,
+			"visibility": "list",
+			"supported_in_api": true,
+			"speed_tier": "standard",
+			"aliases": [],
+			"supported_efforts": ["low", "medium", "high", "xhigh"],
+			"configurable_efforts": ["high", "xhigh"],
+			"installer_menu": { "lead": [], "helper": [] },
+			"default_effort": "medium",
+			"recommended_role": "retiring",
+			"recommended_effort": "high",
+			"retirement": {
+				"retirement_at": "2026-10-14T19:00:00Z",
+				"upgrade": { "model": "gpt-5.6-sol" }
+			}
+		}
+	],
+	"roles": {
+		"default": { "model": "gpt-6-luna", "model_reasoning_effort": "max" },
+		"explorer": { "model": "gpt-6-luna", "model_reasoning_effort": "max" },
+		"librarian": { "model": "gpt-6-luna", "model_reasoning_effort": "max" },
+		"plan": { "model": "gpt-6-astra", "model_reasoning_effort": "xhigh" },
+		"metis": { "model": "gpt-6-luna", "model_reasoning_effort": "max" },
+		"momus": { "model": "gpt-6-astra", "model_reasoning_effort": "xhigh" },
+		"litwork-reviewer": { "model": "gpt-6-astra", "model_reasoning_effort": "xhigh" }
+	},
+	"managedProfiles": [
+		{
+			"version": "legacy.gpt-5.5-1m",
+			"match": {
+				"model": "gpt-5.5",
+				"model_context_window": 1000000,
+				"model_reasoning_effort": "high",
+				"plan_mode_reasoning_effort": "xhigh"
+			}
+		},
+		{
+			"version": "legacy.gpt-5.5-272k",
+			"match": {
+				"model": "gpt-5.5",
+				"model_context_window": 272000,
+				"model_reasoning_effort": "high",
+				"plan_mode_reasoning_effort": "xhigh"
+			}
+		}
+	]
+}

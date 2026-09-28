@@ -1,0 +1,4 @@
+/* Compatibility alias: the old Bauhaus template now uses the boilerplate-derived professional design system. */
+/* Keep this file in sync with templates/boilerplate_professional.css for older prompts that request bauhaus_light.css. */
+
+@import url("./boilerplate_professional.css");

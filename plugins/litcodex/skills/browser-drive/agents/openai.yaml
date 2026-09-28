@@ -1,0 +1,6 @@
+interface:
+  display_name: "Browser Drive"
+  short_description: "Drive a live page through a verified browser"
+  default_prompt: "Use $litcodex:browser-drive to drive this page."
+policy:
+  allow_implicit_invocation: false

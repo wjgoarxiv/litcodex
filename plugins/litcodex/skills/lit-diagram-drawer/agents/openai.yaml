@@ -1,0 +1,6 @@
+interface:
+  display_name: "Lit Diagram Drawer"
+  short_description: "Create clear diagrams for systems and workflows"
+  default_prompt: "Use $litcodex:lit-diagram-drawer to create this diagram."
+policy:
+  allow_implicit_invocation: true

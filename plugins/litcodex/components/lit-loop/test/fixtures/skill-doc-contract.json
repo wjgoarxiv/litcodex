@@ -1,0 +1,59 @@
+{
+	"requiredPhrases": {
+		"skill": [
+			"references/full-workflow.md",
+			".litcodex/lit-loop",
+			"litcodex loop status --json",
+			"litcodex loop checkpoint",
+			"litcodex loop record-evidence",
+			"<lit-loop-mode>",
+			"UserPromptSubmit"
+		],
+		"workflow": [
+			"litcodex loop create",
+			"litcodex loop status --json",
+			"litcodex loop run",
+			"litcodex loop record-evidence",
+			"litcodex loop checkpoint",
+			"litcodex loop doctor",
+			".litcodex/lit-loop/brief.md",
+			".litcodex/lit-loop/goals.json",
+			".litcodex/lit-loop/ledger.jsonl",
+			".litcodex/lit-loop/evidence/",
+			"TESTS ALONE NEVER PROVE DONE"
+		],
+		"behavioralNonGating": [
+			"records only evidence it re-verified",
+			"Agent behavioral rules (non-gating"
+		]
+	},
+	"requiredLoopCommands": [
+		"litcodex loop create",
+		"litcodex loop status",
+		"litcodex loop run",
+		"litcodex loop checkpoint",
+		"litcodex loop record-evidence",
+		"litcodex loop doctor"
+	],
+	"forbiddenTokens": [
+		{ "parts": ["u", "l", "w", "-loop"] },
+		{ "parts": ["<", "ultra", "work", "-mode>"] },
+		{ "parts": ["ULTRA", "WORK MODE ENABLED!"] }
+	],
+	"forbiddenCliVerb": "litcodex lit-loop",
+	"canonicalCliVerb": "litcodex loop",
+	"bootstrapCachePathSegments": [
+		"plugins",
+		"cache",
+		"litcodex",
+		"litcodex",
+		"*",
+		"components",
+		"lit-loop",
+		"dist",
+		"cli.js"
+	],
+	"toolNamespace": "multi_agent_v1",
+	"forbiddenToolNamespace": "multi_agent_v2",
+	"openaiYaml": { "displayName": "lit-loop", "searchTerm": "lit-loop" }
+}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Init Deep"
+  short_description: "Initialize hierarchical repository guidance"
+  default_prompt: "Use $litcodex:lit-init to initialize repository guidance."
+policy:
+  allow_implicit_invocation: false

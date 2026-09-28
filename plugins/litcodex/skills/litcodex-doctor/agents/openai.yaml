@@ -1,0 +1,11 @@
+interface:
+  display_name: "litcodex-doctor (litcodex)"
+  short_description: "Diagnose LitCodex/Codex install health against latest sources"
+  search_terms:
+    - "litcodex-doctor"
+    - "litcodex doctor"
+    - "litcodex health check"
+    - "codex doctor"
+    - "litcodex install broken"
+    - "litcodex diagnose"
+  default_prompt: "Use $litcodex-doctor to sync the latest LitCodex and Codex sources into /tmp, inventory the local installation, compare versions, config, and wiring against the latest sources, probe the real surface, and report PASS/WARN/FAIL findings with evidence and remediations."

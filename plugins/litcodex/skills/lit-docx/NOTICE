@@ -1,0 +1,3 @@
+The conversion scripts, publisher profiles, templates, and reference guidance
+in this skill derive from the user's MIT-licensed publisher-docx work. This
+LitCodex package adapts them to Codex skill discovery and an isolated runtime.

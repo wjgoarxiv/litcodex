@@ -1,0 +1,6 @@
+interface:
+  display_name: "Lit Comprehend"
+  short_description: "Explain completed work for genuine understanding"
+  default_prompt: "Use $litcodex:lit-comprehend to explain this completed work."
+policy:
+  allow_implicit_invocation: false

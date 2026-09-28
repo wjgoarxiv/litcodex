@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "litfamily.evidence-manifest/v1beta1",
+  "title": "LitFamily material visual evidence manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id", "created_at", "maximum_age_seconds", "design_contract_hash", "source_hash",
+    "capture_hash", "capture_path", "capture_byte_length", "capture_width", "capture_height",
+    "environment", "capabilities", "inventory", "review_receipt_hashes", "cleanup", "blockers", "findings"
+  ],
+  "properties": {
+    "schema_id": { "const": "litfamily.evidence-manifest/v1beta1" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "maximum_age_seconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+    "design_contract_hash": { "$ref": "#/$defs/hash" },
+    "source_hash": { "$ref": "#/$defs/hash" },
+    "capture_hash": { "$ref": "#/$defs/hash" },
+    "capture_path": { "type": "string", "minLength": 1, "maxLength": 512, "pattern": "^(?!/)(?!\\\\)(?![A-Za-z]:[\\\\/])(?!.*\\.\\.).+$" },
+    "capture_byte_length": { "type": "integer", "minimum": 1, "maximum": 26214400 },
+    "capture_width": { "type": "integer", "minimum": 1, "maximum": 16384 },
+    "capture_height": { "type": "integer", "minimum": 1, "maximum": 16384 },
+    "environment": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "surface", "renderer_identity", "capture_tool", "locale", "color_scheme",
+        "reduced_motion", "process_owned", "session_owned"
+      ],
+      "properties": {
+        "surface": { "enum": ["web", "application", "tui"] },
+        "renderer_identity": { "type": "string", "minLength": 1 },
+        "capture_tool": { "type": "string", "minLength": 1 },
+        "locale": { "type": "string", "minLength": 2 },
+        "color_scheme": { "enum": ["light", "dark", "system"] },
+        "reduced_motion": { "type": "boolean" },
+        "process_owned": { "type": "boolean" },
+        "session_owned": { "type": "boolean" }
+      }
+    },
+    "capabilities": {
+      "type": "object", "additionalProperties": false,
+      "required": ["capture", "auth", "independent_review"],
+      "properties": {
+        "capture": { "type": "boolean" },
+        "auth": { "type": "boolean" },
+        "independent_review": { "type": "boolean" }
+      }
+    },
+    "inventory": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "status", "evidence_hash", "captured_at"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "status": { "enum": ["captured", "omitted", "accepted-exception"] },
+          "evidence_hash": { "$ref": "#/$defs/hash" },
+          "captured_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "review_receipt_hashes": { "type": "array", "maxItems": 2, "items": { "$ref": "#/$defs/hash" } },
+    "cleanup": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "temporary_artifacts_removed", "session_terminated", "auth_state_removed"],
+      "properties": {
+        "status": { "const": "complete" },
+        "temporary_artifacts_removed": { "const": true },
+        "session_terminated": { "const": true },
+        "auth_state_removed": { "const": true }
+      }
+    },
+    "blockers": { "type": "array", "items": { "type": "string", "pattern": "^BLOCKED_[A-Z0-9_]+$" } },
+    "findings": { "type": "array" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z0-9][a-z0-9._/-]*$" },
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

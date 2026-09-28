@@ -1,0 +1,36 @@
+{
+	"schema": "litcodex.provider-cache-scenario/v1",
+	"scenario": "lit-plan-transition-v1",
+	"records": [
+		{
+			"id": "B0",
+			"prompt": "Benchmark fixture. Reply with exactly LCPC_B0_OK.",
+			"canary": "LCPC_B0_OK"
+		},
+		{
+			"id": "S1",
+			"prompt": "lit plan. Benchmark-only request: plan three concise checks for preserving a stable synthetic prefix. Do not use tools. End with exactly LCPC_S1_OK.",
+			"canary": "LCPC_S1_OK"
+		},
+		{
+			"id": "S2",
+			"prompt": "Continue the benchmark plan by naming one cache-metric correctness check. Do not use tools. End with exactly LCPC_S2_OK.",
+			"canary": "LCPC_S2_OK"
+		},
+		{
+			"id": "S3",
+			"prompt": "Continue by naming one p95 latency check. Do not use tools. End with exactly LCPC_S3_OK.",
+			"canary": "LCPC_S3_OK"
+		},
+		{
+			"id": "S4",
+			"prompt": "Continue by naming one local-evidence privacy check. Do not use tools. End with exactly LCPC_S4_OK.",
+			"canary": "LCPC_S4_OK"
+		},
+		{
+			"id": "S5",
+			"prompt": "Finish with one sentence stating the greater-than-95-percent acceptance gate. Do not use tools. End with exactly LCPC_S5_OK.",
+			"canary": "LCPC_S5_OK"
+		}
+	]
+}

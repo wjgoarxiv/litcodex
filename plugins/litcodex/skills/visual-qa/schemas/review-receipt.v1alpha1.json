@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "litfamily.review-receipt/v1alpha1",
+  "title": "LitFamily independent visual review receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "review_id",
+    "fresh_context_id",
+    "input_hashes",
+    "independence_assertion",
+    "started_at",
+    "completed_at",
+    "timeout",
+    "canceled",
+    "verdict",
+    "findings"
+  ],
+  "properties": {
+    "schema_id": { "const": "litfamily.review-receipt/v1alpha1" },
+    "review_id": { "$ref": "#/$defs/id" },
+    "fresh_context_id": { "type": "string", "minLength": 1 },
+    "input_hashes": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/hash" }
+    },
+    "independence_assertion": {
+      "const": "I reviewed the immutable evidence bytes in a separate fresh context and did not receive another reviewer's draft or verdict."
+    },
+    "started_at": { "type": "string", "format": "date-time" },
+    "completed_at": { "type": "string", "format": "date-time" },
+    "timeout": { "type": "boolean" },
+    "canceled": { "type": "boolean" },
+    "verdict": { "enum": ["PASS", "REVISE", "FAIL"] },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z0-9][a-z0-9._/-]*$" },
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "message", "open"],
+      "properties": {
+        "severity": { "enum": ["critical", "high", "major", "minor"] },
+        "message": { "type": "string", "minLength": 1 },
+        "open": { "type": "boolean" }
+      }
+    }
+  }
+}

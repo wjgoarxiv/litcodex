@@ -1,0 +1,15 @@
+{
+	"baselineContext": "Project context: this repository uses Node.js 20, TypeScript ESM, explicit local provenance, append-only JSONL authority, deterministic offline relevance, review-required capture, and strict exclusion of raw prompts, source bodies, fetched text, secrets, credentials, instruction-shaped payloads, network services, daemons, watchers, vector databases, and embeddings. Every task must restate these constraints because this baseline has no local knowledge support.",
+	"knowledge": {
+		"kind": "rule",
+		"text": "Use Node 20, local JSONL, deterministic relevance, and review-gated records.",
+		"source": "wikify",
+		"evidenceRef": "fixture/project-rules"
+	},
+	"prompts": [
+		"Apply the project rules to JSONL storage.",
+		"Apply the project rules to deterministic relevance.",
+		"Apply the project rules to record review.",
+		"Apply the project rules to local knowledge."
+	]
+}

@@ -1,0 +1,13 @@
+{
+  "source": "lit-mark-round6-sheet.json",
+  "sourceSha256": "336b7ed8efde2dd3661a1c90963fd815dd8470d5ec6a5b754755f7385394c968",
+  "generator": "lit-mark-round6-generator.mjs",
+  "generatorSha256": "533d7801cff34ed721ff8cc91ca0342df965eefa9beee9e9c8a19243141be8a1",
+  "upstream": {
+    "source": "2026-09-05-lit-ascii-round6.txt",
+    "sourceSha256": "50f72e42983776d8e21e8239f6885a8b3a575ecc329fb9f32bfd2ae17d45b6fb",
+    "generator": "litmark6.mjs",
+    "generatorSha256": "9fabce77034a64d7a3d8467711bb87d582b7de905d06417ce19e0493ebf78df7"
+  },
+  "projection": "A/D retain the final empty canvas sentinel. E retains the 28-column mark field, normalizes field padding and uses codex on row 6. G retains the first 16 columns. The generator retains original bitmap, plume, shear, extrusion and quadrant logic; only variant labels, product text and output serialization change. Formatting, unused parameter names and the void forEach callback follow repository lint rules without changing geometry."
+}

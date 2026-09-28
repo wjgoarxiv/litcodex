@@ -1,0 +1,7 @@
+The PowerPoint compiler, templates, template learner, font embedder, QA gate,
+agents, and specifications in this skill originate from user-authored work by
+wjgoarxiv. This LitCodex packaging adapts that engine to Codex skill discovery,
+isolated first-use runtime installation, and Codex workflow routing.
+
+Pretendard font files retain the bundled OFL license in pretendard-font/LICENSE.txt.
+A2Z font files retain their license in fonts/a2z-font/OFL.txt.

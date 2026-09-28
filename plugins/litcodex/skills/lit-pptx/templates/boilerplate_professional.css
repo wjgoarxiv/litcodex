@@ -1,0 +1,508 @@
+/* Boilerplate Professional Theme - 4:3 technical deck style */
+/* Source reference: BOILERPLATE/BOILERPLATE.pptx */
+
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 300;
+  src: url("../pretendard-font/public/static/PretendardGOV-Light.otf") format("opentype");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 400;
+  src: url("../pretendard-font/public/static/PretendardGOV-Regular.otf") format("opentype");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 500;
+  src: url("../pretendard-font/public/static/PretendardGOV-Medium.otf") format("opentype");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 600;
+  src: url("../pretendard-font/public/static/PretendardGOV-SemiBold.otf") format("opentype");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 700;
+  src: url("../pretendard-font/public/static/PretendardGOV-Bold.otf") format("opentype");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 800;
+  src: url("../pretendard-font/public/static/PretendardGOV-ExtraBold.otf") format("opentype");
+}
+
+:root {
+  --bg-color: #ffffff;
+  --ink: #3c3836;
+  --ink-muted: #6e6256;
+  --muted: #928374;
+  --line: #cbc2b5;
+  --paper-warm: #fbfaf7;
+  --accent-red: #cc241d;
+  --accent-green: #98971a;
+  --accent-green-2: #689d6a;
+  --accent-amber: #d79921;
+  --accent-yellow: #ffc000;
+  --accent-purple: #b16286;
+  --source-blue: #3f6f5b; /* source/link teal, darkened to clear 4.5:1 on white */
+  --card-radius: 0px; /* one deck-wide corner law (0-16px); default sharp */
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 960px;
+  height: 720px;
+  background: var(--bg-color);
+  color: var(--ink);
+  font-family: "Pretendard", Arial, sans-serif;
+  /* PowerPoint target: Character Spacing > Narrow, 0.5pt */
+  letter-spacing: -0.5pt;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+body,
+.slide {
+  position: relative;
+  width: 960px;
+  height: 720px;
+  background: var(--bg-color);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol {
+  margin: 0;
+}
+
+h1 {
+  font-size: 24pt;
+  line-height: 1.12;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+h2 {
+  font-size: 20pt;
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+h3 {
+  font-size: 15pt;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+p,
+li {
+  font-size: 12pt;
+  /* PowerPoint target: Paragraph before/after 0pt, Line Spacing > Multiple 1.3 */
+  line-height: 1.3;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+ul,
+ol {
+  padding-left: 18pt;
+}
+
+li {
+  margin-bottom: 0;
+}
+
+.slide-content {
+  position: absolute;
+  left: 26px;
+  top: 38px;
+  width: 908px;
+  height: 632px;
+}
+
+/* Optional top navigation. Avoid by default; 4:3 aspect ratio and stable layout are higher priority. */
+.top-tabs {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 34px;
+  display: grid;
+  grid-template-columns: 2.15fr 2.05fr 3.15fr 1.65fr;
+  z-index: 10;
+}
+
+.tab {
+  height: 34px;
+  border: 1px solid var(--ink);
+  border-left: 0;
+  color: var(--ink);
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9pt;
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: -0.5pt;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab p {
+  font-size: 9pt;
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: -0.5pt;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.tab:first-child {
+  border-left: 1px solid var(--ink);
+}
+
+.tab.active {
+  background: var(--ink);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.tab.active p {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.top-ribbon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 31px;
+  background: var(--ink);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  padding: 0 26px;
+  font-size: 14pt;
+  font-weight: 700;
+  letter-spacing: -0.5pt;
+  z-index: 10;
+}
+
+.title-block {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.top-tabs + .slide-content {
+  top: 50px;
+  height: 610px;
+}
+
+.title-block.narrow {
+  width: 620px;
+}
+
+.eyebrow {
+  font-size: 10pt;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: 0.4pt; /* uppercase wants open, not the global narrow tracking */
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  font-size: 13pt;
+  line-height: 1.3;
+  color: var(--ink-muted);
+  margin-top: 10px;
+}
+
+.header-line {
+  height: 2px;
+  width: 100%;
+  background: var(--ink);
+  margin-top: 10px;
+}
+
+.separator {
+  height: 1px;
+  width: 100%;
+  background: var(--line);
+  margin: 12px 0;
+}
+
+.section-divider {
+  position: absolute;
+  left: 61px;
+  top: 322px;
+  width: 837px;
+  height: 78px;
+  background: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 28px;
+}
+
+.section-divider h1,
+.section-divider p {
+  color: #ffffff;
+  font-size: 36pt;
+  line-height: 1;
+  font-weight: 700;
+  text-align: center;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.grid-sidebar {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 22px;
+}
+
+.evidence-layout {
+  height: 492px;
+  align-items: stretch;
+}
+
+.evidence-layout.grid-2 {
+  grid-template-columns: 1.12fr 1fr;
+}
+
+.evidence-card,
+.metric-card,
+.callout,
+.sidebar {
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  background: #ffffff;
+  padding: 16px;
+}
+
+.evidence-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fit-image {
+  width: 100%;
+  max-height: 430px;
+  object-fit: contain;
+}
+
+.placeholder-box {
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  min-height: 300px;
+  color: var(--ink-muted);
+  background: var(--paper-warm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 18px;
+  font-size: 11.5pt;
+  font-weight: 600;
+}
+
+.callout {
+  background: var(--paper-warm);
+}
+
+.callout h3 {
+  line-height: 1.3;
+  margin-bottom: 0;
+}
+
+.callout h3 + p {
+  margin-top: 14px;
+}
+
+.callout p + p {
+  margin-top: 8px;
+}
+
+.callout p {
+  line-height: 1.3;
+}
+
+/* Semantic accent: full hairline border color (no side-stripe), one color = one meaning */
+.accent-red { border-color: var(--accent-red); }
+.accent-green { border-color: var(--accent-green); }
+.accent-amber { border-color: var(--accent-amber); }
+.accent-purple { border-color: var(--accent-purple); }
+
+.metric-card {
+  min-height: 112px;
+  background: var(--paper-warm);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.metric {
+  font-size: 28pt;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.7pt; /* slight negative on large display numerals (floor ~-1pt) */
+  color: var(--ink);
+}
+
+.metric-label {
+  margin-top: 10px;
+  font-size: 9pt;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.4pt; /* uppercase wants open, not the global narrow tracking */
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.caption,
+.source-note {
+  font-size: 7.5pt;
+  line-height: 1.3;
+  color: var(--ink-muted);
+}
+
+.source-note {
+  color: var(--source-blue);
+}
+
+.slide-number {
+  position: absolute;
+  right: 0;
+  bottom: 48px;
+  width: 216px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-muted);
+  font-size: 10.5pt;
+}
+
+.cover-meta-left,
+.cover-meta-right {
+  position: absolute;
+  top: 31px;
+  width: 250px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  color: var(--ink);
+  font-size: 10pt;
+  font-weight: 500;
+}
+
+.cover-meta-left { left: 24px; justify-content: flex-start; }
+.cover-meta-right { right: 24px; justify-content: flex-end; }
+
+.cover-title {
+  position: absolute;
+  left: 70px;
+  top: 188px;
+  width: 820px;
+  text-align: center;
+}
+
+.cover-title h1 {
+  font-size: 39pt;
+  line-height: 1.16;
+  font-weight: 800;
+}
+
+.cover-title .subtitle {
+  font-size: 19pt;
+  color: var(--ink-muted);
+  margin-top: 22px;
+}
+
+.cover-author {
+  position: absolute;
+  left: 114px;
+  top: 448px;
+  width: 732px;
+  text-align: center;
+}
+
+.cover-author p {
+  font-size: 15pt;
+  line-height: 1.3;
+}
+
+.cover-author p + p {
+  margin-top: 18px;
+}
+
+.toc-title {
+  position: absolute;
+  left: 66px;
+  top: 38px;
+  width: 828px;
+}
+
+.toc-title h1 {
+  font-size: 40pt;
+  letter-spacing: -0.5pt;
+}
+
+.toc-list {
+  position: absolute;
+  left: 66px;
+  top: 190px;
+  width: 828px;
+  display: grid;
+  grid-template-rows: repeat(4, 48px);
+  row-gap: 26px;
+}
+
+.toc-list p {
+  font-size: 20pt;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.toc-list strong {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+strong,
+b {
+  font-weight: 700;
+}

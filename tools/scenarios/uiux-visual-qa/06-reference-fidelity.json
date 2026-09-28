@@ -1,0 +1,1 @@
+{"name":"reference-fidelity","tier":"reference-fidelity","expected":"FAIL","finding_codes":["FINDING_REFERENCE_DIMENSION_MISMATCH","FINDING_SCREENSHOT_SUBSTITUTION"],"blocked_codes":[],"review_rounds":2}

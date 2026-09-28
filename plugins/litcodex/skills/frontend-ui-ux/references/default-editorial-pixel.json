@@ -1,0 +1,64 @@
+{
+	"schema_id": "litfamily.frontend-default-profile/v1",
+	"name": "Quiet signal / editorial pixel",
+	"authorship": "Authored LitCodex starting direction; not derived from the immutable reference corpus.",
+	"principles": [
+		"oversized editorial headings with deliberate line breaks",
+		"terminal micro-labels and thin boundaries",
+		"original crisp pixel illustrations",
+		"asymmetric composition with atmospheric fields"
+	],
+	"pixel_illustration": {
+		"default_when_unspecified": true,
+		"composition_role": "primary visual anchor",
+		"authorship": "original and task-specific",
+		"grid": {
+			"minimum_rendered_cell_css_px": 6,
+			"vector_rendering": "grid-aligned rect cells with crisp edges",
+			"raster_rendering": "nearest-neighbor scaling without smoothing"
+		},
+		"integration": [
+			"Tie the illustration subject to the requested product or content, not just interface chrome.",
+			"Keep the artwork prominent and recognizable at 320px without horizontal overflow.",
+			"Recompose the full illustration for 320px, 390px, and 1440px instead of shrinking or hiding it.",
+			"Echo one artwork color in a nearby interface detail while preserving text and control contrast."
+		],
+		"not_sufficient": [
+			"Smooth orbit or line art as the only featured illustration.",
+			"An isolated pixel icon or background grid without an integrated subject illustration."
+		]
+	},
+	"spacing": {
+		"base_px": 8,
+		"microstep_px": 4,
+		"desktop_section_gap_px": [80, 128],
+		"mobile_section_gap_px": [40, 64]
+	},
+	"typography": {
+		"display_px": { "desktop": [56, 104], "mobile": [36, 56] },
+		"latin_leading": [0.95, 1.05],
+		"korean_leading": [1.12, 1.25],
+		"body_leading": [1.5, 1.7]
+	},
+	"color_roles": {
+		"paper": "#F4F1E9",
+		"ink": "#15242A",
+		"signal": "#E86A4A",
+		"quiet_signal": "#A9DCC8",
+		"boundary": "#15242A"
+	},
+	"surface_rules": [
+		"Use typography, spacing, and one deliberate contrast shift to establish hierarchy.",
+		"Keep pixel edges crisp and original; do not blur or upscale low-resolution art with smoothing.",
+		"Use an atmospheric field as a restrained background treatment, not a substitute for content contrast.",
+		"Keep navigation and controls quiet, legible, and clearly interactive."
+	],
+	"motion": {
+		"principle": "Motion explains state change and never carries essential information alone.",
+		"reduced_motion": "Remove nonessential movement and preserve the same information and action."
+	},
+	"responsive": {
+		"minimum_width_px": 320,
+		"reflow": "Recompose hierarchy and line breaks for compact widths; do not merely scale the desktop canvas."
+	}
+}

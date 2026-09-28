@@ -1,0 +1,8 @@
+LitCodex — @litcodex/lit-loop
+Copyright (c) 2026 LitCodex Authors
+
+This product is licensed under the MIT License (see LICENSE).
+
+The lit-loop trigger/hook/loop-runtime mechanics were re-implemented for LitCodex with a
+LitCodex-native identity and hardened path, state, and packaging handling. No third-party code is
+vendored into this package; the bundled directive and skill content are original to LitCodex.

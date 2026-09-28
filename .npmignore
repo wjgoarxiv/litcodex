@@ -1,0 +1,78 @@
+# --- LitCodex publication boundary ---
+#
+# WHY THIS FILE EXISTS: npm resolves ignores as `files[]` -> .npmignore -> .gitignore.
+# This package has no `files[]` allowlist, so before this file existed npm fell back to
+# .gitignore. The moment .npmignore appears that fallback is DISABLED ENTIRELY, so every
+# rule below must mirror .gitignore or previously-excluded local state starts publishing.
+#
+# KEEP IN SYNC WITH .gitignore. When you add a rule there, add it here. Verify with the
+# JSON output — the human-readable listing wraps long paths and cannot be diffed reliably:
+#   npm pack --dry-run --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s)[0].files.length))"
+# Baseline: 1216 files. Removing this file entirely yields 1217 — the difference is exactly
+# AGENTS.md, which is how the switch to .npmignore was proven behavior-preserving.
+
+# Dependencies & build output
+node_modules/
+/dist/
+packages/*/dist/
+plugins/litcodex/dist/
+coverage/
+*.tsbuildinfo
+
+# EXCEPTION — Codex MARKETPLACE distribution channel. `codex plugin add` copies the plugin
+# tree verbatim (no build, no `npm install`), so the compiled component `dist/` and the rules
+# component's vendored picomatch MUST ship or every hook crashes with MODULE_NOT_FOUND.
+!plugins/litcodex/components/*/dist/
+!plugins/litcodex/components/rules/node_modules/
+!plugins/litcodex/components/rules/node_modules/picomatch/
+!plugins/litcodex/components/rules/node_modules/picomatch/**
+
+# Local planning state (NEVER published)
+HANDOFF.md
+plans/
+
+# Canonical byte-identical lit-handoff source assets are product payload, not local state.
+!plugins/litcodex/vendor/handoff/templates/HANDOFF.md
+!plugins/litcodex/vendor/handoff/examples/HANDOFF-example-generic-auth-refactor.md
+
+# LitCodex runtime + evidence state (NEVER published)
+.litcodex/
+plugins/litcodex/skills/lit-humanizer/fixtures/negative/
+
+# Sibling-harness dogfooding state written into this worktree by other lit tools.
+# Was leaking into the published tarball until 2026-08-01 (3 session files).
+.litclaude/
+
+# Temp QA scratch
+.tmp/
+tmp/
+*.tmp
+.qa-tmp/
+litcodex-qa-*/
+
+# Packed tarballs
+*.tgz
+*.tar
+*.tar.gz
+
+# Environment & OS noise
+.env
+.env.*
+.DS_Store
+__pycache__/
+*.pyc
+
+# Read-only reference archive (lives only in the parent workspace; never copy in)
+\# REFERENCE/
+
+# Local agent navigation guidance: tracked in git so contributors and in-repo agents see it,
+# never shipped to the registry.
+AGENTS.md
+
+# Documentation artwork and release operations stay in Git, outside npm payloads.
+# These publication-only exclusions intentionally do not belong in .gitignore.
+/cover.png
+/generate_cover.py
+/docs/assets/
+/docs/release/
+/RELEASE_CHECKLIST.md

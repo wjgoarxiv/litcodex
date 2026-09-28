@@ -1,0 +1,57 @@
+{
+  "schema": "litfamily.payload-references/v1",
+  "surfaces": [
+    {
+      "token": "./target",
+      "reason": "The target path is a consuming-project binary or build artifact, not a file supplied by the skill package."
+    },
+    {
+      "prefix": "~/.codex/",
+      "reason": "The Codex user directory contains host-managed agents, configuration, and cache state outside the npm payload."
+    },
+    {
+      "prefix": ".codex/",
+      "reason": "Project Codex configuration is supplied by the host workspace and is not an installed skill resource."
+    },
+    {
+      "prefix": ".litcodex/",
+      "reason": "The .litcodex tree is Codex session and ledger state created in the user's project, not package content."
+    },
+    {
+      "prefix": "~/.litcodex/",
+      "reason": "The user-level .litcodex tree is host-managed state and is intentionally outside the npm payload."
+    },
+    {
+      "prefix": "HOME/.codex",
+      "reason": "HOME/.codex is a host-selected Codex installation root and its files are not package-relative resources."
+    },
+    {
+      "prefix": "CODEX_HOME/",
+      "reason": "CODEX_HOME is a host-selected installation root and its files are provided by the Codex host."
+    },
+    {
+      "prefix": "~/skills/",
+      "reason": "This user-level skills path is a host installation location, not a file path inside this npm payload."
+    },
+    {
+      "prefix": "src/",
+      "reason": "Source paths in the instructions refer to the consuming project implementation, not this package payload."
+    },
+    {
+      "prefix": "api/",
+      "reason": "Example API source paths belong to the consuming application and are not package-provided resources."
+    },
+    {
+      "prefix": ".github/",
+      "reason": "Repository workflow and Copilot instruction files belong to the consuming project's host checkout."
+    },
+    {
+      "prefix": "/plugins/cache/",
+      "reason": "The absolute plugin cache path is created and selected by the host, not shipped by this package."
+    },
+    {
+      "prefix": "/tmp/",
+      "reason": "Absolute temporary paths are created by the host process and cannot be part of an npm package payload."
+    }
+  ]
+}

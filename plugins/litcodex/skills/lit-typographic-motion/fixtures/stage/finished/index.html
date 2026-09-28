@@ -1,0 +1,12 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><script src="/lit/stage-kit.js"></script>
+<style>html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0E1A24; } .dot { position: absolute; top: 480px; left: 200px; width: 120px; height: 120px; border-radius: 50%; } #a { background: #F2C14E; top: 200px; } #b { background: #5FAD56; }</style></head>
+<body><div class="dot" id="a"></div><div class="dot" id="b"></div>
+<script>
+const a = document.getElementById("a");
+const b = document.getElementById("b");
+a.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1400, fill: "forwards" }).finished.then(() => {
+	b.animate([{ transform: "translateX(0px)" }, { transform: "translateX(1000px)" }], { duration: 1200, fill: "forwards", easing: "linear" });
+});
+LitStage.define({ width: 1920, height: 1080, fps: 30, duration: 4 });
+</script></body></html>

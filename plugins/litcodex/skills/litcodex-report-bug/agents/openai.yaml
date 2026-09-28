@@ -1,0 +1,10 @@
+interface:
+  display_name: "litcodex-report-bug (litcodex)"
+  short_description: "Route LitCodex or Codex bugs with source evidence"
+  search_terms:
+    - "litcodex-report-bug"
+    - "litcodex bug"
+    - "litcodex issue"
+    - "openai codex bug"
+    - "codex upstream issue"
+  default_prompt: "Use $litcodex-report-bug to investigate this LitCodex or Codex bug, compare LitCodex evidence with /tmp openai/codex source, choose the correct GitHub repo, and file an issue or PR with reproduction, root cause, fix guidance, and the litcodex-generated label and footer."

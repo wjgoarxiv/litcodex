@@ -1,0 +1,1 @@
+{"name":"missing-capture-auth-review","tier":"smoke","expected":"BLOCKED","finding_codes":[],"blocked_codes":["BLOCKED_AUTH_UNAVAILABLE","BLOCKED_INDEPENDENT_REVIEW_UNAVAILABLE","BLOCKED_RENDERER_UNAVAILABLE"],"review_rounds":1}

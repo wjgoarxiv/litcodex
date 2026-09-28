@@ -1,0 +1,10 @@
+interface:
+  display_name: "lit-loop"
+  short_description: "Direct bounded work or durable evidence-bound execution"
+  search_terms:
+    - "lit-loop"
+    - "bounded task"
+    - "durable goals"
+    - "evidence"
+    - "checkpoint"
+  default_prompt: "Run $lit-loop on this request. Route one coherent deliverable that fits the current session through direct work and verification; use durable goals and checkpoints only when the scope gate selects the durable path or the user explicitly asks."

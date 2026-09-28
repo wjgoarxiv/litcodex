@@ -1,0 +1,14 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"allowImportingTsExtensions": false,
+		"noEmit": false,
+		"composite": true,
+		"declaration": true,
+		"outDir": "dist",
+		"rootDir": "src"
+	},
+	"include": ["src/**/*"],
+	"exclude": ["test/**/*", "src/**/*.test.ts", "src/**/*test-helpers.ts"],
+	"references": [{ "path": "../../plugins/litcodex/components/lit-loop/tsconfig.build.json" }]
+}

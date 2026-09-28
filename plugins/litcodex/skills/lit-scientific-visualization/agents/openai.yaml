@@ -1,0 +1,6 @@
+interface:
+  display_name: "Lit Scientific Visualization"
+  short_description: "Design evidence-backed scientific figures"
+  default_prompt: "Use $litcodex:lit-scientific-visualization to create this figure."
+policy:
+  allow_implicit_invocation: false

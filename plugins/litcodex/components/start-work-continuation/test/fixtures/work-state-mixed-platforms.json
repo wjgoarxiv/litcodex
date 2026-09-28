@@ -1,0 +1,27 @@
+{
+	"schema_version": 2,
+	"active_work_id": "codex_work",
+	"works": {
+		"foreign_work": {
+			"work_id": "foreign_work",
+			"active_plan": "/repo/.litcodex/plans/foreign-plan.md",
+			"plan_name": "foreign-plan",
+			"status": "active",
+			"started_at": "2026-05-28T00:00:00Z",
+			"session_ids": ["foreign:sess_abc"]
+		},
+		"codex_work": {
+			"work_id": "codex_work",
+			"active_plan": "/repo/.litcodex/plans/plan-with-unchecked.md",
+			"plan_name": "codex-plan",
+			"status": "paused",
+			"started_at": "2026-05-28T00:00:00Z",
+			"session_ids": ["codex:def"]
+		}
+	},
+	"active_plan": "/repo/.litcodex/plans/foreign-plan.md",
+	"plan_name": "legacy-foreign-plan",
+	"started_at": "2026-05-28T00:00:00Z",
+	"status": "active",
+	"session_ids": ["foreign:sess_abc"]
+}

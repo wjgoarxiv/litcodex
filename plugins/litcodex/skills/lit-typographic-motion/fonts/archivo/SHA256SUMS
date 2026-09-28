@@ -1,0 +1,16 @@
+# Archivo static instances (MO-A-59 default set), generated at development time, never at install.
+# Source: Archivo[wdth,wght].ttf from mexicat/pdoom-video@ca251e3dddda422b364385eb484b5a3593a0990d
+#   app/public/fonts/src/, 658,596 bytes, sha256 0e094a7d3c7c4c25cf1310c4b30014f1dae9332220b1c2c88f4fa996f0b05053
+# Recipe: uv run --with fonttools==4.62.1 python, per width w in (75, 100, 125) and weight wt in (400, 700, 900):
+#   TTFont(src, recalcTimestamp=False) -> varLib.instancer.instantiateVariableFont(
+#   {"wdth": w, "wght": wt}, updateFontNames=True).save(f"Archivo-w{w}-wt{wt}.ttf")
+# The recipe is byte-reproducible; rerunning it must print the hashes below.
+bb6a38015aa4f22aaa7eb0b11aae2fd91a0fab1cb9affaed260ee984c3723e6f  Archivo-w100-wt400.ttf
+7e32f8857f5f4744781d501fd83afbc0587996bff3c2b78c0ed179a42fa51c94  Archivo-w100-wt700.ttf
+b83eae2d3a2ec48a4fe5d3e34f9bb6653d2182cb998b7a99af231dd07ee54fcd  Archivo-w100-wt900.ttf
+608ae8fd89513d91c22e88e45b418d2a29589f32dc9bc5373105e602369c5d09  Archivo-w125-wt400.ttf
+1858ad005ef543cccaba015e2c46cd8001771bc2132b1d1f23123dca2a0c1583  Archivo-w125-wt700.ttf
+f7f74623bee69fa2de1efe7d3fe25c2e8856fc3e0c62d7a86a2e36c7608462d0  Archivo-w125-wt900.ttf
+4dc4b1a99bdeae009897c761bce7e1143efff543525bde91020d4493e33921ba  Archivo-w75-wt400.ttf
+55424d853a7b020ccf975fa40a6c9e05d817529c8721e7af6d009fd25c907fc7  Archivo-w75-wt700.ttf
+8726c4b11823235e452e53d2f1edcb7f6a8357497ca8a60c3c97ba837bd665ec  Archivo-w75-wt900.ttf

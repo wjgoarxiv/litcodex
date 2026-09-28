@@ -1,0 +1,24 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="/lit/fonts.css"><script src="/lit/stage-kit.js"></script>
+<style>
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0E1A24; font-family: "Archivo"; }
+#hook { position: absolute; left: 240px; top: 420px; margin: 0; font: 700 96px "Archivo"; color: #F3EDE2; }
+#label { position: absolute; left: 20px; top: 20px; margin: 0; font: 400 22px "Archivo"; color: #26323A; }
+#tick { position: absolute; left: 1300px; top: 800px; margin: 0; font: 400 28px "Archivo"; color: #F3EDE2; }
+.shape { position: absolute; left: 1200px; top: 300px; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #E07A5F, #7A2E1F); }
+</style></head>
+<body>
+<div class="shape"></div>
+<h1 id="hook">Tide pool at noon</h1>
+<p id="label">NORTH BASIN 3</p>
+<p id="tick">12:04</p>
+<script>
+const COPY = { hook: "Tide pool at noon" };
+LitStage.text(document.getElementById("hook"));
+LitStage.text(document.getElementById("label"), { decor: true });
+LitStage.text(document.getElementById("tick"), { decor: true });
+LitStage.define({ width: 1920, height: 1080, fps: 30, duration: 4, render(t) {
+	document.querySelector(".shape").style.transform = `translateY(${Math.sin(t * 1.5) * 30}px)`;
+	document.getElementById("tick").style.opacity = t < 0.4 ? "1" : "0";
+} });
+</script></body></html>

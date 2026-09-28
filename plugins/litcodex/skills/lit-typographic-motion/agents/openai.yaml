@@ -1,0 +1,15 @@
+interface:
+  display_name: "lit-typographic-motion"
+  short_description: "Direct, render and verify films: stage page capture or typography engine"
+  search_terms:
+    - "video"
+    - "영상"
+    - "kinetic typography"
+    - "typographic motion"
+    - "lyric video"
+    - "title sequence"
+    - "모션그래픽"
+    - "타이포그래피 영상"
+  default_prompt: "Use $litcodex:lit-typographic-motion to direct, render and verify a film."
+policy:
+  allow_implicit_invocation: true

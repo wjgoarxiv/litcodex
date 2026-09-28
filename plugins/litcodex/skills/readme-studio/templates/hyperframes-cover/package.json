@@ -1,0 +1,14 @@
+{
+	"name": "readme-studio-hyperframes-cover",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"render": "hyperframes render . -c index.html"
+	},
+	"devDependencies": {
+		"hyperframes": "0.8.51"
+	}
+}

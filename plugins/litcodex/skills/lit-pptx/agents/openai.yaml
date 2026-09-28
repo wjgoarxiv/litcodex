@@ -1,0 +1,14 @@
+interface:
+  display_name: "lit-pptx"
+  short_description: "Create and QA editable PowerPoint decks"
+  search_terms:
+    - "slides"
+    - "deck"
+    - "presentation"
+    - "PowerPoint"
+    - "발표자료"
+    - "슬라이드"
+    - "피피티"
+  default_prompt: "Use $litcodex:lit-pptx to make an editable Markdown source and a QA-checked PowerPoint deck."
+policy:
+  allow_implicit_invocation: true

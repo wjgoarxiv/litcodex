@@ -1,0 +1,1 @@
+{"name":"healthcare-mobile","tier":"full","expected":"FAIL","finding_codes":["FINDING_DESTRUCTIVE_ACTION_UNGUARDED","FINDING_TOUCH_TARGET_UNDERSIZED"],"blocked_codes":[],"review_rounds":2}

@@ -1,0 +1,23 @@
+{
+	"version": 1,
+	"verifiedAgainstCodex": { "confirmed": false, "codexVersion": null, "date": null, "evidence": ".litcodex/evidence/task-19-codex-schema-live.txt" },
+	"marketplaceFields": {
+		"name": "name",
+		"interfaceDisplayName": "interface.displayName",
+		"pluginName": "plugins[].name",
+		"pluginSource": "plugins[].source",
+		"pluginCategory": "plugins[].category",
+		"installation": "plugins[].policy.installation",
+		"authentication": "plugins[].policy.authentication"
+	},
+	"pluginManifestFields": {
+		"name": "name",
+		"version": "version",
+		"hooks": "hooks",
+		"skills": "skills",
+		"mcpServers": "mcpServers",
+		"interfaceDisplayName": "interface.displayName"
+	},
+	"resourcePointerKeys": ["hooks", "mcpServers", "skills"],
+	"policyEnums": { "installation": ["AVAILABLE"], "authentication": ["ON_INSTALL"] }
+}

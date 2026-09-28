@@ -1,0 +1,6 @@
+interface:
+  display_name: "Lit Plan"
+  short_description: "Create an approved decision-complete work plan"
+  default_prompt: "Use $litcodex:lit-plan to create an approved work plan."
+policy:
+  allow_implicit_invocation: false

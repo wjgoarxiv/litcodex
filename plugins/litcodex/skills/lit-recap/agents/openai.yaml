@@ -1,0 +1,6 @@
+interface:
+  display_name: "Lit Recap"
+  short_description: "Summarize durable work state without mutation"
+  default_prompt: "Use $litcodex:lit-recap to summarize the current work state."
+policy:
+  allow_implicit_invocation: false

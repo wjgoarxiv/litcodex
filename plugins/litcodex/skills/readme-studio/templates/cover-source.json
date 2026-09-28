@@ -1,0 +1,35 @@
+{
+	"schema_id": "litcodex.readme-cover-source/v1",
+	"editable_text": {
+		"title": "",
+		"subtitle": "",
+		"micro_label": ""
+	},
+	"font_runs": [
+		{
+			"text_key": "title",
+			"font_path": "",
+			"file_name": "",
+			"sha256": "",
+			"family_and_style": "",
+			"license": "",
+			"license_source": ""
+		}
+	],
+	"background": {
+		"origin": "native-generation-or-user-supplied",
+		"tool_or_supplier": "",
+		"original_path": "",
+		"working_copy": "",
+		"inspected": false
+	},
+	"composition": {
+		"engine": "",
+		"engine_version": "",
+		"license_class_checked": false,
+		"width": 1600,
+		"height": 800,
+		"fps": 60,
+		"duration_frames": 300
+	}
+}

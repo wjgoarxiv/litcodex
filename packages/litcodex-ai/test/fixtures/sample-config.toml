@@ -1,0 +1,16 @@
+# LitCodex sample Codex config — mixed root + section-scoped keys + comments.
+# This top comment MUST survive a migration untouched.
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+# A user note that must be preserved verbatim.
+disable_response_storage = false
+
+[some.other]
+# unrelated section the migration must never touch
+custom_setting = "keep me"
+nested_value = 42
+
+[profiles.review]
+model_reasoning_effort = "medium"

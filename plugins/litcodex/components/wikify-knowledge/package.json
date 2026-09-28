@@ -1,0 +1,22 @@
+{
+	"name": "@litcodex/wikify-knowledge",
+	"version": "1.0.7",
+	"description": "Local review-gated knowledge records for the LitCodex Wikify surface.",
+	"type": "module",
+	"private": true,
+	"bin": {
+		"litcodex-wikify-knowledge": "./dist/cli.js"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"postbuild": "node ../../../../scripts/mark-cli-executable.mjs --workspace .",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest --run --config vitest.config.ts --passWithNoTests=false"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	}
+}

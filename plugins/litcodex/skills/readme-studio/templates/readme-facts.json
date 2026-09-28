@@ -1,0 +1,11 @@
+{
+	"schema_id": "litcodex.readme-facts/v1",
+	"facts": [
+		{
+			"claim": "repository.name",
+			"value": "REPLACE_WITH_VERIFIED_VALUE",
+			"source": "package.json"
+		}
+	],
+	"badges": []
+}

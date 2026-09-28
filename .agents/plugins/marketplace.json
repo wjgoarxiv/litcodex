@@ -1,0 +1,17 @@
+{
+	"name": "litcodex",
+	"interface": {
+		"displayName": "LitCodex"
+	},
+	"plugins": [
+		{
+			"name": "litcodex",
+			"source": "./plugins/litcodex",
+			"category": "Developer Tools",
+			"policy": {
+				"installation": "AVAILABLE",
+				"authentication": "ON_INSTALL"
+			}
+		}
+	]
+}

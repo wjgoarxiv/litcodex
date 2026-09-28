@@ -1,0 +1,29 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="/lit/fonts.css"><script src="/lit/stage-kit.js"></script>
+<style>
+html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #F3EDE2; }
+svg { position: absolute; left: 0; top: 0; }
+h1 { position: absolute; left: 120px; top: 1420px; margin: 0; font: 700 88px "Archivo"; color: #1F2A30; }
+</style></head>
+<body>
+<svg width="1080" height="1920"><path id="shape" fill="#E07A5F"/><path id="line" d="M140 1300 C 400 1100, 700 1500, 940 1260" stroke="#1F2A30" stroke-width="10" fill="none"/></svg>
+<h1 id="title">Leaf to lantern</h1>
+<script>
+const COPY = { title: "Leaf to lantern" };
+const title = document.getElementById("title");
+LitStage.text(title);
+const words = LitStage.splitText(title, { by: "word" });
+const leaf = "M540 300 C 820 420, 820 820, 540 980 C 260 820, 260 420, 540 300 Z";
+const lamp = "M400 380 L680 380 L760 900 L320 900 Z";
+const shape = LitStage.morph(leaf, lamp);
+const line = document.getElementById("line");
+LitStage.define({ width: 1080, height: 1920, fps: 30, duration: 4, render(t) {
+	document.getElementById("shape").setAttribute("d", shape(LitStage.at(t, 1, 1.6, "inOutCubic")));
+	LitStage.drawPath(line, LitStage.at(t, 0.2, 2, "outCubic"));
+	words.forEach((w, i) => { const p = LitStage.at(t, 2.2 + LitStage.stagger(i, { each: 0.12 }), 0.5, "outBack"); w.style.opacity = String(p); w.style.transform = `translateY(${(1 - p) * 40}px)`; });
+	document.body.style.background = LitStage.mix("#F3EDE2", "#FBE3C2", LitStage.at(t, 2, 2));
+	const s = LitStage.spring(t, { from: 0.9, to: 1, stiffness: 120, damping: 12 });
+	document.getElementById("shape").style.transformOrigin = "540px 640px";
+	document.getElementById("shape").style.transform = `scale(${s})`;
+} });
+</script></body></html>

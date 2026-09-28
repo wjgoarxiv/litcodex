@@ -1,0 +1,299 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "litfamily.design-contract/v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "contract_id",
+    "source_hash",
+    "intent",
+    "direction",
+    "inventory",
+    "accessibility",
+    "localization",
+    "performance",
+    "evidence_policy",
+    "omissions",
+    "accepted_exceptions"
+  ],
+  "properties": {
+    "schema_id": { "const": "litfamily.design-contract/v1alpha1" },
+    "contract_id": { "$ref": "#/$defs/id" },
+    "source_hash": { "$ref": "#/$defs/hash" },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["audiences", "tasks", "qualities", "constraints", "non_goals"],
+      "properties": {
+        "audiences": { "$ref": "#/$defs/nonEmptyStrings" },
+        "tasks": { "$ref": "#/$defs/nonEmptyStrings" },
+        "qualities": { "$ref": "#/$defs/nonEmptyStrings" },
+        "constraints": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" } },
+        "non_goals": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" } }
+      }
+    },
+    "direction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "principles", "token_strategy", "voice"],
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "principles": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 7,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "token_strategy": { "enum": ["reuse", "extend", "create"] },
+        "voice": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "routes",
+        "regions",
+        "components",
+        "interactions",
+        "states",
+        "viewports",
+        "references",
+        "authenticated_surfaces"
+      ],
+      "properties": {
+        "routes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "path", "primary", "auth_required"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "path": { "$ref": "#/$defs/nonEmptyString" },
+              "primary": { "type": "boolean" },
+              "auth_required": { "type": "boolean" }
+            }
+          }
+        },
+        "regions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "route_id"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "route_id": { "$ref": "#/$defs/id" }
+            }
+          }
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "region_id"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "region_id": { "$ref": "#/$defs/id" }
+            }
+          }
+        },
+        "interactions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "route_id", "critical", "input_modes"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "route_id": { "$ref": "#/$defs/id" },
+              "critical": { "type": "boolean" },
+              "input_modes": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": { "enum": ["keyboard", "pointer", "touch", "voice", "switch"] }
+              }
+            }
+          }
+        },
+        "states": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "route_id", "kind"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "route_id": { "$ref": "#/$defs/id" },
+              "kind": {
+                "enum": [
+                  "loading",
+                  "empty",
+                  "error",
+                  "success",
+                  "disabled",
+                  "permission",
+                  "offline",
+                  "ready"
+                ]
+              }
+            }
+          }
+        },
+        "viewports": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "width", "height", "category"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "width": { "type": "integer", "minimum": 240, "maximum": 16384 },
+              "height": { "type": "integer", "minimum": 240, "maximum": 16384 },
+              "category": { "enum": ["compact", "medium", "expanded"] }
+            }
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "sha256", "kind", "label"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "sha256": { "$ref": "#/$defs/hash" },
+              "kind": { "enum": ["user-provided", "repo-local", "generated", "measured"] },
+              "label": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        },
+        "authenticated_surfaces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["route_id", "owner", "safe_test_account"],
+            "properties": {
+              "route_id": { "$ref": "#/$defs/id" },
+              "owner": { "$ref": "#/$defs/nonEmptyString" },
+              "safe_test_account": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "accessibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target",
+        "keyboard",
+        "screen_reader",
+        "reduced_motion",
+        "forced_colors",
+        "zoom_percent"
+      ],
+      "properties": {
+        "target": { "const": "WCAG 2.2 AA" },
+        "keyboard": { "type": "boolean" },
+        "screen_reader": { "type": "boolean" },
+        "reduced_motion": { "type": "boolean" },
+        "forced_colors": { "type": "boolean" },
+        "zoom_percent": { "type": "integer", "minimum": 200, "maximum": 400 }
+      }
+    },
+    "localization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "locales",
+        "text_expansion_percent",
+        "cjk_line_break_review",
+        "font_fallback_review",
+        "ime_review",
+        "rtl_review"
+      ],
+      "properties": {
+        "locales": { "$ref": "#/$defs/nonEmptyStrings" },
+        "text_expansion_percent": { "type": "integer", "minimum": 0, "maximum": 300 },
+        "cjk_line_break_review": { "type": "boolean" },
+        "font_fallback_review": { "type": "boolean" },
+        "ime_review": { "type": "boolean" },
+        "rtl_review": { "type": "boolean" }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lcp_ms", "cls", "inp_ms", "initial_js_kb", "initial_css_kb"],
+      "properties": {
+        "lcp_ms": { "type": "integer", "minimum": 1, "maximum": 60000 },
+        "cls": { "type": "number", "minimum": 0, "maximum": 1 },
+        "inp_ms": { "type": "integer", "minimum": 1, "maximum": 60000 },
+        "initial_js_kb": { "type": "integer", "minimum": 0, "maximum": 1048576 },
+        "initial_css_kb": { "type": "integer", "minimum": 0, "maximum": 1048576 }
+      }
+    },
+    "evidence_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["independent_review_required", "required_channels", "cleanup_required"],
+      "properties": {
+        "independent_review_required": { "type": "boolean" },
+        "required_channels": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "tests",
+              "browser",
+              "keyboard",
+              "accessibility-tree",
+              "screen-reader",
+              "performance",
+              "localization"
+            ]
+          }
+        },
+        "cleanup_required": { "type": "boolean" }
+      }
+    },
+    "omissions": { "type": "array", "items": { "$ref": "#/$defs/deviation" } },
+    "accepted_exceptions": { "type": "array", "items": { "$ref": "#/$defs/deviation" } }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z0-9][a-z0-9._/-]*$" },
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "nonEmptyStrings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nonEmptyString" }
+    },
+    "deviation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "reason", "owner"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "reason": { "$ref": "#/$defs/nonEmptyString" },
+        "owner": { "$ref": "#/$defs/nonEmptyString" },
+        "expires_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

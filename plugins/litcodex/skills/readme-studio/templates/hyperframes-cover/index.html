@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en" data-fps="60">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Local README cover composition</title>
+		<style>
+			* { box-sizing: border-box; }
+			html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #10191e; }
+			#cover { --field-color: #0c151a; --ink: #f4f1e9; --frame-color: rgba(244,241,233,.44); --rule-color: rgba(244,241,233,.64); --glow-color: rgba(169,220,200,.18); --rim-color: rgba(169,220,200,.42); position: relative; width: 1600px; height: 800px; overflow: hidden; color: var(--ink); }
+			#cover[data-theme="light"] { --field-color: #fbf8f0; --ink: #15242a; --frame-color: rgba(21,36,42,.42); --rule-color: rgba(21,36,42,.6); --glow-color: rgba(232,106,74,.16); --rim-color: rgba(232,106,74,.34); }
+			#cover[data-theme="dark"] .theme-light-only, #cover[data-theme="light"] .theme-dark-only { display: none; }
+			#background { position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover; filter: blur(18px); animation: background-breath 5s cubic-bezier(.65,0,.35,1) both; }
+			#focal-plane { position: absolute; inset: 0; width: 100%; height: 100%; background-image: url("assets/cover-background.png"); background-size: cover; background-position: center center; -webkit-mask-image: linear-gradient(90deg, transparent 47%, rgba(0,0,0,.55) 58%, #000 67%); mask-image: linear-gradient(90deg, transparent 47%, rgba(0,0,0,.55) 58%, #000 67%); animation: background-breath 5s cubic-bezier(.65,0,.35,1) both; }
+			#veil { position: absolute; inset: 0; background: linear-gradient(115deg, rgba(8,17,22,.16), transparent 58%, rgba(169,220,200,.10)); }
+			#rim-light { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent 53%, var(--rim-color) 60%, transparent 68%), radial-gradient(ellipse at 94% 18%, var(--rim-color) 0%, transparent 48%); mix-blend-mode: screen; opacity: .16; animation: rim-light-cycle 5s cubic-bezier(.65,0,.35,1) both; }
+			#cover[data-theme="light"] #rim-light { mix-blend-mode: soft-light; }
+			#text-field { position: absolute; inset: 0 auto 0 0; width: 62%; height: 100%; background: linear-gradient(90deg, var(--field-color) 0%, var(--field-color) 88%, transparent 100%); }
+			#glow { position: absolute; width: 620px; height: 620px; top: -12%; right: -4%; border-radius: 50%; background: var(--glow-color); filter: blur(82px); opacity: .34; animation: glow-breath 5s cubic-bezier(.65,0,.35,1) both; pointer-events: none; }
+			#identity { position: absolute; inset: 126px; border: 1px solid var(--frame-color); transform: perspective(1200px) rotateY(-3deg); }
+			#label, #label-light { position: absolute; left: 126px; top: 96px; width: 32%; height: 26px; object-fit: contain; object-position: left center; }
+			#title, #title-light { position: absolute; left: 126px; top: 232px; width: 50%; height: 216px; object-fit: contain; object-position: left center; animation: title-entry-reset 800ms cubic-bezier(.65,0,.35,1) both; }
+			#subtitle, #subtitle-light { position: absolute; left: 126px; bottom: 152px; width: 38%; max-height: 48px; object-fit: contain; object-position: left center; animation: title-entry-reset 800ms cubic-bezier(.65,0,.35,1) both; }
+			#rule { position: absolute; left: 126px; bottom: 80px; width: 42%; height: 1px; background: var(--rule-color); }
+			#grain { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .06; mix-blend-mode: soft-light; pointer-events: none; }
+			#cover[data-layout="mobile"] { width: 1080px; height: 1350px; }
+			#cover[data-layout="mobile"] #text-field { inset: 0 0 auto; width: 100%; height: 62%; background: linear-gradient(180deg, var(--field-color) 0%, var(--field-color) 89%, transparent 100%); }
+			#cover[data-layout="mobile"] #glow { width: 470px; height: 470px; top: 6%; right: -14%; }
+			#cover[data-layout="mobile"] #focal-plane { background-position: 84% center; -webkit-mask-image: linear-gradient(180deg, transparent 44%, rgba(0,0,0,.55) 56%, #000 68%); mask-image: linear-gradient(180deg, transparent 44%, rgba(0,0,0,.55) 56%, #000 68%); }
+			#cover[data-layout="mobile"] #rim-light { background: linear-gradient(180deg, transparent 58%, var(--rim-color) 62%, transparent 72%), radial-gradient(ellipse at 88% 96%, var(--rim-color) 0%, transparent 48%); }
+			#cover[data-layout="mobile"] #identity { inset: 5%; transform: none; }
+			#cover[data-layout="mobile"] #label, #cover[data-layout="mobile"] #label-light { left: 7%; top: 12%; width: 56%; height: 3.5%; }
+			#cover[data-layout="mobile"] #title, #cover[data-layout="mobile"] #title-light { left: 7%; top: 21%; width: 86%; height: 22%; }
+			#cover[data-layout="mobile"] #subtitle, #cover[data-layout="mobile"] #subtitle-light { left: 7%; bottom: 45%; width: 76%; max-height: 5.5%; }
+			#cover[data-layout="mobile"] #rule { left: 7%; bottom: 12%; width: 72%; }
+			@keyframes background-breath { 0%, 12%, 88%, 100% { transform: scale(1.035); } 46%, 54% { transform: scale(1.075); } }
+			@keyframes title-entry-reset { 0%, 100% { transform: translateY(0); } 22% { transform: translateY(8px); } 48% { transform: translateY(0); } }
+			@keyframes glow-breath { 0%, 12%, 88%, 100% { opacity: .34; } 46%, 54% { opacity: .52; } }
+			@keyframes rim-light-cycle { 0%, 12%, 88%, 100% { opacity: .16; } 46%, 54% { opacity: .3; } }
+		</style>
+	</head>
+	<body>
+		<main id="cover" data-composition-id="readme-cover" data-start="0" data-duration="5" data-width="1600" data-height="800" data-theme="dark" data-layout="wide" data-no-timeline aria-label="README cover">
+			<img id="background" src="assets/cover-background.png" alt="" />
+			<div id="focal-plane" aria-hidden="true"></div>
+			<div id="veil"></div>
+			<div id="rim-light"></div>
+			<div id="text-field"></div>
+			<div id="glow" data-layout-allow-overflow></div>
+			<div id="identity"></div>
+			<img id="label" class="theme-dark-only" src="assets/micro-label-outline-dark.svg" alt="" />
+			<img id="label-light" class="theme-light-only" src="assets/micro-label-outline-light.svg" alt="" />
+			<img id="title" class="theme-dark-only" src="assets/title-outline-dark.svg" alt="" />
+			<img id="title-light" class="theme-light-only" src="assets/title-outline-light.svg" alt="" />
+			<img id="subtitle" class="theme-dark-only" src="assets/subtitle-outline-dark.svg" alt="" />
+			<img id="subtitle-light" class="theme-light-only" src="assets/subtitle-outline-light.svg" alt="" />
+			<div id="rule"></div>
+			<svg id="grain" viewBox="0 0 1600 800" preserveAspectRatio="none" aria-hidden="true"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="2" seed="17"/><feColorMatrix values=".35 0 0 0 .2 0 .35 0 0 .2 0 0 .35 0 .2 0 0 0 .18 0"/></filter><rect width="100%" height="100%" filter="url(#noise)"/></svg>
+		</main>
+	</body>
+</html>

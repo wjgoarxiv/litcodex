@@ -1,0 +1,22 @@
+{
+	"name": "@litcodex/auto-update",
+	"version": "1.0.7",
+	"description": "LitCodex foreground update barrier for the SessionStart and management lifecycles.",
+	"type": "module",
+	"private": true,
+	"bin": {
+		"litcodex-auto-update": "./dist/cli.js"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"postbuild": "node ../../../../scripts/mark-cli-executable.mjs --workspace .",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest --run --passWithNoTests=false"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	}
+}

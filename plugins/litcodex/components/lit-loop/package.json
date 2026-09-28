@@ -1,0 +1,33 @@
+{
+	"name": "@litcodex/lit-loop",
+	"version": "1.0.7",
+	"description": "LitCodex Lit-Loop runtime: durable repo-native multi-goal orchestration with embedded success criteria and observable evidence audit.",
+	"type": "module",
+	"private": true,
+	"bin": {
+		"litcodex-lit-loop": "./dist/cli.js"
+	},
+	"files": [
+		"dist",
+		"directives",
+		"skills",
+		"vendor",
+		"agents",
+		"directive.md",
+		"LICENSE",
+		"NOTICE",
+		"README.md",
+		"CHANGELOG.md"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"postbuild": "node ../../../../scripts/mark-cli-executable.mjs --workspace .",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest --config vitest.config.ts --run --passWithNoTests=false",
+		"prepack": "node ../../../../scripts/lit-loop-skill-bundle.mjs materialize",
+		"postpack": "node ../../../../scripts/lit-loop-skill-bundle.mjs clean"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	}
+}

@@ -1,0 +1,63 @@
+# --- LitCodex repo boundary (M01) ---
+
+# Dependencies & build output (never tracked; `npm run build` regenerates it,
+# and `npm pack` ships dist via each package's files[] allowlist regardless of this ignore)
+node_modules/
+/dist/
+packages/*/dist/
+plugins/litcodex/dist/
+coverage/
+*.tsbuildinfo
+
+# EXCEPTION — Codex MARKETPLACE distribution channel. `codex plugin add` fetches this repo from
+# GitHub and COPIES the plugin tree verbatim (no build, no `npm install`). So the compiled component
+# `dist/` and the rules component's sole vendored runtime dep (picomatch) MUST be committed, or every
+# hook crashes with MODULE_NOT_FOUND on a clean install. Kept in sync by `check:marketplace-dist`.
+# (packages/*/dist stays ignored above — that's the npm channel, shipped via files[].)
+!plugins/litcodex/components/*/dist/
+!plugins/litcodex/components/rules/node_modules/
+!plugins/litcodex/components/rules/node_modules/picomatch/
+!plugins/litcodex/components/rules/node_modules/picomatch/**
+
+# Local planning state (NEVER tracked, NEVER published)
+HANDOFF.md
+plans/
+
+# Canonical byte-identical lit-handoff source assets are product payload, not local state.
+!plugins/litcodex/vendor/handoff/templates/HANDOFF.md
+!plugins/litcodex/vendor/handoff/examples/HANDOFF-example-generic-auth-refactor.md
+
+# LitCodex runtime + evidence state (NEVER tracked, NEVER published)
+.litcodex/
+plugins/litcodex/skills/lit-humanizer/fixtures/negative/
+
+# Sibling-harness dogfooding state written into this worktree by other lit tools.
+# Was leaking into the published tarball until 2026-08-01 (3 session files).
+.litclaude/
+
+# Temp QA scratch
+.tmp/
+tmp/
+*.tmp
+.qa-tmp/
+litcodex-qa-*/
+
+# Packed tarballs
+*.tgz
+*.tar
+*.tar.gz
+
+# Environment & OS noise
+.env
+.env.*
+.DS_Store
+__pycache__/
+*.pyc
+
+# Read-only reference archive (lives only in the parent workspace; never copy in)
+# load-bearing line below escapes the leading '#' so git ignores the dir (A3 Part F/G1)
+\# REFERENCE/
+
+# NOTE: AGENTS.md is tracked here and excluded from the registry by .npmignore instead.
+# Adding a rule to this file no longer affects publication — .npmignore took over that job
+# the moment it was created. Mirror every new rule into .npmignore as well.

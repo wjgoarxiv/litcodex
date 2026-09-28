@@ -1,0 +1,12 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"composite": false,
+		"declaration": false,
+		"noEmit": false,
+		"outDir": "../../.litcodex/runtime/release-tools",
+		"rootDir": ".",
+		"rewriteRelativeImportExtensions": true
+	},
+	"files": ["version.ts", "check-version-lockstep.ts", "release-checklist.ts"]
+}

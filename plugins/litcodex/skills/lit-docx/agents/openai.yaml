@@ -1,0 +1,14 @@
+interface:
+  display_name: "lit-docx"
+  short_description: "Create and edit styled Word reports"
+  search_terms:
+    - "report"
+    - "document"
+    - "Word"
+    - "docx"
+    - "보고서"
+    - "기획서"
+    - "워드"
+  default_prompt: "Use $litcodex:lit-docx to deliver editable Markdown and a checked Word document."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,13 @@
+# Exotic-but-valid TOML: a multiline basic string + an array-of-tables.
+# Both MUST be ACCEPTED by validateTomlShape (no rewrite-block).
+note = """
+line one
+line two with a "quote" inside
+line three
+"""
+
+[[servers]]
+host = "a"
+
+[[servers]]
+host = "b"

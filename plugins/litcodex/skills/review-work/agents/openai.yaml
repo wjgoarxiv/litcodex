@@ -1,0 +1,6 @@
+interface:
+  display_name: "Review Work"
+  short_description: "Audit plans and implementations against evidence"
+  default_prompt: "Use $litcodex:review-work to audit this work against evidence."
+policy:
+  allow_implicit_invocation: false

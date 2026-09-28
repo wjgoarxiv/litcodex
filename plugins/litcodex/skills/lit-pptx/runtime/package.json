@@ -1,0 +1,13 @@
+{
+  "name": "litcodex-office-runtime",
+  "private": true,
+  "version": "1.0.0",
+  "type": "commonjs",
+  "dependencies": {
+    "pptxgenjs": "^3.12.0",
+    "sharp": "0.35.4"
+  },
+  "overrides": {
+    "image-size": "2.0.3"
+  }
+}

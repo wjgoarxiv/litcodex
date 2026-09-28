@@ -1,0 +1,1 @@
+{"name":"saas-landing-responsive","tier":"smoke","expected":"FAIL","finding_codes":["FINDING_MOBILE_OVERFLOW","FINDING_REDUCED_MOTION_UNSUPPORTED"],"blocked_codes":[],"review_rounds":2}

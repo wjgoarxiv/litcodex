@@ -1,0 +1,22 @@
+{
+	"name": "@litcodex/lsp",
+	"version": "1.0.7",
+	"description": "LitCodex LSP hook (inert placeholder): post-edit diagnostics + cache reset, no-op until an LSP daemon is provided.",
+	"type": "module",
+	"private": true,
+	"bin": {
+		"litcodex-lsp": "./dist/cli.js"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"postbuild": "node ../../../../scripts/mark-cli-executable.mjs --workspace .",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest --run --passWithNoTests=false"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	}
+}

@@ -1,0 +1,64 @@
+{
+	"name": "@litfamily/litcodex",
+	"version": "1.0.7",
+	"description": "Codex loop harness installer. Run `npm exec --package @litfamily/litcodex -- litcodex install` to set up the LitCodex Codex platform: the bare `lit` hook and the durable lit-loop runtime.",
+	"keywords": [
+		"codex",
+		"litcodex",
+		"lit-loop",
+		"ai-agents",
+		"orchestration"
+	],
+	"author": "LitCodex Authors",
+	"license": "MIT",
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/wjgoarxiv/litcodex.git"
+	},
+	"bugs": {
+		"url": "https://github.com/wjgoarxiv/litcodex/issues"
+	},
+	"homepage": "https://github.com/wjgoarxiv/litcodex#readme",
+	"type": "module",
+	"bin": {
+		"litcodex": "bin/litcodex.js"
+	},
+	"files": [
+		"bin",
+		"dist",
+		"marketplace",
+		"!marketplace/**/.*",
+		"marketplace/.agents/plugins/marketplace.json",
+		"marketplace/plugins/litcodex/.codex-plugin/**",
+		"marketplace/plugins/litcodex/.mcp.json",
+		"marketplace/plugins/litcodex/skills/lit-loop/.gitkeep",
+		"marketplace/plugins/litcodex/skills/lit-code/scripts/go/templates/.editorconfig",
+		"marketplace/plugins/litcodex/skills/lit-code/scripts/go/templates/.golangci.yml",
+		"model-catalog.json",
+		"README.md",
+		"LICENSE",
+		"readme-assets"
+	],
+	"dependencies": {
+		"@litcodex/lit-loop": "1.0.7"
+	},
+	"bundledDependencies": [
+		"@litcodex/lit-loop"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"postbuild": "node ../../scripts/mark-cli-executable.mjs --workspace .",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest --run --passWithNoTests=false",
+		"postinstall": "node dist/postinstall.js",
+		"prepublishOnly": "npm --prefix ../.. run release:check",
+		"prepack": "node ../../scripts/prepack-bundle-component.mjs",
+		"postpack": "node ../../scripts/postpack-clean-component.mjs"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	}
+}

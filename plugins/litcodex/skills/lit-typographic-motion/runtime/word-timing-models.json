@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "tier": "word-timing (Tier 3, opt-in with --word-timing only)",
+  "status": "no licence-verified Korean-capable alignment model is pinned in this release (model id, revision and licence could not be verified from a pinned source), so Tier 3 fails closed",
+  "downloadBytes": 0,
+  "models": [],
+  "neverPinned": [
+    { "id": "torchaudio MMS_FA", "reason": "CC-BY-NC weights (non-commercial)" },
+    { "id": "madmom models", "reason": "CC-BY-NC-SA weights (non-commercial)" }
+  ]
+}

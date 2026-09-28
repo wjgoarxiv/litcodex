@@ -1,0 +1,6 @@
+interface:
+  display_name: "Deep Interview"
+  short_description: "Clarify requests into execution-ready briefs"
+  default_prompt: "Use $litcodex:deep-interview to clarify this request before planning."
+policy:
+  allow_implicit_invocation: false

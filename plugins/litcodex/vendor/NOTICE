@@ -1,0 +1,19 @@
+LitCodex scientific-visualization notice
+
+The vendored authored snapshot is included under the adjacent MIT License with authorization from
+its owner. It contains scientific guidance and examples that name established external resources;
+those names do not imply endorsement and their own websites, software, and publications remain
+subject to their respective terms.
+
+- Okabe-Ito and Wong colorblind-friendly palette values are identified in the authored source.
+- Paul Tol palette values and guidance are attributed to https://personal.sron.nl/~pault/.
+- ColorBrewer is referenced at https://colorbrewer2.org/.
+- Matplotlib, seaborn, Plotly, MDAnalysis, and related optional Python packages are not vendored by
+  this skill and retain their own licenses.
+- Journal and publisher requirements are informational snapshots; current official author guidance
+  controls an actual submission.
+- The CP/SDS molecular-visualization material is an authorized scientific-domain reference within
+  the authored snapshot. It is not a bundled trajectory, chemical dataset, or third-party program.
+
+The dependency preflight is read-only. Installing this npm package does not install or modify a
+Python environment.

@@ -1,0 +1,212 @@
+[
+	{
+		"path": "docs/spec/litcodex-contract.md",
+		"kind": "regex",
+		"locator": "^\\| Installer npm package \\| `[^`]+`, version `(\\d+\\.\\d+\\.\\d+)`",
+		"label": "canonical contract installer version",
+		"optional": false
+	},
+	{
+		"path": "docs/spec/litcodex-contract.md",
+		"kind": "regex",
+		"locator": "^\\| Version \\(all `package\\.json`\\) \\| `(\\d+\\.\\d+\\.\\d+)`",
+		"label": "canonical contract shared version",
+		"optional": false
+	},
+	{
+		"path": "package.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "root manifest",
+		"optional": false
+	},
+	{
+		"path": "packages/litcodex-ai/package.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "installer package",
+		"optional": false
+	},
+	{
+		"path": "packages/litcodex-ai/package.json",
+		"kind": "json-pointer",
+		"locator": "/dependencies/@litcodex~1lit-loop",
+		"label": "installer workspace dependency",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/package.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "aggregate plugin package",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/components/lit-loop/package.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "lit-loop component package",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/components/git-bash/package.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "git-bash component package",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/components/comment-checker/package.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "comment-checker component package",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/components/lsp/package.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "lsp component package",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/components/start-work-continuation/package.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "start-work-continuation component package",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/components/telemetry/package.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "telemetry component package",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/components/rules/package.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "rules component package",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/components/auto-update/package.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "auto-update component package",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/components/wikify-knowledge/package.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "wikify-knowledge component package",
+		"optional": false
+	},
+	{
+		"path": "package-lock.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "lockfile root",
+		"optional": false
+	},
+	{
+		"path": "package-lock.json",
+		"kind": "json-pointer",
+		"locator": "/packages//version",
+		"label": "lockfile packages[\"\"]",
+		"optional": false
+	},
+	{
+		"path": "package-lock.json",
+		"kind": "json-pointer",
+		"locator": "/packages/packages~1litcodex-ai/dependencies/@litcodex~1lit-loop",
+		"label": "lockfile installer workspace dependency",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/.codex-plugin/plugin.json",
+		"kind": "json-pointer",
+		"locator": "/version",
+		"label": "aggregate plugin manifest",
+		"optional": false
+	},
+	{
+		"path": "CHANGELOG.md",
+		"kind": "regex",
+		"locator": "^## \\[(\\d+\\.\\d+\\.\\d+)\\]",
+		"label": "changelog top release",
+		"optional": false
+	},
+	{
+		"path": "packages/litcodex-ai/src/cli.test.ts",
+		"kind": "regex",
+		"locator": "it\\(\"--version is the pinned ([0-9]+\\.[0-9]+\\.[0-9]+)\"",
+		"label": "CLI pinned-version fixture label",
+		"optional": false
+	},
+	{
+		"path": "packages/litcodex-ai/src/cli.test.ts",
+		"kind": "regex",
+		"locator": "expect\\(manifest\\.version\\)\\.toBe\\(\"([0-9]+\\.[0-9]+\\.[0-9]+)\"",
+		"label": "CLI manifest-version fixture",
+		"optional": false
+	},
+	{
+		"path": "packages/litcodex-ai/src/cli.test.ts",
+		"kind": "regex",
+		"locator": "expect\\(dispatch\\(\\[\"--version\"\\]\\)\\.stdout\\)\\.toBe\\(\"([0-9]+\\.[0-9]+\\.[0-9]+)",
+		"label": "CLI stdout-version fixture",
+		"optional": false
+	},
+	{
+		"path": "packages/litcodex-ai/src/install/install-doctor.test.ts",
+		"kind": "regex",
+		"locator": "undefined,\\s*\"([0-9]+\\.[0-9]+\\.[0-9]+)\"",
+		"label": "install doctor plugin-version fixture",
+		"optional": false
+	},
+	{
+		"path": "packages/litcodex-ai/test/install-doctor-fixtures.ts",
+		"kind": "regex",
+		"locator": "pluginVersion\\s*=\\s*\"([0-9]+\\.[0-9]+\\.[0-9]+)\"",
+		"label": "install doctor default plugin version",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/marketplace.test.ts",
+		"kind": "regex",
+		"locator": "JSON\\.stringify\\(\\{ name: \"@litcodex/plugin\", version: \"([0-9]+\\.[0-9]+\\.[0-9]+)\", private: true",
+		"label": "marketplace staged package version",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/marketplace.test.ts",
+		"kind": "regex",
+		"locator": "expect\\(md\\.pluginVersion\\)\\.toBe\\(\"([0-9]+\\.[0-9]+\\.[0-9]+)\"",
+		"label": "marketplace plugin-version fixture",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/marketplace.test.ts",
+		"kind": "regex",
+		"locator": "expect\\(agg\\.version\\)\\.toBe\\(\"([0-9]+\\.[0-9]+\\.[0-9]+)\"",
+		"label": "marketplace aggregate-version fixture",
+		"optional": false
+	},
+	{
+		"path": "plugins/litcodex/marketplace.test.ts",
+		"kind": "regex",
+		"locator": "expect\\(err\\.detail\\)\\.toContain\\(\"([0-9]+\\.[0-9]+\\.[0-9]+)\"",
+		"label": "marketplace mismatch-version fixture",
+		"optional": false
+	},
+	{
+		"path": ".github/workflows/release.yml",
+		"kind": "regex",
+		"locator": "default:\\s*\"(\\d+\\.\\d+\\.\\d+)\"",
+		"label": "publish workflow default",
+		"optional": true
+	}
+]

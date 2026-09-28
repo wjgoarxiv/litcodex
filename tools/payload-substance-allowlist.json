@@ -1,0 +1,6 @@
+{
+  "schema": "litfamily.payload-substance/v1",
+  "skills": {
+    "lit-burnoff-file": "Self-contained single-file cleanup adapter: scope, behavior lock, keep rules, verification, and no-op criteria live in SKILL.md. It links to the bundled cleanup and language policies for optional detail and ships no separate executable corpus."
+  }
+}

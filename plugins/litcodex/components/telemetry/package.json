@@ -1,0 +1,22 @@
+{
+	"name": "@litcodex/telemetry",
+	"version": "1.0.7",
+	"description": "LitCodex telemetry: a deliberately inert, local-only SessionStart hook (NO network, NO data collection).",
+	"type": "module",
+	"private": true,
+	"bin": {
+		"litcodex-telemetry": "./dist/cli.js"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"postbuild": "node ../../../../scripts/mark-cli-executable.mjs --workspace .",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest --run --passWithNoTests=false"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	}
+}

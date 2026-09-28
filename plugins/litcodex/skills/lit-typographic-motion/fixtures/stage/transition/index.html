@@ -1,0 +1,8 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><script src="/lit/stage-kit.js"></script>
+<style>html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #202020; } #box { position: absolute; left: 760px; top: 340px; width: 400px; height: 400px; background-color: #000000; transition: background-color 1s linear; }</style></head>
+<body><div id="box"></div>
+<script>
+setTimeout(() => { document.getElementById("box").style.backgroundColor = "#ffffff"; }, 2000);
+LitStage.define({ width: 1920, height: 1080, fps: 30, duration: 4 });
+</script></body></html>

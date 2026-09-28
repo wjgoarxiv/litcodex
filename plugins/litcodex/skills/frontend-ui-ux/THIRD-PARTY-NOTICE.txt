@@ -1,0 +1,7 @@
+Frontend UI/UX research credits
+
+Craft-floor and slop-register mechanisms were independently re-expressed after studying pbakaus/impeccable (https://github.com/pbakaus/impeccable) by Paul Bakaus, Apache License 2.0, at upstream commit 9d715cc. No source file, prose, or fixture from that project is reproduced here.
+
+Mode, review-format, and route-governance mechanisms were independently re-expressed after studying jakubkrehel/skills (https://github.com/jakubkrehel/skills), Copyright (c) 2026 Jakub Krehel, MIT License, at upstream commit 267330e. No source or prose from that repository is reproduced here.
+
+Anti-slop and responsive value cross-checks were independently re-expressed after studying the ui-skills.com playbook (https://www.ui-skills.com/playbook), sourced from github.com/ibelick/ui-skills, Copyright (c) 2026 Julien Thibeaut, MIT License. No source or prose from the site or repository is reproduced here.

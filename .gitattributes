@@ -1,0 +1,13 @@
+* text=auto eol=lf
+.gitignore text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+
+# Committed Codex MARKETPLACE dist (build output that MUST ship in git — see .gitignore exception).
+# Mark generated so GitHub collapses diffs and excludes it from language stats. Kept LF by the rule
+# above so Windows/WSL2 clones get correct line endings.
+plugins/litcodex/components/*/dist/** linguist-generated=true
+plugins/litcodex/components/rules/node_modules/** linguist-generated=true
+
+# Immutable canonical frontend reference library; preserve mixed source line endings byte-for-byte.
+plugins/litcodex/skills/frontend-ui-ux/references/_canonical-corpus/** -text

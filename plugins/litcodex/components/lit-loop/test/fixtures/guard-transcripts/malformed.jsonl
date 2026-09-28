@@ -1,0 +1,4 @@
+{not json at all
+{"role":"user","content":"hello"
+}}}garbage{{{
+{"role":"assistant","content":"ok"}

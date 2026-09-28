@@ -1,0 +1,34 @@
+{
+  "name": "litcodex",
+  "version": "1.0.7",
+  "description": "LitCodex Codex plugin: the lit-loop activation, durable loop runtime, and local review-gated knowledge.",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "codex-plugin",
+    "litcodex",
+    "lit-loop",
+    "hooks"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "LitCodex",
+    "shortDescription": "Loop-native Codex enhancement: bare `lit` activates lit-loop.",
+    "longDescription": "LitCodex turns Codex into a loop-native agent harness. A bare `lit` trigger activates lit-loop through a UserPromptSubmit hook. Accepted local Wikify records add bounded project context from .litcodex/knowledge. Successful objective-only create_goal calls add review-needed checkpoints.",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Hooks",
+      "Workflow",
+      "Context Injection",
+      "Local Knowledge"
+    ],
+    "defaultPrompt": [
+      "lit: run this change with evidence."
+    ],
+    "brandColor": "#FF6337",
+    "logo": "./assets/logo.png",
+    "composerIcon": "./assets/logo.png"
+  }
+}

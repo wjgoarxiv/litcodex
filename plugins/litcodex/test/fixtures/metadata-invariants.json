@@ -1,0 +1,20 @@
+{
+	"version": 1,
+	"marketplaceName": "litcodex",
+	"pluginName": "litcodex",
+	"pluginSource": "./plugins/litcodex",
+	"resources": { "hooks": "./hooks/hooks.json", "skills": "./skills/", "mcpServers": "./.mcp.json" },
+	"hookEvent": "UserPromptSubmit",
+	"hookCommandFragments": ["${PLUGIN_ROOT}", "components/lit-loop/dist/cli.js", "hook user-prompt-submit"],
+	"statusMessagePrefix": "LitCodex:",
+	"expectedComponents": ["lit-loop"],
+	"forbiddenTokens": [
+		{ "tokenParts": ["o", "m", "o"], "match": "bounded" },
+		{ "tokenParts": ["sisyphus", "labs"], "match": "substring" },
+		{ "tokenParts": ["lazy", "codex"], "match": "substring" },
+		{ "tokenParts": ["ultra", "work"], "match": "substring" },
+		{ "tokenParts": ["u", "l", "w"], "match": "bounded" },
+		{ "tokenParts": ["oh-my-", "openagent"], "match": "substring" },
+		{ "tokenParts": ["open", "code"], "match": "substring" }
+	]
+}

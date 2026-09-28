@@ -1,0 +1,16 @@
+{
+	"files": [],
+	"references": [
+		{ "path": "packages/litcodex-ai/tsconfig.build.json" },
+		{ "path": "plugins/litcodex/tsconfig.build.json" },
+		{ "path": "plugins/litcodex/components/lit-loop/tsconfig.build.json" },
+		{ "path": "plugins/litcodex/components/git-bash/tsconfig.build.json" },
+		{ "path": "plugins/litcodex/components/comment-checker/tsconfig.build.json" },
+		{ "path": "plugins/litcodex/components/lsp/tsconfig.build.json" },
+		{ "path": "plugins/litcodex/components/start-work-continuation/tsconfig.build.json" },
+		{ "path": "plugins/litcodex/components/telemetry/tsconfig.build.json" },
+		{ "path": "plugins/litcodex/components/rules/tsconfig.build.json" },
+		{ "path": "plugins/litcodex/components/auto-update/tsconfig.build.json" },
+		{ "path": "plugins/litcodex/components/wikify-knowledge/tsconfig.build.json" }
+	]
+}

@@ -1,0 +1,3 @@
+# Malformed config: an unterminated double-quoted string on a root scalar line.
+model = "gpt-5.5
+model_context_window = 400000

@@ -1,0 +1,32 @@
+lit-typographic-motion (LitCodex): third-party notices
+
+Engine
+- Portions of this engine are adapted from mexicat/pdoom-video
+  (https://github.com/mexicat/pdoom-video), commit ca251e3dddda422b364385eb484b5a3593a0990d,
+  MIT licence, Copyright (c) 2026 Giacomo Magnanini. The full notice is in NOTICE beside this file.
+
+Fonts bundled in this skill (paths relative to the skill directory)
+- Archivo, nine static instances (widths 75/100/125 x weights 400/700/900):
+  fonts/archivo/Archivo-w*-wt*.ttf; licence fonts/archivo/OFL.txt (SIL Open Font License 1.1,
+  Copyright 2020 The Archivo Project Authors). Instanced at development time from the pinned
+  variable font; recipe and hashes in fonts/archivo/SHA256SUMS.
+- VT323 Regular: fonts/vt323/VT323-Regular.ttf; licence fonts/vt323/OFL.txt (SIL Open Font
+  License 1.1, The VT323 Project Authors).
+- EMS Allure, EMS Felix, EMS Osmotron, EMS Readability, EMS Tech single-stroke SVG fonts:
+  fonts/stroke/*.svg; licence fonts/stroke/OFL.txt (SIL Open Font License 1.1) and
+  fonts/stroke/CREDITS (per-font creator, converter and base font).
+
+Fonts reused from LitCodex's lit-pptx skill (unmodified official files)
+- PretendardGOV Regular and Bold: ../lit-pptx/pretendard-font/public/static/PretendardGOV-*.otf;
+  licence ../lit-pptx/pretendard-font/LICENSE.txt (SIL Open Font License 1.1).
+
+Fonts fetched by `litcodex motion-runtime install` into the motion-runtime cache
+(${XDG_CACHE_HOME:-~/.cache}/litcodex/motion-runtime/<id>/, paths relative to that directory)
+- Galmuri9: fonts/Galmuri9.ttf; licence fonts/licenses/Galmuri-ofl.md (SIL Open Font License 1.1,
+  Lee Minseo).
+- MesloLGS NF Regular: fonts/MesloLGS NF Regular.ttf; licences fonts/licenses/MesloLGS-NF-License.txt
+  (Apache-2.0 notice for Meslo), fonts/licenses/Apache-2.0.txt (full Apache License 2.0 text) and
+  fonts/licenses/DejaVu-LICENSE.txt (Bitstream Vera and Arev notices inherited by Meslo).
+
+Every fetched file and licence text has a pinned URL, byte count and sha256 in engine/fonts.mjs.
+A render verifies these bytes and never fetches.

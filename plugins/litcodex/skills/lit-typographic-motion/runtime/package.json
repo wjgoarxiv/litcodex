@@ -1,0 +1,1 @@
+{"name":"litcodex-motion-runtime","private":true,"version":"1.0.0","type":"module","dependencies":{"opentype.js":"2.0.0","playwright-core":"1.63.0","ws":"8.22.0"}}

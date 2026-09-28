@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "workflowPath": ".github/workflows/ci.yml",
+  "nodeMatrix": [22],
+  "permissions": { "contents": "read" },
+  "lockedHost": {
+    "version": "0.144.0",
+    "bin": "${{ github.workspace }}/node_modules/.bin/codex",
+    "verifyRun": "npm run qa:codex-host-locked",
+    "doctorRun": "npm run qa:uiux-installed:doctor"
+  },
+  "gates": [
+    { "name": "Assert CI workflow integrity", "run": "npm run check:ci",             "gateOwner": "@litcodex/ci" },
+    { "name": "Verify lock-owned Codex CLI",  "run": "npm run qa:codex-host-locked", "gateOwner": "@litcodex/ci" },
+    { "name": "Typecheck",                     "run": "npm run typecheck",            "gateOwner": "@litcodex/scaffold" },
+    { "name": "Test typecheck",                "run": "npm run typecheck:tests",      "gateOwner": "@litcodex/scaffold" },
+    { "name": "Lint",                          "run": "npm run lint",                 "gateOwner": "@litcodex/scaffold" },
+    { "name": "Unit & integration tests",      "run": "npm test",                     "gateOwner": "@litcodex/scaffold" },
+    { "name": "Documentation and contract audit", "run": "npm run docs:audit",                    "gateOwner": "@litcodex/scaffold" },
+    { "name": "Codex hook QA",                    "run": "npm run qa:codex",                      "gateOwner": "@litcodex/qa" },
+    { "name": "Path-robustness QA",               "run": "npm run qa:path-robustness",            "gateOwner": "@litcodex/path-robust" },
+    { "name": "Lit-loop smoke QA",                 "run": "npm run qa:loop-smoke",                 "gateOwner": "@litcodex/qa" },
+    { "name": "Public page reader A/B QA",         "run": "npm run qa:lit-fetch-ab",      "gateOwner": "@litcodex/qa" },
+    { "name": "Legacy-token scan",             "run": "npm run scan:legacy-tokens",   "gateOwner": "@litcodex/legacy-scan" },
+    { "name": "Build",                         "run": "npm run build",                "gateOwner": "@litcodex/scaffold" },
+    { "name": "Packed install QA",              "run": "npm run qa:install-smoke",    "gateOwner": "@litcodex/qa" },
+    { "name": "Credentialless installed doctor QA", "run": "npm run qa:uiux-installed:doctor", "gateOwner": "@litcodex/qa" },
+    { "name": "Pack dry-run (payload guard)",  "run": "npm run pack:all",             "gateOwner": "@litcodex/plugin-pack" }
+  ],
+  "nonBlockingJobs": [
+    {
+      "job": "windows",
+      "run": "node scripts/qa-windows-codex-ps1.mjs",
+      "summaryStep": "Windows support summary"
+    },
+    {
+      "job": "performance",
+      "run": "npm run test:performance",
+      "summaryStep": "Performance test summary"
+    }
+  ],
+  "forbiddenTokens": [
+    "npm publish", "npm_token", "node_auth_token", "gh release",
+    "registry-url", "id-token", "workflow_dispatch", "secrets.",
+    "git push", "git tag", "--access public"
+  ]
+}

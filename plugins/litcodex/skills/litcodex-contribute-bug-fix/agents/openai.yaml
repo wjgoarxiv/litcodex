@@ -1,0 +1,12 @@
+interface:
+  display_name: "litcodex-contribute-bug-fix (litcodex)"
+  short_description: "Contribute verified LitCodex or Codex bug-fix PRs"
+  search_terms:
+    - "litcodex-contribute-bug-fix"
+    - "contribute a bug fix"
+    - "contribute to fix bug"
+    - "fix bug pr"
+    - "litcodex fix"
+    - "litcodex-ai bug fix"
+    - "codex bug fix pr"
+  default_prompt: "Use $litcodex-contribute-bug-fix to debug this LitCodex or Codex bug, work from a fresh /tmp clone and worktree, implement the smallest verified fix, generate the PR body, apply the litcodex-generated label, open the PR, and clean up."
