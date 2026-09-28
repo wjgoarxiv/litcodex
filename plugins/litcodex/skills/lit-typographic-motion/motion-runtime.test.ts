@@ -92,12 +92,31 @@ describe("runtime states without a browser (Test 10)", () => {
 	});
 	it("an offline pre-warm fails the runtime step but prints one receipt line naming the command", () => {
 		const xdg = temp("motion-offline-");
-		const result = node([RUNTIME, "install"], { XDG_CACHE_HOME: xdg, npm_config_registry: "http://127.0.0.1:9/", npm_config_cache: temp("motion-npm-"), npm_config_fetch_retries: "0", npm_config_offline: "true" });
+		// Only this test's npm settings reach the child: an inherited npm_config_dry_run (as under `npm publish --dry-run`) would otherwise make `npm ci` succeed.
+		const inherited = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^npm_config_/iu.test(key)));
+		const npm = temp("motion-npm-");
+		const npmConfig = { npm_config_registry: "http://127.0.0.1:9/", npm_config_cache: join(npm, "cache"), npm_config_userconfig: join(npm, "npmrc"), npm_config_globalconfig: join(npm, "global-npmrc"), npm_config_fetch_retries: "0", npm_config_offline: "true" };
+		const result = spawnSync(process.execPath, [RUNTIME, "install"], { encoding: "utf8", env: { ...inherited, XDG_CACHE_HOME: xdg, ...npmConfig }, timeout: 600000 });
 		expect(result.status).toBe(3);
 		expect(result.stdout).toMatch(/^\[litcodex\] Motion runtime pre-warm unavailable \(.+\); run `litcodex motion-runtime install` outside the sandbox\.$/mu);
 		const bridge = prepareMotionRuntime(temp("motion-codexhome-"));
 		expect(bridge.exitCode).toBe(3);
 		expect(bridge.receipt).toContain("run `litcodex motion-runtime install` outside the sandbox");
+	});
+	it("a pre-warm launched from a global npm install runs its npm ci without the inherited global mode", () => {
+		const dir = temp("motion-global-");
+		const dump = join(dir, "npm-env.json");
+		const fakeNpm = join(dir, "fake-npm.mjs");
+		writeFileSync(fakeNpm, `import { writeFileSync } from "node:fs";\nwriteFileSync(${JSON.stringify(dump)}, JSON.stringify({ argv: process.argv.slice(2), env: process.env }));\nprocess.exit(1);\n`);
+		const inherited = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^npm_/iu.test(key)));
+		const npmGlobal = { npm_config_global: "true", npm_config_location: "global", NPM_CONFIG_PREFIX: join(dir, "prefix"), npm_config_dry_run: "true" };
+		const result = spawnSync(process.execPath, [RUNTIME, "install"], { encoding: "utf8", env: { ...inherited, ...npmGlobal, XDG_CACHE_HOME: join(dir, "xdg"), npm_execpath: fakeNpm, npm_config_registry: "http://127.0.0.1:9/" }, timeout: 60000 });
+		expect(result.status).toBe(3);
+		const seen = JSON.parse(readFileSync(dump, "utf8")) as { argv: string[]; env: Record<string, string> };
+		expect(seen.argv[0]).toBe("ci");
+		expect(Object.keys(seen.env).filter((key) => /^npm_config_(global|location|prefix|dry_run)$/iu.test(key))).toEqual([]);
+		expect(seen.env["npm_config_registry"]).toBe("http://127.0.0.1:9/");
+		expect(seen.env["PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD"]).toBe("1");
 	});
 	it("an absent audio venv and a venv whose pins changed both degrade to Tier 1 with the warning", () => {
 		const cache = temp("motion-audio-");

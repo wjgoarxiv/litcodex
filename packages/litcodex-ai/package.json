@@ -1,6 +1,6 @@
 {
 	"name": "@litfamily/litcodex",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"description": "Codex loop harness installer. Run `npm exec --package @litfamily/litcodex -- litcodex install` to set up the LitCodex Codex platform: the bare `lit` hook and the durable lit-loop runtime.",
 	"keywords": [
 		"codex",
@@ -39,11 +39,12 @@
 		"marketplace/plugins/litcodex/skills/lit-code/scripts/go/templates/.golangci.yml",
 		"model-catalog.json",
 		"README.md",
+		"README-Ko-KR.md",
 		"LICENSE",
 		"readme-assets"
 	],
 	"dependencies": {
-		"@litcodex/lit-loop": "1.0.8"
+		"@litcodex/lit-loop": "1.0.9"
 	},
 	"bundledDependencies": [
 		"@litcodex/lit-loop"

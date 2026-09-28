@@ -24,7 +24,9 @@ const REPO_ROOT = join(HERE, "..");
 const README_PATH = join(REPO_ROOT, "README.md");
 const README_KO_PATH = join(REPO_ROOT, "README-Ko-KR.md");
 const PKG_README_PATH = join(REPO_ROOT, "packages", "litcodex-ai", "README.md");
-const NPM_CDN = "https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.8/readme-assets";
+const PKG_README_KO_PATH = join(REPO_ROOT, "packages", "litcodex-ai", "README-Ko-KR.md");
+const PKG_JSON = JSON.parse(readFileSync(join(REPO_ROOT, "packages", "litcodex-ai", "package.json"), "utf8"));
+const NPM_CDN = "https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.9/readme-assets";
 const NPM_COVER = `${NPM_CDN}/cover-motion.webp`;
 const CHANGELOG_PATH = join(REPO_ROOT, "CHANGELOG.md");
 const AUDIT = join(HERE, "readme-audit.mjs");
@@ -33,6 +35,7 @@ const FORBIDDEN_TOKENS = CONTRACT.forbiddenTokens.map(materializeFixtureValue);
 const README = readFileSync(README_PATH, "utf8");
 const README_KO = readFileSync(README_KO_PATH, "utf8");
 const PKG_README = readFileSync(PKG_README_PATH, "utf8");
+const PKG_README_KO = readFileSync(PKG_README_KO_PATH, "utf8");
 const USAGE = readFileSync(join(REPO_ROOT, "docs/usage.md"), "utf8");
 const USAGE_KO = readFileSync(join(REPO_ROOT, "docs/usage-Ko-KR.md"), "utf8");
 const CHANGELOG = readFileSync(CHANGELOG_PATH, "utf8");
@@ -117,7 +120,8 @@ describe("readme content invariants", () => {
 			),
 		);
 		const expected = `${rows.banner.map((row) => row.text.trimEnd()).join("\n")}\nLIT · codex\n`;
-		for (const source of [README, README_KO, PKG_README]) {
+		// The copyable ASCII lockup belongs to the GitHub pages; the npm pages open with the cover only.
+		for (const source of [README, README_KO]) {
 			assert.equal(source.split("```", 3)[1], `\n${expected}`);
 			assert.ok(!source.includes("\x1b"));
 		}
@@ -126,7 +130,7 @@ describe("readme content invariants", () => {
 	test("README presentation retains the exact outlined mark, local badges, licensed icons and motion", () => {
 		const assetPins = {
 			"ascii-readme.svg": "a074e5ba5ff3f6f17611f0621669b3a14b0fa85410e5972157b8d2202760d80d",
-			"badge-version.svg": "e3ef88f2b068416ddb203cb9999097ef4e18ec627d18f41027c331a4d54cffc6",
+			"badge-version.svg": "08e157f4b2cd4d36eea2eb368501ca6e7020fb68f2876ebcfe5ccb6d64f99b85",
 			"badge-license.svg": "decba749e28b4b87635e62eae766899fdc3e91a8e312208ff152831f620b18d7",
 			"lucide-book-open.svg": "3ae327cc4bbff19933a3ed535978ff558985b1bcca950e5484f61aa78764ebd2",
 			"lucide-play.svg": "ab6e5f5c9e61ec2d8ddd6b93b5476b976c8a0086f5529142a7981284d85f8b83",
@@ -168,14 +172,20 @@ describe("readme content invariants", () => {
 			assert.ok(source.includes("docs/assets/readme/README.md"), "README links media and license credits");
 			assert.doesNotMatch(source, /README visual draft|img\.shields\.io|unpkg\.com/);
 		}
-		assert.match(PKG_README, /<p align="center"><img src="[^"]*ascii-readme\.svg"/);
-		assert.match(PKG_README, /<details>\s*<summary>[^<]+<\/summary>\s*```\n[\s\S]*?```\s*<\/details>/);
-		for (const name of Object.keys(assetPins).filter(
-			(name) => !name.endsWith(".txt") && name !== "ignition-film.mp4" && name !== "ignition-readme.gif",
-		)) {
-			assert.ok(PKG_README.includes(`${NPM_CDN}/${name}`), `package README uses packed ${name}`);
+		const npmHeroAssets = [
+			"badge-version.svg",
+			"badge-license.svg",
+			"lucide-book-open.svg",
+			"lucide-play.svg",
+			"lucide-shield-check.svg",
+		];
+		for (const source of [PKG_README, PKG_README_KO]) {
+			assert.ok(source.includes(NPM_COVER), "npm README loads the cover from the published package");
+			for (const name of npmHeroAssets) {
+				assert.ok(source.includes(`${NPM_CDN}/${name}`), `npm README uses packed ${name}`);
+			}
+			assert.doesNotMatch(source, /README visual draft|img\.shields\.io|unpkg\.com|raw\.githubusercontent/);
 		}
-		assert.doesNotMatch(PKG_README, /README visual draft|img\.shields\.io|unpkg\.com/);
 		assert.match(README, /href="#install"/);
 		assert.match(README_KO, /href="#설치"/);
 		assert.match(README_KO, /<summary>ASCII 로고 복사<\/summary>/);
@@ -183,7 +193,7 @@ describe("readme content invariants", () => {
 
 	test("README images and linked references resolve in the product repository", () => {
 		const pkgAssets = join(REPO_ROOT, "packages", "litcodex-ai", "readme-assets");
-		for (const path of [README_PATH, README_KO_PATH, PKG_README_PATH]) {
+		for (const path of [README_PATH, README_KO_PATH, PKG_README_PATH, PKG_README_KO_PATH]) {
 			const source = readFileSync(path, "utf8");
 			assert.ok(source.includes("cover-motion.webp"), `${path} includes the moving cover`);
 			assert.ok(
@@ -197,7 +207,7 @@ describe("readme content invariants", () => {
 			);
 			assert.ok(
 				source.includes(
-					path === README_KO_PATH
+					path === README_KO_PATH || path === PKG_README_KO_PATH
 						? 'alt="LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitCodex 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상"'
 						: 'alt="LitFamily motion cover: five armored robots power on one by one, the LitCodex robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up."',
 				),
@@ -254,7 +264,6 @@ describe("readme content invariants", () => {
 		for (const [source, lang] of [
 			[README, "en"],
 			[README_KO, "ko"],
-			[PKG_README, "en"],
 		]) {
 			const rows = source
 				.split("\n")
@@ -307,7 +316,26 @@ describe("readme content invariants", () => {
 			);
 			assert.ok(README.includes(`./docs/ab-simple/assets/${name}`), `README shows ${name}`);
 			assert.ok(README_KO.includes(`./docs/ab-simple/assets/${name}`), `Korean README shows ${name}`);
-			assert.ok(PKG_README.includes(`${NPM_CDN}/ab-simple/assets/${name}`), `package README shows ${name}`);
+		}
+		const npmSummaries = [
+			[
+				PKG_README,
+				["8 won, 1 tie, 1 lost", "3 won, 2 ties, 5 lost", "except S7", "Each arm ran once", "pre-release build"],
+				"https://github.com/wjgoarxiv/litcodex#ab-plain-codex-vs-lit",
+			],
+			[
+				PKG_README_KO,
+				["8승 1무 1패", "3승 2무 5패", "S7은 메인테이너 미검토", "작업마다 한 번씩", "배포 전 로컬 빌드"],
+				"https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md#ab-기본-codex와-lit-비교",
+			],
+		];
+		for (const [source, facts, link] of npmSummaries) {
+			const flat = source.replace(/\s+/g, " ");
+			for (const fact of facts) {
+				assert.ok(flat.includes(fact), `npm README keeps the A/B summary and its limits: ${fact}`);
+			}
+			assert.ok(source.includes(link), "npm README links the full A/B section on GitHub");
+			assert.ok(!source.includes("| S1 "), "npm README leaves the verdict table to GitHub");
 		}
 	});
 
@@ -342,13 +370,6 @@ describe("readme content invariants", () => {
 				"(#스킬-한눈에-보기)",
 				"./docs/assets/skills",
 			],
-			[
-				PKG_README,
-				"## Skills at a glance",
-				"## A/B: plain Codex vs lit",
-				"(#skills-at-a-glance)",
-				`${NPM_CDN}/skills`,
-			],
 		]) {
 			assert.ok(source.includes(nav), `${heading} is linked from the top navigation`);
 			const start = source.indexOf(`\n${heading}\n`);
@@ -370,6 +391,13 @@ describe("readme content invariants", () => {
 				return ids.length > 0 ? ids : [shownAs(cell)];
 			});
 			assert.deepEqual(named.sort(), bundled, `${heading} names every bundled skill`);
+		}
+		for (const source of [PKG_README, PKG_README_KO]) {
+			assert.ok(!source.includes("<table>"), "npm README lists skills as text, without the picture gallery");
+			for (const name of bundled) {
+				const shown = name === START_WORK ? "Start Work" : `\`${name}\``;
+				assert.ok(source.includes(shown), `npm README names bundled skill ${name}`);
+			}
 		}
 	});
 
@@ -563,17 +591,17 @@ describe("readme content invariants", () => {
 	// --- G16.1 install-path identity ---
 	test("npx install is the primary path", () => {
 		const installIdx = README.indexOf("## Install");
-		const nextSection = README.indexOf("## Activate", installIdx);
+		const nextSection = README.indexOf("## Start with lit", installIdx);
 		const installSection = README.slice(installIdx, nextSection);
 		const globalIdx = installSection.indexOf("npm install -g @litfamily/litcodex");
-		const npxIdx = installSection.indexOf("npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install");
+		const npxIdx = installSection.indexOf("npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install");
 		assert.ok(npxIdx >= 0, "npx install present in Install section");
 		assert.ok(globalIdx === -1 || npxIdx < globalIdx, "npx install precedes optional global install");
 		evidence("task-21-install-primary.txt", "npx install is first\nSTATUS: PASS");
 	});
 
 	test("documents npx no-global alternative", () => {
-		assert.ok(README.includes("npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install"));
+		assert.ok(README.includes("npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install"));
 		assert.ok(/>\s*Without a global install/i.test(README), "labeled callout present");
 		evidence("task-21-install-npx-alt.txt", "npx alt labeled\nSTATUS: PASS");
 	});
@@ -584,6 +612,10 @@ describe("readme content invariants", () => {
 		assert.ok(
 			PKG_README.includes("https://github.com/wjgoarxiv/litcodex/blob/main/docs/usage.md"),
 			"the published quick start links the same product-owned reference",
+		);
+		assert.ok(
+			PKG_README_KO.includes("https://github.com/wjgoarxiv/litcodex/blob/main/docs/usage-Ko-KR.md"),
+			"the published Korean quick start links its usage reference",
 		);
 		for (const [name, content] of [["usage reference", USAGE]]) {
 			const prose = content.replace(/\s+/g, " ");
@@ -756,7 +788,7 @@ describe("readme content invariants", () => {
 		const report = auditReadme(README, CONTRACT);
 		assert.ok(!report.offenders.some((o) => o.kind === "forbidden-phrase" && o.value === "or-join"));
 		const bad = auditReadme(
-			`${README}\n\nlitcodex install or npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install\n`,
+			`${README}\n\nlitcodex install or npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install\n`,
 			CONTRACT,
 		);
 		assert.ok(bad.offenders.some((o) => o.kind === "forbidden-phrase" && o.value === "or-join"));
@@ -785,13 +817,13 @@ describe("readme content invariants", () => {
 
 	test("npx alias is route-checked too", () => {
 		assert.equal(
-			extractLitcodexSubcommand("npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install"),
+			extractLitcodexSubcommand("npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install"),
 			"install",
 		);
 		assert.equal(extractLitcodexSubcommand("litcodex doctor"), "doctor");
 		assert.equal(extractLitcodexSubcommand("not a command"), null);
 		const bad = auditReadme(
-			`${README}\n\n    npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex steer\n`,
+			`${README}\n\n    npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex steer\n`,
 			CONTRACT,
 		);
 		assert.ok(bad.offenders.some((o) => o.kind === "unknown-subcommand" && o.value.includes("steer")));
@@ -926,6 +958,121 @@ describe("readme content invariants", () => {
 			assert.match(t, /^task-21-[a-z0-9-]+\.(txt|json)$/);
 		}
 		evidence("task-21-evidence-root.txt", `evidence targets=${targets.length}; all .litcodex\nSTATUS: PASS`);
+	});
+});
+
+// GitHub-style heading slugs, so in-page anchors can be checked against the headings that exist.
+function headingSlugs(source) {
+	const slugs = new Set();
+	const seen = new Map();
+	let fenced = false;
+	for (const line of source.split("\n")) {
+		if (/^\s*```/.test(line)) {
+			fenced = !fenced;
+			continue;
+		}
+		const heading = fenced ? null : /^#{1,6}\s+(.+?)\s*$/.exec(line);
+		if (!heading) continue;
+		const base = heading[1]
+			.replace(/<[^>]+>/g, "")
+			.toLowerCase()
+			.replace(/[^\p{L}\p{N}\p{M} _-]/gu, "")
+			.replace(/ /g, "-");
+		const count = seen.get(base) ?? 0;
+		seen.set(base, count + 1);
+		slugs.add(count === 0 ? base : `${base}-${count}`);
+	}
+	return slugs;
+}
+
+describe("GitHub and npm README split", () => {
+	const GITHUB_READMES = [
+		[README_PATH, README],
+		[README_KO_PATH, README_KO],
+	];
+	const NPM_READMES = [
+		[PKG_README_PATH, PKG_README, "https://github.com/wjgoarxiv/litcodex#readme"],
+		[PKG_README_KO_PATH, PKG_README_KO, "https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md"],
+	];
+	const GITHUB_PAGES = new Map([
+		["https://github.com/wjgoarxiv/litcodex", README],
+		["https://github.com/wjgoarxiv/litcodex/blob/main/README.md", README],
+		["https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md", README_KO],
+	]);
+	const targetsOf = (source) => [
+		...Array.from(source.matchAll(/\]\(([^)\s]+)\)/g), (match) => match[1]),
+		...Array.from(source.matchAll(/\b(?:src|srcset|href)="([^"]+)"/g), (match) => match[1]),
+	];
+
+	test("npm READMEs pin every packed asset to the package version and use no relative targets", () => {
+		const pin = `https://cdn.jsdelivr.net/npm/${PKG_JSON.name}@${PKG_JSON.version}/`;
+		assert.equal(`${pin}readme-assets`, NPM_CDN, "the test pin follows the package version");
+		for (const [path, source, guide] of NPM_READMES) {
+			const cdn = [...source.matchAll(/https:\/\/cdn\.jsdelivr\.net\/npm\/[^"')\s]+/g)].map((match) => match[0]);
+			assert.ok(cdn.length > 0, `${path} loads packed assets`);
+			for (const url of cdn) {
+				assert.ok(url.startsWith(`${pin}readme-assets/`), `${path}: ${url} is pinned to ${PKG_JSON.version}`);
+				assert.ok(
+					existsSync(join(REPO_ROOT, "packages", "litcodex-ai", url.slice(pin.length))),
+					`${path}: ${url} is packed`,
+				);
+			}
+			for (const target of targetsOf(source)) {
+				assert.match(target, /^(?:https:\/\/|#)/, `${path}: ${target} must be absolute or an in-page anchor`);
+			}
+			assert.ok(source.includes(`](${guide})`), `${path} links the full guide on GitHub`);
+		}
+	});
+
+	test("GitHub READMEs load every asset from the repository by relative path", () => {
+		for (const [path, source] of GITHUB_READMES) {
+			assert.ok(!source.includes("cdn.jsdelivr.net"), `${path} renders before any publish`);
+			for (const target of targetsOf(source)) {
+				if (/^(?:[a-z]+:|#)/i.test(target)) continue;
+				assert.ok(existsSync(resolve(dirname(path), target.split("#")[0])), `${path}: ${target} exists`);
+			}
+		}
+	});
+
+	test("npm READMEs are a short install card that shares the GitHub title and tagline", () => {
+		for (const [[, npm], [, github], installHeading] of [
+			[NPM_READMES[0], GITHUB_READMES[0], "## Install"],
+			[NPM_READMES[1], GITHUB_READMES[1], "## 설치"],
+		]) {
+			for (const source of [npm, github]) {
+				assert.equal(
+					source.split("\n").find((line) => line.startsWith("# ")),
+					"# LitCodex",
+				);
+				assert.ok(source.includes("\n**Keep the work lit.**\n"));
+			}
+			assert.equal(
+				npm.split("\n").find((line) => line.startsWith("## ")),
+				installHeading,
+				"install is the first section",
+			);
+			assert.ok(npm.includes("npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install"));
+			const ratio = npm.length / github.length;
+			assert.ok(ratio > 0.15 && ratio < 0.5, `npm README is ${Math.round(ratio * 100)}% of the GitHub README`);
+		}
+		assert.ok(PKG_JSON.files.includes("README.md") && PKG_JSON.files.includes("README-Ko-KR.md"));
+	});
+
+	test("every in-page and cross-page README anchor resolves to a heading", () => {
+		for (const [path, source] of [...GITHUB_READMES, ...NPM_READMES]) {
+			const own = headingSlugs(source);
+			for (const target of targetsOf(source)) {
+				const [page, anchor] = target.split("#");
+				if (anchor === undefined || anchor === "readme") continue;
+				const slugs = page === "" ? own : GITHUB_PAGES.has(page) ? headingSlugs(GITHUB_PAGES.get(page)) : null;
+				if (slugs === null) continue;
+				assert.ok(slugs.has(decodeURIComponent(anchor)), `${path}: dead anchor ${target}`);
+			}
+		}
+		const migration = readFileSync(join(REPO_ROOT, "docs/npm-migration.md"), "utf8");
+		for (const [, anchor] of migration.matchAll(/\.\.\/README\.md#([^)\s]+)/g)) {
+			assert.ok(headingSlugs(README).has(anchor), `docs/npm-migration.md: dead README anchor #${anchor}`);
+		}
 	});
 });
 

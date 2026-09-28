@@ -33,6 +33,7 @@ import {
 	HOOK_SUBCOMMANDS,
 	LOOP_SUBCOMMANDS,
 	lineOfIndex,
+	MOTION_RUNTIME_SUBCOMMANDS,
 	OFFICE_RUNTIME_SUBCOMMANDS,
 } from "./readme-audit.mjs";
 
@@ -59,6 +60,7 @@ export const USER_FACING_DOCS = Object.freeze([
 	"README-Ko-KR.md",
 	"CHANGELOG.md",
 	"packages/litcodex-ai/README.md",
+	"packages/litcodex-ai/README-Ko-KR.md",
 	"docs/usage.md",
 	"docs/usage-Ko-KR.md",
 	"docs/spec/litcodex-contract.md",
@@ -72,7 +74,12 @@ export const USER_FACING_DOCS = Object.freeze([
 	"plugins/litcodex/components/lit-loop/directive.md",
 ]);
 
-const CHANGELOG_LINK_DOCS = new Set(["README.md", "README-Ko-KR.md", "packages/litcodex-ai/README.md"]);
+const CHANGELOG_LINK_DOCS = new Set([
+	"README.md",
+	"README-Ko-KR.md",
+	"packages/litcodex-ai/README.md",
+	"packages/litcodex-ai/README-Ko-KR.md",
+]);
 const PUBLIC_ROUTE_READMES = new Set(["README.md", "README-Ko-KR.md"]);
 const EXACT_ROUTE_MODES = new Set(["lit-handoff", "lit-scientific-visualization"]);
 
@@ -232,6 +239,11 @@ function classifyInvocation(first, tail) {
 		const sub = tail.find((t) => !t.startsWith("-"));
 		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "office-runtime" };
 		return { ok: OFFICE_RUNTIME_SUBCOMMANDS.includes(sub), shown: `office-runtime ${sub}` };
+	}
+	if (first === "motion-runtime") {
+		const sub = tail.find((t) => !t.startsWith("-"));
+		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "motion-runtime" };
+		return { ok: MOTION_RUNTIME_SUBCOMMANDS.includes(sub), shown: `motion-runtime ${sub}` };
 	}
 	const TOP = ["install", "doctor", "uninstall"];
 	return { ok: TOP.includes(first), shown: first };

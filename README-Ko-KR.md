@@ -35,7 +35,7 @@ LIT · codex
 <p align="center"><img src="./docs/assets/clay-icon.png" width="160" alt="LitCodex 클레이 마크" /></p>
 
 <p align="center">
-<a href="#설치"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.8" /></a>
+<a href="#설치"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.9" /></a>
 <a href="./LICENSE"><img src="./docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
 </p>
 
@@ -47,90 +47,17 @@ LIT · codex
 
 **Keep the work lit.**
 
-[English](./README.md) · [설치](#설치) · [빠른 시작](#lit-활성화) · [주요 기능](#주요-기능) · [스킬](#스킬-한눈에-보기) · [명령어](#명령어) · [문제 해결](#문제-해결) · [링크](#링크)
+[English](./README.md) · [설치](#설치) · [첫 작업](#lit으로-시작하기) · [스킬](#스킬-한눈에-보기) · [A/B 결과](#ab-기본-codex와-lit-비교) · [명령어](#명령어) · [문제 해결](#문제-해결) · [문서](#문서와-기여)
 
 ## LitCodex란
 
-LitCodex는 Codex CLI에 계획, 검토, 연구, 실행 루프를 더합니다.
+LitCodex는 Codex CLI 플러그인입니다. 계획, 검토, 조사와 오래 이어지는 실행 루프를 Codex에 더해서,
+한 번 시작한 작업이 대화가 끝난 뒤에도 이어지게 합니다.
 
-## 설치
+요청에 `lit`을 붙이면 됩니다. LitCodex는 그 요청을 목표로 바꾸고 통과·실패를 가릴 기준을 붙인 뒤,
+결과를 프로젝트에 기록합니다. 다음 세션에 그 기록을 읽게 하면 멈춘 자리부터 이어갈 수 있습니다.
 
-> `@litfamily/litcodex@1.0.8` scoped package를 아래 명령으로 설치하세요. [기존 설치 이전](./docs/npm-migration.md).
-
-Node.js 22 이상과 Codex CLI가 설치되어 있으면 아래 명령을 실행하세요.
-
-```sh
-npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install
-```
-
-플러그인·훅·에이전트를 등록하고 `~/.codex/config.toml`의 관리 항목을 갱신합니다. 설치 중 리드 모델,
-헬퍼 모델, 출력 스타일을 선택합니다. 모델 작업에는 Codex 인증과 모델 사용 권한이 필요합니다.
-설치 자체에는 GitHub 인증이 필요하지 않습니다.
-
-새 설치의 기본값은 리드 경로에서 `gpt-6-astra`/`xhigh`, 일반 헬퍼에서 `gpt-6-luna`/`max`입니다. 설치기에서는 지원되는 모델과 추론 수준을 고를 수 있습니다.
-
-변경할 내용은 `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex --dry-run install`로 미리 확인하세요. 무인 설치는
-`npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex install --yes`로 실행하며, 명시한 `--style <id>`는 그대로 적용됩니다.
-
-전역 명령이 필요하면 다음을 실행하세요.
-
-```sh
-npm install -g @litfamily/litcodex
-litcodex install
-```
-
-> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex doctor`.
-
-기존 설정과 분리해서 체험하려면 [격리된 체험 안내](./docs/npm-migration.md#isolated-local-trial)를 먼저 읽으세요.
-`CODEX_HOME`만 바꾸면 기존 홈의 설정까지 검색할 수 있습니다.
-
-Windows에서는 설치기와 CLI shim을 지원합니다. 디렉터리 디스크립터에 의존하는 Python 경로는 POSIX가
-필요하며 Windows에서 `BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME`으로 중단합니다. [플랫폼·질문 정책](./docs/usage-Ko-KR.md#설치)을 확인하세요.
-
-## lit 활성화
-
-프로젝트에서 Codex를 열고 시작 검토에서 LitCodex 훅을 승인한 뒤, 다음을 입력하세요.
-
-```text
-lit 회원가입 폼에 입력 검증을 추가해줘
-```
-
-단독 경계 토큰 `lit`은 `<lit-loop-mode>`를 선택합니다. `UserPromptSubmit` 훅은 `systemMessage`로
-주황-분홍-청록 3단계 그라디언트를 글자별 굵게 칠한 5행 활성화 마크를 보냅니다. `NO_COLOR`, `CI`,
-`dumb` 터미널과 UTF-8이 아닌 로케일에서는 이스케이프 없는 같은 마크를 사용합니다. 답변은
-`🔥 **LIT IGNITED · <discipline>** 🔥` 한 줄로 시작합니다.
-`split`, `literal`, `litmus`, 코드 스팬과 코드 펜스는 실행하지 않습니다.
-슬래시로 시작하는 일반적인 명령 형태도 무시하지만, 정확한 `/litresearch`만 예외로 연구 모드로 라우팅합니다.
-
-`lit-scientific-visualization`만 단독으로 입력하면 훅이 `<lit-scientific-visualization-mode>`를
-선택합니다. Python 의존성을 설치하지는 않습니다. 이 경로와 `handoff`는 다른 문구 없이
-정확히 입력했을 때만 활성화됩니다.
-
-### 작은 결과물 하나부터
-
-빈 프로젝트에서 직접 확인할 수 있는 작업을 맡겨보세요.
-
-```text
-lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외부 의존성은 설치하지 마.
-할 일 추가와 완료 처리를 확인하고, 확인하지 못한 부분은 따로 남겨줘.
-```
-
-결과물, 실제로 확인한 내용, 남은 일을 살펴보세요. 상태 마크가 떴다는 사실만으로 화면이 정상
-동작한다고 볼 수는 없습니다. `lit recap`으로 기록된 상태를 확인하고, 세션을 마치기 전에는
-다른 문구 없이 `handoff`만 보내세요. 다음 세션에서는 그 인수인계 문서와 프로젝트 목표를
-먼저 읽고 이어가도록 요청합니다.
-
-| 단계 | 작업에 남기는 것 |
-| --- | --- |
-| 계획하기 | 통과 여부를 확인할 수 있는 목표와 기준 |
-| 만들기 | 직접 살펴볼 수 있는 작은 결과물 |
-| 확인하기 | 완료한 기준의 증거와 아직 해결하지 못한 문제 |
-| 다음 작업에 건네기 | 결정한 내용, 남은 일, 다시 시작할 위치 |
-
-Codex의 native goal과 로컬 루프 기록은 별도로 관리됩니다. paused 또는 blocked인 native goal은
-아래 복구 절차를 따라야 합니다. 인수인계 문서를 작성했다고 자동으로 재개되지는 않습니다.
-
-## 주요 기능
+## 왜 LitCodex인가
 
 **불씨를 건네받았다.<br>
 이제, 당신의 작업에 옮길 차례다.**
@@ -146,54 +73,127 @@ Codex의 native goal과 로컬 루프 기록은 별도로 관리됩니다. pause
 
 **대화가 끝난 자리에서, 다음 작업이 시작되도록.**
 
-Codex CLI에서 계획하고, 실행하고, 검증합니다. “꺼지지 않는 불”은 프로그램이 끝없이 돌아간다는
-뜻이 아닙니다. **세션이 끝나도, 이어갈 작업을 남긴다는 뜻입니다.**
-
-소스 트리에는 편집 가능한 저대역폭 벡터 대체 표지인 [cover.svg](./docs/assets/cover.svg)가 남아 있습니다.
-
-`UserPromptSubmit` 훅이 요청에 맞는
-작업 모드를 선택하고 39개 번들 스킬을 제공합니다. 목표는 모든 성공 기준을 통과해야 완료됩니다.
-영어·한국어 글을 다듬을 때는 `lit-humanizer`를 선택하세요. 저장 전에는 확실한 초안 흔적을
-차단하고, 약한 패턴은 참고로 알립니다. Office/PDF에서 텍스트를 추출할 수 있으면 생성 직후에도 확인합니다.
-GitHub 저장소를 복제하지 않아도 npm 패키지 하나로 설치할 수 있습니다.
-
-`lit`은 범위가 정해진 작업을 시작하고, `handoff` 또는 `/lit-handoff`는 확인한 작업을 다음 세션으로
-넘깁니다. `lit-plan`은 편집 전 기준을 세우고, `lit start work <승인된 계획>`은 승인된 계획을 실행하며,
-`review-work`는 변경을 검토하고, `litresearch`는 출처와 불확실성을 기록합니다. 이 경로들은 프로젝트
-기록에 각 효과를 남기며 새 슬래시 경로를 만들지 않습니다. 호스트 한계상 hook·에이전트 실행은 Codex CLI가
-담당하지만 인증, 모델 접근, 권한, 화면 확인은 호스트의 능력입니다. 경로 표시나 정적 편집 이미지는 완료
-증거가 아닙니다.
+“꺼지지 않는 불”은 에이전트가 끝없이 돌아간다는 뜻이 아닙니다. **세션이 끝나도, 이어갈 작업을 남긴다는 뜻입니다.**
 
 <p align="center"><img src="docs/assets/litcodex-ignition-1600.webp" width="49%" alt="LitCodex 시작 편집 이미지" /> <img src="docs/assets/litcodex-continuity-1600.webp" width="49%" alt="LitCodex 이어가기 편집 이미지" /></p>
 
-### Codex 안에서 어떻게 이어지나요
+## 설치
 
-Codex가 플러그인을 불러오고 훅을 실행합니다. 훅은 요청에 맞는 모드와 맥락을 전달하고,
-스킬은 에이전트가 작업할 절차를 안내합니다. 루프 CLI는 프로젝트 기록을 관리하며
-native goal 도구를 사용할 때 지켜야 할 지침을 출력합니다.
+Node.js 22 이상과 Codex CLI가 있으면 아래 명령 하나로 설치합니다.
 
-```mermaid
-flowchart TD
-    P["설치된 LitCodex 플러그인"] --> H["Codex 훅: UserPromptSubmit 및 생명주기"]
-    P --> S["번들 스킬"]
-    U["Codex에 입력한 요청"] --> H
-    H --> A["Codex 에이전트"]
-    S --> A
-    A --> L["lit-loop CLI: 목표·증거·체크포인트"]
-    L --> R["프로젝트 기록: .litcodex/lit-loop/"]
-    L -. "목표 도구 사용 지침" .-> A
-    A -. "호스트가 제공할 때 사용" .-> G["Codex native /goal"]
-    R -. "작업을 이어갈 때 읽기" .-> A
+```sh
+npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install
 ```
 
-native goal로 이어지는 점선은 에이전트가 따르는 절차입니다. 패키지가 native goal 도구를
-직접 호출하지는 않습니다. 도구가 없는 세션에서는 로컬 기록을 유지하고 native goal을
-동기화하지 못했다고 남깁니다. paused 또는 blocked인 목표는 문서의 복구 절차를 따라야 하며,
-인수인계 문서를 읽었다고 자동으로 재개되지는 않습니다. [실행·상태 참고서](./docs/usage-Ko-KR.md).
+설치기는 플러그인·훅·에이전트를 등록하고, `~/.codex/config.toml`에서 자신이 관리하는 항목만 갱신합니다.
+설치 중에는 리드 모델, 헬퍼 모델, 출력 스타일 세 가지를 묻습니다. 새로 설치하면 리드 경로는
+`gpt-6-astra`/`xhigh`, 일반 헬퍼는 `gpt-6-luna`/`max`가 기본값이고, 지원되는 다른 모델과 추론 수준을 골라도 됩니다.
+
+npm 패키지 하나에 필요한 것이 모두 들어 있어서 이 저장소를 복제할 필요가 없고, 설치에 GitHub 인증도 필요하지 않습니다.
+실제 모델 작업을 시작할 때는 Codex 인증과 모델 사용 권한이 필요합니다.
+
+알아 두면 좋은 변형이 두 가지 있습니다.
+
+- 무엇이 바뀌는지 먼저 보려면 `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex --dry-run install`을 실행하세요.
+- 묻는 단계 없이 설치하려면 `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install --yes`를 실행하세요. 명시한 `--style <id>`는 그대로 적용됩니다.
+
+예전 패키지 이름(`litcodex-ai`)으로 설치했다면 [기존 설치 이전 안내](./docs/npm-migration.md)를 먼저 읽어 주세요.
+
+### 전역 명령으로 쓰기
+
+`litcodex`를 `PATH`에서 바로 부르고 싶다면 다음을 실행합니다.
+
+```sh
+npm install -g @litfamily/litcodex
+litcodex install
+```
+
+`npm install -g`는 패키지의 postinstall 스크립트를 실행합니다. 전역으로 설치했고 `CI`가 설정되어 있지 않으면
+짧은 환영 문구를 보여 준 뒤 `lit-typographic-motion`이 쓰는 모션 런타임을 미리 준비(pre-warm)해 봅니다.
+
+이 준비 과정은 네트워크를 씁니다. `npm ci`가 고정된 `opentype.js`, `playwright-core`, `ws`를 npm 레지스트리에서
+받고, 고정된 글꼴·라이선스 파일은 GitHub와 apache.org에서 내려받습니다. 브라우저는 내려받지 않으며
+`${XDG_CACHE_HOME:-~/.cache}/litcodex/motion-runtime/`에 설치합니다. 준비가 끝나지 않아도 패키지는 설치된 채로
+남고, 스크립트가 나중에 다시 실행할 명령 `litcodex motion-runtime install`을 알려 줍니다.
+
+스크립트를 건너뛰려면 `--ignore-scripts`를 붙이거나(환영 문구도 함께 빠집니다) 그 명령에만 `CI=1`을 설정하세요.
+`litcodex install`도 설치가 성공하면 같은 준비 과정을 실행하며, 이를 끄는 옵션은 없습니다.
+
+> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex doctor`.
+
+### 기존 설정과 떼어 놓고 써 보기
+
+지금 쓰는 설정을 건드리지 않고 체험하려면 [격리된 체험 안내](./docs/npm-migration.md#isolated-local-trial)를 따르세요.
+`CODEX_HOME`만 바꿔서는 부족합니다. 기존 홈의 설정이 여전히 검색될 수 있기 때문입니다.
+
+### Windows
+
+Windows에서도 설치기와 CLI shim은 동작합니다. 디렉터리 디스크립터에 의존하는 Python 경로는 POSIX가 필요해서,
+Windows에서는 `BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME`으로 멈춥니다. 자세한 내용은
+[플랫폼·질문 정책](./docs/usage-Ko-KR.md#설치)에 있습니다.
+
+## lit으로 시작하기
+
+프로젝트에서 Codex를 열고, 시작 검토에서 LitCodex 훅을 승인한 뒤 다음을 입력하세요.
+
+```text
+lit 회원가입 폼에 입력 검증을 추가해줘
+```
+
+따로 떨어진 단어 `lit`은 `<lit-loop-mode>`를 선택합니다. `UserPromptSubmit` 훅은 `systemMessage`로
+5행짜리 활성화 마크를 보내는데, 터미널 색상 설정과 관계없이 늘 같은 일반 텍스트입니다. 답변은
+`🔥 **LIT IGNITED · <discipline>** 🔥` 한 줄로 시작합니다.
+
+`split`, `literal`, `litmus`처럼 `lit`이 단어 안에 들어 있을 뿐이면 반응하지 않고, 코드 스팬과 코드 펜스 안의 `lit`도 마찬가지입니다.
+슬래시로 시작하는 일반적인 명령 형태도 무시하지만, 정확한 `/litresearch`만 예외로 연구 모드로 라우팅합니다.
+
+`handoff`와 `lit-scientific-visualization`은 메시지 전체가 그 한 단어일 때만 동작합니다.
+정확히 단독으로 입력한 `handoff`는 인수인계 문서를 만듭니다. `lit-scientific-visualization`만 단독으로 입력하면
+훅이 `<lit-scientific-visualization-mode>`를 선택합니다. Python 의존성을 설치하지는 않습니다.
+
+### 작은 결과물 하나부터
+
+빈 프로젝트에서, 직접 확인할 수 있는 작업을 맡겨 보세요.
+
+```text
+lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외부 의존성은 설치하지 마.
+할 일 추가와 완료 처리를 확인하고, 확인하지 못한 부분은 따로 남겨줘.
+```
+
+끝나면 세 가지를 보세요. 결과물, 실제로 돌린 확인, 아직 남은 일입니다. 상태 마크는 요청이 제 경로로
+들어갔다는 표시일 뿐, 화면이 제대로 동작한다는 증거는 아닙니다.
+
+`lit recap`으로 기록된 상태를 읽을 수 있습니다. 세션을 마치기 전에는 다른 문구 없이 `handoff`만 보내세요.
+다음 세션에서는 그 인수인계 문서와 프로젝트 목표를 먼저 읽고 이어가도록 요청하면 됩니다.
+
+목표는 성공 기준을 모두 통과해야 완료됩니다. 단계마다 작업에 남는 것은 다음과 같습니다.
+
+| 단계 | 작업에 남기는 것 |
+| --- | --- |
+| 계획하기 | 통과 여부를 확인할 수 있는 목표와 기준 |
+| 만들기 | 직접 살펴볼 수 있는 작은 결과물 |
+| 확인하기 | 완료한 기준의 증거와 아직 해결하지 못한 문제 |
+| 다음 작업에 건네기 | 결정한 내용, 남은 일, 다시 시작할 위치 |
+
+Codex의 native goal과 로컬 루프 기록은 따로 관리됩니다. native goal이 paused 또는 blocked 상태라면
+[문제 해결](#문제-해결)의 복구 절차를 따르세요. 인수인계 문서를 만들었다고 저절로 재개되지는 않습니다.
+
+### 자주 쓰는 경로
+
+| 입력 | 하는 일 |
+| --- | --- |
+| `lit` | 프로젝트에 목표와 확인 기준을 남기며 범위가 정해진 작업을 시작합니다. |
+| `handoff` 또는 `/lit-handoff` | 확인한 결과와 다음 할 일을 다음 세션으로 넘깁니다. |
+| `lit-plan` | 무엇이든 고치기 전에 계획과 성공 기준부터 씁니다. |
+| `lit start work <승인된 계획>` | 승인한 계획을 실행합니다. |
+| `review-work` | 변경과 그 근거를 검토합니다. |
+| `litresearch` | 출처를 달아 조사하고, 아직 불확실한 부분을 따로 적어 둡니다. |
+
+전체 목록은 [명령어](#명령어)에 있습니다.
 
 ## 스킬 한눈에 보기
 
-이름이나 경로로 시작할 수 있는 스킬을 모았습니다. 줄마다 시작하는 방법과 얻는 것을 적었고, 마지막 줄은 알아서 돌아가는 검사를 묶었습니다.
+번들 스킬을 모두 모았습니다. 줄마다 시작하는 방법과 얻는 것을 적었고, 마지막 줄은 알아서 돌아가는 검사를 묶었습니다.
 
 <table>
 <tr><th>이렇게 됩니다</th><th>스킬</th><th>얻는 것</th></tr>
@@ -406,9 +406,18 @@ native goal로 이어지는 점선은 에이전트가 따르는 절차입니다.
 
 ## A/B: 기본 Codex와 lit 비교
 
-아래 요청은 모두 가볍게 쓴 한국어 한 줄입니다. 기준선에는 그 줄을 그대로 보냈고, lit 실행군에는 같은 줄 끝에 ` lit`만 붙였습니다. 두 실행군 모두 2026-09-26에 Codex CLI 0.157.1과 `gpt-6-sol`(high effort)로 한 번씩 실행했고, 실행마다 따로 만든 일회용 홈을 썼습니다. lit 실행군은 배포 전 로컬 빌드의 LitCodex를 사용했습니다. 배포된 버전으로 실행한 결과가 아닙니다. LitCodex를 고쳐 다시 실행한 작업은 마지막 lit 실행을 같은 기준선과 비교했습니다. 블라인드 심사(Claude Opus 5.5)가 두 결과를 순서를 바꿔 가며 비교했고, 이어서 메인테이너가 두 결과를 나란히 놓고 최종 판정을 내렸습니다. 심사 판정은 참고용으로 옆에 적었습니다.
+아래 요청은 모두 가볍게 쓴 한국어 한 줄입니다. 기준선에는 그 줄을 그대로 보냈고, lit 실행군에는 같은 줄 끝에
+` lit`만 붙였습니다.
 
-S3와 S4는 이후 인터페이스 라운드에서 S11과 함께 다시 실행했습니다. S5는 오피스 라운드에서 S8, S9와 함께 다시 실행했고, 이때 lit 실행군은 `lit-pptx`와 `lit-docx`를 사용했습니다.
+두 실행군 모두 2026-09-26에 Codex CLI 0.157.1과 `gpt-6-sol`(high effort)로 한 번씩 돌렸고, 실행마다 따로 만든
+일회용 홈을 썼습니다. lit 실행군은 배포 전 로컬 빌드의 LitCodex를 사용했습니다. 배포된 버전으로 실행한 결과가
+아닙니다. LitCodex를 고쳐 다시 실행한 작업에서는 마지막 lit 실행을 같은 기준선과 비교했습니다.
+
+블라인드 심사(Claude Opus 5.5)가 두 결과의 순서를 바꿔 가며 비교했고, 이어서 메인테이너가 두 결과를 나란히 놓고
+최종 판정을 내렸습니다. 심사 판정은 참고용으로 옆에 적었습니다.
+
+S3와 S4는 이후 인터페이스 라운드에서 S11과 함께 다시 실행했습니다. S5는 오피스 라운드에서 S8, S9와 함께 다시
+실행했고, 이때 lit 실행군은 `lit-pptx`와 `lit-docx`를 사용했습니다.
 
 | 작업 | 요청 | 최종 판정 | 블라인드 심사(같은 라운드) |
 | --- | --- | --- | --- |
@@ -426,7 +435,10 @@ S3와 S4는 이후 인터페이스 라운드에서 S11과 함께 다시 실행�
 
 모션 스킬 `lit-typographic-motion`은 첫 A/B 이후 새로 만들었고, 아직 A/B 결과가 없습니다. 맨 위 커버는 LitFamily 모션 스킬로 만들었습니다.
 
-인터페이스 라운드에서는 Codex 샌드박스가 브라우저를 막아 lit 실행군의 인터페이스 프로브가 화면을 측정하지 못했고, 두 실행군 모두 렌더링된 화면을 확인하지 못했습니다. 오피스 라운드에서는 샌드박스 안에서 렌더러가 실패해 lit 실행군이 슬라이드와 페이지 미리보기를 보지 못했으며, 답변마다 그 사실을 밝혔습니다. 메인테이너는 오피스 라운드 전체를 두고 실무에 쓰기에는 LitCodex 결과물이 훨씬 낫다고 봤습니다.
+두 라운드 모두 화면 확인이 제대로 되지 않았습니다. 인터페이스 라운드에서는 Codex 샌드박스가 브라우저를 막아 lit
+실행군의 인터페이스 프로브가 화면을 측정하지 못했고, 두 실행군 모두 렌더링된 화면을 확인하지 못했습니다. 오피스
+라운드에서는 샌드박스 안에서 렌더러가 실패해 lit 실행군이 슬라이드와 페이지 미리보기를 보지 못했으며, 답변마다 그
+사실을 밝혔습니다. 메인테이너는 오피스 라운드 전체를 두고 실무에 쓰기에는 LitCodex 결과물이 훨씬 낫다고 봤습니다.
 
 ### 양쪽이 만든 것
 
@@ -491,95 +503,118 @@ S3와 S4는 이후 인터페이스 라운드에서 S11과 함께 다시 실행�
 
 </details>
 
+## 어떻게 동작하나요
+
+Codex가 플러그인을 불러오고 훅을 실행합니다. 훅은 요청이 어떤 모드에 속하는지 가리고 맥락을 보태며,
+스킬은 에이전트가 일하는 절차를 안내합니다. 루프 CLI는 프로젝트 기록을 관리하고, Codex의 native goal 도구를
+쓸 때 따를 지침을 출력합니다.
+
+```mermaid
+flowchart TD
+    P["설치된 LitCodex 플러그인"] --> H["Codex 훅: UserPromptSubmit 및 생명주기"]
+    P --> S["번들 스킬"]
+    U["Codex에 입력한 요청"] --> H
+    H --> A["Codex 에이전트"]
+    S --> A
+    A --> L["lit-loop CLI: 목표·증거·체크포인트"]
+    L --> R["프로젝트 기록: .litcodex/lit-loop/"]
+    L -. "목표 도구 사용 지침" .-> A
+    A -. "호스트가 제공할 때 사용" .-> G["Codex native /goal"]
+    R -. "작업을 이어갈 때 읽기" .-> A
+```
+
+native goal로 이어지는 점선은 에이전트가 따르는 절차입니다. 패키지가 native goal 도구를 직접 호출하지는 않습니다.
+도구가 없는 세션에서는 로컬 기록을 유지하고, native goal을 동기화하지 못했다고 남깁니다. paused 또는 blocked인
+목표는 문서의 복구 절차를 따라야 하며, 인수인계 문서를 읽었다고 자동으로 재개되지는 않습니다.
+
+훅과 에이전트 실행은 Codex CLI가 맡습니다. 인증, 모델 접근, 권한, 화면 확인은 Codex와 사용자 환경의 몫이어서,
+경로 표시나 이 README의 이미지만으로 작업이 끝났다고 볼 수는 없습니다. 더 자세한 내용은
+[실행·상태 참고서](./docs/usage-Ko-KR.md)에 있습니다.
+
 ## 명령어
-
-### 작은 lit 작업부터 시작하기
-
-프롬프트 끝에 `lit`을 붙이면 Codex CLI hook이 내구성 있는 작업 루프로 연결합니다. 모델 실행은 Codex가 담당합니다.
-
-| 프롬프트 또는 경로 | 효과 |
-| --- | --- |
-| `lit` | 프로젝트에 목표와 확인 기준을 남기는 작은 작업을 시작합니다. |
-| `handoff` 또는 `/lit-handoff` | 확인한 결과와 다음 할 일을 다음 세션으로 건넵니다. |
-| `lit-plan` | 편집 전에 계획과 성공 기준을 작성합니다. |
-| `lit start work <승인된 계획>` | 승인한 계획을 실행합니다. |
-| `review-work` | 변경과 근거를 검토합니다. |
-| `litresearch` | 출처가 있는 조사와 불확실성을 기록합니다. |
-
-hook 표시는 진입 신호이며 모델 결과나 화면 확인이 끝났다는 증거는 아닙니다.
-
-<p align="center"><a href="./docs/assets/readme/ignition-film.mp4"><img src="./docs/assets/readme/ignition-poster.png" width="720" alt="Ignition 모션 포스터" /></a></p>
-
-포스터를 선택해 선택형 영상을 보세요. README에서 자동 재생하지 않습니다.
 
 ### Codex 작성창에서
 
-| 입력 | 모드 | 동작 |
+| 입력 | 모드 | 하는 일 |
 | --- | --- | --- |
-| `lit` 또는 `lit-loop` | **lit-loop** | 증거 체크포인트가 있는 실행 루프 |
-| `litwork` | **litwork** | 수동 QA 증거를 포함한 결과 중심 작업 |
-| `lit-plan` 또는 `lit plan` | **lit-plan** | 범위가 제한된 계획과 검증 체크리스트 작성 |
-| `deep-interview` 또는 `lit deep interview` | **deep-interview** | 모호한 요구를 질문으로 좁히는 계획 전용 탐색 |
+| `lit` 또는 `lit-loop` | **lit-loop** | 오래 이어지는 루프에서 작업하며 증거를 체크포인트로 남김 |
+| `litwork` | **litwork** | 결과 중심 작업, 수동 QA 증거 포함 |
+| `lit-plan` 또는 `lit plan` | **lit-plan** | 계획만 작성: 증거와 마지막 완료 주장이 담긴 범위 있는 계획 |
+| `deep-interview` 또는 `lit deep interview` | **deep-interview** | 계획만 작성: 모호한 요구를 질문으로 좁힘 |
 | `litgoal` 또는 `lit goal` | **litgoal** | 목표와 기준을 루프 상태에 연결 |
 | `lit-recap` 또는 `lit recap` | **lit-recap** | `.litcodex` 원장을 읽기 전용으로 요약 |
 | `lit-comprehend` 또는 `comprehend` | **lit-comprehend** | 작업 트리 밖에 자체 완결형 설명 자료 생성 |
-| `review-work` 또는 `lit review` | **review-work** | 계획 또는 완료 작업을 읽기 전용으로 검토 |
-| `litresearch`, `/litresearch` 또는 `lit research` | **litresearch** | 사실·가설·출처·불확실성을 나누는 연구 저널 |
-| `lit start work <plan-name>` | **Start Work** | 승인된 계획을 증거와 함께 실행 |
-| 정확히 단독으로 입력한 `handoff` | **lit-handoff** | 비밀값을 보호하는 재개 패킷 생성 또는 갱신 |
-| 정확히 단독으로 입력한 `lit-scientific-visualization` | **lit-scientific-visualization** | 훅을 통해 출판용 시각화 어댑터 로드 |
+| `review-work` 또는 `lit review` | **review-work** | 계획이나 끝난 작업을 읽기 전용으로 검토 |
+| `litresearch`, `/litresearch` 또는 `lit research` | **litresearch** | 사실·가설·출처·불확실성을 나눠 적는 연구 저널 |
+| `lit start work <plan-name>` | **Start Work** | 승인된 계획을 실행하고 증거를 남김 |
+| 정확히 단독으로 입력한 `handoff` | **lit-handoff** | 비밀값을 빼고 인수인계 문서를 만들거나 갱신 |
+| 정확히 단독으로 입력한 `lit-scientific-visualization` | **lit-scientific-visualization** | 훅을 통해 출판용 시각화 어댑터를 불러옴 |
 
-같은 모드를 한 세션에서 다시 입력해도 중복 실행하지 않습니다. 개별 스킬은 Codex skill picker 또는
-`$litcodex:lit-fetch`, `$litcodex:lit-korean`, `$litcodex:lit-handoff`,
-`$litcodex:lit-scientific-visualization` 같은 정확한 ID로 선택할 수 있습니다.
-아키텍처, 워크플로, 시스템, 개념 다이어그램은 Codex skill picker에서 `lit-diagram-drawer`를 선택합니다. 범위가 정해진 `lit` 다이어그램 요청에서도 이 스킬을 읽도록 안내합니다. 제품 UI와 측정 과학 데이터 플롯은 각각 전용 스킬을 사용합니다.
-보고서·기획서·워드 문서는 `lit-docx`, 발표자료·슬라이드는 `lit-pptx`를 선택합니다. 범위가 정해진 `lit` 요청은 필요한 스킬을 자동으로 읽고, 두 형식을 함께 요청하면 둘 다 사용합니다. 편집 가능한 Markdown 원본을 DOCX/PPTX 옆에 보관합니다. `litcodex install`이 Codex 세션 밖에서 고정된 의존성을 제품 캐시에 준비합니다. `litcodex office-runtime status` 또는 `litcodex doctor`로 준비 상태를 확인하고, 네트워크 없이 설치했다면 나중에 샌드박스 밖에서 `litcodex office-runtime install`을 실행합니다. LibreOffice·pandoc·XeLaTeX는 Office 실행기의 doctor 명령으로 확인합니다.
+같은 모드를 한 세션에서 다시 입력해도 달라지는 것은 없습니다. 개별 스킬은 Codex skill picker에서 정확한 ID로
+고르거나, `$litcodex:lit-handoff`, `$litcodex:lit-scientific-visualization`, `$litcodex:lit-humanizer`,
+`$litcodex:lit-fetch`처럼 `$litcodex:` 접두어를 붙인 이름으로 불러도 됩니다.
+
+이름을 알아 두면 편한 스킬도 몇 가지 있습니다.
+
+- **다이어그램.** 아키텍처, 워크플로, 시스템, 개념 다이어그램은 Codex skill picker에서 `lit-diagram-drawer`를
+  고르세요. `lit`으로 다이어그램을 요청해도 이 스킬을 읽도록 안내합니다. 제품 화면과 측정 데이터 그래프는 각자
+  전용 스킬이 있습니다.
+- **Word와 PowerPoint.** 보고서·기획서는 `lit-docx`, 발표자료는 `lit-pptx`를 고릅니다. 범위가 정해진 `lit`
+  요청은 필요한 스킬을 알아서 읽고, 두 형식을 함께 요청하면 둘 다 씁니다. 두 스킬 모두 편집 가능한 Markdown 원본을
+  DOCX/PPTX 옆에 남깁니다. 고정된 의존성은 `litcodex install`이 Codex 세션 밖에서 제품 캐시에 준비하고,
+  `litcodex office-runtime status`나 `litcodex doctor`로 준비 상태를 볼 수 있습니다. 네트워크 없이 설치했다면
+  나중에 샌드박스 밖에서 `litcodex office-runtime install`을 실행하세요. LibreOffice·pandoc·XeLaTeX 지원 여부는
+  Office 실행기의 doctor 명령이 알려 줍니다.
+- **글 다듬기.** 영어·한국어 글은 `lit-humanizer`를 고르세요. 저장하기 전에 확실한 초안 흔적 몇 가지를 막고,
+  약한 패턴은 알려 주기만 합니다. 만든 Office·PDF 파일도 호스트가 텍스트를 뽑을 수 있으면 생성 직후에 확인합니다.
 
 ### CLI 명령어
 
-| 명령 | 동작 |
+| 명령 | 하는 일 |
 | --- | --- |
 | `litcodex install` | LitCodex 플러그인과 훅 등록 |
-| `litcodex doctor` | 설치, 호스트 설정, 루프 상태 진단 |
-| `litcodex uninstall` | 플러그인과 관리 설정 제거 |
+| `litcodex doctor` | 설치, 루프 상태, 호스트 기능, 실제 적용된 설정 진단 |
+| `litcodex uninstall` | 플러그인과 LitCodex가 관리하는 설정 제거 |
 | `litcodex config migrate` | 관리되는 Codex 설정을 미리 보거나 적용 |
-| `litcodex hook user-prompt-submit` | 호스트가 호출하는 훅 진입점 |
+| `litcodex hook user-prompt-submit` | 호스트가 훅을 부를 때 쓰는 진입점 |
 | `litcodex loop create` | 브리프에서 목표와 성공 기준 도출 |
 | `litcodex loop status --json` | 루프 상태를 JSON으로 확인 |
-| `litcodex loop run` | 다음 실행 가능한 목표 선택 |
-| `litcodex loop record-evidence` | 기준별 통과·실패·차단 결과 기록 |
-| `litcodex loop checkpoint` | 모든 기준 통과 시 목표 완료 처리 |
+| `litcodex loop run` | 다음에 실행할 수 있는 목표 선택 |
+| `litcodex loop record-evidence` | 기준 하나의 통과·실패·차단 결과 기록 |
+| `litcodex loop checkpoint` | 모든 기준을 통과했을 때만 목표 완료 처리 |
 | `litcodex loop doctor` | 루프 상태 진단 또는 복구 |
 
-전역 설치가 없다면 이후 명령도 `npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex <command>` 형식으로 실행하세요. 예를 들어
-`npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex doctor`를 사용합니다.
-
-전체 스킬은 Codex skill picker에서 선택할 수 있습니다. 이전 스킬 이름은 한 릴리스 동안 새 이름으로 연결됩니다.
+전체 스킬은 Codex skill picker에서 볼 수 있습니다. 이름이 바뀐 스킬은 한 릴리스 동안 예전 이름으로도 불러집니다.
 [이름 전환 정책](./docs/usage-Ko-KR.md#스킬-이름-전환)과 [CHANGELOG.md](./CHANGELOG.md)를 참고하세요.
 
-## 루프 상태
+## 작업 기록이 남는 곳
 
-프로젝트의 `.litcodex/lit-loop/`에 `brief.md`, `goals.json`, `ledger.jsonl`, `evidence/`를 저장합니다.
-쓰기는 원자적으로 수행하며 손상된 목표 파일은 `.bak`으로 보존합니다. 로컬 상태는 Git과 패키지에서 제외됩니다.
-[상태·복구 참고서](./docs/usage-Ko-KR.md#루프-상태)에서 자세한 내용을 확인할 수 있습니다.
+프로젝트의 루프 상태는 `.litcodex/lit-loop/` 아래에 있습니다. 기록 파일은 `brief.md`, `goals.json`,
+`ledger.jsonl`이고, 증거는 `evidence/` 폴더에 쌓입니다. 쓰기는 원자적으로 이뤄지고, 손상된 목표 파일은 버리지 않고
+`.bak`으로 보존합니다. 이 상태는 로컬에만 있으며 Git과 패키지에서 제외됩니다.
+[상태·복구 참고서](./docs/usage-Ko-KR.md#루프-상태)에서 자세히 볼 수 있습니다.
 
-## 동작 확인
+## 설치 확인
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex doctor
 ```
 
-`litcodex doctor`는 등록·훅·설정·호스트 기능을, `litcodex loop doctor`는 프로젝트 루프 상태를 확인합니다.
-설치 검증을 통과해도 인증된 모델 작업이나 자식 에이전트 실행까지 확인한 것은 아닙니다.
+`litcodex doctor`는 등록·훅·설정·호스트 기능을, `litcodex loop doctor`는 현재 프로젝트의 루프 상태를 확인합니다.
+설치 검사를 통과해도 인증된 모델 작업이나 자식 에이전트 실행까지 확인한 것은 아닙니다.
 
 ## 안전
 
-- 계획과 증거를 검토할 수 있어야 합니다. 테스트 명령 실행만으로 성공 기준을 완료 처리하지 않습니다.
-- 설치는 관련 없는 Codex 설정을 보존합니다. `--reconfigure` 전에 변경 계획을 확인하세요.
-- 진단 자체는 읽기 전용이지만, 조건에 맞는 대화형 관리 명령 뒤에는 별도 업데이트 실행기가 새 전역 패키지를
-  설치할 수 있습니다. `LITCODEX_NO_UPDATE_CHECK=1`로 두 업데이트 경로를 끌 수 있습니다. 분리된 알림 작업은
-  캐시만 갱신합니다. JSON·dry-run·비TTY·CI·실패·opt-out doctor에서는 업데이트를 생략합니다. [개인정보 안내](./docs/privacy.md).
-- 모델 경로는 설정값이며 사용 권한이나 실행 보장이 아닙니다. [모델 호환성](./docs/usage-Ko-KR.md#설치)을 참고하세요.
+- 계획과 증거는 언제든 검토할 수 있습니다. 테스트 명령을 돌렸다는 사실만으로 성공 기준을 완료 처리하지 않습니다.
+- 설치는 관련 없는 Codex 설정을 그대로 둡니다. `--reconfigure` 전에는 바뀔 내용을 먼저 확인하세요.
+- 진단 자체는 Codex 설정, 설치 상태, 플러그인 상태를 바꾸지 않습니다. 조건에 맞는 대화형 doctor 실행에서는
+  캐시해 둔 안내를 보여 줄 수 있고, 백그라운드 작업은 정해진 레지스트리만 조회해
+  `~/.litcodex/update-check.json`을 새로 고칩니다. 이 작업은 패키지를 설치하지 않습니다. 이와 별개로, 조건에 맞는 대화형 관리 명령 뒤에는
+  업데이트 실행기가 새 전역 패키지를 설치할 수 있습니다. `LITCODEX_NO_UPDATE_CHECK=1`로 두 업데이트 경로를 모두
+  끌 수 있습니다. 실패했거나 `--json`·`--dry-run`·비TTY·CI·opt-out인 doctor 실행은 부수 효과가 없습니다.
+  [개인정보 안내](./docs/privacy.md)를 참고하세요.
+- 모델 경로는 설정값일 뿐, 그 모델을 쓸 수 있다거나 실제로 실행된다는 보장은 아닙니다.
+  [모델 호환성](./docs/usage-Ko-KR.md#설치)을 참고하세요.
 
 ## Jev 스킬 힌트 (선택)
 
@@ -616,41 +651,38 @@ export TYPESAFE_API_KEY=<본인의 TypeSafe 키>
 
 ## 문제 해결
 
-- **출력 없이 pane이 닫힌다면:** 아직 설치기·호스트·터미널 중 어느 단계의 문제인지 알 수 없습니다.
-  열린 터미널에서 도움말, 설치, doctor를 따로 실행하고 각 종료 코드를 남기세요.
-  [단계별 확인](./docs/npm-migration.md#isolated-local-trial) 후 호스트는 직접 실행합니다.
-- 활성화되지 않으면 `litcodex doctor`와 Codex의 훅 승인을 확인하세요.
-- 명령을 찾지 못하면 npx 형식을 사용하거나 npm 전역 bin 경로의 `PATH` 등록을 확인하세요.
-- native goal이 paused 또는 blocked라면 `/goal resume`으로 활성 상태를 확인한 뒤
-  `litcodex loop run --retry-failed`로 재시도하세요. 미완료 목표는 보존합니다. [복구 참고서](./docs/usage-Ko-KR.md#문제-해결).
+- **출력 없이 pane이 닫힌다면.** 아직 어느 단계에서 실패했는지 알 수 없습니다. 이미 열려 있는 터미널에서 도움말,
+  설치, doctor를 하나씩 따로 실행하고 각 종료 코드를 남기세요. 그다음 [단계별 확인](./docs/npm-migration.md#isolated-local-trial)을
+  따르되, 호스트는 직접 실행하세요.
+- **활성화되지 않는다면.** `litcodex doctor`를 실행하고 Codex에서 훅을 승인했는지 확인하세요.
+- **명령을 찾지 못한다면.** 위의 `npm exec` 형식을 쓰거나, npm 전역 bin 경로가 `PATH`에 있는지 확인하세요.
+- **native goal이 paused 또는 blocked라면.** `/goal resume`으로 재개하고 활성 상태인지 확인한 뒤
+  `litcodex loop run --retry-failed`로 다시 시도하세요. 미완료 목표는 지우지 말고 남겨 두세요. 자세한 내용은 [복구 참고서](./docs/usage-Ko-KR.md#문제-해결)에 있습니다.
 
 ## 제거
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.8 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex uninstall
 ```
 
-`litcodex uninstall`은 플러그인과 LitCodex 관리 설정을 제거하며 관련 없는 설정은 남깁니다.
+`litcodex uninstall`은 플러그인과 LitCodex가 관리하는 설정을 지우고, 관련 없는 설정은 그대로 둡니다.
 
 ## 라이선스
 
-MIT
+[MIT](./LICENSE)
 
-## 링크
+## 문서와 기여
 
-### 문서
+- [사용 참고서](./docs/usage-Ko-KR.md): 전체 경로, 모델 설정, 플랫폼 제약, 복구 절차
+- [LitCodex 계약](./docs/spec/litcodex-contract.md): 훅, native goal 경계, 증거 요건
+- [참조 분석](./docs/reference-analysis.md): 설계와 호환성 판단
+- 릴리스 이력은 [릴리스 provenance](./docs/release/provenance.md), [publish checklist](./docs/release/publish-checklist.md),
+  [CHANGELOG.md](./CHANGELOG.md)에 있습니다.
 
-- [사용 참고서](./docs/usage-Ko-KR.md) — 전체 경로, 모델 설정, 플랫폼 제약, 복구 절차
-- [LitCodex 계약](./docs/spec/litcodex-contract.md) — 훅, native goal 경계, 증거 요건
-- [참조 분석](./docs/reference-analysis.md) — 설계와 호환성 판단
-- [릴리스 provenance](./docs/release/provenance.md), [publish checklist](./docs/release/publish-checklist.md), [CHANGELOG.md](./CHANGELOG.md)
+테스트, 픽스처, 테스트 헬퍼, Vitest 설정은 이 저장소에만 있습니다. npm 패키지와 설치된 마켓플레이스 플러그인에는
+들어가지 않습니다.
 
-스킬 라이브러리에는 `autoconference`, `autoresearch`, `browser-drive`, `coding-session-audit`, `comment-checker`,
-`debugging`, `frontend-ui-ux`, `lit-commit`, `lit-crucible`, `lit-init`, `lit-korean`, `lit-fetch`, `litcodex-doctor`,
-`litcodex-report-bug`, `lsp`, `lsp-setup`, `lit-code`, `refactor`, `lit-burnoff`, `structural-search`,
-`lit-team`, `visual-qa`, `wikify`도 있습니다.
-
-테스트, 픽스처, 테스트 헬퍼 및 Vitest 설정은 추적되는 저장소 검증 자산으로 유지되며 npm 및 설치된 마켓플레이스 페이로드에서는 제외됩니다.
+[기여 안내](./CONTRIBUTING.md) · [보안](./SECURITY.md) · [행동 규범](./CODE_OF_CONDUCT.md) · [지원](./SUPPORT.md) · [개인정보](./docs/privacy.md)
 
 ### LITFAMILY
 
@@ -665,5 +697,3 @@ MIT
 <p align="center"><a href="./docs/assets/readme/ignition-film.mp4"><img src="./docs/assets/readme/ignition-poster.png" width="720" alt="Ignition 모션 그래픽 포스터" /></a></p>
 
 [애니메이션 GIF](./docs/assets/readme/ignition-readme.gif) · [미디어·아이콘 출처](./docs/assets/readme/README.md)
-
-[기여 안내](./CONTRIBUTING.md) · [보안](./SECURITY.md) · [행동 규범](./CODE_OF_CONDUCT.md) · [지원](./SUPPORT.md) · [개인정보](./docs/privacy.md)

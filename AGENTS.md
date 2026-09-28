@@ -97,8 +97,8 @@ and the `.gitignore` fallback is **disabled**. Consequences:
 
 `AGENTS.md` itself is tracked in git and excluded from the registry by `.npmignore`.
 README covers use `docs/assets/cover-motion.webp`, with `docs/assets/cover-motion-still.webp` as the
-reduced-motion still; both are excluded from npm, and the package README loads the copies in
-`packages/litcodex-ai/readme-assets/`. The older `docs/assets/cover.svg` and `cover.webp` stay in Git
+reduced-motion still; both are excluded from npm, and the package READMEs (`README.md` and
+`README-Ko-KR.md`, the short npm pages) load the copies in `packages/litcodex-ai/readme-assets/`. The older `docs/assets/cover.svg` and `cover.webp` stay in Git
 but are no longer shown. The SVG uses explicit vector paths and outlined glyphs. The small native
 plugin icon at `plugins/litcodex/assets/logo.png` remains required in the runtime payload.
 

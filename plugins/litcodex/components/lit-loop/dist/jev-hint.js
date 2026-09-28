@@ -270,19 +270,48 @@ function sessionStatePath(repoRoot, sessionId) {
         return null;
     return join(repoRoot, JEV_STATE_DIR, `${normalizeSessionId(sessionId) ?? "unscoped"}.json`);
 }
-function readSessionState(path) {
+const NO_FOLLOW = constants.O_NOFOLLOW ?? 0;
+/**
+ * The session record: fresh when missing or malformed, null when `.litcodex`, `.litcodex/jev` or the
+ * record itself is a symlink or the wrong kind of entry, so a checked-in link is never read through.
+ */
+export function readJevSessionState(path) {
+    const fresh = { version: 1, calls: 0, noted: false, announced: false };
+    const dir = dirname(path);
+    for (const level of [dirname(dir), dir, path]) {
+        let stat;
+        try {
+            stat = lstatSync(level, { throwIfNoEntry: false });
+        }
+        catch {
+            return null;
+        }
+        if (stat === undefined)
+            return fresh;
+        if (level === path ? !stat.isFile() : !stat.isDirectory())
+            return null;
+    }
+    let fd;
     try {
-        const parsed = JSON.parse(readFileSync(path, "utf8"));
+        fd = openSync(path, constants.O_RDONLY | NO_FOLLOW);
+    }
+    catch {
+        return null;
+    }
+    try {
+        const parsed = JSON.parse(readFileSync(fd, "utf8"));
         if (isRecord(parsed) && typeof parsed["calls"] === "number" && typeof parsed["noted"] === "boolean") {
             return { version: 1, calls: parsed["calls"], noted: parsed["noted"], announced: parsed["announced"] === true };
         }
     }
     catch {
-        // Missing or malformed state starts a fresh session record.
+        // A malformed record starts a fresh session record.
     }
-    return { version: 1, calls: 0, noted: false, announced: false };
+    finally {
+        closeSync(fd);
+    }
+    return fresh;
 }
-const NO_FOLLOW = constants.O_NOFOLLOW ?? 0;
 /**
  * Create `.litcodex/jev` one level at a time. False when either level is a symlink or not a directory,
  * so a checked-in link can never redirect state or trace writes elsewhere.
@@ -427,13 +456,15 @@ export async function runJevSkillHint(input) {
     const statePath = sessionStatePath(repoRoot, input.sessionId);
     if (statePath === null)
         return NOTHING;
-    const session = readSessionState(statePath);
+    const session = readJevSessionState(statePath);
+    if (session === null)
+        return NOTHING;
     const fail = (reason, record) => {
         writeTrace(repoRoot, env, now, { ...record, fallback: reason });
         if (session.noted)
             return NOTHING;
-        const current = readSessionState(statePath);
-        if (!writeSessionState(statePath, { ...current, noted: true }))
+        const current = readJevSessionState(statePath);
+        if (current === null || !writeSessionState(statePath, { ...current, noted: true }))
             return NOTHING;
         return { systemMessage: jevFallbackNote(reason) };
     };
@@ -497,8 +528,8 @@ export function claimJevOnBanner(repoRoot, sessionId, env) {
     const statePath = sessionStatePath(repoRoot, sessionId);
     if (statePath === null)
         return null;
-    const session = readSessionState(statePath);
-    if (session.announced)
+    const session = readJevSessionState(statePath);
+    if (session === null || session.announced)
         return null;
     return writeSessionState(statePath, { ...session, announced: true }) ? JEV_ON_BANNER : null;
 }

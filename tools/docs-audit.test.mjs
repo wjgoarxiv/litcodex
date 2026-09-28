@@ -97,6 +97,9 @@ describe("docs-audit command surface (pure)", () => {
 			"litcodex uninstall",
 			"litcodex config migrate",
 			"litcodex hook user-prompt-submit",
+			"litcodex motion-runtime install",
+			"litcodex motion-runtime install --word-timing",
+			"litcodex motion-runtime status",
 			"litcodex loop create",
 			"litcodex loop run",
 			"litcodex loop status --json",
@@ -117,6 +120,13 @@ describe("docs-audit command surface (pure)", () => {
 		assert.ok(hit, "fake litcodex foo-bar flagged");
 		assert.ok(typeof hit.line === "number" && hit.line > 0);
 		evidence("task-27-surface-fake-top.txt", `flagged ${hit.value}\nSTATUS: PASS`);
+	});
+
+	test("fake motion-runtime subcommand fails", () => {
+		const report = auditCommandSurface("```\nlitcodex motion-runtime warm\n```");
+		assert.ok(
+			report.offenders.some((o) => o.kind === "unknown-command" && o.value === "litcodex motion-runtime warm"),
+		);
 	});
 
 	test("fake loop subcommand fails", () => {
@@ -414,6 +424,7 @@ describe("docs-audit doc set", () => {
 			"README.md",
 			"README-Ko-KR.md",
 			"packages/litcodex-ai/README.md",
+			"packages/litcodex-ai/README-Ko-KR.md",
 			"docs/usage.md",
 			"docs/usage-Ko-KR.md",
 			"docs/spec/litcodex-contract.md",
@@ -429,19 +440,31 @@ describe("docs-audit doc set", () => {
 	});
 
 	test("public docs distinguish tracked coverage from shipped runtime payload", () => {
-		const englishContract =
+		const changelogContract =
 			"Tests, fixtures, test helpers, and Vitest configuration remain tracked repository coverage and are excluded from npm and installed marketplace payloads.";
-		for (const rel of ["README.md", "packages/litcodex-ai/README.md", "CHANGELOG.md"]) {
-			const text = readFileSync(join(REPO_ROOT, rel), "utf8");
-			assert.ok(text.includes(englishContract), `${rel} must state the tracked-versus-shipped coverage contract`);
-		}
-		const korean = readFileSync(join(REPO_ROOT, "README-Ko-KR.md"), "utf8");
+		const flat = (rel) => readFileSync(join(REPO_ROOT, rel), "utf8").replace(/\s+/g, " ");
 		assert.ok(
-			korean.includes(
-				"테스트, 픽스처, 테스트 헬퍼 및 Vitest 설정은 추적되는 저장소 검증 자산으로 유지되며 npm 및 설치된 마켓플레이스 페이로드에서는 제외됩니다.",
-			),
-			"README-Ko-KR.md must state the tracked-versus-shipped coverage contract",
+			readFileSync(join(REPO_ROOT, "CHANGELOG.md"), "utf8").includes(changelogContract),
+			"CHANGELOG.md keeps the tracked-versus-shipped entry",
 		);
+		for (const rel of ["README.md", "packages/litcodex-ai/README.md"]) {
+			assert.ok(
+				flat(rel).includes(
+					"Tests, fixtures, test helpers and the Vitest configuration live only in the repository. Neither the npm package nor the installed marketplace plugin includes them.",
+				) ||
+					flat(rel).includes(
+						"Tests, fixtures, test helpers and the Vitest configuration live only in this repository. Neither the npm package nor the installed marketplace plugin includes them.",
+					),
+				`${rel} must state the tracked-versus-shipped coverage contract`,
+			);
+		}
+		for (const rel of ["README-Ko-KR.md", "packages/litcodex-ai/README-Ko-KR.md"]) {
+			assert.match(
+				flat(rel),
+				/테스트, 픽스처, 테스트 헬퍼, Vitest 설정은 (?:이 )?저장소에만 있습니다\. npm 패키지와 설치된 마켓플레이스 플러그인에는 들어가지 않습니다\./,
+				`${rel} must state the tracked-versus-shipped coverage contract`,
+			);
+		}
 	});
 });
 
@@ -449,7 +472,7 @@ describe("docs-audit cli", () => {
 	test("audit passes on the real repo docs", () => {
 		const r = runAuditCli();
 		assert.equal(r.code, 0, r.stdout + r.stderr);
-		assert.match(r.stdout, /ok: 21 doc\(s\) consistent/);
+		assert.match(r.stdout, /ok: 22 doc\(s\) consistent/);
 		assert.match(r.stdout, /docs-audit: PASS/);
 		evidence("task-27-cli-pass.txt", r.stdout.trim());
 	});

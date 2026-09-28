@@ -82,6 +82,17 @@ export interface JevHttpResponse {
 /** Injected in tests; the default uses the runtime's built-in `fetch`. */
 export type JevHttpClient = (url: string, request: JevHttpRequest) => Promise<JevHttpResponse>;
 export declare const fetchJevHttpClient: JevHttpClient;
+export interface JevSessionState {
+    readonly version: 1;
+    readonly calls: number;
+    readonly noted: boolean;
+    readonly announced: boolean;
+}
+/**
+ * The session record: fresh when missing or malformed, null when `.litcodex`, `.litcodex/jev` or the
+ * record itself is a symlink or the wrong kind of entry, so a checked-in link is never read through.
+ */
+export declare function readJevSessionState(path: string): JevSessionState | null;
 export interface JevHintInput {
     readonly prompt: string;
     readonly sessionId: string | null;

@@ -92,6 +92,11 @@ Proceed only when it prints `release:check: READY at <VERSION>` with `publishAtt
 
 ## Manual repository and registry gates
 
+The npm package carries its own README pair, `packages/litcodex-ai/README.md` and `README-Ko-KR.md`: a short
+install card whose images load from jsDelivr at the exact package version. The repository README pair is the
+full GitHub page and loads everything by relative path. A version bump moves the jsDelivr pins in both package
+READMEs; `node --test tools/readme.test.mjs` fails on a stale pin, a relative target or a missing GitHub guide link.
+
 9. Confirm factual repository metadata and exact refs. The configured remote must be
    `https://github.com/wjgoarxiv/litcodex.git`, the branch must be `main`, and all three hashes must
    match. `git status --short` must print nothing.

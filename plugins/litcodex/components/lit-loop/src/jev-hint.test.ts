@@ -4,7 +4,16 @@
 // is obviously fake, and the last test asserts it never appears in any captured stream or state file.
 
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	symlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PassThrough, Writable } from "node:stream";
@@ -23,6 +32,7 @@ import {
 	jevSkipReason,
 	jevSwitchState,
 	loadJevCatalog,
+	readJevSessionState,
 	redactJevPrompt,
 	runJevSkillHint,
 } from "./jev-hint.js";
@@ -435,6 +445,62 @@ describe("jev skill hint local files refuse symlinks", () => {
 		expect(readdirSync(outside)).toEqual([]);
 
 		expect(fake.calls).toHaveLength(1);
+	});
+
+	it("session state behind a symlinked file or folder is never read; the turn stays silent", async () => {
+		const linked = JSON.stringify({ version: 1, calls: 999, noted: true, announced: true });
+		const cases: Array<[string, (repoRoot: string, outside: string) => void]> = [
+			[
+				"state file",
+				(repoRoot, outside) => {
+					writeFileSync(join(outside, "session-1.json"), linked);
+					mkdirSync(join(repoRoot, ".litcodex", "jev"), { recursive: true });
+					symlinkSync(join(outside, "session-1.json"), join(repoRoot, ".litcodex", "jev", "session-1.json"));
+				},
+			],
+			[
+				"jev folder",
+				(repoRoot, outside) => {
+					writeFileSync(join(outside, "session-1.json"), linked);
+					mkdirSync(join(repoRoot, ".litcodex"), { recursive: true });
+					symlinkSync(outside, join(repoRoot, ".litcodex", "jev"));
+				},
+			],
+			[
+				".litcodex folder",
+				(repoRoot, outside) => {
+					mkdirSync(join(outside, "jev"));
+					writeFileSync(join(outside, "jev", "session-1.json"), linked);
+					symlinkSync(outside, join(repoRoot, ".litcodex"));
+				},
+			],
+		];
+		const fake = fakeClient(() => answer("lit-humanizer", 0.9));
+		for (const [label, arrange] of cases) {
+			const repoRoot = tempDir("repo");
+			arrange(repoRoot, tempDir("outside"));
+			const statePath = join(repoRoot, ".litcodex", "jev", "session-1.json");
+			expect(readJevSessionState(statePath), label).toBeNull();
+			const env = { ...ON, LITCODEX_JEV_TRACE: "1" };
+			expect(await run({ http: fake.http, repoRoot, env }), label).toEqual({});
+			expect(await run({ http: fake.http, repoRoot, env: { ...env, TYPESAFE_API_KEY: "" } }), label).toEqual({});
+			expect(claimJevOnBanner(repoRoot, "session-1", env), label).toBeNull();
+			expect(existsSync(join(repoRoot, ".litcodex", "jev", "trace.jsonl")), label).toBe(false);
+		}
+		expect(fake.calls).toHaveLength(0);
+	});
+
+	it("a real state folder still reads a missing record as fresh and a written record as written", () => {
+		const repoRoot = tempDir("repo");
+		const statePath = join(repoRoot, ".litcodex", "jev", "session-1.json");
+		const fresh = { version: 1, calls: 0, noted: false, announced: false };
+		expect(readJevSessionState(statePath)).toEqual(fresh);
+		mkdirSync(join(repoRoot, ".litcodex", "jev"), { recursive: true });
+		expect(readJevSessionState(statePath)).toEqual(fresh);
+		writeFileSync(statePath, JSON.stringify({ version: 1, calls: 3, noted: true, announced: true }));
+		expect(readJevSessionState(statePath)).toEqual({ version: 1, calls: 3, noted: true, announced: true });
+		writeFileSync(statePath, "not json");
+		expect(readJevSessionState(statePath)).toEqual(fresh);
 	});
 });
 

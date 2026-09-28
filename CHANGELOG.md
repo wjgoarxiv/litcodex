@@ -6,6 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.9] - 2026-09-29
+
+### Fixed
+
+- The Jev skill hint no longer reads its per-session record through a symlink. If `.litcodex`,
+  `.litcodex/jev` or the record itself is a link, the hint stays silent for that turn and sends
+  nothing.
+- The motion runtime pre-warm that `npm install -g` starts now works. It used to fail every time,
+  because npm's global-install settings reached its inner `npm ci`, which refuses to run globally.
+  The Office runtime install drops the same settings before its own `npm ci`.
+
+### Changed
+
+- `docs/privacy.md` now describes the Jev per-session record: where it lives, its four fields, and
+  that it holds no prompt text, response, skill choice or key.
+- The README explains what `npm install -g` runs after install: a short welcome and a motion runtime
+  pre-warm that uses the network. It also lists how to skip it, with `--ignore-scripts` or `CI=1`.
+- The READMEs are rewritten in plainer language. The GitHub README keeps the full guide, the skills
+  gallery and the A/B results; the npm page is now a short install card that links there, and a Korean
+  npm README ships in the package.
+
 ## [1.0.8] - 2026-09-28
 
 ### Added

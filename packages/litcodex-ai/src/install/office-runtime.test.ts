@@ -51,6 +51,43 @@ describe("Office runtime boundary", () => {
 		expect(officeRuntimeNotice(offline.ready)).toContain("office-runtime install");
 	});
 
+	it("a runtime install launched under global npm config runs its npm ci without the global mode", () => {
+		const dir = mkdtempSync(join(tmpdir(), "lit-office-global-"));
+		roots.push(dir);
+		const base = {
+			...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^npm_/iu.test(key))),
+			XDG_CACHE_HOME: join(dir, "xdg"),
+		};
+		const doctor = spawnSync(process.execPath, [runner, "doctor"], { encoding: "utf8", env: base });
+		const pptxCache = (JSON.parse(doctor.stdout) as { pptx: { cache: string } }).pptx.cache;
+		mkdirSync(pptxCache, { recursive: true });
+		writeFileSync(join(pptxCache, "python.ready"), "ready\n");
+		const dump = join(dir, "npm-env.json");
+		const fakeNpm = join(dir, "fake-npm.mjs");
+		writeFileSync(
+			fakeNpm,
+			`import { writeFileSync } from "node:fs";\nwriteFileSync(${JSON.stringify(dump)}, JSON.stringify({ argv: process.argv.slice(2), env: process.env }));\nprocess.exit(1);\n`,
+		);
+		const npmGlobal = {
+			npm_config_global: "true",
+			npm_config_location: "global",
+			NPM_CONFIG_PREFIX: join(dir, "prefix"),
+			npm_config_dry_run: "true",
+		};
+		const result = spawnSync(process.execPath, [runner, "install"], {
+			encoding: "utf8",
+			env: { ...base, ...npmGlobal, npm_execpath: fakeNpm, npm_config_registry: "http://127.0.0.1:9/" },
+		});
+		expect(result.status).toBe(1);
+		const seen = JSON.parse(readFileSync(dump, "utf8")) as { argv: string[]; env: Record<string, string> };
+		expect(seen.argv[0]).toBe("ci");
+		expect(
+			Object.keys(seen.env).filter((key) => /^npm_config_(global|location|prefix|dry_run)$/iu.test(key)),
+		).toEqual([]);
+		expect(seen.env["npm_config_registry"]).toBe("http://127.0.0.1:9/");
+		expect(seen.env["PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD"]).toBe("1");
+	});
+
 	it("skill guidance forbids substitute OOXML builders and handles renderer aborts", () => {
 		for (const skill of ["lit-pptx", "lit-docx"]) {
 			const body = readFileSync(join(root, `plugins/litcodex/skills/${skill}/SKILL.md`), "utf8");

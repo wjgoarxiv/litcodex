@@ -2001,6 +2001,7 @@
         "src/**",
         "model-catalog.json",
         "README.md",
+        "README-Ko-KR.md",
         "LICENSE",
         "readme-assets/**",
         "node_modules/@litcodex/lit-loop/**"

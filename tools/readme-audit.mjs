@@ -23,6 +23,7 @@ export const TOP_LEVEL_ROUTES = Object.freeze([
 	"install",
 	"doctor",
 	"office-runtime",
+	"motion-runtime",
 	"uninstall",
 	"config",
 	"loop",
@@ -48,6 +49,7 @@ export const LOOP_SUBCOMMANDS = Object.freeze([
 export const CONFIG_SUBCOMMANDS = Object.freeze(["migrate"]);
 export const HOOK_SUBCOMMANDS = Object.freeze(["user-prompt-submit"]);
 export const OFFICE_RUNTIME_SUBCOMMANDS = Object.freeze(["install", "status"]);
+export const MOTION_RUNTIME_SUBCOMMANDS = Object.freeze(["install", "status"]);
 
 // Fixed, contract-derived non-gating claims (G16.2): descriptive claims the audit deliberately
 // does NOT verify against the live Codex host. Emitted verbatim so the report self-documents the

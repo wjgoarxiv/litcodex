@@ -57,7 +57,11 @@ passwords that are not written as `password=…`.
 The key is read from the environment only. LitCodex never writes it to output, errors or local state.
 Because `TYPESAFE_API_KEY` is exported in the shell that starts Codex, Codex's own tools can read it too;
 use a key dedicated to this feature, with low spend limits.
-Per-session call counts live under project `.litcodex/jev/`. With `LITCODEX_JEV_TRACE=1`,
+Each session keeps one small record at project `.litcodex/jev/<session id>.json` (`unscoped.json` when
+the hook gets no session id). It holds four fields: a format version, the number of requests sent, whether
+the one fallback note was already shown, and whether the `✦ Jev skill hint ON` banner was already shown.
+It holds no prompt text, response, skill choice or key. LitCodex does not read or write the record
+through a symlink. With `LITCODEX_JEV_TRACE=1`,
 `.litcodex/jev/trace.jsonl` records a timestamp, a SHA-256 of the sent text, the chosen skill, confidence,
 latency, HTTP status and fallback reason; it never records the text, the response body or the key.
 TypeSafe bills the key's owner. Unset `LITCODEX_JEV` and restart Codex to stop the requests.

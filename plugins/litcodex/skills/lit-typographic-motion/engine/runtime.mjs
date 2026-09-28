@@ -115,6 +115,10 @@ function withLock(root, action) {
 		});
 }
 
+/** npm config an enclosing `npm install -g` or `--dry-run` exports; each one turns the child `npm ci` into a different command. */
+const INHERITED_NPM_MODE = /^npm_config_(global|location|prefix|dry[-_]run)$/iu;
+const npmChildEnv = (env) => Object.fromEntries(Object.entries(env).filter(([key]) => !INHERITED_NPM_MODE.test(key)));
+
 function npmCommand(env) {
 	if (env.npm_execpath && existsSync(env.npm_execpath)) return [process.execPath, [env.npm_execpath]];
 	return [process.platform === "win32" ? "npm.cmd" : "npm", []];
@@ -139,7 +143,7 @@ export async function install({ env = process.env, audio = false, wordTiming = f
 			const args = [...prefix, "ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"];
 			if (env.LITCODEX_MOTION_NPM_CACHE) args.push("--offline", "--cache", env.LITCODEX_MOTION_NPM_CACHE);
 			log(`installing pinned engine dependencies into ${dir}`);
-			const result = spawnSync(command, args, { cwd: dir, encoding: "utf8", env: { ...env, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1" }, timeout: 300000 });
+			const result = spawnSync(command, args, { cwd: dir, encoding: "utf8", env: { ...npmChildEnv(env), PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1" }, timeout: 300000 });
 			if (result.status !== 0) throw new Error(`npm ci failed: ${(result.error?.message || result.stderr || "").trim().split("\n").slice(-2).join(" ")}`);
 		}
 		for (const item of FETCHED) {

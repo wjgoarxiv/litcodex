@@ -27,8 +27,8 @@ describe("plugin-root skill runtime contracts", () => {
 		expect(packageReadme).toMatch(/exact bare\s+`lit-scientific-visualization` hook route/u);
 		expect(packageReadme).toContain("does not install Python dependencies");
 		const activationIntro = repoReadme.slice(
-			repoReadme.indexOf("## Activate lit"),
-			repoReadme.indexOf("## The lit command family"),
+			repoReadme.indexOf("## Start with lit"),
+			repoReadme.indexOf("## Skills at a glance"),
 		);
 		expect(activationIntro).toContain("exact bare `handoff`");
 		expect(activationIntro).toContain("<lit-scientific-visualization-mode>");

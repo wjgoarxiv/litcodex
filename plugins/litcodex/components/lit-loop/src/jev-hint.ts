@@ -328,7 +328,7 @@ export const fetchJevHttpClient: JevHttpClient = async (url, request) => {
 
 // ── Session state and trace ──────────────────────────────────────────────────
 
-interface JevSessionState {
+export interface JevSessionState {
 	readonly version: 1;
 	readonly calls: number;
 	readonly noted: boolean;
@@ -340,19 +340,43 @@ function sessionStatePath(repoRoot: string, sessionId: string | null): string | 
 	return join(repoRoot, JEV_STATE_DIR, `${normalizeSessionId(sessionId) ?? "unscoped"}.json`);
 }
 
-function readSessionState(path: string): JevSessionState {
+const NO_FOLLOW = constants.O_NOFOLLOW ?? 0;
+
+/**
+ * The session record: fresh when missing or malformed, null when `.litcodex`, `.litcodex/jev` or the
+ * record itself is a symlink or the wrong kind of entry, so a checked-in link is never read through.
+ */
+export function readJevSessionState(path: string): JevSessionState | null {
+	const fresh: JevSessionState = { version: 1, calls: 0, noted: false, announced: false };
+	const dir = dirname(path);
+	for (const level of [dirname(dir), dir, path]) {
+		let stat: ReturnType<typeof lstatSync>;
+		try {
+			stat = lstatSync(level, { throwIfNoEntry: false });
+		} catch {
+			return null;
+		}
+		if (stat === undefined) return fresh;
+		if (level === path ? !stat.isFile() : !stat.isDirectory()) return null;
+	}
+	let fd: number;
 	try {
-		const parsed: unknown = JSON.parse(readFileSync(path, "utf8"));
+		fd = openSync(path, constants.O_RDONLY | NO_FOLLOW);
+	} catch {
+		return null;
+	}
+	try {
+		const parsed: unknown = JSON.parse(readFileSync(fd, "utf8"));
 		if (isRecord(parsed) && typeof parsed["calls"] === "number" && typeof parsed["noted"] === "boolean") {
 			return { version: 1, calls: parsed["calls"], noted: parsed["noted"], announced: parsed["announced"] === true };
 		}
 	} catch {
-		// Missing or malformed state starts a fresh session record.
+		// A malformed record starts a fresh session record.
+	} finally {
+		closeSync(fd);
 	}
-	return { version: 1, calls: 0, noted: false, announced: false };
+	return fresh;
 }
-
-const NO_FOLLOW = constants.O_NOFOLLOW ?? 0;
 
 /**
  * Create `.litcodex/jev` one level at a time. False when either level is a symlink or not a directory,
@@ -522,12 +546,13 @@ export async function runJevSkillHint(input: JevHintInput): Promise<JevHintResul
 
 	const statePath = sessionStatePath(repoRoot, input.sessionId);
 	if (statePath === null) return NOTHING;
-	const session = readSessionState(statePath);
+	const session = readJevSessionState(statePath);
+	if (session === null) return NOTHING;
 	const fail = (reason: string, record: Omit<JevTraceRecord, "fallback">): JevHintResult => {
 		writeTrace(repoRoot, env, now, { ...record, fallback: reason });
 		if (session.noted) return NOTHING;
-		const current = readSessionState(statePath);
-		if (!writeSessionState(statePath, { ...current, noted: true })) return NOTHING;
+		const current = readJevSessionState(statePath);
+		if (current === null || !writeSessionState(statePath, { ...current, noted: true })) return NOTHING;
 		return { systemMessage: jevFallbackNote(reason) };
 	};
 	const blank = { promptSha256: "", choice: null, confidence: null, latencyMs: null, httpStatus: null };
@@ -587,8 +612,8 @@ export function claimJevOnBanner(repoRoot: string, sessionId: string | null, env
 	if (jevSwitchState(env) !== "on") return null;
 	const statePath = sessionStatePath(repoRoot, sessionId);
 	if (statePath === null) return null;
-	const session = readSessionState(statePath);
-	if (session.announced) return null;
+	const session = readJevSessionState(statePath);
+	if (session === null || session.announced) return null;
 	return writeSessionState(statePath, { ...session, announced: true }) ? JEV_ON_BANNER : null;
 }
 

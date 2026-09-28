@@ -43,6 +43,12 @@ function npmInvocation(args) {
     : { command: process.platform === "win32" ? "npm.cmd" : "npm", args };
 }
 
+// npm config an enclosing `npm install -g` or `--dry-run` exports; each one turns the child `npm ci` into a different command.
+const inheritedNpmMode = /^npm_config_(global|location|prefix|dry[-_]run)$/iu;
+function npmChildEnv() {
+  return Object.fromEntries(Object.entries(process.env).filter(([key]) => !inheritedNpmMode.test(key)));
+}
+
 function cacheFor(skill) {
   const root = skill === "pptx" ? deckRoot : docRoot;
   const lock = join(root, "runtime/requirements.lock");
@@ -85,7 +91,7 @@ function ensureNode(cache) {
   }
   const npm = npmInvocation(["ci", "--ignore-scripts", "--omit=dev", "--prefix", cache]);
   run(npm.command, npm.args, {
-    env: { ...process.env, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1" },
+    env: { ...npmChildEnv(), PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1" },
   });
   writeFileSync(join(cache, "node.ready"), "ready\n");
 }

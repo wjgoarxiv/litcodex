@@ -200,7 +200,12 @@ describe("approved next-version picker families", () => {
 
 describe("mutable catalog prose cleanup", () => {
 	it("keeps release history in the changelog instead of mutable README chronology", () => {
-		for (const relativePath of ["README.md", "README-Ko-KR.md", "packages/litcodex-ai/README.md"]) {
+		for (const relativePath of [
+			"README.md",
+			"README-Ko-KR.md",
+			"packages/litcodex-ai/README.md",
+			"packages/litcodex-ai/README-Ko-KR.md",
+		]) {
 			const text = readFileSync(`${repoRoot}${relativePath}`, "utf8");
 			expect(text, relativePath).not.toMatch(/release candidate|릴리스 후보/iu);
 			expect(text, relativePath).not.toMatch(/\b31(?:-skill| skills?|개 (?:canonical )?번들 스킬|개 스킬)\b/iu);
