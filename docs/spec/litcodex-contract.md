@@ -117,7 +117,13 @@ directive into the model's context for the next turn.
   `NO_COLOR`, `CI`, dumb terminals, and non-UTF-8 locales use its escape-free form.
   `hookSpecificOutput.hookEventName` equals **`UserPromptSubmit`**. The model-only
   `hookSpecificOutput.additionalContext` contains the **`<lit-loop-mode>`**
-  directive block. Non-activation turns emit no hook JSON or `systemMessage`.
+  directive block. Non-activation turns emit no hook JSON or `systemMessage`,
+  except that the opt-in Jev skill hint (`LITCODEX_JEV=1` plus `TYPESAFE_API_KEY`) may add one
+  advisory `additionalContext` line or a once-per-session fallback `systemMessage`,
+  and with `LITCODEX_JEV_SHOW=1` a hinted turn also carries a `systemMessage` naming the skill id and latency;
+  while the hint is on, the first such turn of each session also carries a plain-text `✦ Jev skill hint ON`
+  `systemMessage`
+  ([privacy](../privacy.md#optional-jev-skill-hint)).
 - The hook input type-guard accepts both `hook_event_name` (snake_case,
   primary) and `hookEventName` (camelCase, fallback); the output is always
   camelCase.

@@ -43,6 +43,25 @@ separate notifier eligible. The CLI also accepts `--no-auto-update` on managemen
 commands. These controls do not stop npm from downloading an explicitly requested
 package, or prevent an external tool from making network requests.
 
+## Optional Jev skill hint
+
+The [Jev skill hint](../plugins/litcodex/components/lit-loop/src/jev-hint.ts) is off by default. When
+`LITCODEX_JEV=1` and a non-empty `TYPESAFE_API_KEY` are both set in the environment Codex runs in, the
+`UserPromptSubmit` hook sends each eligible prompt to `https://api.typesafe.ai/v1/systemone`. The request
+holds the prompt text, truncated to 2,000 characters with home paths, email addresses and token-shaped
+strings redacted, plus the names and short descriptions of the bundled skills. It holds no files, tool output
+or history. Slash commands, `$skill` mentions and prompts that already start a lit route are not sent.
+Anything in the prompt without a token shape is sent as written, such as hostnames, customer names, or
+passwords that are not written as `password=…`.
+
+The key is read from the environment only. LitCodex never writes it to output, errors or local state.
+Because `TYPESAFE_API_KEY` is exported in the shell that starts Codex, Codex's own tools can read it too;
+use a key dedicated to this feature, with low spend limits.
+Per-session call counts live under project `.litcodex/jev/`. With `LITCODEX_JEV_TRACE=1`,
+`.litcodex/jev/trace.jsonl` records a timestamp, a SHA-256 of the sent text, the chosen skill, confidence,
+latency, HTTP status and fallback reason; it never records the text, the response body or the key.
+TypeSafe bills the key's owner. Unset `LITCODEX_JEV` and restart Codex to stop the requests.
+
 ## Model and tool work
 
 Running model work uses your configured Codex host and provider. Prompts, selected

@@ -581,6 +581,39 @@ npm exec --yes --package @litfamily/litcodex@1.0.7 -- litcodex doctor
   캐시만 갱신합니다. JSON·dry-run·비TTY·CI·실패·opt-out doctor에서는 업데이트를 생략합니다. [개인정보 안내](./docs/privacy.md).
 - 모델 경로는 설정값이며 사용 권한이나 실행 보장이 아닙니다. [모델 호환성](./docs/usage-Ko-KR.md#설치)을 참고하세요.
 
+## Jev 스킬 힌트 (선택)
+
+LitCodex는 TypeSafe(typesafe.ai)의 호스팅 모델 Jev에게 일반 프롬프트에 맞는 번들 LitCodex 스킬을 물어볼 수
+있습니다. Jev가 충분한 확신으로 하나를 고르면 `UserPromptSubmit` 훅이 그 스킬 이름을 담은 참고용 한 줄을 이번
+턴 컨텍스트에 추가합니다. 스킬을 불러올지는 여전히 Codex가 정합니다. 힌트는 권한을 주거나 도구를 실행하지
+않습니다.
+
+기본값은 꺼짐입니다. 켜려면 Codex를 실행하는 환경에 두 변수를 모두 설정한 뒤 Codex를 다시 시작하세요.
+
+```sh
+export LITCODEX_JEV=1
+export TYPESAFE_API_KEY=<본인의 TypeSafe 키>
+```
+
+- **켜면 조건에 맞는 프롬프트가 매번 TypeSafe(typesafe.ai)로 전송됩니다.** 먼저 2,000자로 자르고 홈 경로,
+  이메일 주소, 토큰 형태의 문자열을 가립니다. 파일, 도구 출력, 대화 기록 같은 세션의 다른 내용은 보내지
+  않습니다. 슬래시 명령, `$skill` 언급, 이미 lit 경로를 시작하는 프롬프트도 보내지 않습니다.
+- 토큰 형태가 아닌 내용은 그대로 전송됩니다. 호스트 이름, 고객 이름, `password=…` 형식으로 쓰지 않은 비밀번호가
+  그 예입니다.
+- `TYPESAFE_API_KEY`는 Codex를 시작하는 셸에서 export되므로 Codex의 도구도 이 값을 읽을 수 있습니다. 이 기능
+  전용 키를 쓰고 사용 한도를 낮게 설정하세요.
+- 비용은 본인 키로 TypeSafe에 청구되며 입력 토큰 100만 개당 약 0.04달러입니다. 요청에는 프롬프트와 스킬 목록이
+  함께 들어가고, 세션당 요청은 최대 200회입니다(`LITCODEX_JEV_MAX_CALLS`).
+- 힌트 자체는 모델에게만 전달됩니다. 직접 보려면 `LITCODEX_JEV_SHOW=1`도 설정하세요. 힌트가 붙은 턴마다 Codex
+  대화 화면에 `Jev → lit-humanizer (0.37s)` 같은 한 줄이 나타납니다.
+- 켜져 있으면 세션마다 lit 경로를 시작하지 않는 첫 프롬프트에서 `✦ Jev skill hint ON`이 한 번 나타나 켜진
+  상태임을 알려 줍니다.
+- 요청마다 최대 1.5초까지만 기다립니다. 시간 초과나 다른 실패가 나면 힌트 없이 평소처럼 진행하고, 짧은 안내를
+  세션당 한 번만 보여 줍니다.
+- `litcodex doctor`는 `Jev skill hint: off`, `on`, `flag on but TYPESAFE_API_KEY missing` 중 하나를 보여 줍니다.
+- 끄려면 `LITCODEX_JEV`를 지운 뒤(`1`이 아닌 값이어도 꺼집니다) Codex를 다시 시작하세요.
+  [개인정보 안내](./docs/privacy.md#optional-jev-skill-hint)도 참고하세요.
+
 ## 문제 해결
 
 - **출력 없이 pane이 닫힌다면:** 아직 설치기·호스트·터미널 중 어느 단계의 문제인지 알 수 없습니다.

@@ -5,9 +5,12 @@
 // hands the parsed value to the pure engine, and writes the decision. Exit map: any structurally
 // valid event → 0 (no-op writes zero bytes); unparseable or oversized stdin → 2 with a
 // machine-readable LitHookError JSON line on stderr. NEVER calls process.exit (the dispatcher does)
-// and NEVER throws.
+// and NEVER throws. A UserPromptSubmit turn the router leaves alone may carry the opt-in Jev skill
+// hint (./jev-hint.ts) and, once per session while it is on, a plain-text banner; with its switch
+// off, that path makes no request and writes nothing.
 import { isAbsolute } from "node:path";
-import { applyPreToolUseCreateGoalGuard, runUserPromptSubmitHook } from "./codex-hook.js";
+import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
+import { claimJevOnBanner, formatJevHookOutput, jevSwitchState, runJevSkillHint, withJevBanner, } from "./jev-hint.js";
 import { evaluatePlanPersistence, formatStopBlockOutput, recordLitPlanActivation } from "./plan-persistence.js";
 /** Hard cap on stdin to bound memory / ReDoS exposure inside the 5 s Codex hook budget. 8 MB. */
 export const MAX_STDIN_BYTES = 8_000_000;
@@ -66,7 +69,7 @@ function readStdin(stdin) {
  * NEVER throws. Writes the camelCase activation line to stdout (empty on no-op), or a LitHookError
  * line to stderr on malformed / oversized stdin.
  */
-export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot = process.cwd()) {
+export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot = process.cwd(), jev = {}) {
     const decoded = await readStdin(stdin);
     if (decoded === null) {
         stderr.write(errorLine("LIT_HOOK_STDIN_TOO_LARGE", TOO_LARGE_MESSAGE));
@@ -94,9 +97,38 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
         if (scope !== null)
             recordLitPlanActivation(scope.cwd, scope.sessionId);
     }
-    if (decision.kind === "inject")
+    if (decision.kind === "inject") {
         stdout.write(decision.stdout);
+        return 0;
+    }
+    const hint = await jevHintOutput(parsed, repoRoot, jev);
+    if (hint !== "")
+        stdout.write(hint);
     return 0;
+}
+/** Optional Jev skill hint for a turn the deterministic router left alone. Never throws. */
+async function jevHintOutput(parsed, repoRoot, options) {
+    const env = options.env ?? process.env;
+    if (jevSwitchState(env) === "off" || !isLitUserPromptSubmitInput(parsed))
+        return "";
+    const record = parsed;
+    const sessionId = typeof record["session_id"] === "string" ? record["session_id"] : null;
+    const cwd = typeof record["cwd"] === "string" && isAbsolute(record["cwd"]) ? record["cwd"] : repoRoot;
+    try {
+        const banner = claimJevOnBanner(cwd, sessionId, env);
+        const result = await runJevSkillHint({
+            prompt: parsed.prompt,
+            sessionId,
+            repoRoot: cwd,
+            env,
+            ...(options.http === undefined ? {} : { http: options.http }),
+            ...(options.skillsRoot === undefined ? {} : { skillsRoot: options.skillsRoot }),
+        });
+        return formatJevHookOutput(withJevBanner(result, banner));
+    }
+    catch {
+        return "";
+    }
 }
 /** Read `{ session_id, cwd }` from a hook event; `cwd` falls back to `repoRoot` when absent or relative. */
 function hookSessionScope(parsed, repoRoot) {

@@ -29,6 +29,7 @@ export function renderDoctorText(report: DoctorReport): string {
 			: [
 					`  auto-update: ${report.autoUpdate.enabled ? "enabled" : "disabled"} (${report.autoUpdate.status ?? "no receipt"}; ${report.autoUpdate.detail})`,
 				]),
+		...(report.jevSkillHint === undefined ? [] : [`  Jev skill hint: ${report.jevSkillHint}`]),
 		`  concurrency: ${capabilityText(report.capabilities.concurrency)}`,
 		`  probe-only explicit context/auto-compaction override: ${capabilityText(report.capabilities.autoCompaction)}`,
 	];

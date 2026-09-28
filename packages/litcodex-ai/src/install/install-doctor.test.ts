@@ -177,3 +177,30 @@ describe("probeMarketplaceRegistration — parses Codex 0.144 structured source"
 		});
 	});
 });
+
+describe("doctor — Jev skill hint line", () => {
+	const fakeKey = "test-key-not-real-0000";
+	const withEnv = (deps: ReturnType<typeof doctorDeps>, extra: NodeJS.ProcessEnv) => ({
+		...deps,
+		env: { ...deps.env, ...extra },
+	});
+
+	it("shows off, on, or the missing key, and never the key itself", () => {
+		const cases: Array<[NodeJS.ProcessEnv, string]> = [
+			[{}, "off"],
+			[{ TYPESAFE_API_KEY: fakeKey }, "off"],
+			[{ LITCODEX_JEV: "1", TYPESAFE_API_KEY: fakeKey }, "on"],
+			[{ LITCODEX_JEV: "1" }, "flag on but TYPESAFE_API_KEY missing"],
+			[{ LITCODEX_JEV: "1", TYPESAFE_API_KEY: " " }, "flag on but TYPESAFE_API_KEY missing"],
+		];
+		for (const files of [[codexBin, sentinelPath], []]) {
+			for (const [extra, state] of cases) {
+				const report = runDoctor(withEnv(doctorDeps(files), extra));
+				const text = renderDoctorText(report);
+				expect(report.jevSkillHint).toBe(state);
+				expect(text).toContain(`  Jev skill hint: ${state}`);
+				expect(`${text}\n${JSON.stringify(report)}`).not.toContain(fakeKey);
+			}
+		}
+	});
+});

@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Add an optional Jev skill hint. With `LITCODEX_JEV=1` and your own `TYPESAFE_API_KEY`, the
+  prompt hook sends each eligible prompt, redacted and truncated, to TypeSafe and may add one advisory
+  skill line. It is off by default, and `litcodex doctor` shows its state. `LITCODEX_JEV_SHOW=1` also
+  shows a hinted turn's skill id and latency in the Codex transcript. While it is on, each session shows
+  `✦ Jev skill hint ON` once.
+
 ## [1.0.7] - 2026-09-28
 
 ### Added

@@ -110,7 +110,11 @@ export interface DoctorReport {
 	readonly warnings: readonly string[];
 	/** Read-only foreground update barrier state; the updater owns the receipt/journal files. */
 	readonly autoUpdate?: AutoUpdateDoctorReport;
+	/** Opt-in Jev skill hint switch, read from this process's environment. Never carries the key. */
+	readonly jevSkillHint?: JevSkillHintState;
 }
+
+export type JevSkillHintState = "off" | "on" | "flag on but TYPESAFE_API_KEY missing";
 
 export interface AutoUpdateDoctorReport {
 	readonly enabled: boolean;

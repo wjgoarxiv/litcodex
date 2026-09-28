@@ -24,7 +24,7 @@ import { inspectEffectiveConfig } from "./doctor-config.js";
 import { modelContextsForWrites, probeHostCapabilities } from "./host-capabilities.js";
 import { canonicalMarketplacePath, LITCODEX_MARKETPLACE, managedMarketplaceRoot } from "./marketplace.js";
 import { probeSkillCatalogPayload } from "./skill-catalog.js";
-import type { AutoUpdateDoctorReport, DoctorReport } from "./types.js";
+import type { AutoUpdateDoctorReport, DoctorReport, JevSkillHintState } from "./types.js";
 
 export { renderDoctorText } from "./doctor-render.js";
 
@@ -103,6 +103,7 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 			scientificVisualizationInstalled: false,
 			capabilities: unavailableCapabilities,
 			autoUpdate: readAutoUpdateReport(deps.env),
+			jevSkillHint: jevSkillHintState(deps.env),
 			issues,
 			warnings,
 		};
@@ -199,9 +200,16 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 		...bundledSkills,
 		capabilities,
 		autoUpdate,
+		jevSkillHint: jevSkillHintState(deps.env),
 		issues,
 		warnings,
 	};
+}
+
+/** Mirrors the lit-loop hook switch: `LITCODEX_JEV=1` plus a non-empty `TYPESAFE_API_KEY`. */
+function jevSkillHintState(env: NodeJS.ProcessEnv): JevSkillHintState {
+	if (env["LITCODEX_JEV"] !== "1") return "off";
+	return (env["TYPESAFE_API_KEY"]?.trim() ?? "") !== "" ? "on" : "flag on but TYPESAFE_API_KEY missing";
 }
 
 /** Read the updater receipt without touching the updater lock, journal, or npm. */

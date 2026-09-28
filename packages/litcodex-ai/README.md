@@ -577,6 +577,40 @@ project loop state. A successful installation check does not prove authenticated
   and opt-out doctor paths stay side-effect-free. See [privacy](https://github.com/wjgoarxiv/litcodex/blob/main/docs/privacy.md).
 - Model routes are configuration choices, not guarantees of access or execution. See [managed model compatibility](https://github.com/wjgoarxiv/litcodex/blob/main/docs/usage.md#safety).
 
+## Jev skill hint (optional)
+
+LitCodex can ask Jev, a hosted model from TypeSafe (typesafe.ai), which bundled LitCodex skill fits a plain
+prompt. When Jev picks one with enough confidence, the `UserPromptSubmit` hook adds one advisory line naming
+that skill to the turn's context. Codex still decides whether to load it. The hint never grants a permission
+or runs a tool.
+
+It is off by default. To turn it on, set both variables in the environment Codex runs in, then restart Codex:
+
+```sh
+export LITCODEX_JEV=1
+export TYPESAFE_API_KEY=<your own TypeSafe key>
+```
+
+- **Enabling it sends each eligible prompt to TypeSafe (typesafe.ai).** The text is truncated to 2,000
+  characters, and home paths, email addresses and token-shaped strings are redacted first. Nothing else from
+  the session is sent: no files, tool output or history. Slash commands, `$skill` mentions and prompts that
+  already start a lit route are not sent.
+- Anything in the prompt without a token shape is sent as written: hostnames, customer names, or passwords
+  that are not written as `password=…`, for example.
+- Because `TYPESAFE_API_KEY` is exported in the shell that starts Codex, Codex's own tools can read it too.
+  Use a key dedicated to this feature, with low spend limits.
+- TypeSafe bills your key, at about $0.04 per million input tokens. Each request carries the prompt and the
+  skill list. A session makes at most 200 requests (`LITCODEX_JEV_MAX_CALLS`).
+- The hint itself goes only to the model. To see it, also set `LITCODEX_JEV_SHOW=1`: a turn that got a hint
+  then shows one line in the Codex transcript, such as `Jev → lit-humanizer (0.37s)`.
+- While it is on, the first prompt of each session that does not start a lit route shows `✦ Jev skill hint ON`
+  once, so you can tell it is enabled.
+- Each request waits at most 1.5 seconds. After a timeout or any other failure the turn continues without a
+  hint, and one short note appears once per session.
+- `litcodex doctor` shows `Jev skill hint: off`, `on`, or `flag on but TYPESAFE_API_KEY missing`.
+- To turn it off, unset `LITCODEX_JEV` (any value other than `1` also turns it off) and restart Codex.
+  See [privacy](https://github.com/wjgoarxiv/litcodex/blob/main/docs/privacy.md#optional-jev-skill-hint).
+
 ## Troubleshooting
 
 - **Pane closes before any output:** the failing stage is unknown. In an already-open terminal, run help,

@@ -40,6 +40,9 @@ env.npm_config_globalconfig = join(sandbox, "global-npmrc");
 env.LITCODEX_MODEL_CATALOG_STATE_PATH = join(sandbox, "catalog-state.json");
 env.LITCODEX_TEST_PROTECTED_HOME = protectedHome;
 env.LITCODEX_TEST_PROTECTED_CODEX_HOME = protectedCodex;
+// An opted-in maintainer shell must never turn a test hook run into a live skill-hint request.
+delete env.LITCODEX_JEV;
+delete env.TYPESAFE_API_KEY;
 
 // macOS enforces this across Node, Python, shell and host subprocesses, even when
 // a child replaces its environment. Linked-worktree index/tree verification also
