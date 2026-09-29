@@ -27,9 +27,9 @@ Node.js 22 이상과 Codex CLI가 필요합니다.
 npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install
 ```
 
-설치기는 플러그인·훅·에이전트를 등록하고 `~/.codex/config.toml`에서 자신이 관리하는 항목만 갱신합니다.
-설치 중에 리드 모델, 헬퍼 모델, 출력 스타일을 묻고, 새로 설치하면 리드는 `gpt-6-astra`/`xhigh`, 헬퍼는
-`gpt-6-luna`/`max`가 기본값입니다. 미리 보려면
+설치기는 플러그인과 훅, 에이전트를 등록하고 `~/.codex/config.toml`에서는 자기가 관리하는 항목만 고칩니다.
+설치 중에 어떤 모델이 작업을 이끌지(리드), 어떤 모델이 거들지(헬퍼), 답변 스타일은 무엇으로 할지 묻습니다.
+새로 설치하면 리드는 `gpt-6-astra`/`xhigh`, 헬퍼는 `gpt-6-luna`/`max`로 시작합니다. 바뀔 내용을 먼저 보려면
 `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex --dry-run install`을 실행하고, 묻는 단계 없이
 설치하려면 `install` 뒤에 `--yes`를 붙이세요.
 
@@ -40,19 +40,23 @@ npm install -g @litfamily/litcodex
 litcodex install
 ```
 
-전역 설치는 postinstall 스크립트를 실행합니다. `CI`가 설정되지 않았으면 짧은 환영 문구를 보여 준 뒤
-`lit-typographic-motion`용 런타임을 `${XDG_CACHE_HOME:-~/.cache}/litcodex/motion-runtime/`에 미리 준비해
-봅니다. 이 과정은 네트워크를 씁니다. 고정된 npm 패키지는 레지스트리에서, 고정된 글꼴·라이선스 파일은
-GitHub와 apache.org에서 받고, 브라우저는 내려받지 않습니다. 끝나지 않아도 패키지는 설치된 채로 남으며
-`litcodex motion-runtime install`로 다시 시도할 수 있습니다. 건너뛰려면 `--ignore-scripts`를 붙이거나
-`CI=1`을 설정하세요. `litcodex install`도 같은 준비 과정을 실행하며, 이를 끄는 옵션은 없습니다.
+전역으로 설치하면 `CI`가 설정되어 있지 않은 한 짧은 설치 스크립트가 환영 문구를 보여 주고, 영상 스킬
+`lit-typographic-motion`이 쓸 도구를 미리 받아 둡니다. 처음 영상을 요청할 때 렌더링 도구가 이미 준비되어 있게
+하려는 것입니다. 그래서 인터넷을 조금 씁니다. 버전이 고정된 npm 패키지는 레지스트리에서, 고정된 글꼴·라이선스 파일은 GitHub와 apache.org에서
+받아 모두 `${XDG_CACHE_HOME:-~/.cache}/litcodex/motion-runtime/`에 둡니다. 브라우저는 받지 않습니다. 이 단계가
+끝나지 않아도 LitCodex 설치는 그대로 남고, 나중에 `litcodex motion-runtime install`로 다시 해 보면 됩니다.
+
+전역 설치 때 이 스크립트를 빼려면 `--ignore-scripts`를 붙이거나 그 명령에만 `CI=1`을 설정하세요.
+다만 이렇게 빼도 내려받기가 뒤로 미뤄질 뿐입니다. `litcodex install`이 설치에 성공한 뒤 같은 도구를 준비하고,
+이 단계는 끌 수 없습니다.
 
 > 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex <command>` 형식을 사용하세요.
 
 기존 설정과 떼어 놓고 써 보려면
 [격리된 체험 안내](https://github.com/wjgoarxiv/litcodex/blob/main/docs/npm-migration.md#isolated-local-trial)를
-따르세요. `CODEX_HOME`만 바꿔서는 부족합니다. Windows에서도 설치기와 CLI shim은 동작하지만, POSIX가 필요한 Python
-경로는 `BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME`으로 멈춥니다.
+따르세요. 체험용 홈 디렉터리를 통째로 따로 만드는 방법인데, `CODEX_HOME` 하나만 바꾸면 기존 설정이 여전히
+읽힐 수 있기 때문입니다. Windows에서도 설치기와 CLI shim은 동작하고, POSIX가 필요한 Python 경로만
+`BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME`으로 멈춥니다.
 
 ## 첫 작업
 
@@ -62,8 +66,8 @@ GitHub와 apache.org에서 받고, 브라우저는 내려받지 않습니다. �
 lit 회원가입 폼에 입력 검증을 추가해줘
 ```
 
-답변은 `🔥 **LIT IGNITED · <discipline>** 🔥` 한 줄로 시작합니다. 이 표시는 요청이 제 경로로 들어갔다는
-뜻일 뿐입니다. 목표는 성공 기준을 모두 통과해야 완료되고, 기록은 프로젝트의 `.litcodex/lit-loop/` 아래에 남습니다.
+답변이 `🔥 **LIT IGNITED · <discipline>** 🔥` 한 줄로 시작하면 요청이 LitCodex에 닿은 것입니다. 목표는 성공
+기준을 모두 통과해야 완료되고, 기록은 프로젝트의 `.litcodex/lit-loop/` 아래에 남습니다.
 
 직접 판단할 수 있는 첫 작업이 필요하다면 빈 폴더에서 이렇게 시작해 보세요.
 
@@ -86,8 +90,8 @@ lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외�
 | `review-work` | 변경과 그 근거를 검토합니다. |
 | `litresearch` | 출처를 달아 조사하고, 아직 불확실한 부분을 따로 적어 둡니다. |
 
-다른 문구 없이 `handoff`만 보내면 인수인계 문서를 만듭니다. `lit-scientific-visualization`만 단독으로 입력하면
-훅이 시각화 어댑터를 불러오며, Python 의존성을 설치하지는 않습니다.
+메시지 전체가 그 한 단어일 때만 동작하는 단어가 두 개 있습니다. `handoff`만 보내면 인수인계 문서를 만들고,
+`lit-scientific-visualization`만 보내면 시각화 어댑터를 불러옵니다. Python 패키지는 설치하지 않습니다.
 
 ## 패키지에 들어 있는 스킬
 
@@ -97,7 +101,7 @@ lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외�
 
 **작업을 계획하고 실행하기**
 
-- `lit-loop`(`lit`): 오래 이어지는 루프 안에서 일하고, 확인하지 못한 것은 그대로 기록합니다.
+- `lit-loop`(`lit`): 세션이 바뀌어도 이어지는 루프 안에서 일하고, 확인하지 못한 것은 그대로 적어 둡니다.
 - `litwork`: 처음부터 끝까지 꼼꼼한 구현이나 수정입니다. 실패하는 테스트 먼저, 그다음 실제 화면에서 증명합니다.
 - `lit-plan`: `.litcodex/plans/`에 번호 붙은 승인 계획을 만듭니다. 계획만 세웁니다.
 - Start Work(`lit start work <승인된 계획>`): 승인된 계획을 다섯 관문으로 실행합니다.
@@ -109,7 +113,7 @@ lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외�
 
 **검토, 조사, 지식**
 
-- `review-work`: 막는 힘이 있는 리뷰 다섯 갈래입니다. 하나라도 실패하면 승인되지 않습니다.
+- `review-work`: 리뷰 다섯 개가 따로 돌고, 하나라도 통과하지 못하면 승인이 나지 않습니다.
 - `litresearch`: 조사를 요청할 때만 움직이며, 여러 갈래로 증거를 모아 출처와 함께 종합합니다.
 - `autoresearch`: 승인된 예산 안에서 실험을 반복합니다.
 - `autoconference`: 예산을 정해 두고 연구 회의를 엽니다.
@@ -155,24 +159,26 @@ lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외�
 ## 설치하면 달라지는 것
 
 Codex가 플러그인을 불러오고 훅을 실행합니다. 훅은 요청이 어떤 모드에 속하는지 가리고, 스킬은 에이전트의 작업
-절차를 안내하며, 루프 CLI는 프로젝트 기록을 관리합니다. 패키지가 Codex의 native goal 도구를 직접 호출하지는
-않습니다. 도구가 있으면 에이전트가 씁니다. paused 또는 blocked인 목표는 아래 복구 절차를 따르세요.
+절차를 안내하며, 루프 CLI는 프로젝트 기록을 관리합니다. Codex 목표 도구는 LitCodex가 직접 부르지 않고, 도구가
+있을 때 에이전트가 씁니다. 멈췄거나(paused) 막힌(blocked) 목표는 아래 복구 절차를 따르세요.
 
 - Codex에 플러그인·훅·에이전트가 등록되고 `~/.codex/config.toml`의 관리 항목이 갱신됩니다. 관련 없는 Codex
   설정은 그대로 둡니다. `--reconfigure` 전에는 바뀔 내용을 먼저 확인하세요.
-- 모델 경로는 설정값일 뿐, 그 모델을 쓸 수 있다거나 실제로 실행된다는 보장은 아닙니다.
+- 고른 모델은 설정 파일에 적히는 값입니다. 그 모델을 실제로 쓸 수 있는지, 실제로 도는지는 Codex와 사용자 계정에 달려 있습니다.
 - 프로젝트마다 `.litcodex/lit-loop/` 아래에 로컬 기록이 생기며, Git과 패키지에서는 제외됩니다.
-- 진단 자체는 Codex 설정, 설치 상태, 플러그인 상태를 바꾸지 않습니다. 조건에 맞는 대화형 doctor 실행에서는
-  캐시해 둔 안내를 보여 줄 수 있고, 백그라운드 작업은 정해진 레지스트리만 조회해 `~/.litcodex/update-check.json`을
-  새로 고칠 뿐 패키지를 설치하지 않습니다. 이와 별개로, 조건에 맞는 대화형 관리 명령 뒤에는 업데이트 실행기가
-  새 전역 패키지를 설치할 수 있습니다. `LITCODEX_NO_UPDATE_CHECK=1`로 둘 다 끌 수 있고, 실패했거나
-  `--json`·`--dry-run`·비TTY·CI·opt-out인 doctor 실행은 부수 효과가 없습니다.
+- doctor 진단은 Codex 설정, 설치 상태, 플러그인 상태를 바꾸지 않고 살펴보기만 합니다. 터미널에서 직접 실행해
+  성공적으로 끝난 doctor처럼 조건에 맞는 실행이면 캐시해 둔 새 버전 안내가 뜰 수 있고, 백그라운드 작업이 정해진
+  레지스트리만 조회해 `~/.litcodex/update-check.json`에 적어 둡니다. 이 작업은 아무것도 설치하지 않습니다. 이와
+  별개로, 조건에 맞는 대화형 관리 명령 뒤에는 업데이트 실행기가 새 전역 패키지를 설치할 수 있습니다.
+  `LITCODEX_NO_UPDATE_CHECK=1`을 설정하면 둘 다 꺼집니다. 실패했거나 `--json`·`--dry-run`으로 돌렸거나,
+  비TTY·CI 환경이거나 이 설정으로 끈 doctor 실행은 부수 효과가 없습니다.
 - 테스트, 픽스처, 테스트 헬퍼, Vitest 설정은 저장소에만 있습니다. npm 패키지와 설치된 마켓플레이스 플러그인에는
   들어가지 않습니다.
 
-선택 기능인 Jev 스킬 힌트는 기본값이 꺼짐입니다. 켜면(`LITCODEX_JEV=1`과 본인의 `TYPESAFE_API_KEY`) 조건에 맞는
-프롬프트가 매번 TypeSafe(typesafe.ai)로 전송됩니다. 2,000자로 자르고 홈 경로, 이메일 주소, 토큰 형태의 문자열을
-가리고, 프롬프트의 나머지 내용은 그대로 보냅니다. 파일, 도구 출력, 대화 기록은 보내지 않습니다. 켜기 전에
+선택 기능인 Jev 스킬 힌트는 평범한 요청에 맞는 번들 스킬을 제안해 주며, 기본값은 꺼짐입니다.
+켜면(`LITCODEX_JEV=1`과 본인의 `TYPESAFE_API_KEY`) 조건에 맞는 프롬프트가 매번 TypeSafe(typesafe.ai)로 갑니다.
+2,000자로 자르고 홈 경로, 이메일 주소, 토큰 형태의 문자열을 가린 뒤 나머지는 그대로 보냅니다. 파일, 도구 출력,
+대화 기록은 보내지 않습니다. 켜기 전에
 [전체 설명](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md#jev-스킬-힌트-선택)과
 [개인정보 안내](https://github.com/wjgoarxiv/litcodex/blob/main/docs/privacy.md#optional-jev-skill-hint)를 읽어 주세요.
 
@@ -183,13 +189,14 @@ npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex doctor
 ```
 
 `litcodex doctor`는 등록·훅·설정·호스트 기능을, `litcodex loop doctor`는 현재 프로젝트의 루프 상태를 확인합니다.
-검사를 통과해도 인증된 모델 작업까지 확인한 것은 아닙니다.
+둘 다 설치 상태를 보는 검사이고, 로그인한 모델 작업이 실제로 도는지는 작은 작업을 하나 맡겨 보면 알 수 있습니다.
 
 - **`lit`을 입력해도 반응이 없다면.** `litcodex doctor`를 실행하고 Codex에서 훅을 승인했는지 확인하세요.
 - **명령을 찾지 못한다면.** 위의 `npm exec` 형식을 쓰거나, npm 전역 bin 경로를 `PATH`에 넣으세요.
-- **native goal이 paused 또는 blocked라면.** `/goal resume`으로 재개하고 활성 상태인지 확인한 뒤
+- **Codex 목표가 멈췄거나(paused) 막혔다면(blocked).** `/goal resume`으로 재개하고 활성 상태인지 확인한 뒤
   `litcodex loop run --retry-failed`로 다시 시도하세요. 미완료 목표는 지우지 말고 남겨 두세요.
-- **출력 없이 pane이 닫힌다면.** 열린 터미널에서 도움말, 설치, doctor를 하나씩 실행해 각 종료 코드를 남기고
+- **아무 출력 없이 창(pane)이 닫힌다면.** 어느 단계가 문제인지부터 찾습니다. 열린 터미널에서 도움말, 설치,
+  doctor를 하나씩 실행해 각 종료 코드를 적어 두고
   [문제 해결](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md#문제-해결)을 참고하세요.
 
 ```sh

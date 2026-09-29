@@ -200,11 +200,11 @@ describe("docs-audit repo-derived facts", () => {
 		assert.deepEqual(documentedModeForms(korean, mode), expectedForms);
 		assert.match(
 			english,
-			/slash-command-style mentions are ignored except the explicit\s+`\/litresearch` research route/,
+			/Slash commands are left alone as well, with one\s+exception: `\/litresearch` starts research\./,
 		);
 		assert.match(
 			korean,
-			/슬래시로 시작하는 일반적인 명령 형태도 무시하지만, 정확한 `\/litresearch`만 예외로 연구 모드로 라우팅합니다\./,
+			/슬래시 명령도\s+건드리지\s+않는데,\s+`\/litresearch`\s+하나만\s+예외로\s+조사를\s+시작합니다\./,
 		);
 		assert.match(korean, /정확히 단독으로 입력한 `handoff`/);
 		assert.match(korean, /정확히 단독으로 입력한 `lit-scientific-visualization`/);

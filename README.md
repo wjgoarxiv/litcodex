@@ -68,8 +68,8 @@ Starting takes a sentence. Picking up where you left off takes more: the decisio
 the checks you ran, and the next thing to try.
 
 **LIT keeps that spark with your project.** Goals, plans, checked results and next steps stay in
-local records that a later session can read. An enduring spark means work you can return to;
-it is not a promise that an agent runs forever.
+local records that a later session can read. The spark that lasts is the work you can come back to,
+long after the agent has stopped.
 
 **Where one conversation ends, the next stretch of work can begin.**
 
@@ -83,18 +83,19 @@ You need Node.js 22 or later and Codex CLI. Then run:
 npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install
 ```
 
-The installer registers the plugin, hooks and agents, and updates the keys it manages in
-`~/.codex/config.toml`. It asks three things: the lead model, the helper model and the output style.
-Fresh installs default to `gpt-6-astra` at `xhigh` for the lead route and `gpt-6-luna` at `max` for
-ordinary helpers; you can pick any other supported model and effort instead.
+The installer sets LitCodex up inside Codex. It registers the plugin, its hooks and its agents, and
+it changes only the keys it manages in `~/.codex/config.toml`. Along the way it asks three questions:
+which model leads, which model helps, and which output style you like. On a fresh install the lead is
+`gpt-6-astra` at `xhigh` and ordinary helpers use `gpt-6-luna` at `max`. Pick another supported model
+and effort if you prefer.
 
-The npm package is self-contained, so you do not need to clone this repository, and installing needs
-no GitHub credentials. Codex sign-in and model access are needed once real model work starts.
+Everything comes in the npm package, so there is nothing to clone and no GitHub sign-in. You need your
+Codex sign-in and model access once real model work starts.
 
 Two variants are worth knowing:
 
-- To see what would change first, run `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex --dry-run install`.
-- For an unattended setup, run `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install --yes`. An explicit `--style <id>` still applies.
+- If you want to see what would change before anything does, run `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex --dry-run install`.
+- If you are setting up a machine without anyone at the keyboard, run `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install --yes`. A `--style <id>` you pass is still used.
 
 Coming from the old unscoped package? The [migration guide](./docs/npm-migration.md) covers the move.
 
@@ -107,32 +108,37 @@ npm install -g @litfamily/litcodex
 litcodex install
 ```
 
-`npm install -g` runs the package's postinstall script. On a global install, unless `CI` is set, it
-prints a short welcome and then tries to pre-warm the motion runtime used by `lit-typographic-motion`.
+A global install does a little more than copy files. Right after the download, unless `CI` is set, a
+short setup script prints a welcome and then gets the video skill, `lit-typographic-motion`, ready ahead of time, so the
+tools it renders with are already in place the first time you ask for a video.
 
-That pre-warm goes to the network. `npm ci` fetches the pinned `opentype.js`, `playwright-core` and
-`ws` from your npm registry, and the pinned font and license files come from GitHub and apache.org.
-It downloads no browser and installs into `${XDG_CACHE_HOME:-~/.cache}/litcodex/motion-runtime/`.
-If it does not finish, the package stays installed and the script tells you to retry later with
-`litcodex motion-runtime install`.
+Getting ready means a few downloads. The script runs `npm ci` to fetch pinned copies of `opentype.js`,
+`playwright-core` and `ws` from your npm registry, and it fetches pinned font and license files from
+GitHub and apache.org. It downloads no browser. Everything goes into
+`${XDG_CACHE_HOME:-~/.cache}/litcodex/motion-runtime/`. If the step does not finish, LitCodex is still
+installed, and the script prints the command to try again later: `litcodex motion-runtime install`.
 
-To leave the script out, add `--ignore-scripts` (this also drops the welcome) or set `CI=1` for that
-one command. `litcodex install` runs the same pre-warm after a successful install and has no switch
-to turn it off.
+You can keep the script out of the global install in either of two ways:
+
+- Add `--ignore-scripts` to `npm install -g`. The whole script is left out, welcome included.
+- Set `CI=1` for that one command. The script sees it and stops before doing anything, just as it does
+  on a build server where `CI` is already set.
+
+Leaving it out here only postpones the downloads. `litcodex install` gets the video tools ready the same
+way after a successful install, and there is no switch to turn that off.
 
 > Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex doctor`.
 
 ### Trying it apart from your setup
 
 To try LitCodex without touching your existing settings, follow the
-[isolated trial guide](./docs/npm-migration.md#isolated-local-trial). Changing only `CODEX_HOME` is
-not enough: settings in your existing home can still be found.
+[isolated trial guide](./docs/npm-migration.md#isolated-local-trial). It gives the trial a whole home of its
+own, because with only `CODEX_HOME` changed, settings in your existing home can still be found.
 
 ### Windows
 
-The installer and the CLI shims work on Windows. Python routes that depend on directory descriptors
-need POSIX, so on Windows they stop with `BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME`. See
-[platform and prompt policy](./docs/usage.md#install).
+The installer and the CLI shims work on Windows. Python routes that rely on POSIX directory
+descriptors cannot run there, so on Windows they stop with `BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME`. See [platform and prompt policy](./docs/usage.md#install).
 
 ## Start with lit
 
@@ -142,18 +148,19 @@ Open Codex in your project and approve the LitCodex hooks when the startup revie
 lit add input validation to the signup form
 ```
 
-A bare `lit` selects `<lit-loop-mode>`. The `UserPromptSubmit` hook shows a five-row activation mark
-through its `systemMessage`, the same plain text whatever your terminal color settings, and the reply
-opens with `🔥 **LIT IGNITED · <discipline>** 🔥`.
+When `lit` stands on its own as a word, LitCodex puts the request into its work loop
+(`<lit-loop-mode>` internally). You see two signs of it. A five-row LIT mark appears first; the
+`UserPromptSubmit` hook sends it as plain text, so it looks the same whatever your terminal colors.
+Then the reply opens with `🔥 **LIT IGNITED · <discipline>** 🔥`.
 
-Words that merely contain `lit` stay inert: `split`, `literal` and `litmus` do nothing.
-Code spans and fences are ignored too, and slash-command-style mentions are ignored except the explicit
-`/litresearch` research route.
+Words that only happen to contain the letters, such as `split`, `literal` or `litmus`, do nothing.
+Neither does `lit` inside a code span or a code block. Slash commands are left alone as well, with one
+exception: `/litresearch` starts research.
 
-`handoff` and `lit-scientific-visualization` are exact-only routes: they fire only when the whole
-message is that one word. Send exact bare `handoff` to write a continuation packet. The exact bare
-`lit-scientific-visualization` hook route selects `<lit-scientific-visualization-mode>`; it does not
-install Python dependencies.
+`handoff` and `lit-scientific-visualization` are exact-only routes: each one works only when it is the
+whole message, with nothing around it. The command table calls that "exact bare".
+Send exact bare `handoff` to write a continuation packet. Send exact bare `lit-scientific-visualization`
+to switch to plotting mode (`<lit-scientific-visualization-mode>`); it installs no Python packages.
 
 ### Make one small thing
 
@@ -165,13 +172,14 @@ Check adding and completing a task, and record anything you could not verify.
 ```
 
 When it finishes, look for three things: the result, the checks that actually ran, and what is still
-unfinished. The status mark only tells you the request was routed. It does not prove the page works.
+unfinished. The status mark tells you the request reached LitCodex. Whether the page works is something
+you find out by opening it and adding a task yourself.
 
-Ask for `lit recap` to read what was recorded. Before you leave the session, send exact bare
-`handoff` as its own message. In the next session, ask Codex to read that packet and the project goals
-before it continues.
+Ask for `lit recap` to read what was recorded. Before you leave the session, send `handoff` as a
+message of its own. In the next session, ask Codex to read that packet and the project goals before it
+continues.
 
-A goal is complete only after every one of its success criteria passes. Each step leaves something
+A goal is complete only once every one of its success criteria passes. Each step leaves something
 behind:
 
 | Step | What stays with the work |
@@ -181,8 +189,9 @@ behind:
 | Verify | Evidence for each completed criterion; blockers stay open |
 | Hand off | Decisions, remaining work, and where to resume |
 
-Codex's native goals and the local loop records are kept apart. If a native goal is paused or blocked,
-use the recovery step under [Troubleshooting](#troubleshooting); a handoff does not resume it for you.
+Codex keeps its own goals (the `/goal` feature), and LitCodex keeps its records separately. If a Codex
+goal is paused or blocked, bring it back with the recovery step under [Troubleshooting](#troubleshooting).
+A handoff carries your notes forward and leaves the goal as it was.
 
 ### The routes you will use most
 
@@ -205,14 +214,14 @@ the checks that run on their own.
 <table>
 <tr><th>What it looks like</th><th>Skill</th><th>What you get</th></tr>
 <tr>
-<td><img src="./docs/assets/skills/lit-loop.webp" width="240" alt="Add lit to a request. Codex binds the scope, works with evidence and records what it could not verify." /></td>
+<td><img src="./docs/assets/skills/lit-loop.webp" width="240" alt="Add lit to a request. Codex pins down the scope, backs each step with a check, and writes down what it could not verify." /></td>
 <td><code>lit-loop</code><br /><sub><code>lit</code> · <code>$litcodex:lit-loop</code></sub></td>
-<td>Add <code>lit</code> to a request. Codex binds the scope, works with evidence and records what it could not verify.</td>
+<td>Add <code>lit</code> to a request. Codex pins down the scope, backs each step with a check, and writes down what it could not verify.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/litwork.webp" width="240" alt="Careful end-to-end build or fix: RED first, then proof on the real surface." /></td>
+<td><img src="./docs/assets/skills/litwork.webp" width="240" alt="A careful build or fix from start to finish: a failing test first, then proof where the thing actually runs." /></td>
 <td><code>litwork</code><br /><sub><code>litwork</code> · <code>$litcodex:litwork</code></sub></td>
-<td>Careful end-to-end build or fix: RED first, then proof on the real surface.</td>
+<td>A careful build or fix from start to finish: a failing test first, then proof where the thing actually runs.</td>
 </tr>
 <tr>
 <td><img src="./docs/assets/skills/lit-plan.webp" width="240" alt="An approved plan in .litcodex/plans/ with numbered rows. Planning only." /></td>
@@ -220,19 +229,19 @@ the checks that run on their own.
 <td>An approved plan in <code>.litcodex/plans/</code> with numbered rows. Planning only.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/start-approved-plan.webp" width="240" alt="Runs an approved plan through five gates. All five review lanes must pass at the end." /></td>
+<td><img src="./docs/assets/skills/start-approved-plan.webp" width="240" alt="Runs an approved plan through five gates and finishes only when all five reviews pass." /></td>
 <td>Start Work<br /><sub><code>lit start work &lt;approved-plan&gt;</code></sub></td>
-<td>Runs an approved plan through five gates. All five review lanes must pass at the end.</td>
+<td>Runs an approved plan through five gates and finishes only when all five reviews pass.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/review-work.webp" width="240" alt="Five blocking review lanes. One failing lane blocks approval." /></td>
+<td><img src="./docs/assets/skills/review-work.webp" width="240" alt="Five separate reviews, and any one of them can hold back approval." /></td>
 <td><code>review-work</code><br /><sub><code>lit review</code> · <code>$litcodex:review-work</code></sub></td>
-<td>Five blocking review lanes. One failing lane blocks approval.</td>
+<td>Five separate reviews, and any one of them can hold back approval.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/litgoal.webp" width="240" alt="Binds one goal with observable criteria to the durable lit-loop." /></td>
+<td><img src="./docs/assets/skills/litgoal.webp" width="240" alt="Ties one goal, with criteria you can observe, to the lit-loop so it carries across sessions." /></td>
 <td><code>litgoal</code><br /><sub><code>lit goal</code> · <code>$litcodex:litgoal</code></sub></td>
-<td>Binds one goal with observable criteria to the durable lit-loop.</td>
+<td>Ties one goal, with criteria you can observe, to the lit-loop so it carries across sessions.</td>
 </tr>
 <tr>
 <td><img src="./docs/assets/skills/lit-recap.webp" width="240" alt="A read-only summary: done, in progress, blocked, where the evidence is, what comes next." /></td>
@@ -260,9 +269,9 @@ the checks that run on their own.
 <td>Pressure-tests a brief before planning. Only the risks that survive critique reach the plan.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/lit-init.webp" width="240" alt="Sparse AGENTS.md guidance backed by what is in the repository." /></td>
+<td><img src="./docs/assets/skills/lit-init.webp" width="240" alt="A short AGENTS.md, based on what is actually in the repository." /></td>
 <td><code>lit-init</code><br /><sub><code>lit-init</code> · <code>$litcodex:lit-init</code></sub></td>
-<td>Sparse AGENTS.md guidance backed by what is in the repository.</td>
+<td>A short AGENTS.md, based on what is actually in the repository.</td>
 </tr>
 <tr>
 <td><img src="./docs/assets/skills/lit-comprehend.webp" width="240" alt="An explainer page for agent-written work: intuition first, then the walkthrough, then a short quiz." /></td>
@@ -417,9 +426,8 @@ Each prompt below is one casual line in Korean. The baseline got the line as typ
 same line with ` lit` added, and nothing else.
 
 Both arms ran Codex CLI 0.157.1 with `gpt-6-sol` at high effort on 2026-09-26, one trial per arm, each
-in its own disposable home. The lit arm used a local pre-release build of LitCodex, not a published
-version. Where LitCodex was fixed and run again, the table compares the latest lit run with the same
-baseline.
+in its own disposable home. The lit arm used a local pre-release build of LitCodex. Where LitCodex was
+fixed and run again, the table compares the latest lit run with the same baseline.
 
 A blind judge (Claude Opus 5.5) compared each pair in both orders. The maintainer then looked at both
 outputs side by side and made the final call. The judge's verdict stays next to it for reference.
@@ -455,7 +463,7 @@ found the LitCodex files much better suited to real work.
 - **S2, tie.** Both sides fixed all six seeded bugs, with no failing visible tests. The judge leaned to the baseline because its reply mentioned that creating an item now returns 201 instead of 200, which the LitCodex reply left out. The maintainer called it a tie.
 - **S3, won.** The LitCodex dashboard shows monthly income, spending and the budget, and lets you add, delete and search transactions and change the budget. The judge preferred the baseline's richer analysis: an income and expense line chart, a category donut and budgets per category. The maintainer preferred the LitCodex page.
 - **S4, won.** The judge called it a tie: the baseline's shop-front photos and menu felt more finished, while the LitCodex page showed mock-up labels to visitors because the prompt gave no address or hours. The checker found no clipped text on the LitCodex page (9 items on the baseline) but more accessibility findings (38 against 29).
-- **S5, won.** LitCodex made a Word report and a 7-slide deck, each with an editable Markdown source. The judge called it a tie: the baseline report was better built (a data-period box, an interpretation column and numbered citations), while the LitCodex slides looked more polished. The checker counted 12 of 12 facts right for the baseline and 11 of 12 for LitCodex, none wrong on either side, and 5 invented-number flags against 14.
+- **S5, won.** LitCodex made a Word report and a 7-slide deck, each with an editable Markdown source. The judge called it a tie: the baseline report was better built (a data-period box, an interpretation column and numbered citations), while the LitCodex slides looked more polished. The checker counted 12 of 12 facts right for the baseline and 11 of 12 for LitCodex, with none wrong on either side. It flagged 14 invented numbers in the baseline's files and 5 in LitCodex's.
 - **S6, won.** LitCodex correctly lists `dirent.path` as removed, where the baseline called it only deprecated, and notes that `require(esm)` and type stripping already exist in Node 22. The checker found 3 of 10 expected facts against 2; 75% of LitCodex's links were official sources, against 100% for the baseline.
 - **S7, won (blind judge; not reviewed by eye).** LitCodex saved a rendered PNG and an editable HTML diagram with labelled arrows and a payment-failure path. The baseline gave Mermaid code in its reply and no rendered file, although its architecture covered more services.
 - **S8, won.** The prompt gave no figures. The baseline made a 10-slide fill-in template with blanks for every number, and the checker flagged 18 overflowing text boxes. LitCodex made an 8-slide deck for a fictional company with sample figures labelled as examples and 3 tables; the checker flagged one overflowing box and one overlap. The judge preferred the baseline's template.
@@ -532,14 +540,15 @@ flowchart TD
     R -. "read when continuing" .-> A
 ```
 
-The dotted line to native goals is a protocol the agent follows: the package never calls the native
-goal tools itself. When those tools are unavailable, the agent keeps the local records and reports that
-native goal sync was unavailable. A paused or blocked goal still needs the documented recovery step;
-reading a handoff does not resume it.
+The dotted line to Codex's goal tools is an instruction the agent follows. LitCodex itself never calls
+those tools. When they are there, the agent uses them. When they are missing, it keeps the local records
+and says that it could not sync the Codex goal. A paused or blocked goal comes back only through the
+documented recovery step; reading a handoff leaves it as it was.
 
-Codex CLI runs the hooks and the agents. Authentication, model access, permissions and any visual check
-stay with Codex and your machine, so a route mark or an image in this README is not proof that the work
-is done. The [runtime and state reference](./docs/usage.md) goes deeper.
+Codex CLI does the running: it starts the hooks and the agents, and sign-in, model access, permissions
+and any look at the screen all happen in Codex on your machine. So judge a piece of work by what it
+produced and which checks ran. The route mark and the pictures in this README only show where the work
+started. The [runtime and state reference](./docs/usage.md) goes deeper.
 
 ## Commands
 
@@ -570,14 +579,15 @@ A few skills are worth knowing by name:
   from the Codex skill picker. A diagram request with `lit` also tells Codex to load it. Product screens
   and plots of measured data have their own skills.
 - **Word and PowerPoint.** Pick `lit-docx` for a Word report or proposal and `lit-pptx` for slides.
-  A bounded `lit` request for either loads the matching skill, and a request for both loads both. Each
-  keeps editable Markdown next to the DOCX or PPTX. `litcodex install` prepares their pinned dependencies
-  outside the Codex session, and `litcodex office-runtime status` or `litcodex doctor` shows whether they
-  are ready. If the install had no network, run `litcodex office-runtime install` later, outside the
-  sandbox. The Office runner's doctor command reports the optional LibreOffice, pandoc and XeLaTeX support.
-- **Prose.** Pick `lit-humanizer` to edit English or Korean prose. Its pre-write hook blocks a small set
-  of high-confidence drafting patterns and only flags the softer ones. Office or PDF files it generates
-  are checked after creation when the host can extract their text.
+  A `lit` request for either one loads the matching skill, and asking for both loads both. You always
+  get editable Markdown next to the DOCX or PPTX. Both skills need a few pinned tools, which
+  `litcodex install` fetches ahead of time, outside the Codex session. To see whether they are ready,
+  run `litcodex office-runtime status` or `litcodex doctor`. If you installed without a network, run
+  `litcodex office-runtime install` later, outside the sandbox. The Office runner's own doctor command
+  tells you whether the optional LibreOffice, pandoc and XeLaTeX support is there.
+- **Prose.** Pick `lit-humanizer` to edit English or Korean prose. Before a file is written, its hook
+  stops a small set of clear drafting tells and points out the softer ones without stopping anything.
+  Office and PDF files are checked right after they are made, when the host can pull out their text.
 
 ### CLI commands
 
@@ -602,9 +612,9 @@ leading name for one release; see [rename compatibility](./docs/usage.md#skill-r
 ## Where your work is kept
 
 A project's loop state lives under `.litcodex/lit-loop/`: `brief.md`, `goals.json`, `ledger.jsonl` and the
-`evidence/` folder. Writes are atomic, and a damaged goals file is kept as `.bak`
-instead of being thrown away. This state is local and excluded from Git and from packages. See
-[state and recovery](./docs/usage.md#loop-state).
+`evidence/` folder. Each write lands whole or not at all, and if the goals file is ever damaged, it is
+kept as `.bak` so you can recover it. The state stays on your machine, out of Git and out of packages.
+See [state and recovery](./docs/usage.md#loop-state).
 
 ## Check the install
 
@@ -613,29 +623,37 @@ npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex doctor
 ```
 
 `litcodex doctor` checks registration, hooks, config and host capabilities. `litcodex loop doctor`
-checks the loop state of the current project. A clean install check does not prove that authenticated
-model work or child agents will run.
+checks the loop state of the current project. Both look at the setup. To see signed-in model work and
+child agents actually run, give Codex a small real task.
 
 ## Safety
 
-- Plans and evidence stay open to review. Running a test command does not, on its own, count as meeting
-  a criterion.
-- Installing keeps your unrelated Codex settings. Look at the planned changes before you use `--reconfigure`.
-- The doctor diagnostic core never modifies Codex config, install state or plugin state. An eligible
-  interactive doctor run may show a cached advisory notice. Its detached worker performs a fixed registry
-  refresh at `~/.litcodex/update-check.json` and never installs packages.
-  A separate foreground updater can install a newer global package after eligible interactive management
-  commands. Set `LITCODEX_NO_UPDATE_CHECK=1` to turn off both update paths. Failed, `--json`, `--dry-run`,
-  non-TTY, CI and opt-out doctor runs stay side-effect-free. See [privacy](./docs/privacy.md).
-- A model route is a configuration choice. It does not guarantee access to that model or that it runs.
-  See [managed model compatibility](./docs/usage.md#safety).
+- Plans and evidence stay where you can read them. A criterion is met by recorded evidence that it
+  passed; simply running a test command does not count.
+- Installing leaves your unrelated Codex settings as they are. Look at the planned changes before you
+  use `--reconfigure`.
+- Doctor only looks: the doctor diagnostic core never modifies your Codex config, install state or
+  plugin state. There are two small update helpers around it, and you can switch both off.
+  - The update notice. An eligible interactive doctor run (a successful run you start by hand in a terminal) may show
+    a cached advisory notice about a newer version. To keep that notice fresh, a detached background
+    worker does a fixed registry refresh and saves the answer in `~/.litcodex/update-check.json`. It
+    never installs anything.
+  - The updater. After an eligible interactive management command, a separate foreground updater can
+    install a newer global package.
+
+  Set `LITCODEX_NO_UPDATE_CHECK=1` if you want neither. A doctor run that failed, or ran with `--json`,
+  `--dry-run`, in a non-TTY or CI shell, or with that opt-out set, stays side-effect-free. See
+  [privacy](./docs/privacy.md).
+- The model you pick is a setting in your config. Whether that model is open to you, and whether it
+  actually runs, is up to Codex and your account. See [managed model compatibility](./docs/usage.md#safety).
 
 ## Jev skill hint (optional)
 
-LitCodex can ask Jev, a hosted model from TypeSafe (typesafe.ai), which bundled LitCodex skill fits a plain
-prompt. When Jev picks one with enough confidence, the `UserPromptSubmit` hook adds one advisory line naming
-that skill to the turn's context. Codex still decides whether to load it. The hint never grants a permission
-or runs a tool.
+Sometimes you type a plain request that one of the bundled skills would handle well. With this option on,
+LitCodex asks Jev, a hosted model from TypeSafe (typesafe.ai), which skill fits. When Jev is confident
+enough, the `UserPromptSubmit` hook adds one line to the turn's context naming that skill. It is only a
+suggestion: Codex still decides whether to load the skill, and the hint grants no permission and runs no
+tool.
 
 It is off by default. To turn it on, set both variables in the environment Codex runs in, then restart Codex:
 
@@ -650,14 +668,15 @@ export TYPESAFE_API_KEY=<your own TypeSafe key>
   that already start a lit route are not sent.
 - Anything in the prompt without a token shape is sent as written: hostnames, customer names, or passwords
   that are not written as `password=…`, for example.
-- Because `TYPESAFE_API_KEY` is exported in the shell that starts Codex, Codex's own tools can read it too.
-  Use a key only for this feature, with low spend limits.
+- `TYPESAFE_API_KEY` is exported in the shell that starts Codex, so Codex's own tools can read it too.
+  Give this feature a key of its own with a low spend limit.
 - TypeSafe bills your key, at about $0.04 per million input tokens. Each request carries the prompt and the
   skill list. A session makes at most 200 requests (`LITCODEX_JEV_MAX_CALLS`).
-- The hint itself goes only to the model. To see it, also set `LITCODEX_JEV_SHOW=1`: a turn that got a hint
-  then shows one line in the Codex transcript, such as `Jev → lit-humanizer (0.37s)`.
-- While it is on, the first prompt of each session that does not start a lit route shows `✦ Jev skill hint ON`
-  once, so you can tell it is enabled.
+- The hint goes to the model, and you normally never see it. If you want to, also set `LITCODEX_JEV_SHOW=1`;
+  every turn that got a hint then shows one line in the Codex transcript, such as
+  `Jev → lit-humanizer (0.37s)`.
+- So you can tell it is on, the first prompt of each session that does not start a lit route shows
+  `✦ Jev skill hint ON` once.
 - Each request waits at most 1.5 seconds. After a timeout or any other failure the turn carries on without a
   hint, and one short note appears once per session.
 - `litcodex doctor` shows `Jev skill hint: off`, `on`, or `flag on but TYPESAFE_API_KEY missing`.
@@ -666,9 +685,10 @@ export TYPESAFE_API_KEY=<your own TypeSafe key>
 
 ## Troubleshooting
 
-- **The pane closes before any output.** You cannot tell yet which stage failed. In a terminal that is
-  already open, run help, install and doctor one at a time and keep each exit status. Then follow the
-  [staged trial](./docs/npm-migration.md#isolated-local-trial) and start the host yourself.
+- **The pane closes before any output.** You cannot tell yet which step failed, so find out one step
+  at a time. In a terminal that is already open, run help, install and doctor separately and note
+  each exit status. Then follow the [staged trial](./docs/npm-migration.md#isolated-local-trial) and
+  start Codex yourself.
 - **Nothing activates.** Run `litcodex doctor` and check that the hooks are approved in Codex.
 - **The command is missing.** Use the `npm exec` form above, or check that npm's global bin directory is on
   your `PATH`.
