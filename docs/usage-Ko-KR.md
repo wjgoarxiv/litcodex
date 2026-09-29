@@ -102,14 +102,14 @@ flowchart LR
 권장 설치는 다음 한 줄입니다.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex install
 ```
 
 이 명령은 플러그인과 마켓플레이스를 등록하고 `UserPromptSubmit` 훅을 연결하며 `~/.codex/config.toml`을
 비파괴적으로 갱신합니다. 변경 계획만 보려면 다음을 먼저 실행하세요.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex --dry-run install
+npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex --dry-run install
 ```
 
 전역 명령이 필요하면 전역 설치 후 플러그인을 등록합니다.
@@ -119,7 +119,7 @@ npm install -g @litfamily/litcodex
 litcodex install
 ```
 
-무인 설치는 `litcodex install --yes` 또는 `npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex install --yes`로 실행합니다.
+무인 설치는 `litcodex install --yes` 또는 `npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex install --yes`로 실행합니다.
 `--yes`, 빈 값도 포함한 `CI`, 비TTY 입출력, `--no-tui`, `--json`, `--dry-run`에서는 모델·스타일 선택과
 확인 질문을 건너뜁니다. 명시한 `--style <id>`는 실제 설치에 적용됩니다. 빈 값도 포함한 `NO_COLOR`는
 대화형 선택을 유지하면서 ANSI 이스케이프 없는 질문을 표시합니다. `TERM=dumb`과 UTF-8이 아닌 로케일에서도
@@ -245,8 +245,8 @@ Codex의 native goal과 로컬 루프 기록은 별도로 관리됩니다. pause
 | `litcodex loop checkpoint` | 모든 기준 통과 시 목표 완료 처리 |
 | `litcodex loop doctor` | 루프 상태 진단 또는 복구 |
 
-전역 설치가 없다면 이후 명령도 `npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex <command>` 형식으로 실행하세요. 예를 들어
-`npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex doctor`를 사용합니다.
+전역 설치가 없다면 이후 명령도 `npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex <command>` 형식으로 실행하세요. 예를 들어
+`npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex doctor`를 사용합니다.
 
 ## 루프 상태
 

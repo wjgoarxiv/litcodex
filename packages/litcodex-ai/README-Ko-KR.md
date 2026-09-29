@@ -1,12 +1,12 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.10/readme-assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.10/readme-assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitCodex 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitCodex 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
 
 <p align="center">
-<a href="#설치"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.10/readme-assets/badge-version.svg" alt="1.0.10" /></a>
-<a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.10/readme-assets/badge-license.svg" alt="MIT license" /></a>
+<a href="#설치"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/badge-version.svg" alt="1.0.11" /></a>
+<a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/badge-license.svg" alt="MIT license" /></a>
 </p>
 
 <p align="center">
-<a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/usage-Ko-KR.md"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.10/readme-assets/lucide-book-open.svg" width="16" alt="" /> 문서</a> &nbsp; <a href="#설치">설치</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.10/readme-assets/lucide-play.svg" width="16" alt="" /> Ignition</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.10/readme-assets/lucide-shield-check.svg" width="16" alt="" /> MIT</a>
+<a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/usage-Ko-KR.md"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/lucide-book-open.svg" width="16" alt="" /> 문서</a> &nbsp; <a href="#설치">설치</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/lucide-play.svg" width="16" alt="" /> Ignition</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/lucide-shield-check.svg" width="16" alt="" /> MIT</a>
 </p>
 
 # LitCodex
@@ -24,13 +24,13 @@ LitCodex는 Codex CLI 플러그인입니다. 계획, 검토, 조사와 오래 �
 Node.js 22 이상과 Codex CLI가 필요합니다.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex install
 ```
 
 설치기는 플러그인과 훅, 에이전트를 등록하고 `~/.codex/config.toml`에서는 자기가 관리하는 항목만 고칩니다.
 설치 중에 어떤 모델이 작업을 이끌지(리드), 어떤 모델이 거들지(헬퍼), 답변 스타일은 무엇으로 할지 묻습니다.
 새로 설치하면 리드는 `gpt-6-astra`/`xhigh`, 헬퍼는 `gpt-6-luna`/`max`로 시작합니다. 바뀔 내용을 먼저 보려면
-`npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex --dry-run install`을 실행하고, 묻는 단계 없이
+`npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex --dry-run install`을 실행하고, 묻는 단계 없이
 설치하려면 `install` 뒤에 `--yes`를 붙이세요.
 
 전역 명령으로 쓰려면 다음을 실행합니다.
@@ -50,7 +50,7 @@ litcodex install
 다만 이렇게 빼도 내려받기가 뒤로 미뤄질 뿐입니다. `litcodex install`이 설치에 성공한 뒤 같은 도구를 준비하고,
 이 단계는 끌 수 없습니다.
 
-> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex <command>` 형식을 사용하세요.
+> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex <command>` 형식을 사용하세요.
 
 기존 설정과 떼어 놓고 써 보려면
 [격리된 체험 안내](https://github.com/wjgoarxiv/litcodex/blob/main/docs/npm-migration.md#isolated-local-trial)를
@@ -185,7 +185,7 @@ Codex가 플러그인을 불러오고 훅을 실행합니다. 훅은 요청이 �
 ## 확인, 문제 해결, 제거
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex doctor
 ```
 
 `litcodex doctor`는 등록·훅·설정·호스트 기능을, `litcodex loop doctor`는 현재 프로젝트의 루프 상태를 확인합니다.
@@ -200,7 +200,7 @@ npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex doctor
   [문제 해결](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md#문제-해결)을 참고하세요.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex uninstall
 ```
 
 플러그인과 LitCodex가 관리하는 설정을 지우고, 관련 없는 설정은 그대로 둡니다.

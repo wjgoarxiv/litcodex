@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.11] - 2026-09-30
+
+### Fixed
+
+- `litcodex doctor` no longer warns about an update receipt that the installed version has already
+  passed. If an earlier automatic update failed and a later install reached its target version or
+  went beyond it, doctor now reports that update as resolved instead of asking you to look into an
+  unknown installation state. A receipt whose target is newer than what is installed still warns.
+
+### Changed
+
+- The GitHub pages show what Jev looks like when it is on, off, or unavailable, in English and
+  Korean. Jev stays off unless you turn it on yourself.
+- The GitHub pages gained a short motion film under "Watch it in motion", in English and Korean, and
+  the READMEs were rewritten again in plainer language.
+- Development dependencies (vitest and postcss) were updated. The installed package is unaffected.
+
 ## [1.0.10] - 2026-09-29
 
 ### Changed

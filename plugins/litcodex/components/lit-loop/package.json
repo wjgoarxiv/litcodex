@@ -1,6 +1,6 @@
 {
 	"name": "@litcodex/lit-loop",
-	"version": "1.0.10",
+	"version": "1.0.11",
 	"description": "LitCodex Lit-Loop runtime: durable repo-native multi-goal orchestration with embedded success criteria and observable evidence audit.",
 	"type": "module",
 	"private": true,
