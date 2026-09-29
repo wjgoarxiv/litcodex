@@ -66,6 +66,8 @@ through a symlink. With `LITCODEX_JEV_TRACE=1`,
 latency, HTTP status and fallback reason; it never records the text, the response body or the key.
 TypeSafe bills the key's owner. Unset `LITCODEX_JEV` and restart Codex to stop the requests.
 
+The README shows what appears on screen in each state under [What you will see](../README.md#what-you-will-see).
+
 ## Model and tool work
 
 Running model work uses your configured Codex host and provider. Prompts, selected

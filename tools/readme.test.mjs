@@ -1034,6 +1034,77 @@ describe("GitHub and npm README split", () => {
 		}
 	});
 
+	test("Jev snapshots appear on both GitHub pages and stay out of the npm package", () => {
+		const names = ["jev-off", "jev-on-notice", "jev-hint-shown", "jev-key-missing", "jev-doctor"];
+		const dir = join(REPO_ROOT, "docs/assets/jev");
+		const files = names.flatMap((name) => [`${name}-dark.webp`, `${name}-light.webp`]);
+		assert.deepEqual(
+			readdirSync(dir).sort(),
+			[...files, "MesloLGS-NF-LICENSE.txt", "README.md"].sort(),
+			"docs/assets/jev holds the snapshots, their font notice and the media notes",
+		);
+		for (const file of files) {
+			const bytes = readFileSync(join(dir, file));
+			assert.equal(bytes.subarray(0, 4).toString("latin1"), "RIFF", `${file} is a WebP`);
+			assert.equal(bytes.subarray(8, 12).toString("latin1"), "WEBP", `${file} is a WebP`);
+			assert.ok(bytes.length <= 65_536, `${file} stays under 64 KiB`);
+			for (const [, source] of GITHUB_READMES) {
+				assert.ok(source.includes(`./docs/assets/jev/${file}`), `GitHub README shows ${file}`);
+			}
+		}
+		const packed = join(REPO_ROOT, "packages", "litcodex-ai", "readme-assets");
+		for (const file of files) assert.ok(!existsSync(join(packed, file)), `${file} is not in the npm payload`);
+		for (const [, source] of NPM_READMES)
+			assert.ok(!source.includes("docs/assets/jev"), "npm cards carry no snapshots");
+	});
+
+	test("the motion promo is embedded on both GitHub pages, stays under its caps and out of the npm package", () => {
+		const dir = join(REPO_ROOT, "docs/assets/promo");
+		assert.deepEqual(
+			readdirSync(dir).sort(),
+			[
+				"Archivo-OFL.txt",
+				"README.md",
+				"promo-poster.png",
+				"promo-preview.webp",
+				"promo-still.webp",
+				"promo.mp4",
+				"source",
+			].sort(),
+			"docs/assets/promo holds the film, its stills, the font license, the notes and the source",
+		);
+		assert.deepEqual(readdirSync(join(dir, "source")).sort(), ["index.html", "treatment.json"]);
+		const film = readFileSync(join(dir, "promo.mp4"));
+		assert.equal(film.subarray(4, 8).toString("latin1"), "ftyp", "promo.mp4 is an MP4");
+		assert.ok(film.length <= 8 * 1_048_576, "the master stays under 8 MiB");
+		const preview = readFileSync(join(dir, "promo-preview.webp"));
+		assert.equal(preview.subarray(8, 12).toString("latin1"), "WEBP");
+		assert.ok(preview.includes(Buffer.from("ANIM")), "the inline preview is animated");
+		assert.ok(preview.length <= 2_621_440, "the inline preview stays under 2.5 MiB");
+		const still = readFileSync(join(dir, "promo-still.webp"));
+		assert.equal(still.subarray(8, 12).toString("latin1"), "WEBP");
+		assert.ok(!still.includes(Buffer.from("ANIM")), "the reduced-motion still is not animated");
+		const poster = readFileSync(join(dir, "promo-poster.png"));
+		assert.equal(poster.readUInt32BE(16), 1920);
+		assert.equal(poster.readUInt32BE(20), 1080);
+		assert.ok(poster.length <= 1_048_576 && still.length <= 1_048_576, "each still stays under 1 MiB");
+		for (const [path, source] of GITHUB_READMES) {
+			assert.match(
+				source,
+				/<source media="\(prefers-reduced-motion: reduce\)" srcset="\.\/docs\/assets\/promo\/promo-still\.webp" \/><img src="\.\/docs\/assets\/promo\/promo-preview\.webp"/,
+				`${path} shows the promo with a reduced-motion still first`,
+			);
+			assert.ok(source.includes("](./docs/assets/promo/promo.mp4)"), `${path} links the MP4`);
+			assert.ok(source.includes("](./docs/assets/promo/promo-poster.png)"), `${path} links the poster`);
+		}
+		const packed = join(REPO_ROOT, "packages", "litcodex-ai", "readme-assets");
+		for (const file of ["promo.mp4", "promo-preview.webp", "promo-poster.png", "promo-still.webp"]) {
+			assert.ok(!existsSync(join(packed, file)), `${file} is not in the npm payload`);
+		}
+		for (const [, source] of NPM_READMES)
+			assert.ok(!source.includes("docs/assets/promo"), "npm cards do not embed the promo");
+	});
+
 	test("npm READMEs are a short install card that shares the GitHub title and tagline", () => {
 		for (const [[, npm], [, github], installHeading] of [
 			[NPM_READMES[0], GITHUB_READMES[0], "## Install"],

@@ -1,0 +1,203 @@
+{
+  "request": "Make a promo film for LitCodex, the lit workflow plugin for Codex CLI, to sit in its GitHub README.",
+  "genre": "motion-graphics",
+  "path": "stage",
+  "pathReason": "The film needs a drawn goal card, a progress ring, a handoff sheet and a terminal prompt, which are shapes and diagrams beyond type.",
+  "idea": "One small task travels from a typed lit through checks that must earn their green and a handoff, so the next session can finish it.",
+  "audience": "Developers who work in Codex CLI and lose the thread between sessions.",
+  "channel": "GitHub README section and link previews",
+  "format": "16:9",
+  "formatReason": "The README column and video players are landscape.",
+  "durationSec": 24,
+  "beats": [
+    {
+      "t0": 0,
+      "t1": 4,
+      "purpose": "Hook: the one word a person types",
+      "onScreen": "Headline Add lit to a request with lit in orange; a prompt bar types a lit request; the five-row LIT mark builds in an outlined transcript frame",
+      "motion": "Words rise through a mask; the typed lit ignites the headline word; mark rows stagger in",
+      "sound": "Pad and pulse from the first quarter second; a rise toward the end of the beat"
+    },
+    {
+      "t0": 4,
+      "t1": 8,
+      "purpose": "The request becomes a goal with checks",
+      "onScreen": "Headline A request becomes a goal; a goal card unfolds with four unchecked checks and a progress ring drawing in",
+      "motion": "Mark lifts away, card wipes open from the top, rows slide in on a stagger, ring draws on",
+      "sound": "Hit on the cut into the goal card"
+    },
+    {
+      "t0": 8,
+      "t1": 12,
+      "purpose": "Checks earn green only with evidence; a blocker stays open",
+      "onScreen": "Headline Green needs evidence; three checks turn lime with evidence tags and the ring fills three quarters; the fourth stays orange and open",
+      "motion": "Check marks draw on one after another, ring segments fill in step, the open row holds a steady orange outline",
+      "sound": "Hit on the cut into the checks; a rise into the open check"
+    },
+    {
+      "t0": 12,
+      "t1": 16,
+      "purpose": "Handoff carries the unfinished work forward",
+      "onScreen": "Headline Say handoff; the prompt bar types handoff; a paper handoff sheet with Decisions, Remaining work and Where to resume slides over the card and is filed into the prompt bar",
+      "motion": "Sheet slides in with a slight tilt, its rows draw, then it drops into the bar as the right side clears",
+      "sound": "Hit on the cut into the handoff"
+    },
+    {
+      "t0": 16,
+      "t1": 20,
+      "purpose": "A new session resumes and closes the open check",
+      "onScreen": "Headline Next session, same place; a fresh prompt asks to read the handoff and continue; the sheet is read, the card returns with three green checks, and the fourth turns lime as the ring completes",
+      "motion": "Bar wipes clean, sheet rises and is read line by line, card returns, final check draws on and ring closes",
+      "sound": "Hit on the cut into the new session"
+    },
+    {
+      "t0": 20,
+      "t1": 24,
+      "purpose": "Resolve: doctor confirms, brand lands",
+      "onScreen": "A complete four-segment ring holds the LIT mark; the prompt bar runs doctor and prints All checks passed; LitCodex and Keep the work lit settle",
+      "motion": "Card collapses into the large ring, doctor line types, wordmark rises through a mask",
+      "sound": "Cadence: a struck tonic chord to close the film"
+    }
+  ],
+  "subject": {
+    "name": "The lit loop on a signup form task",
+    "source": "invented",
+    "specifics": [
+      "A goal card with four checks that can pass or fail, and a progress ring that fills only when evidence is recorded",
+      "One check stays open across a handoff and closes in the next session"
+    ]
+  },
+  "visualDevices": [
+    {
+      "kind": "diagram",
+      "role": "subject",
+      "beats": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "kind": "path",
+      "role": "support",
+      "beats": [
+        0,
+        1,
+        2,
+        4,
+        5
+      ]
+    },
+    {
+      "kind": "shape",
+      "role": "support",
+      "beats": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "kind": "icon",
+      "role": "support",
+      "beats": [
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "kind": "grid",
+      "role": "texture",
+      "beats": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "kind": "gradient",
+      "role": "texture",
+      "beats": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    }
+  ],
+  "typePlan": {
+    "faces": [
+      "Archivo",
+      "MesloLGS NF"
+    ],
+    "hierarchy": "Archivo 900 headline at 108 to 250 px, Archivo 400 support line at 40 to 44 px, MesloLGS NF for the prompt, mark and evidence tags",
+    "maxWordsOnScreen": 24
+  },
+  "palette": [
+    {
+      "color": "#080d14",
+      "role": "ink background"
+    },
+    {
+      "color": "#0e1622",
+      "role": "panel"
+    },
+    {
+      "color": "#ff6337",
+      "role": "ignition orange for lit, open checks and glow"
+    },
+    {
+      "color": "#d7f75b",
+      "role": "lime for passed checks and the final state"
+    },
+    {
+      "color": "#f2efdf",
+      "role": "paper for type and the handoff sheet"
+    }
+  ],
+  "sound": {
+    "mode": "generated",
+    "plan": "A driving minor pulse bed at 120 BPM, one bar per two seconds, with hits on each scene cut, a rise into the open check and a closing cadence",
+    "palette": {
+      "timbre": "pulse-synth",
+      "key": "D",
+      "mode": "minor",
+      "tempo": 120
+    }
+  },
+  "copy": {
+    "source": "invented",
+    "lines": [
+      "Add lit to a request.",
+      "A request becomes a goal.",
+      "With checks that can fail.",
+      "Green needs evidence.",
+      "Blockers stay open.",
+      "Say handoff.",
+      "Decisions, remaining work, where to resume.",
+      "Next session, same place.",
+      "It reads the packet and the project goals first.",
+      "Keep the work lit."
+    ]
+  },
+  "inventions": [
+    "The subject's name: The lit loop on a signup form task",
+    "The example task's four check names: Empty email is rejected, Short password is rejected, Valid signup goes through, Works in a real browser",
+    "Which check stays open and its label not verified yet",
+    "The layout of the handoff sheet",
+    "The wording of the headline copy, written from the README's description of the product"
+  ],
+  "ambition": "Kinetic type with real hierarchy, one continuous diagram that changes state instead of cutting between slides, hits locked to the cuts, and a first frame that already reads as LitCodex.",
+  "posterBeat": 2
+}

@@ -132,6 +132,69 @@ describe("doctor — agentsInstalled probe", () => {
 			rmSync(stateRoot, { recursive: true, force: true });
 		}
 	});
+
+	describe("stale foreground updater receipt", () => {
+		const staleReceipt = {
+			schemaVersion: 1,
+			packageName: "@litfamily/litcodex",
+			status: "unknown-state",
+			reason: "rollback-failed:190",
+			currentVersion: "1.0.7",
+			latestVersion: "1.0.8",
+			rollbackAttempted: true,
+			rollbackStatus: 190,
+			verificationDetail: "npm install exited 190",
+		};
+		const doctorWithReceipt = (receipt: Record<string, unknown>) => {
+			const stateRoot = mkdtempSync(join(tmpdir(), "litcodex-doctor-update-stale-"));
+			try {
+				writeFileSync(join(stateRoot, "receipt.json"), JSON.stringify(receipt));
+				const deps = doctorDeps(
+					[codexBin, sentinelPath],
+					"model_context_window = 372000\nmodel_auto_compact_token_limit = 334800\n",
+					undefined,
+					"1.0.10",
+					"0.145.0",
+				);
+				return runDoctor({ ...deps, env: { ...deps.env, LITCODEX_AUTO_UPDATE_STATE_ROOT: stateRoot } });
+			} finally {
+				rmSync(stateRoot, { recursive: true, force: true });
+			}
+		};
+
+		it("stops warning once the installed version has passed the receipt's target", () => {
+			const report = doctorWithReceipt(staleReceipt);
+			expect(report.ok).toBe(true);
+			expect(report.issues).toEqual([]);
+			expect(report.autoUpdate?.status).toBe("resolved");
+			expect(report.autoUpdate?.detail).toContain("1.0.8");
+			expect(renderDoctorText(report)).toContain("an earlier update to 1.0.8 did not finish");
+		});
+
+		it("also stops warning when the target equals the installed version", () => {
+			const report = doctorWithReceipt({ ...staleReceipt, currentVersion: "1.0.9", latestVersion: "1.0.10" });
+			expect(report.issues).toEqual([]);
+			expect(report.autoUpdate?.status).toBe("resolved");
+		});
+
+		it("keeps warning when the receipt targets a version newer than the installed one", () => {
+			const report = doctorWithReceipt({ ...staleReceipt, currentVersion: "1.0.10", latestVersion: "999.0.0" });
+			expect(report.ok).toBe(false);
+			expect(report.autoUpdate?.status).toBe("unknown-state");
+			expect(report.issues).toContainEqual(expect.stringContaining("installation state is unknown"));
+		});
+
+		it("keeps warning when the installed version is older than the version the update started from", () => {
+			const report = doctorWithReceipt({ ...staleReceipt, currentVersion: "998.0.0", latestVersion: "999.0.0" });
+			expect(report.ok).toBe(false);
+			expect(report.issues).toContainEqual(expect.stringContaining("installation state is unknown"));
+		});
+
+		it("keeps warning when the receipt carries no readable target version", () => {
+			const report = doctorWithReceipt({ ...staleReceipt, latestVersion: "not-a-version" });
+			expect(report.issues).toContainEqual(expect.stringContaining("installation state is unknown"));
+		});
+	});
 });
 
 describe("probePluginInstalled — parses the status column (VERIFY-LIVE codex 0.139.x)", () => {

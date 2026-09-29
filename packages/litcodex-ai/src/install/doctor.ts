@@ -9,6 +9,7 @@ import { createRequire } from "node:module";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { EXPLICIT_GPT56_SOL_MODEL, GPT56_MODELS } from "../config-migration/gpt56-policy.js";
+import { isNewer } from "../update-check.js";
 import { inspectAgentRouting, routingReport } from "./agent-routing.js";
 import { detectAuthMode } from "./auth-mode.js";
 import { probeBundledSkills } from "./bundled-skills.js";
@@ -225,8 +226,24 @@ function readAutoUpdateReport(env: NodeJS.ProcessEnv): AutoUpdateDoctorReport {
 	try {
 		const parsed: unknown = JSON.parse(readFileSync(receiptPath, "utf8"));
 		if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
-			const status = (parsed as Record<string, unknown>)["status"];
+			const fields = parsed as Record<string, unknown>;
+			const status = fields["status"];
 			if (typeof status === "string") {
+				const target = fields["latestVersion"];
+				// A failed update whose target the installed package has since reached (or passed) is history:
+				// a later install finished the job, so the old receipt no longer describes this machine.
+				if (
+					status === "unknown-state" &&
+					typeof target === "string" &&
+					(target === PACKAGE_VERSION || isNewer(PACKAGE_VERSION, target))
+				) {
+					return {
+						enabled,
+						status: "resolved",
+						receiptPath,
+						detail: `an earlier update to ${target} did not finish, and ${PACKAGE_VERSION} is installed now`,
+					};
+				}
 				return {
 					enabled,
 					status,

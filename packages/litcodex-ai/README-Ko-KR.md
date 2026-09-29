@@ -179,7 +179,7 @@ Codex가 플러그인을 불러오고 훅을 실행합니다. 훅은 요청이 �
 켜면(`LITCODEX_JEV=1`과 본인의 `TYPESAFE_API_KEY`) 조건에 맞는 프롬프트가 매번 TypeSafe(typesafe.ai)로 갑니다.
 2,000자로 자르고 홈 경로, 이메일 주소, 토큰 형태의 문자열을 가린 뒤 나머지는 그대로 보냅니다. 파일, 도구 출력,
 대화 기록은 보내지 않습니다. 켜기 전에
-[전체 설명](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md#jev-스킬-힌트-선택)과
+[전체 설명](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md#jev-스킬-힌트-선택)(각 상태가 화면에서 어떻게 보이는지도 나옵니다)과
 [개인정보 안내](https://github.com/wjgoarxiv/litcodex/blob/main/docs/privacy.md#optional-jev-skill-hint)를 읽어 주세요.
 
 ## 확인, 문제 해결, 제거

@@ -186,7 +186,8 @@ Turning it on (`LITCODEX_JEV=1` plus your own `TYPESAFE_API_KEY`) sends each eli
 (typesafe.ai). The prompt is cut to 2,000 characters and home paths, email addresses and token-shaped
 strings are redacted; the rest of it is sent as written. Nothing else from the session goes with it:
 no files, tool output or history.
-Read [the full description](https://github.com/wjgoarxiv/litcodex#jev-skill-hint-optional) and the
+Read [the full description](https://github.com/wjgoarxiv/litcodex#jev-skill-hint-optional), which shows what
+appears on screen in each state, and the
 [privacy notes](https://github.com/wjgoarxiv/litcodex/blob/main/docs/privacy.md#optional-jev-skill-hint)
 before you turn it on.
 

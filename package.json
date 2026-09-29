@@ -69,6 +69,6 @@
 		"@openai/codex": "0.144.0",
 		"@types/node": "^25.7.0",
 		"typescript": "^6.0.3",
-		"vitest": "^4.1.5"
+		"vitest": "^4.1.11"
 	}
 }

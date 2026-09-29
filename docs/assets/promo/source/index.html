@@ -1,0 +1,407 @@
+<!doctype html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/stage-kit.js"></script>
+<style>
+  :root { --ink:#080d14; --panel:#0e1622; --panel2:#132033; --line:#26364d; --orange:#ff6337; --lime:#d7f75b; --paper:#f2efdf; --muted:#93a1b3; }
+  html, body { margin:0; width:1920px; height:1080px; overflow:hidden; background:var(--ink); }
+  body { position:relative; font-family:"Archivo",sans-serif; color:var(--paper); }
+  .abs { position:absolute; }
+  #grid { left:-96px; top:-96px; width:2112px; height:1272px;
+    background-image:linear-gradient(rgba(242,239,223,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(242,239,223,.04) 1px, transparent 1px);
+    background-size:96px 96px; }
+  #glow { left:0; top:0; width:1500px; height:1500px; border-radius:50%; }
+  #vig { left:0; top:0; width:1920px; height:1080px; background:radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%); }
+  .h { font-weight:900; line-height:.98; letter-spacing:-.012em; overflow:hidden; padding:.06em 0 .1em; margin:-.06em 0 -.1em; }
+  .h .w, .s .w { display:inline-block; white-space:pre; will-change:transform; }
+  .s { font-weight:400; color:var(--muted); line-height:1.25; overflow:hidden; padding:.08em 0 .12em; }
+  .mono { font-family:"MesloLGS NF",monospace; }
+  #wm { left:110px; top:64px; height:34px; display:flex; align-items:center; gap:14px; font-weight:700; font-size:22px; letter-spacing:.34em; color:var(--paper); }
+  #wm i { display:block; width:16px; height:16px; background:var(--orange); }
+  #bar { left:110px; width:1700px; border-radius:16px; background:var(--panel); border:2px solid var(--line); box-sizing:border-box; overflow:hidden; }
+  #bar .row { position:absolute; left:34px; font-size:36px; line-height:44px; white-space:pre; }
+  #bar .chev { position:absolute; left:34px; font-size:36px; line-height:44px; color:var(--lime); }
+  #caret { position:absolute; width:20px; height:38px; background:var(--lime); }
+  #card { left:1060px; top:190px; width:750px; height:650px; border-radius:22px; background:var(--panel); border:2px solid var(--line); box-sizing:border-box; }
+  .row { }
+  .crit { position:absolute; left:34px; width:682px; height:84px; }
+  .crit .lbl { position:absolute; left:64px; top:6px; font-size:28px; font-weight:400; line-height:36px; color:var(--paper); white-space:nowrap; }
+  .crit .tag { position:absolute; left:64px; top:46px; font-size:18px; line-height:24px; white-space:nowrap; letter-spacing:.02em; }
+  .crit svg { position:absolute; left:0; top:0; }
+  #sheet { left:1090px; top:250px; width:680px; height:520px; border-radius:16px; background:var(--paper); color:#0b1119; transform-origin:50% 50%; }
+  #sheet .sec { position:absolute; left:44px; width:590px; height:110px; }
+  #sheet .sec b { position:absolute; left:52px; top:0; font-size:34px; font-weight:900; line-height:40px; letter-spacing:-.01em; }
+  #sheet .sec .ln { position:absolute; left:52px; height:10px; border-radius:5px; background:rgba(11,17,25,.22); }
+  #ring, #big { }
+  #wordmark { left:110px; top:250px; font-weight:900; font-size:190px; line-height:.98; letter-spacing:-.02em; }
+  #tag { left:110px; top:470px; font-weight:900; font-size:84px; line-height:1.0; letter-spacing:-.01em; }
+  .clip { overflow:hidden; padding:.06em 0 .12em; }
+</style>
+<body>
+  <div id="grid" class="abs"></div>
+  <div id="glow" class="abs"></div>
+  <div id="vig" class="abs"></div>
+  <div id="sweep" class="abs" style="left:0;top:132px;width:1920px;height:3px;opacity:0"></div>
+  <div id="wm" class="abs"><i></i><span id="wmtxt">LITCODEX</span></div>
+
+  <div id="hl" class="abs"></div>
+  <div id="sup" class="abs"></div>
+
+  <svg id="frame" class="abs" style="left:1060px;top:190px" width="750" height="650" viewBox="0 0 750 650">
+    <rect id="framerect" x="1" y="1" width="748" height="648" rx="22" fill="none" stroke="#26364d" stroke-width="2" stroke-dasharray="10 12"/>
+  </svg>
+  <svg id="mark" class="abs" style="left:1090px;top:250px" width="640" height="400" viewBox="0 0 640 400"></svg>
+  <div id="ignited" class="abs mono" style="left:1090px;top:690px;font-size:30px;line-height:36px;color:var(--orange);white-space:nowrap"></div>
+
+  <div id="card" class="abs">
+    <div class="abs" style="left:34px;top:30px;font-size:19px;font-weight:700;letter-spacing:.3em;color:var(--muted)">GOAL</div>
+    <div id="title" class="abs" style="left:34px;top:64px;width:560px;font-size:31px;font-weight:700;line-height:38px;color:var(--paper)">Add input validation<br>to the signup form</div>
+    <svg id="ring" class="abs" style="left:610px;top:22px" width="112" height="112" viewBox="0 0 112 112"></svg>
+    <div id="ringtxt" class="abs mono" style="left:610px;top:54px;width:112px;text-align:center;font-size:24px;line-height:28px;color:var(--paper)">0/4</div>
+    <div class="abs" style="left:34px;top:150px;width:682px;height:2px;background:var(--line)"></div>
+  </div>
+
+  <div id="sheet" class="abs"></div>
+  <svg id="big" class="abs" style="left:1130px;top:170px" width="620" height="620" viewBox="0 0 620 620"></svg>
+  <svg id="bigmark" class="abs" style="left:1272px;top:328px" width="336" height="304" viewBox="0 0 334.4 304"></svg>
+
+  <div id="bar" class="abs">
+    <div class="chev mono" id="chev" style="top:23px">›</div>
+    <div class="row mono" id="cmd" style="left:80px;top:23px"></div>
+    <div id="caret"></div>
+    <div class="row mono" id="out" style="left:80px;top:78px;color:var(--lime)"></div>
+  </div>
+
+  <div id="wordmark" class="abs clip"></div>
+  <div id="tag" class="abs clip"></div>
+
+<script>
+  const COPY = {
+    l1: "Add lit to a request.",
+    l2: "A request becomes a goal.",
+    l3: "With checks that can fail.",
+    l4: "Green needs evidence.",
+    l5: "Blockers stay open.",
+    l6: "Say handoff.",
+    l7: "Decisions, remaining work, where to resume.",
+    l8: "Next session, same place.",
+    l9: "It reads the packet and the project goals first.",
+    l10: "LitCodex",
+    l11: "Keep the work lit."
+  };
+  const CRIT = ["Empty email is rejected", "Short password is rejected", "Valid signup goes through", "Works in a real browser"];
+  const { define, text, ease, at, kf, splitText, drawPath, clamp, lerp, mix, rgba, rand } = LitStage;
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const $ = (id) => document.getElementById(id);
+  const ORANGE = "#ff6337", LIME = "#d7f75b", PAPER = "#f2efdf", LINE = "#26364d", MUTED = "#93a1b3", PANEL = "#0e1622";
+
+  /* ---------- the real five-row mark, drawn as quadrant rectangles ---------- */
+  const QUAD = { "▘":[1,0,0,0], "▝":[0,1,0,0], "▖":[0,0,1,0], "▗":[0,0,0,1], "▀":[1,1,0,0], "▄":[0,0,1,1], "▌":[1,0,1,0], "▐":[0,1,0,1], "█":[1,1,1,1], "▛":[1,1,1,0], "▜":[1,1,0,1], "▙":[1,0,1,1], "▟":[0,1,1,1], "▚":[1,0,0,1], "▞":[0,1,1,0] };
+  // real per-character colours from the product's mark fixture
+  const REAL = [{"t":"▗▖  ▄▄ █▌       ","c":["#FF6337","#FF6337",null,null,"#F2EFDF","#F2EFDF",null,"#D7F75B","#D7F75B",null,null,null,null,null,null,null]},{"t":"▐▌▗█▀▀▀▀▀▀▘     ","c":["#FF6337","#FF6337","#F2EFDF","#F2EFDF","#F2EFDF","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,null]},{"t":"▐▌ ▄▌▀▝▀▀▘      ","c":["#FF6337","#FF6337",null,"#F2EFDF","#F2EFDF","#D7F75B","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null]},{"t":"▐▌▛▘  ▐▌        ","c":["#FF6337","#FF6337","#F2EFDF","#F2EFDF",null,null,"#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,null]},{"t":"▝▀▀▘  ▝▘        ","c":["#FF6337","#FF6337","#FF6337","#FF6337",null,null,"#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,null]}];
+  function buildMark(svg, data, cols, cw) {
+    const ch = cw * 2, qw = cw / 2, qh = cw;
+    const rows = [];
+    data.forEach((row, r) => {
+      const g = document.createElementNS(SVGNS, "g");
+      Array.from(row.t).forEach((chr, i) => {
+        const q = QUAD[chr]; if (!q) return;
+        const fill = (row.c && row.c[i]) || "#F2EFDF";
+        [[0,0],[1,0],[0,1],[1,1]].forEach(([qx, qy], k) => {
+          if (!q[k]) return;
+          const rect = document.createElementNS(SVGNS, "rect");
+          rect.setAttribute("x", (i * cw + qx * qw).toFixed(2)); rect.setAttribute("y", (r * ch + qy * qh).toFixed(2));
+          rect.setAttribute("width", (qw + 0.5).toFixed(2)); rect.setAttribute("height", (qh + 0.5).toFixed(2));
+          rect.setAttribute("fill", fill); g.appendChild(rect);
+        });
+      });
+      svg.appendChild(g); rows.push(g);
+    });
+    return rows;
+  }
+  const BANNER = [{"t":"                             ▄▄▄▄           ","c":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,"#D7F75B","#D7F75B","#D7F75B","#D7F75B",null,null,null,null,null,null,null,null,null,null,null]},{"t":"                   ▗███▌   ▗██████▖         ","c":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,"#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B",null,null,null,null,null,null,null,null,null]},{"t":" ▗▄▄▄▄▄          ▗▟████▌   ▝██████▘         ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,"#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B",null,null,null,null,null,null,null,null,null]},{"t":" ▐█████        ▗▟██████▌    ▝▀▜█▀▘          ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,"#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B",null,null,null,null,null,null,null,null,null,null]},{"t":" ▐█████      ▗▟███████▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null]},{"t":" ▐█████    ▗▟█████████████████████████ ▐█▀  ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,"#FF6337","#FF6337","#FF6337",null,null]},{"t":" ▐█████    ████████████████████████████▀    ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null]},{"t":" ▐█████    ██▛▘   ▄ ▄▄▄▄▖▄▄▄▄▄▄▄▄▄▄▄▄▄▖     ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,"#F2EFDF",null,"#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null]},{"t":" ▐█████    ▀    ▄██ ████▌█████████████▌     ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,"#F2EFDF",null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF",null,"#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null]},{"t":" ▐█████       ▄████ ████▌█████████████▌     ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,"#D7F75B","#D7F75B","#D7F75B","#D7F75B","#D7F75B","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null]},{"t":" ▐█████     ▄█████▛                         ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},{"t":" ▐█████  ▗▟█████▀▘       ▄▄▄▄▄     ▗▖       ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,"#F2EFDF","#F2EFDF",null,null,null,null,null,null,null]},{"t":" ▐█████ ▐█████▀          █████     ▐▛▀      ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null]},{"t":" ▐█████ ▐███▀            █████              ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,null,null,null,null,null,null,null]},{"t":" ▐█████ ▐█▀              █████              ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,"#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,null,null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,null,null,null,null,null,null,null]},{"t":" ▐█████ ▝                █████              ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,"#F2EFDF",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,null,null,null,null,null,null,null]},{"t":" ▐█████▄▄▄▄▄▄▄▖          █████              ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,null,null,null,null,null,null,null]},{"t":" ▐███████████▛           █████              ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,null,null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,null,null,null,null,null,null,null]},{"t":" ▐██████████▀            █████              ","c":[null,"#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337","#FF6337",null,null,null,null,null,null,null,null,null,null,null,null,"#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF","#F2EFDF",null,null,null,null,null,null,null,null,null,null,null,null,null,null]},{"t":"                                            ","c":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]}];
+  const markRows = buildMark($("mark"), REAL, 16, 40);
+  const bigRows = buildMark($("bigmark"), BANNER, 44, 7.6);
+
+  /* ---------- headline and support lines ---------- */
+  function line(container, cls, str, css, opts = {}) {
+    const el = document.createElement("div");
+    el.className = cls; el.style.cssText = css; el.textContent = str;
+    container.appendChild(el);
+    text(el);
+    const parts = splitText(el, { by: "word" });
+    if (opts.accent) parts.forEach((p, i) => { if (opts.accent.includes(i)) p.style.color = opts.accent.color || ORANGE; });
+    return { el, parts };
+  }
+  const HL = $("hl"), SUP = $("sup");
+  const H = {
+    l1: line(HL, "h", COPY.l1, "position:absolute;left:110px;top:150px;width:1000px;font-size:150px;", { accent: Object.assign([1], { color: ORANGE }) }),
+    l2: line(HL, "h", COPY.l2, "position:absolute;left:110px;top:170px;width:900px;font-size:128px;", { accent: Object.assign([4, 5], { color: ORANGE }) }),
+    l4: line(HL, "h", COPY.l4, "position:absolute;left:110px;top:170px;width:985px;font-size:140px;", { accent: Object.assign([2, 3], { color: LIME }) }),
+    l6: line(HL, "h", COPY.l6, "position:absolute;left:110px;top:150px;width:940px;font-size:170px;", { accent: Object.assign([1, 2], { color: ORANGE }) }),
+    l8: line(HL, "h", COPY.l8, "position:absolute;left:110px;top:150px;width:950px;font-size:130px;", { accent: Object.assign([3, 4, 5], { color: LIME }) })
+  };
+  const S = {
+    l3: line(SUP, "s", COPY.l3, "position:absolute;left:110px;top:590px;width:900px;font-size:44px;"),
+    l5: line(SUP, "s", COPY.l5, "position:absolute;left:110px;top:470px;width:900px;font-size:44px;color:#ff8f70;"),
+    l7: line(SUP, "s", COPY.l7, "position:absolute;left:110px;top:530px;width:860px;font-size:42px;"),
+    l9: line(SUP, "s", COPY.l9, "position:absolute;left:110px;top:440px;width:900px;font-size:44px;")
+  };
+  function words(L, tIn, tOut, t, opts = {}) {
+    const n = L.parts.length, each = opts.each ?? 0.07, dur = opts.dur ?? 0.8, dy = opts.dy ?? 1.15;
+    L.parts.forEach((p, i) => {
+      const a = at(t, tIn + i * each, dur, ease.emphasized);
+      const b = at(t, tOut + i * 0.05, 0.6, ease.inOutSine);
+      const y = (1 - a) * dy - b * 0.32;
+      p.style.transform = `translateY(${(y * 100).toFixed(2)}%)`;
+      p.style.opacity = (Math.min(1, a * 1.6) * (1 - b)).toFixed(3);
+    });
+    L.el.style.visibility = (t < tIn - 0.05 || t > tOut + n * 0.05 + 0.75) ? "hidden" : "visible";
+  }
+
+  /* ---------- wordmark and tagline (final beat) ---------- */
+  const WM = $("wordmark"), TG = $("tag");
+  const wmL = line(WM, "w0", COPY.l10, "font-size:190px;line-height:.98;white-space:nowrap;");
+  const tgL = line(TG, "w0", COPY.l11, "font-size:84px;line-height:1;white-space:nowrap;", { accent: Object.assign([3, 4], { color: ORANGE }) });
+  wmL.el.style.fontWeight = "900"; tgL.el.style.fontWeight = "900";
+  wmL.el.style.letterSpacing = "-.02em";
+
+  /* ---------- prompt bar ---------- */
+  const bar = $("bar"), cmd = $("cmd"), out = $("out"), caret = $("caret"), chev = $("chev");
+  text(cmd, { decor: true }); text(out, { decor: true }); text(chev, { decor: true });
+  function typed(str, t, t0, t1) { return Math.round(str.length * clamp((t - t0) / (t1 - t0), 0, 1)); }
+  const CMD1 = "lit add input validation to the signup form";
+  const CMD2 = "handoff";
+  const CMD3 = "read the handoff and continue";
+  const CMD4 = "litcodex doctor";
+  const OUT4 = "All checks passed.";
+  function setCmd(t) {
+    let str = "", lead = "›", color = PAPER, litAccent = false, tail = "";
+    if (t < 12.0) { const n = typed(CMD1, t, 0.55, 2.3); str = t > 2.75 ? "" : CMD1.slice(0, n); litAccent = true; }
+    else if (t < 12.35) { str = ""; }
+    else if (t < 15.7) { str = t > 13.35 ? "" : CMD2.slice(0, typed(CMD2, t, 12.45, 13.0)); }
+    else if (t < 16.3) { str = ""; }
+    else if (t < 20.0) { str = t > 17.85 ? "" : CMD3.slice(0, typed(CMD3, t, 16.45, 17.5)); }
+    else if (t < 20.35) { str = ""; }
+    else { lead = "$"; str = CMD4.slice(0, typed(CMD4, t, 20.45, 21.05)); }
+    chev.textContent = lead;
+    if (litAccent && str.length > 0) {
+      const a = str.slice(0, 3), b = str.slice(3);
+      cmd.innerHTML = `<span style="color:${ORANGE}">${a}</span><span style="color:${PAPER}">${b}</span>`;
+    } else cmd.textContent = str;
+    // the caret follows the typed text; blink at 1 Hz once idle
+    const w = 21.6; // Meslo advance at 36px
+    const active = (t < 2.3 || (t > 12.0 && t < 13.05) || (t > 16.3 && t < 17.55) || (t > 20.3 && t < 21.1));
+    const blink = active || (Math.floor(t * 1.6) % 2 === 0);
+    caret.style.left = `${80 + str.length * w + 2}px`;
+    caret.style.top = lead === "$" ? "22px" : "22px";
+    caret.style.opacity = blink && !(t >= 21.1) ? 1 : 0;
+    // dim the bar after a message is sent
+    const sent = (t > 2.45 && t < 2.75) || (t > 13.2 && t < 13.35) || (t > 17.7 && t < 17.85);
+    cmd.style.opacity = sent ? 0.55 : 1;
+    // doctor output line
+    const showOut = t > 21.1;
+    out.textContent = showOut ? OUT4.slice(0, typed(OUT4, t, 21.1, 21.55)) : "";
+  }
+  function layoutBar(t) {
+    const hOut = at(t, 21.0, 0.4, ease.emphasized); // bar grows for doctor output
+    const h = 92 + hOut * 52;
+    const enter = at(t, -0.3, 0.6, ease.outCubic);
+    bar.style.height = `${h}px`;
+    bar.style.top = `${992 - h + (1 - enter) * 60}px`;
+    bar.style.opacity = enter;
+    // bar wipes between sessions (16.0 to 16.35): a lime line sweeps across
+    const glowLine = at(t, 15.65, 0.55, ease.inOutSine);
+    bar.style.borderColor = mix(LINE, LIME, Math.sin(Math.PI * glowLine) * 0.9);
+  }
+
+  /* ---------- card, rows, ring ---------- */
+  const card = $("card");
+  const rows = CRIT.map((label, i) => {
+    const d = document.createElement("div"); d.className = "crit"; d.style.top = `${172 + i * 116}px`;
+    d.innerHTML = `<svg width="48" height="48" viewBox="0 0 48 48"><circle class="c" cx="24" cy="24" r="20" fill="none" stroke="${MUTED}" stroke-width="3"/><path class="ck" d="M14 25 L21 32 L34 16" fill="none" stroke="${PANEL}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path class="bg" d="M24 12 L24 27" fill="none" stroke="${ORANGE}" stroke-width="5" stroke-linecap="round"/><circle class="bd" cx="24" cy="35" r="3" fill="${ORANGE}"/></svg><div class="lbl">${label}</div><div class="tag mono"></div>`;
+    card.appendChild(d);
+    const lbl = d.querySelector(".lbl"); text(lbl, { decor: true });
+    const tag = d.querySelector(".tag"); text(tag, { decor: true });
+    return { d, c: d.querySelector(".c"), ck: d.querySelector(".ck"), bg: d.querySelector(".bg"), bd: d.querySelector(".bd"), tag };
+  });
+  text($("title"), { decor: true }); text($("ringtxt"), { decor: true });
+  text(card.querySelector("div"), { decor: true });
+  text($("ignited"), { decor: true });
+
+  // ring: four arcs, gaps of 12 degrees
+  const ring = $("ring");
+  const ringSegs = [];
+  function arc(cx, cy, r, a0, a1) {
+    const p = (a) => [cx + r * Math.cos((a - 90) * Math.PI / 180), cy + r * Math.sin((a - 90) * Math.PI / 180)];
+    const [x0, y0] = p(a0), [x1, y1] = p(a1);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  }
+  function makeRing(svg, cx, cy, r, sw) {
+    const segs = [];
+    for (let i = 0; i < 4; i++) {
+      const a0 = i * 90 + 7, a1 = (i + 1) * 90 - 7;
+      const track = document.createElementNS(SVGNS, "path");
+      track.setAttribute("d", arc(cx, cy, r, a0, a1)); track.setAttribute("fill", "none"); track.setAttribute("stroke", LINE); track.setAttribute("stroke-width", sw); track.setAttribute("stroke-linecap", "round");
+      const fill = document.createElementNS(SVGNS, "path");
+      fill.setAttribute("d", arc(cx, cy, r, a0, a1)); fill.setAttribute("fill", "none"); fill.setAttribute("stroke", LIME); fill.setAttribute("stroke-width", sw); fill.setAttribute("stroke-linecap", "round");
+      svg.appendChild(track); svg.appendChild(fill); segs.push({ track, fill });
+    }
+    return segs;
+  }
+  const rSmall = makeRing(ring, 56, 56, 40, 9);
+  const rBig = makeRing($("big"), 310, 310, 250, 30);
+
+  /* ---------- handoff sheet ---------- */
+  const sheet = $("sheet");
+  const SEC = [["Decisions", [300, 220]], ["Remaining work", [340, 180]], ["Where to resume", [260, 300]]];
+  sheet.innerHTML = `<div class="abs" style="left:44px;top:40px;width:120px;height:14px;border-radius:7px;background:#0b1119"></div>` + SEC.map(([name, ws], i) => `<div class="sec" style="top:${100 + i * 128}px"><div class="abs" style="left:0;top:6px;width:30px;height:30px;border-radius:8px;background:${i === 1 ? ORANGE : "#0b1119"}"></div><b>${name}</b><div class="ln" style="top:52px;width:${ws[0]}px"></div><div class="ln" style="top:72px;width:${ws[1]}px"></div></div>`).join("");
+  sheet.querySelectorAll("b").forEach((b) => text(b, { decor: true }));
+  const secEls = Array.from(sheet.querySelectorAll(".sec"));
+
+  /* ---------- background ---------- */
+  const glow = $("glow"), grid = $("grid");
+
+  /* ---------- state helpers ---------- */
+  const DONE_T = [8.2, 8.6, 9.0]; // rows 1-3 turn green in beat 3
+  const FINAL_T = 18.95;
+  function rowState(i, t) {
+    // returns {done: 0..1 progress of ✓, open: 0..1 progress of the orange open state}
+    if (i < 3) return { done: at(t, DONE_T[i], 0.45, ease.outCubic), open: 0 };
+    return { done: at(t, FINAL_T, 0.5, ease.outCubic), open: at(t, 9.3, 0.5, ease.outCubic) * (1 - at(t, FINAL_T - 0.1, 0.25, ease.standard)) };
+  }
+  function drawRows(t) {
+    rows.forEach((r, i) => {
+      const inn = at(t, 4.55 + i * 0.13, 0.55, ease.emphasized);
+      r.d.style.opacity = inn; r.d.style.transform = `translateX(${(1 - inn) * 46}px)`;
+      const s = rowState(i, t);
+      const stroke = s.done > 0 ? LIME : (s.open > 0 ? mix(MUTED, ORANGE, s.open) : MUTED);
+      r.c.setAttribute("stroke", stroke);
+      r.c.setAttribute("fill", s.done > 0 ? rgba(LIME, s.done) : "none");
+      drawPath(r.ck, at(t, 0, 1, ease.standard) * 0 + s.done);
+      r.ck.style.opacity = s.done > 0 ? 1 : 0;
+      drawPath(r.bg, s.open); r.bg.style.opacity = s.open > 0.02 ? 1 : 0; r.bd.style.opacity = s.open > 0.6 ? clamp((s.open - 0.6) / 0.4, 0, 1) : 0;
+      const tagStr = s.done > 0.85 ? "evidence recorded" : (s.open > 0.9 ? "not verified yet" : "");
+      const tagTxt = tagStr; const shown = tagStr ? tagStr.slice(0, Math.round(tagStr.length * clamp(((s.done > 0.85 ? s.done : s.open) - 0.85) / 0.15 * 1.0, 0, 1))) : "";
+      // the tag types in once the mark is nearly drawn
+      r.tag.textContent = shown; r.tag.style.color = s.done > 0.85 ? LIME : "#ff8f70";
+      const labelColor = s.done > 0.5 ? PAPER : (s.open > 0.5 ? "#ffd6c9" : "#cfd6df");
+      r.d.querySelector(".lbl").style.color = labelColor;
+    });
+  }
+  function doneCount(t) {
+    let n = 0; for (let i = 0; i < 4; i++) { if (rowState(i, t).done > 0.5) n++; } return n;
+  }
+  function drawRingSmall(t) {
+    rows.forEach((_, i) => {
+      const s = rowState(i, t);
+      const draw = at(t, 4.95 + i * 0.2, 0.7, ease.inOutSine);
+      drawPath(rSmall[i].track, draw);
+      drawPath(rSmall[i].fill, s.done);
+      rSmall[i].fill.style.opacity = s.done > 0 ? 1 : 0;
+    });
+    $("ringtxt").textContent = `${doneCount(t)}/4`;
+    // the ring pulses lime when the last check lands
+    const complete = at(t, FINAL_T + 0.4, 0.6, ease.outCubic);
+    $("ringtxt").style.color = complete > 0.5 ? LIME : PAPER;
+  }
+  function drawRingBig(t) {
+    const enter = at(t, 20.0, 0.6, ease.inOutSine);
+    rBig.forEach((s, i) => {
+      const d = at(t, 20.0 + i * 0.12, 0.6, ease.inOutSine);
+      drawPath(s.track, d); drawPath(s.fill, d);
+      s.fill.style.opacity = d > 0 ? 1 : 0;
+    });
+    $("big").style.opacity = enter > 0 ? 1 : 0;
+    const m = at(t, 20.5, 0.6, ease.emphasized);
+    bigRows.forEach((g, i) => { const a = at(t, 20.5 + i * 0.03, 0.45, ease.outCubic); g.style.opacity = a; g.setAttribute("transform", `translate(0 ${(1 - a) * 30})`); });
+    $("bigmark").style.opacity = m > 0 ? 1 : 0;
+  }
+
+  /* ---------- the render ---------- */
+  define({ width: 1920, height: 1080, fps: 60, duration: 24, render(t) {
+    // texture
+    grid.style.transform = "translate(0px, 0px)";
+    const gx = kf(t, [{ t: 0, v: 1420, ease: "inOutSine" }, { t: 4, v: 1420 }, { t: 8, v: 1440 }, { t: 12, v: 1430 }, { t: 16, v: 1380 }, { t: 20, v: 1440 }, { t: 24, v: 1440 }]);
+    const gy = kf(t, [{ t: 0, v: 620 }, { t: 24, v: 520 }]);
+    const gc = mix(ORANGE, LIME, at(t, 17, 3.5, ease.inOutSine) * 0.55);
+    const ga = 0.16 + 0.10 * at(t, 2.4, 1.0, ease.outCubic) + 0.10 * at(t, 18.6, 1.5, ease.outCubic) + 0.05 * at(t, 20, 4, ease.inOutSine);
+    glow.style.left = `${gx - 750}px`; glow.style.top = `${gy - 750}px`;
+    glow.style.background = `radial-gradient(circle at 50% 50%, ${rgba(gc, ga)} 0%, ${rgba(gc, ga * 0.4)} 28%, transparent 62%)`;
+
+    // a hairline sweeps across the frame on each cut, so the hit is seen as well as heard
+    let sw = 0, sx = 0;
+    [4, 8, 12, 16, 20].forEach((c) => { const p = at(t, c - 0.05, 0.55, ease.inOutSine); if (p > 0 && p < 1) { sw = Math.sin(Math.PI * p); sx = p; } });
+    $("sweep").style.opacity = 0.85 * sw;
+    $("sweep").style.background = `linear-gradient(90deg, transparent ${(sx * 100 - 22).toFixed(1)}%, ${ORANGE} ${(sx * 100 - 4).toFixed(1)}%, ${LIME} ${(sx * 100).toFixed(1)}%, transparent ${(sx * 100 + 1).toFixed(1)}%)`;
+
+    // wordmark chrome
+    $("wm").style.opacity = at(t, -0.3, 0.6, ease.outCubic);
+
+    // headlines and support lines
+    words(H.l1, -0.45, 3.2, t);
+    words(H.l2, 4.15, 7.2, t);
+    words(S.l3, 5.7, 7.2, t, { each: 0.05, dur: 0.6 });
+    words(H.l4, 8.15, 11.2, t);
+    words(S.l5, 9.6, 11.4, t, { each: 0.05, dur: 0.6 });
+    words(H.l6, 12.15, 15.15, t, { dur: 0.75 });
+    words(S.l7, 13.2, 15.15, t, { each: 0.04, dur: 0.6 });
+    words(H.l8, 16.15, 19.3, t);
+    words(S.l9, 17.15, 19.3, t, { each: 0.04, dur: 0.6 });
+    wmL.parts.forEach((p) => { const a = at(t, 20.6, 0.8, ease.emphasized); p.style.transform = `translateY(${((1 - a) * 115).toFixed(2)}%)`; });
+    tgL.parts.forEach((p, i) => { const a = at(t, 21.0 + i * 0.1, 0.7, ease.emphasized); p.style.transform = `translateY(${((1 - a) * 115).toFixed(2)}%)`; });
+    WM.style.visibility = t < 20.5 ? "hidden" : "visible"; TG.style.visibility = t < 20.9 ? "hidden" : "visible";
+
+    // prompt bar
+    layoutBar(t); setCmd(t);
+
+    // outlined transcript frame + mark (beat 1)
+    const fr = at(t, 0.3, 1.1, ease.inOutSine);
+    const frOut = at(t, 3.3, 0.8, ease.inOutSine);
+    drawPath($("framerect"), fr);
+    $("frame").style.opacity = (1 - frOut) * (t < 4.2 ? 1 : 0);
+    const mOut = at(t, 3.25, 0.85, ease.inOutSine);
+    markRows.forEach((g, i) => { const a = at(t, 2.5 + i * 0.09, 0.55, ease.outCubic); g.style.opacity = a * (1 - mOut); g.setAttribute("transform", `translate(0 ${((1 - a) * 44 - mOut * 24).toFixed(2)})`); });
+    const ig = "LIT IGNITED · lit-loop";
+    $("ignited").textContent = ig.slice(0, Math.round(ig.length * at(t, 3.0, 0.5, ease.standard)));
+    $("ignited").style.opacity = 1 - mOut;
+
+    // goal card (from beat 2 to 5), sheet (beat 4/5)
+    const cardIn = at(t, 4.0, 0.7, ease.emphasized);
+    const sheetIn1 = at(t, 13.25, 0.8, ease.emphasized), sheetOut1 = at(t, 15.05, 0.7, ease.accelerate);
+    const cardDim1 = at(t, 13.25, 0.6, ease.standard) * (1 - at(t, 16.2, 0.3, ease.standard));
+    const sheetIn2 = at(t, 16.45, 0.8, ease.emphasized), sheetOut2 = at(t, 17.2, 0.45, ease.accelerate);
+    const cardClear1 = at(t, 15.5, 0.4, ease.accelerate) * (1 - at(t, 17.7, 0.6, ease.emphasized));
+    const cardOutEnd = at(t, 19.7, 0.5, ease.accelerate);
+    const cardVis = cardIn * (1 - 0.88 * cardClear1) * (1 - cardOutEnd);
+    card.style.opacity = cardVis * (1 - 0.72 * cardDim1);
+    const cy = (1 - cardIn) * 50 + cardClear1 * 40 + cardOutEnd * 30;
+    const cs = 0.94 + 0.06 * cardIn - 0.04 * cardOutEnd;
+    card.style.transform = `translateY(${cy}px) scale(${cs})`;
+    card.style.clipPath = `inset(0 0 ${(1 - at(t, 4.0, 0.8, ease.inOutSine)) * 100}% 0 round 22px)`;
+    // card border: orange while a check is open, lime once complete
+    const openAmt = at(t, 9.3, 0.5, ease.outCubic) * (1 - at(t, FINAL_T, 0.4, ease.standard));
+    const doneAmt = at(t, FINAL_T + 0.2, 0.6, ease.outCubic);
+    card.style.borderColor = mix(mix(LINE, ORANGE, openAmt), LIME, doneAmt);
+    drawRows(t); drawRingSmall(t);
+    $("ring").style.opacity = 1;
+
+    // handoff sheet: in at 13.25, filed into the bar at 15.05; back at 16.45 to be read, gone by 17.75
+    const sVis = Math.max(sheetIn1 * (1 - sheetOut1), sheetIn2 * (1 - sheetOut2));
+    let sy, sr, ss;
+    if (t < 16.2) { sy = (1 - sheetIn1) * 70 + sheetOut1 * 36; sr = -2 + (1 - sheetIn1) * 3; ss = 1 - sheetOut1 * 0.04; }
+    else { sy = (1 - sheetIn2) * 70 + sheetOut2 * -36; sr = -2 + (1 - sheetIn2) * 3; ss = 1 - sheetOut2 * 0.04; }
+    sheet.style.opacity = sVis; sheet.style.transform = `translateY(${sy}px) rotate(${sr}deg) scale(${ss})`;
+    sheet.style.visibility = sVis > 0.01 ? "visible" : "hidden";
+    secEls.forEach((s, i) => {
+      const a1 = at(t, 13.55 + i * 0.2, 0.45, ease.outCubic), a2 = at(t, 16.85 + i * 0.18, 0.4, ease.outCubic);
+      const a = t < 16.2 ? a1 : Math.max(a2, 0.0 + (t >= 16.2 ? 0 : 0));
+      const read = t < 16.2 ? 1 : a2;
+      s.style.opacity = t < 16.2 ? a1 : (0.35 + 0.65 * a2);
+    });
+
+    // big ring + mark (final beat)
+    drawRingBig(t);
+  } });
+</script>
+</body>
