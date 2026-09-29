@@ -10,7 +10,7 @@ Use the [poster](./ignition-poster.png), [film](./ignition-film.mp4) or
 [animation](./ignition-readme.gif). These files and the other assets in this
 directory are excluded from npm and installed marketplace payloads.
 
-The local badges describe the `1.0.9` candidate and the product's
+The local badges describe the `1.0.10` candidate and the product's
 [MIT license](../../../LICENSE). They are static Shields-style images, with dark
 lettering on the orange candidate field and lime license field. They do not
 report registry availability or CI results.

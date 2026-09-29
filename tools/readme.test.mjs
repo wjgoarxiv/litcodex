@@ -26,7 +26,7 @@ const README_KO_PATH = join(REPO_ROOT, "README-Ko-KR.md");
 const PKG_README_PATH = join(REPO_ROOT, "packages", "litcodex-ai", "README.md");
 const PKG_README_KO_PATH = join(REPO_ROOT, "packages", "litcodex-ai", "README-Ko-KR.md");
 const PKG_JSON = JSON.parse(readFileSync(join(REPO_ROOT, "packages", "litcodex-ai", "package.json"), "utf8"));
-const NPM_CDN = "https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.9/readme-assets";
+const NPM_CDN = "https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.10/readme-assets";
 const NPM_COVER = `${NPM_CDN}/cover-motion.webp`;
 const CHANGELOG_PATH = join(REPO_ROOT, "CHANGELOG.md");
 const AUDIT = join(HERE, "readme-audit.mjs");
@@ -130,7 +130,7 @@ describe("readme content invariants", () => {
 	test("README presentation retains the exact outlined mark, local badges, licensed icons and motion", () => {
 		const assetPins = {
 			"ascii-readme.svg": "a074e5ba5ff3f6f17611f0621669b3a14b0fa85410e5972157b8d2202760d80d",
-			"badge-version.svg": "08e157f4b2cd4d36eea2eb368501ca6e7020fb68f2876ebcfe5ccb6d64f99b85",
+			"badge-version.svg": "998e61f15b6525e98906cb1bf32ba1a3aca571062c8025da5953d23ab72a6198",
 			"badge-license.svg": "decba749e28b4b87635e62eae766899fdc3e91a8e312208ff152831f620b18d7",
 			"lucide-book-open.svg": "3ae327cc4bbff19933a3ed535978ff558985b1bcca950e5484f61aa78764ebd2",
 			"lucide-play.svg": "ab6e5f5c9e61ec2d8ddd6b93b5476b976c8a0086f5529142a7981284d85f8b83",
@@ -594,14 +594,14 @@ describe("readme content invariants", () => {
 		const nextSection = README.indexOf("## Start with lit", installIdx);
 		const installSection = README.slice(installIdx, nextSection);
 		const globalIdx = installSection.indexOf("npm install -g @litfamily/litcodex");
-		const npxIdx = installSection.indexOf("npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install");
+		const npxIdx = installSection.indexOf("npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex install");
 		assert.ok(npxIdx >= 0, "npx install present in Install section");
 		assert.ok(globalIdx === -1 || npxIdx < globalIdx, "npx install precedes optional global install");
 		evidence("task-21-install-primary.txt", "npx install is first\nSTATUS: PASS");
 	});
 
 	test("documents npx no-global alternative", () => {
-		assert.ok(README.includes("npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install"));
+		assert.ok(README.includes("npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex install"));
 		assert.ok(/>\s*Without a global install/i.test(README), "labeled callout present");
 		evidence("task-21-install-npx-alt.txt", "npx alt labeled\nSTATUS: PASS");
 	});
@@ -788,7 +788,7 @@ describe("readme content invariants", () => {
 		const report = auditReadme(README, CONTRACT);
 		assert.ok(!report.offenders.some((o) => o.kind === "forbidden-phrase" && o.value === "or-join"));
 		const bad = auditReadme(
-			`${README}\n\nlitcodex install or npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install\n`,
+			`${README}\n\nlitcodex install or npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex install\n`,
 			CONTRACT,
 		);
 		assert.ok(bad.offenders.some((o) => o.kind === "forbidden-phrase" && o.value === "or-join"));
@@ -817,13 +817,13 @@ describe("readme content invariants", () => {
 
 	test("npx alias is route-checked too", () => {
 		assert.equal(
-			extractLitcodexSubcommand("npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install"),
+			extractLitcodexSubcommand("npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex install"),
 			"install",
 		);
 		assert.equal(extractLitcodexSubcommand("litcodex doctor"), "doctor");
 		assert.equal(extractLitcodexSubcommand("not a command"), null);
 		const bad = auditReadme(
-			`${README}\n\n    npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex steer\n`,
+			`${README}\n\n    npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex steer\n`,
 			CONTRACT,
 		);
 		assert.ok(bad.offenders.some((o) => o.kind === "unknown-subcommand" && o.value.includes("steer")));
@@ -1051,7 +1051,7 @@ describe("GitHub and npm README split", () => {
 				installHeading,
 				"install is the first section",
 			);
-			assert.ok(npm.includes("npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install"));
+			assert.ok(npm.includes("npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex install"));
 			const ratio = npm.length / github.length;
 			assert.ok(ratio > 0.15 && ratio < 0.5, `npm README is ${Math.round(ratio * 100)}% of the GitHub README`);
 		}

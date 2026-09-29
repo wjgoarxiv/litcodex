@@ -35,7 +35,7 @@ LIT · codex
 <p align="center"><img src="./docs/assets/clay-icon.png" width="160" alt="LitCodex clay mark" /></p>
 
 <p align="center">
-<a href="#install"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.9" /></a>
+<a href="#install"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.10" /></a>
 <a href="./LICENSE"><img src="./docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
 </p>
 
@@ -80,7 +80,7 @@ long after the agent has stopped.
 You need Node.js 22 or later and Codex CLI. Then run:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex install
 ```
 
 The installer sets LitCodex up inside Codex. It registers the plugin, its hooks and its agents, and
@@ -94,8 +94,8 @@ Codex sign-in and model access once real model work starts.
 
 Two variants are worth knowing:
 
-- If you want to see what would change before anything does, run `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex --dry-run install`.
-- If you are setting up a machine without anyone at the keyboard, run `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install --yes`. A `--style <id>` you pass is still used.
+- If you want to see what would change before anything does, run `npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex --dry-run install`.
+- If you are setting up a machine without anyone at the keyboard, run `npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex install --yes`. A `--style <id>` you pass is still used.
 
 Coming from the old unscoped package? The [migration guide](./docs/npm-migration.md) covers the move.
 
@@ -127,7 +127,7 @@ You can keep the script out of the global install in either of two ways:
 Leaving it out here only postpones the downloads. `litcodex install` gets the video tools ready the same
 way after a successful install, and there is no switch to turn that off.
 
-> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex doctor`.
+> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex doctor`.
 
 ### Trying it apart from your setup
 
@@ -619,7 +619,7 @@ See [state and recovery](./docs/usage.md#loop-state).
 ## Check the install
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex doctor
 ```
 
 `litcodex doctor` checks registration, hooks, config and host capabilities. `litcodex loop doctor`
@@ -698,7 +698,7 @@ export TYPESAFE_API_KEY=<your own TypeSafe key>
 ## Uninstall
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex uninstall
 ```
 
 `litcodex uninstall` removes the plugin and the config LitCodex manages, and leaves your other settings alone.

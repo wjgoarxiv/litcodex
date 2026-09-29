@@ -35,7 +35,7 @@ LIT · codex
 <p align="center"><img src="./docs/assets/clay-icon.png" width="160" alt="LitCodex 클레이 마크" /></p>
 
 <p align="center">
-<a href="#설치"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.9" /></a>
+<a href="#설치"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.10" /></a>
 <a href="./LICENSE"><img src="./docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
 </p>
 
@@ -82,7 +82,7 @@ LitCodex는 Codex CLI 플러그인입니다. 계획, 검토, 조사와 오래 �
 Node.js 22 이상과 Codex CLI가 있으면 아래 명령 하나로 설치합니다.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex install
 ```
 
 설치기는 Codex 안에 LitCodex 자리를 만듭니다. 플러그인과 훅, 에이전트를 등록하고,
@@ -95,8 +95,8 @@ Codex 로그인과 모델 사용 권한은 실제 모델 작업을 시작할 때
 
 알아 두면 좋은 변형이 두 가지 있습니다.
 
-- 설치 전에 무엇이 바뀌는지 먼저 보고 싶다면 `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex --dry-run install`을 실행하세요.
-- 사람이 지켜보지 않는 환경에서 한 번에 설치하려면 `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex install --yes`를 실행하세요. 직접 넘긴 `--style <id>`는 그대로 반영됩니다.
+- 설치 전에 무엇이 바뀌는지 먼저 보고 싶다면 `npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex --dry-run install`을 실행하세요.
+- 사람이 지켜보지 않는 환경에서 한 번에 설치하려면 `npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex install --yes`를 실행하세요. 직접 넘긴 `--style <id>`는 그대로 반영됩니다.
 
 예전 패키지 이름(`litcodex-ai`)으로 설치했다면 [기존 설치 이전 안내](./docs/npm-migration.md)를 먼저 읽어 주세요.
 
@@ -127,7 +127,7 @@ npm 레지스트리에서 받고, 역시 고정된 글꼴·라이선스 파일�
 여기서 빼면 내려받기가 뒤로 미뤄질 뿐입니다. `litcodex install`이 설치에 성공한 뒤 같은 방식으로 영상 도구를
 준비하고, 이 단계는 끌 수 없습니다.
 
-> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex doctor`.
+> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex doctor`.
 
 ### 기존 설정과 떼어 놓고 써 보기
 
@@ -607,7 +607,7 @@ Codex 안에서 일어납니다. 그러니 작업은 결과물과 실제로 돌�
 ## 설치 확인
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex doctor
 ```
 
 `litcodex doctor`는 등록·훅·설정·호스트 기능을, `litcodex loop doctor`는 현재 프로젝트의 루프 상태를 확인합니다.
@@ -676,7 +676,7 @@ export TYPESAFE_API_KEY=<본인의 TypeSafe 키>
 ## 제거
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.9 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.10 -- litcodex uninstall
 ```
 
 `litcodex uninstall`은 플러그인과 LitCodex가 관리하는 설정을 지우고, 관련 없는 설정은 그대로 둡니다.

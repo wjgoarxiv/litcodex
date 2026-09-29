@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.10] - 2026-09-29
+
+### Changed
+
+- The READMEs in English and Korean are rewritten in plainer language, both the full guide on GitHub
+  and the short install card on the npm page that links to it. Each section now gives the reason first
+  and the switches after it.
+
 ## [1.0.9] - 2026-09-29
 
 ### Fixed
