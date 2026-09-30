@@ -48,6 +48,8 @@ export const GPT56_MODELS = {
 } as const;
 
 export const ASTRA_MODEL = GPT6_MODELS.astra;
+/** The previous-generation GPT-6 Sol id stays a known managed route for users who already chose it. */
+const PREVIOUS_GPT6_SOL_MODEL = requiredModelForAlias("gpt-6-sol");
 export const EXPLICIT_GPT56_SOL_MODEL = requiredModelForAlias("sol");
 
 export type Gpt56Profile = keyof typeof GPT56_MODELS | "astra";
@@ -220,6 +222,7 @@ export function classifyCatalogInput(args: {
 		originalDispatchId === GPT56_MODELS.luna ||
 		originalDispatchId === ASTRA_MODEL ||
 		originalDispatchId === GPT6_MODELS.sol ||
+		originalDispatchId === PREVIOUS_GPT6_SOL_MODEL ||
 		originalDispatchId === GPT6_MODELS.luna
 	) {
 		return { class: "existing_managed", originalDispatchId };

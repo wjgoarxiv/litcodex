@@ -28,7 +28,7 @@ import {
 	writeSync,
 } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, isAbsolute, join } from "node:path";
+import { dirname, isAbsolute, join, relative, sep } from "node:path";
 
 export const AUTO_HANDOFF_FLAG_ENV = "LITCODEX_AUTO_HANDOFF";
 export const AUTO_HANDOFF_PERCENT_ENV = "LITCODEX_AUTO_HANDOFF_PERCENT";
@@ -169,6 +169,27 @@ export function loadAutoHandoffState(repoRoot: string, env: NodeJS.ProcessEnv): 
 
 // ── Safe small-file writes ───────────────────────────────────────────────────
 
+/**
+ * True when no existing component of `target` below `root` is a symlink, so a write or delete cannot be
+ * redirected out of the project. Components that do not exist yet are fine; `root` itself is trusted.
+ */
+function clearOfSymlinks(root: string, target: string): boolean {
+	const below = relative(root, target);
+	if (below === "" || below === ".." || below.startsWith(`..${sep}`) || isAbsolute(below)) return false;
+	let current = root;
+	try {
+		for (const part of below.split(sep)) {
+			current = join(current, part);
+			const stat = lstatSync(current, { throwIfNoEntry: false });
+			if (stat === undefined) return true;
+			if (stat.isSymbolicLink()) return false;
+		}
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 function ensureDir(dir: string): boolean {
 	try {
 		const stat = lstatSync(dir, { throwIfNoEntry: false });
@@ -182,9 +203,9 @@ function ensureDir(dir: string): boolean {
 	}
 }
 
-/** Atomic write that refuses to go through a symlink or replace anything but a regular file. */
-export function writeSmallFile(path: string, text: string): boolean {
-	if (!ensureDir(dirname(path))) return false;
+/** Atomic write that refuses to go through a symlink (in any component below `root`) or replace anything but a regular file. */
+export function writeSmallFile(path: string, text: string, root: string): boolean {
+	if (!clearOfSymlinks(root, path) || !ensureDir(dirname(path))) return false;
 	const tmp = `${path}.${process.pid}.${randomBytes(6).toString("hex")}.tmp`;
 	try {
 		const existing = lstatSync(path, { throwIfNoEntry: false });
@@ -208,7 +229,7 @@ export function writeSmallFile(path: string, text: string): boolean {
 }
 
 export function writeStoredAutoHandoff(repoRoot: string, stored: StoredAutoHandoff): boolean {
-	return writeSmallFile(settingsPath(repoRoot), `${JSON.stringify({ version: 1, ...stored })}\n`);
+	return writeSmallFile(settingsPath(repoRoot), `${JSON.stringify({ version: 1, ...stored })}\n`, repoRoot);
 }
 
 // ── Project config: Codex compacts after the handoff turn ────────────────────
@@ -288,6 +309,7 @@ export type ProjectConfigResult = "written" | "unchanged-user-key" | "failed" | 
 /** Write (or update) the marked block. A key the user wrote by hand stays as it is. */
 export function writeProjectCompaction(repoRoot: string, percent: number): ProjectConfigResult {
 	const path = projectConfigPath(repoRoot);
+	if (!clearOfSymlinks(repoRoot, path)) return "failed";
 	const stat = lstatSync(path, { throwIfNoEntry: false });
 	if (stat !== undefined && !stat.isFile()) return "failed";
 	const raw = stat === undefined ? "" : readSmallFile(path);
@@ -299,15 +321,16 @@ export function writeProjectCompaction(repoRoot: string, percent: number): Proje
 		const lines = raw.split("\n");
 		const at = lines.findIndex((line) => KEY_LINE.test(line.replace(/\r$/u, "")));
 		lines[at] = `${HOST_COMPACT_KEY} = ${percent}`;
-		return writeSmallFile(path, lines.join("\n")) ? "written" : "failed";
+		return writeSmallFile(path, lines.join("\n"), repoRoot) ? "written" : "failed";
 	}
-	return writeSmallFile(path, raw === "" ? block : `${block}\n${raw}`) ? "written" : "failed";
+	return writeSmallFile(path, raw === "" ? block : `${block}\n${raw}`, repoRoot) ? "written" : "failed";
 }
 
 /** Remove only the marked block; delete the file (and an empty `.codex`) when nothing else is left. */
 export function removeProjectCompaction(repoRoot: string): ProjectConfigResult {
 	const path = projectConfigPath(repoRoot);
 	if (readProjectCompaction(repoRoot).kind !== "managed") return "nothing-to-remove";
+	if (!clearOfSymlinks(repoRoot, path)) return "failed";
 	const raw = readSmallFile(path);
 	if (raw === null) return "failed";
 	const lines = raw.split("\n");
@@ -329,7 +352,22 @@ export function removeProjectCompaction(repoRoot: string): ProjectConfigResult {
 			return "failed";
 		}
 	}
-	return writeSmallFile(path, rest) ? "removed" : "failed";
+	return writeSmallFile(path, rest, repoRoot) ? "removed" : "failed";
+}
+
+/**
+ * Remove the managed block when the feature is effectively off, however it got there: `lit-handoff auto
+ * off`, `LITCODEX_AUTO_HANDOFF=0`, a deleted settings file, or a percent that is not valid. Without this the
+ * block outlives the switch and Codex keeps compacting at that percent with no handoff. Only the marked
+ * block goes; a key the user wrote by hand is never touched. Never throws.
+ */
+export function clearManagedCompactionWhenOff(repoRoot: string, env: NodeJS.ProcessEnv): ProjectConfigResult {
+	try {
+		if (!isAbsolute(repoRoot) || loadAutoHandoffState(repoRoot, env).active) return "nothing-to-remove";
+		return removeProjectCompaction(repoRoot);
+	} catch {
+		return "failed";
+	}
 }
 
 // ── The `lit-handoff auto ...` prompt route ──────────────────────────────────
@@ -381,7 +419,10 @@ export function applyAutoHandoffRoute(repoRoot: string, env: NodeJS.ProcessEnv, 
 	try {
 		if (route.action === "usage") return USAGE;
 		const { stored } = readStoredAutoHandoff(repoRoot);
-		if (route.action === "status") return describeAutoHandoff(repoRoot, loadAutoHandoffState(repoRoot, env), env);
+		if (route.action === "status") {
+			clearManagedCompactionWhenOff(repoRoot, env);
+			return describeAutoHandoff(repoRoot, loadAutoHandoffState(repoRoot, env), env);
+		}
 		const envNote =
 			(env[AUTO_HANDOFF_FLAG_ENV]?.trim() ?? "") === ""
 				? ""

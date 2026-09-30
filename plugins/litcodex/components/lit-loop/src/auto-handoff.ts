@@ -88,8 +88,8 @@ function readSession(path: string, sessionId: string): AutoHandoffSession {
 	}
 }
 
-function writeSession(path: string, session: AutoHandoffSession): boolean {
-	return writeSmallFile(path, `${JSON.stringify(session)}\n`);
+function writeSession(repoRoot: string, path: string, session: AutoHandoffSession): boolean {
+	return writeSmallFile(path, `${JSON.stringify(session)}\n`, repoRoot);
 }
 
 // ── Context percent from the session transcript ──────────────────────────────
@@ -100,7 +100,14 @@ export interface ContextReading {
 	readonly window: number;
 }
 
-function readTail(path: string, bytes: number): string | null {
+interface Tail {
+	readonly text: string;
+	/** True when the read reached the start of the file, so a wider window would add nothing. */
+	readonly whole: boolean;
+}
+
+/** The last `bytes` bytes of a file. Byte counts are compared with byte counts, never with decoded text length. */
+function readTail(path: string, bytes: number): Tail | null {
 	let fd: number;
 	try {
 		const stat = lstatSync(path, { throwIfNoEntry: false });
@@ -113,8 +120,8 @@ function readTail(path: string, bytes: number): string | null {
 		const size = fstatSync(fd).size;
 		const length = Math.min(size, bytes);
 		const buffer = Buffer.alloc(length);
-		readSync(fd, buffer, 0, length, size - length);
-		return buffer.toString("utf8");
+		const read = readSync(fd, buffer, 0, length, size - length);
+		return { text: buffer.subarray(0, read).toString("utf8"), whole: size <= bytes };
 	} catch {
 		return null;
 	} finally {
@@ -151,11 +158,11 @@ function lastTokenCount(text: string): ContextReading | null {
 export function readContextPercent(transcriptPath: string | null | undefined): ContextReading | null {
 	if (typeof transcriptPath !== "string" || transcriptPath === "" || !isAbsolute(transcriptPath)) return null;
 	for (const bytes of TAIL_STEPS) {
-		const text = readTail(transcriptPath, bytes);
-		if (text === null) return null;
-		const reading = lastTokenCount(text);
+		const tail = readTail(transcriptPath, bytes);
+		if (tail === null) return null;
+		const reading = lastTokenCount(tail.text);
 		if (reading !== null) return reading;
-		if (text.length < bytes) return null;
+		if (tail.whole) return null;
 	}
 	return null;
 }
@@ -217,10 +224,10 @@ export function evaluateAutoHandoffStop(input: AutoHandoffStopInput): AutoHandof
 		if (input.stopHookActive) return PASS;
 		if (reading.percent < state.percent) {
 			if (session.phase === "idle" || session.phase === "compacted") {
-				if (session.lastPercent !== seen.lastPercent) writeSession(path, seen);
+				if (session.lastPercent !== seen.lastPercent) writeSession(input.repoRoot, path, seen);
 				return PASS;
 			}
-			writeSession(path, { ...seen, phase: "idle", firedAt: null, firedPercent: null });
+			writeSession(input.repoRoot, path, { ...seen, phase: "idle", firedAt: null, firedPercent: null });
 			return PASS;
 		}
 		if (session.phase !== "idle") return PASS;
@@ -230,7 +237,7 @@ export function evaluateAutoHandoffStop(input: AutoHandoffStopInput): AutoHandof
 			firedAt: input.now ?? Date.now(),
 			firedPercent: state.percent,
 		};
-		if (!writeSession(path, fired)) return PASS;
+		if (!writeSession(input.repoRoot, path, fired)) return PASS;
 		return {
 			decision: "block",
 			reason: buildHandoffInstruction(
@@ -253,7 +260,7 @@ export function recordCompaction(repoRoot: string, sessionId: string): void {
 		const path = sessionPath(repoRoot, sessionId);
 		if (path === null) return;
 		const session = readSession(path, sessionId);
-		if (session.phase === "fired") writeSession(path, { ...session, phase: "compacted" });
+		if (session.phase === "fired") writeSession(repoRoot, path, { ...session, phase: "compacted" });
 	} catch {
 		// fail-open
 	}
@@ -323,17 +330,24 @@ function buildReloadContext(repoRoot: string, session: AutoHandoffSession): stri
 	].join("\n");
 }
 
+/** A reload the record has already been moved past; `release` puts the record back if the text never reached the model. */
+export interface ReloadClaim {
+	readonly text: string;
+	readonly release: () => void;
+}
+
 /**
- * The reload text for a session that fired and then compacted, or null when there is nothing to bring
+ * Claim the reload text for a session that fired and then compacted, or null when there is nothing to bring
  * back. `allowFired` lets SessionStart (source "compact") reload even when PostCompact has not run yet.
- * The record moves to "reloaded" first, so the excerpt is injected once.
+ * The record moves to "reloaded" first, so the excerpt is injected once; a caller that then fails to put
+ * the text into its hook output calls `release` so the next prompt can try again.
  */
-export function takeReloadContext(
+export function claimReloadContext(
 	repoRoot: string,
 	sessionId: string,
 	env: NodeJS.ProcessEnv,
 	allowFired: boolean,
-): string | null {
+): ReloadClaim | null {
 	try {
 		const state: AutoHandoffState = loadAutoHandoffState(repoRoot, env);
 		if (!state.active) return null;
@@ -341,11 +355,21 @@ export function takeReloadContext(
 		if (path === null) return null;
 		const session = readSession(path, sessionId);
 		if (session.phase !== "compacted" && !(allowFired && session.phase === "fired")) return null;
-		if (!writeSession(path, { ...session, phase: "reloaded" })) return null;
-		return buildReloadContext(repoRoot, session);
+		if (!writeSession(repoRoot, path, { ...session, phase: "reloaded" })) return null;
+		return { text: buildReloadContext(repoRoot, session), release: () => void writeSession(repoRoot, path, session) };
 	} catch {
 		return null;
 	}
+}
+
+/** The reload text, claimed for good. Use `claimReloadContext` when the text might not reach the output. */
+export function takeReloadContext(
+	repoRoot: string,
+	sessionId: string,
+	env: NodeJS.ProcessEnv,
+	allowFired: boolean,
+): string | null {
+	return claimReloadContext(repoRoot, sessionId, env, allowFired)?.text ?? null;
 }
 
 /** Mirror of the rendered state for the doctor: what this session's record says. */

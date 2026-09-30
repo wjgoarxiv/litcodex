@@ -637,7 +637,9 @@ Here is what happens at the chosen percent, and which steps LitCodex does by its
 
 Choose a percent below the point where Codex compacts on its own; otherwise Codex can compact before the
 handoff is saved, and `litcodex doctor` warns when your percent reaches that point. Turning the option off
-removes only the lines LitCodex added to `.codex/config.toml`. Your choice and the per-session records live in
+removes only the lines LitCodex added to `.codex/config.toml`. That also holds when the environment
+(`LITCODEX_AUTO_HANDOFF=0`) or a deleted settings file turns it off: the next hook or route run removes the lines,
+and `litcodex doctor` warns while they are still there. Your choice and the per-session records live in
 `.litcodex/auto-handoff/` inside the project, on your machine and out of Git. See
 [privacy](./docs/privacy.md#automatic-handoff).
 

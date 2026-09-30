@@ -65,9 +65,10 @@ function readSession(path, sessionId) {
         return freshSession(sessionId);
     }
 }
-function writeSession(path, session) {
-    return writeSmallFile(path, `${JSON.stringify(session)}\n`);
+function writeSession(repoRoot, path, session) {
+    return writeSmallFile(path, `${JSON.stringify(session)}\n`, repoRoot);
 }
+/** The last `bytes` bytes of a file. Byte counts are compared with byte counts, never with decoded text length. */
 function readTail(path, bytes) {
     let fd;
     try {
@@ -83,8 +84,8 @@ function readTail(path, bytes) {
         const size = fstatSync(fd).size;
         const length = Math.min(size, bytes);
         const buffer = Buffer.alloc(length);
-        readSync(fd, buffer, 0, length, size - length);
-        return buffer.toString("utf8");
+        const read = readSync(fd, buffer, 0, length, size - length);
+        return { text: buffer.subarray(0, read).toString("utf8"), whole: size <= bytes };
     }
     catch {
         return null;
@@ -126,13 +127,13 @@ export function readContextPercent(transcriptPath) {
     if (typeof transcriptPath !== "string" || transcriptPath === "" || !isAbsolute(transcriptPath))
         return null;
     for (const bytes of TAIL_STEPS) {
-        const text = readTail(transcriptPath, bytes);
-        if (text === null)
+        const tail = readTail(transcriptPath, bytes);
+        if (tail === null)
             return null;
-        const reading = lastTokenCount(text);
+        const reading = lastTokenCount(tail.text);
         if (reading !== null)
             return reading;
-        if (text.length < bytes)
+        if (tail.whole)
             return null;
     }
     return null;
@@ -176,10 +177,10 @@ export function evaluateAutoHandoffStop(input) {
         if (reading.percent < state.percent) {
             if (session.phase === "idle" || session.phase === "compacted") {
                 if (session.lastPercent !== seen.lastPercent)
-                    writeSession(path, seen);
+                    writeSession(input.repoRoot, path, seen);
                 return PASS;
             }
-            writeSession(path, { ...seen, phase: "idle", firedAt: null, firedPercent: null });
+            writeSession(input.repoRoot, path, { ...seen, phase: "idle", firedAt: null, firedPercent: null });
             return PASS;
         }
         if (session.phase !== "idle")
@@ -190,7 +191,7 @@ export function evaluateAutoHandoffStop(input) {
             firedAt: input.now ?? Date.now(),
             firedPercent: state.percent,
         };
-        if (!writeSession(path, fired))
+        if (!writeSession(input.repoRoot, path, fired))
             return PASS;
         return {
             decision: "block",
@@ -210,7 +211,7 @@ export function recordCompaction(repoRoot, sessionId) {
             return;
         const session = readSession(path, sessionId);
         if (session.phase === "fired")
-            writeSession(path, { ...session, phase: "compacted" });
+            writeSession(repoRoot, path, { ...session, phase: "compacted" });
     }
     catch {
         // fail-open
@@ -279,11 +280,12 @@ function buildReloadContext(repoRoot, session) {
     ].join("\n");
 }
 /**
- * The reload text for a session that fired and then compacted, or null when there is nothing to bring
+ * Claim the reload text for a session that fired and then compacted, or null when there is nothing to bring
  * back. `allowFired` lets SessionStart (source "compact") reload even when PostCompact has not run yet.
- * The record moves to "reloaded" first, so the excerpt is injected once.
+ * The record moves to "reloaded" first, so the excerpt is injected once; a caller that then fails to put
+ * the text into its hook output calls `release` so the next prompt can try again.
  */
-export function takeReloadContext(repoRoot, sessionId, env, allowFired) {
+export function claimReloadContext(repoRoot, sessionId, env, allowFired) {
     try {
         const state = loadAutoHandoffState(repoRoot, env);
         if (!state.active)
@@ -294,13 +296,17 @@ export function takeReloadContext(repoRoot, sessionId, env, allowFired) {
         const session = readSession(path, sessionId);
         if (session.phase !== "compacted" && !(allowFired && session.phase === "fired"))
             return null;
-        if (!writeSession(path, { ...session, phase: "reloaded" }))
+        if (!writeSession(repoRoot, path, { ...session, phase: "reloaded" }))
             return null;
-        return buildReloadContext(repoRoot, session);
+        return { text: buildReloadContext(repoRoot, session), release: () => void writeSession(repoRoot, path, session) };
     }
     catch {
         return null;
     }
+}
+/** The reload text, claimed for good. Use `claimReloadContext` when the text might not reach the output. */
+export function takeReloadContext(repoRoot, sessionId, env, allowFired) {
+    return claimReloadContext(repoRoot, sessionId, env, allowFired)?.text ?? null;
 }
 /** Mirror of the rendered state for the doctor: what this session's record says. */
 export function readSessionPhase(repoRoot, sessionId) {

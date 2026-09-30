@@ -26,9 +26,9 @@
 			"recommended_effort": "xhigh"
 		},
 		{
-			"id": "gpt-6-sol",
+			"id": "gpt-6.1-sol",
 			"config_profile": "sol",
-			"display_name": "GPT-6 Sol",
+			"display_name": "GPT-6.1 Sol",
 			"generation": "gpt-6",
 			"priority": 2,
 			"visibility": "list",
@@ -41,8 +41,28 @@
 				"lead": ["xhigh", "low", "medium", "high", "max", "ultra"],
 				"helper": ["low", "medium", "high", "xhigh", "max", "ultra"]
 			},
-			"default_effort": "medium",
+			"default_effort": "low",
 			"recommended_role": "coding-lead",
+			"recommended_effort": "xhigh"
+		},
+		{
+			"id": "gpt-6-sol",
+			"config_profile": "sol",
+			"display_name": "GPT-6 Sol",
+			"generation": "gpt-6",
+			"priority": 3,
+			"visibility": "list",
+			"supported_in_api": true,
+			"speed_tier": "fast",
+			"aliases": [],
+			"supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"configurable_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"installer_menu": {
+				"lead": ["xhigh", "low", "medium", "high", "max", "ultra"],
+				"helper": ["low", "medium", "high", "xhigh", "max", "ultra"]
+			},
+			"default_effort": "medium",
+			"recommended_role": "previous-generation",
 			"recommended_effort": "xhigh"
 		},
 		{
@@ -50,7 +70,7 @@
 			"config_profile": "luna",
 			"display_name": "GPT-6 Luna",
 			"generation": "gpt-6",
-			"priority": 3,
+			"priority": 4,
 			"visibility": "list",
 			"supported_in_api": true,
 			"speed_tier": "fast",
@@ -70,7 +90,7 @@
 			"config_profile": "sol",
 			"display_name": "GPT-5.6 Sol",
 			"generation": "gpt-5.6",
-			"priority": 4,
+			"priority": 5,
 			"visibility": "list",
 			"supported_in_api": true,
 			"speed_tier": "standard",
@@ -89,7 +109,7 @@
 			"context_probe": true,
 			"display_name": "GPT-5.6",
 			"generation": "gpt-5.6",
-			"priority": 5,
+			"priority": 6,
 			"visibility": "list",
 			"supported_in_api": true,
 			"speed_tier": "standard",

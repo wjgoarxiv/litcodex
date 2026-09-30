@@ -8,6 +8,7 @@ import {
 	readFileSync,
 	realpathSync,
 	rmSync,
+	symlinkSync,
 	utimesSync,
 	writeFileSync,
 } from "node:fs";
@@ -23,6 +24,7 @@ import {
 } from "./auto-handoff.js";
 import {
 	applyAutoHandoffRoute,
+	HOST_COMPACT_BEGIN,
 	HOST_COMPACT_KEY,
 	hostCompactsAt,
 	loadAutoHandoffState,
@@ -407,6 +409,17 @@ describe("Stop: one handoff instruction per crossing", () => {
 		expect(readContextPercent(null)).toBeNull();
 	});
 
+	it("widens the tail for a multi-byte transcript instead of mistaking the tail for the whole file", () => {
+		const root = workspace();
+		const path = transcript(root, 30_000);
+		const line = `${JSON.stringify({ type: "response_item", text: "한국어로 적은 긴 대화 기록입니다. ".repeat(10) })}\n`;
+		for (let index = 0; index < 1200; index += 1) appendFileSync(path, line);
+		const bytes = readFileSync(path).length;
+		expect(bytes).toBeGreaterThan(512 * 1024);
+		expect(bytes).toBeLessThan(2 * 1024 * 1024);
+		expect(readContextPercent(path)?.percent).toBeCloseTo(30, 5);
+	});
+
 	it("does nothing while the switch is off, and writes no state", async () => {
 		const root = workspace();
 		const path = transcript(root, 90_000);
@@ -495,6 +508,101 @@ describe("Stop: one handoff instruction per crossing", () => {
 	});
 });
 
+describe("the project compaction setting follows the effective switch", () => {
+	const OFF_BY_ENV: NodeJS.ProcessEnv = { LITCODEX_AUTO_HANDOFF: "0" };
+	const configPath = (root: string): string => join(root, ".codex", "config.toml");
+
+	function turnedOn(root: string): void {
+		applyAutoHandoffRoute(root, NO_ENV, { action: "on", argument: "60" });
+		expect(readProjectCompaction(root)).toEqual({ kind: "managed", percent: 60 });
+	}
+
+	const hooks: [string, (root: string, env: NodeJS.ProcessEnv) => Promise<unknown>][] = [
+		["Stop", (root, env) => stop(root, transcript(root, 10_000), {}, "sess-a", env)],
+		["UserPromptSubmit", (root, env) => submit(root, "continue please", env)],
+		["SessionStart", (root, env) => sessionStart(root, "startup", env)],
+		[
+			"PostCompact",
+			(root, env) =>
+				drive(
+					runPostCompactHookCli as unknown as typeof runStopPlanPersistenceHookCli,
+					{
+						hook_event_name: "PostCompact",
+						session_id: "sess-a",
+						transcript_path: null,
+						cwd: root,
+						trigger: "auto",
+					},
+					root,
+					{ env },
+				),
+		],
+	];
+
+	it.each(hooks)("%s removes the managed block once the environment turns the feature off", async (_name, run) => {
+		const root = workspace();
+		turnedOn(root);
+		await run(root, OFF_BY_ENV);
+		expect(readProjectCompaction(root)).toEqual({ kind: "absent" });
+		expect(existsSync(configPath(root))).toBe(false);
+	});
+
+	it.each(hooks)("%s removes the managed block once the settings file is gone", async (_name, run) => {
+		const root = workspace();
+		turnedOn(root);
+		rmSync(join(root, ".litcodex", "auto-handoff", "settings.json"));
+		await run(root, NO_ENV);
+		expect(readProjectCompaction(root)).toEqual({ kind: "absent" });
+	});
+
+	it("the status route clears a stale managed block too", () => {
+		const root = workspace();
+		turnedOn(root);
+		expect(applyAutoHandoffRoute(root, OFF_BY_ENV, { action: "status" })).toContain("OFF");
+		expect(readProjectCompaction(root)).toEqual({ kind: "absent" });
+	});
+
+	it("keeps the block while the feature is on, and removes only the marked block when it is off", async () => {
+		const root = workspace();
+		mkdirSync(join(root, ".codex"));
+		const other = 'model = "x"\n\n[features]\nhooks = true\n';
+		writeFileSync(configPath(root), other);
+		turnedOn(root);
+		await submit(root, "continue please", NO_ENV);
+		expect(readProjectCompaction(root)).toEqual({ kind: "managed", percent: 60 });
+		await submit(root, "continue please", OFF_BY_ENV);
+		expect(readFileSync(configPath(root), "utf8")).toBe(other);
+	});
+
+	it("never touches a key the user wrote by hand", async () => {
+		const root = workspace();
+		mkdirSync(join(root, ".codex"));
+		const mine = `# mine\n${HOST_COMPACT_KEY} = 80\n`;
+		writeFileSync(configPath(root), mine);
+		for (const run of hooks) await run[1](root, OFF_BY_ENV);
+		expect(readFileSync(configPath(root), "utf8")).toBe(mine);
+	});
+
+	it("does not delete a config reached through a symlinked .codex folder", async () => {
+		const root = workspace();
+		const elsewhere = workspace();
+		writeFileSync(join(elsewhere, "config.toml"), `${HOST_COMPACT_BEGIN}\n${HOST_COMPACT_KEY} = 60\n`);
+		symlinkSync(elsewhere, join(root, ".codex"));
+		await submit(root, "continue please", OFF_BY_ENV);
+		expect(existsSync(join(elsewhere, "config.toml"))).toBe(true);
+	});
+
+	it("does not write settings through a symlinked parent folder", () => {
+		const root = workspace();
+		const elsewhere = workspace();
+		mkdirSync(join(elsewhere, "auto-handoff"));
+		symlinkSync(elsewhere, join(root, ".litcodex"));
+		const message = applyAutoHandoffRoute(root, NO_ENV, { action: "on", argument: "60" });
+		expect(message).toContain("could not save");
+		expect(existsSync(join(elsewhere, "auto-handoff", "settings.json"))).toBe(false);
+	});
+});
+
 describe("reload after compaction", () => {
 	async function fire(root: string): Promise<void> {
 		expect((await stop(root, transcript(root, 65_000))).stdout).toContain("block");
@@ -575,6 +683,18 @@ describe("reload after compaction", () => {
 		await postCompact(root);
 		const text = context(await submit(root, "go", ON_60));
 		expect(text.length).toBeLessThan(4000);
+	});
+
+	it("does not lose the excerpt when the turn's own output has no context slot", async () => {
+		const root = workspace();
+		await fire(root);
+		writeHandoff(root, good(), 2_000_000);
+		await postCompact(root);
+		const env = { ...ON_60, LITCODEX_JEV: "1", TYPESAFE_API_KEY: "test-key" };
+		const first = await submit(root, "/status", env);
+		expect((JSON.parse(first.stdout) as { systemMessage?: string }).systemMessage).toBeDefined();
+		expect(context(first)).toContain("halfway through the parser");
+		expect((await submit(root, "/status", env)).stdout).toBe("");
 	});
 
 	it("adds the excerpt to a directive the router injects for the same prompt", async () => {

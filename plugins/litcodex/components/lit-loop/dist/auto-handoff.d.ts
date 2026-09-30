@@ -53,11 +53,19 @@ interface FreshHandoff {
 }
 /** The newest HANDOFF file written after `since` that names `sessionId`; everything else is ignored. */
 export declare function findFreshHandoff(repoRoot: string, sessionId: string, since: number): FreshHandoff | null;
+/** A reload the record has already been moved past; `release` puts the record back if the text never reached the model. */
+export interface ReloadClaim {
+    readonly text: string;
+    readonly release: () => void;
+}
 /**
- * The reload text for a session that fired and then compacted, or null when there is nothing to bring
+ * Claim the reload text for a session that fired and then compacted, or null when there is nothing to bring
  * back. `allowFired` lets SessionStart (source "compact") reload even when PostCompact has not run yet.
- * The record moves to "reloaded" first, so the excerpt is injected once.
+ * The record moves to "reloaded" first, so the excerpt is injected once; a caller that then fails to put
+ * the text into its hook output calls `release` so the next prompt can try again.
  */
+export declare function claimReloadContext(repoRoot: string, sessionId: string, env: NodeJS.ProcessEnv, allowFired: boolean): ReloadClaim | null;
+/** The reload text, claimed for good. Use `claimReloadContext` when the text might not reach the output. */
 export declare function takeReloadContext(repoRoot: string, sessionId: string, env: NodeJS.ProcessEnv, allowFired: boolean): string | null;
 /** Mirror of the rendered state for the doctor: what this session's record says. */
 export declare function readSessionPhase(repoRoot: string, sessionId: string): AutoHandoffPhase | null;

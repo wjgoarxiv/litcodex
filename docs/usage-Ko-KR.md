@@ -130,7 +130,7 @@ litcodex install
 권한·모델 실행을 주장하는 것이 아닙니다. GPT-6 Astra와 Sol은
 `low|medium|high|xhigh|max|ultra`를 지원하며 GPT-6 Luna에는 `ultra`가 없습니다. 기존 `sol|gpt-5.6|luna|terra`
 별칭과 모델별 effort 범위도 유지됩니다.
-권장 coding-lead 대안은 `gpt-6-sol`과 `xhigh`이며 GPT-5.6 Sol도 이전 세대 선택지로 계속 사용할 수 있습니다.
+권장 coding-lead 대안은 `gpt-6.1-sol`과 `xhigh`이며 `gpt-6-sol`과 GPT-5.6 Sol도 이전 세대 선택지로 계속 사용할 수 있습니다.
 카탈로그에는 GPT-5.6 Sol, Terra, Luna의 지원 종료일이 등록되어 있지 않습니다.
 `--model luna`는 `model = "gpt-5.6-luna"`를 작성하며 LitCodex는 `model_reasoning_effort = "max"`를 작성합니다.
 이는 공식 Codex CLI/config 안내를 따르는 백엔드 호환성 완화 조치입니다. `gpt-5.6-sol`과 `gpt-5.6-terra`를
@@ -149,7 +149,7 @@ litcodex install
 여섯 named-role 모두에서 그대로 복사되며 지시문 안의 라우트처럼 보이는 텍스트는 데이터로만 처리합니다. 알 수 없거나
 안전하지 않은 라우트와 기존 `gpt-5.6-luna` 및 `xhigh` 조합은 거부합니다.
 
-일반 설치는 `model-catalog.json`에 있는 모든 canonical id와 alias(새 `gpt-6-sol`, `gpt-6-luna` 및 선택 가능한
+일반 설치는 `model-catalog.json`에 있는 모든 canonical id와 alias(새 `gpt-6.1-sol`, `gpt-6-sol`, `gpt-6-luna` 및 선택 가능한
 GPT-5.6 항목 포함), 모델별 `--effort` 범위를 사용합니다. `--subagent-model`과 대응하는 effort는 명시적 helper
 경로를 고릅니다. 새 기본 helper는 리드가 Astra여도 GPT-6 Luna/max입니다. 네이티브 `[agents.default].config_file`은 자동 검색되는
 `<CODEX_HOME>/agents/` 밖의 `<CODEX_HOME>/litcodex-default.toml` 모델 전용 generic 역할을 가리키며, 여섯 named-role은

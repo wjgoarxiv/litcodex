@@ -292,7 +292,7 @@ explicit model choice. This is the product's selected route, not a claim about h
 execution. The shipped `model-catalog.json` is authoritative: GPT-6 Astra and Sol support
 `low|medium|high|xhigh|max|ultra`, while GPT-6 Luna intentionally omits `ultra`; the listed GPT-5.6 ids remain
 selectable with their catalog bounds. `--model luna` keeps the legacy `model = "gpt-5.6-luna"` route and max effort.
-The recommended coding-lead alternative is `gpt-6-sol` with `xhigh`; GPT-5.6 Sol remains selectable as a previous-generation option. The catalog has no retirement metadata for the GPT-5.6 Sol, Terra, or Luna ids.
+The recommended coding-lead alternative is `gpt-6.1-sol` with `xhigh`; `gpt-6-sol` and GPT-5.6 Sol remain selectable as previous-generation options. The catalog has no retirement metadata for the GPT-5.6 Sol, Terra, or Luna ids.
 The catalog marks `gpt-5.5` as retiring on 2026-10-14 with an upgrade to `gpt-5.6-sol`; users need no recurring
 `-m gpt-5.5` workaround.
 
@@ -312,7 +312,7 @@ unsafe routes, including the legacy `gpt-5.6-luna` plus `xhigh` combination.
 Since 0.4.2 the interactive installer asks for the LEAD model (plans and reviews) and the HELPER
 model (spawned/delegated agents) with numbered menus and prints a MODEL ROUTE summary card before
 any write. Normal install accepts every canonical id and alias listed by `model-catalog.json` (including
-`gpt-6-sol`, `gpt-6-luna`, and the selectable GPT-5.6 entries) with model-specific `--effort` bounds; the matching
+`gpt-6.1-sol`, `gpt-6-sol`, `gpt-6-luna`, and the selectable GPT-5.6 entries) with model-specific `--effort` bounds; the matching
 `--subagent-model` and effort flags select an explicit helper route. The fresh/default helper is GPT-6 Luna/max even
 when the lead is Astra. The native Codex `[agents.default].config_file`
 binding points to the installed model-only generic role at `<CODEX_HOME>/litcodex-default.toml`, outside the

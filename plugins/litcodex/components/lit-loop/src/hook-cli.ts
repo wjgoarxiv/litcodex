@@ -10,8 +10,12 @@
 // off, that path makes no request and writes nothing.
 
 import { isAbsolute } from "node:path";
-import { evaluateAutoHandoffStop, recordCompaction, takeReloadContext } from "./auto-handoff.js";
-import { applyAutoHandoffRoute, parseAutoHandoffRoute } from "./auto-handoff-settings.js";
+import { claimReloadContext, evaluateAutoHandoffStop, recordCompaction, takeReloadContext } from "./auto-handoff.js";
+import {
+	applyAutoHandoffRoute,
+	clearManagedCompactionWhenOff,
+	parseAutoHandoffRoute,
+} from "./auto-handoff-settings.js";
 import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
 import {
 	claimJevOnBanner,
@@ -130,18 +134,14 @@ export async function runUserPromptSubmitHookCli(
 		stdout.write(route);
 		return 0;
 	}
-	const reload = autoHandoffReload(parsed, repoRoot, auto);
+	clearManagedCompactionWhenOff(hookCwd(parsed, repoRoot), auto.env ?? process.env);
 	const decision = runUserPromptSubmitHook(parsed);
 	if (decision.kind === "inject" && decision.mode === "lit-plan") {
 		const scope = hookSessionScope(parsed, repoRoot);
 		if (scope !== null) recordLitPlanActivation(scope.cwd, scope.sessionId);
 	}
-	if (decision.kind === "inject") {
-		stdout.write(withReloadContext(decision.stdout, reload));
-		return 0;
-	}
-	const hint = await jevHintOutput(parsed, repoRoot, jev);
-	const output = withReloadContext(hint, reload);
+	const own = decision.kind === "inject" ? decision.stdout : await jevHintOutput(parsed, repoRoot, jev);
+	const output = withAutoHandoffReload(own, parsed, repoRoot, auto);
 	if (output !== "") stdout.write(output);
 	return 0;
 }
@@ -163,28 +163,56 @@ function autoHandoffRouteOutput(parsed: unknown, repoRoot: string, options: Auto
 	return `${JSON.stringify({ decision: "block", reason })}\n`;
 }
 
-/** The handoff excerpt to bring back after a compaction between turns, or null. Claims it once. */
-function autoHandoffReload(parsed: unknown, repoRoot: string, options: AutoHandoffHookOptions): string | null {
+/**
+ * Put the handoff excerpt for a compaction between turns into this turn's output, claiming it once. The
+ * claim is made only when the output is built, and it is given back when the text cannot be merged, so a
+ * reload that never reached the model stays available for the next prompt.
+ */
+function withAutoHandoffReload(
+	stdout: string,
+	parsed: unknown,
+	repoRoot: string,
+	options: AutoHandoffHookOptions,
+): string {
 	const scope = hookSessionScope(parsed, repoRoot);
-	if (scope === null) return null;
-	return takeReloadContext(scope.cwd, scope.sessionId, options.env ?? process.env, false);
+	if (scope === null) return stdout;
+	const claim = claimReloadContext(scope.cwd, scope.sessionId, options.env ?? process.env, false);
+	if (claim === null) return stdout;
+	const merged = withReloadContext(stdout, claim.text);
+	if (merged === null) {
+		claim.release();
+		return stdout;
+	}
+	return merged;
 }
 
-/** Add reload text to a UserPromptSubmit output that may already carry context; "" stays "" without one. */
-function withReloadContext(stdout: string, reload: string | null): string {
-	if (reload === null) return stdout;
+/**
+ * Add reload text to a UserPromptSubmit output that may already carry context, or carry only a visible
+ * line; "" becomes a context-only output. Null when the output cannot be merged (it is not JSON).
+ */
+function withReloadContext(stdout: string, reload: string): string | null {
 	if (stdout === "") {
 		return `${JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: reload } })}\n`;
 	}
 	try {
-		const output = JSON.parse(stdout) as { hookSpecificOutput?: { additionalContext?: string } };
-		const specific = output.hookSpecificOutput;
-		if (specific === undefined) return stdout;
+		const output = JSON.parse(stdout) as {
+			hookSpecificOutput?: { hookEventName?: string; additionalContext?: string };
+		} | null;
+		if (typeof output !== "object" || output === null || Array.isArray(output)) return null;
+		const specific = output.hookSpecificOutput ?? { hookEventName: "UserPromptSubmit" };
 		specific.additionalContext = [specific.additionalContext, reload].filter(Boolean).join("\n\n");
+		output.hookSpecificOutput = specific;
 		return `${JSON.stringify(output)}\n`;
 	} catch {
-		return stdout;
+		return null;
 	}
+}
+
+/** Absolute `cwd` from a hook event, else the fallback root. */
+function hookCwd(parsed: unknown, repoRoot: string): string {
+	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return repoRoot;
+	const cwd = (parsed as Record<string, unknown>)["cwd"];
+	return typeof cwd === "string" && isAbsolute(cwd) ? cwd : repoRoot;
 }
 
 /** Injectable Jev dependencies; production uses the process environment and built-in `fetch`. */
@@ -250,6 +278,7 @@ export async function runStopPlanPersistenceHookCli(
 		stderr.write(errorLine("LIT_HOOK_STDIN_INVALID_JSON", INVALID_JSON_MESSAGE));
 		return 2;
 	}
+	clearManagedCompactionWhenOff(hookCwd(parsed, repoRoot), auto.env ?? process.env);
 	const scope = hookSessionScope(parsed, repoRoot);
 	if (scope !== null) {
 		const persistence = evaluatePlanPersistence(scope.cwd, scope.sessionId);
@@ -302,6 +331,7 @@ export async function runSessionStartHookCli(
 ): Promise<number> {
 	const event = await readHookEvent(stdin, stderr);
 	if (event.exit !== null) return event.exit;
+	clearManagedCompactionWhenOff(hookCwd(event.parsed, repoRoot), auto.env ?? process.env);
 	const record = event.parsed as Record<string, unknown> | null;
 	if (typeof record !== "object" || record === null || record["source"] !== "compact") return 0;
 	const scope = hookSessionScope(record, repoRoot);
@@ -321,9 +351,11 @@ export async function runPostCompactHookCli(
 	_stdout: NodeJS.WritableStream,
 	stderr: NodeJS.WritableStream,
 	repoRoot = process.cwd(),
+	auto: AutoHandoffHookOptions = {},
 ): Promise<number> {
 	const event = await readHookEvent(stdin, stderr);
 	if (event.exit !== null) return event.exit;
+	clearManagedCompactionWhenOff(hookCwd(event.parsed, repoRoot), auto.env ?? process.env);
 	const scope = hookSessionScope(event.parsed, repoRoot);
 	if (scope !== null) recordCompaction(scope.cwd, scope.sessionId);
 	return 0;

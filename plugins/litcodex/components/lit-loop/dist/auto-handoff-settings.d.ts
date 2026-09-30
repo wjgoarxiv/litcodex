@@ -36,8 +36,8 @@ export declare function readStoredAutoHandoff(repoRoot: string): {
  */
 export declare function resolveAutoHandoff(env: NodeJS.ProcessEnv, stored: StoredAutoHandoff, storedWarning?: string | null): AutoHandoffState;
 export declare function loadAutoHandoffState(repoRoot: string, env: NodeJS.ProcessEnv): AutoHandoffState;
-/** Atomic write that refuses to go through a symlink or replace anything but a regular file. */
-export declare function writeSmallFile(path: string, text: string): boolean;
+/** Atomic write that refuses to go through a symlink (in any component below `root`) or replace anything but a regular file. */
+export declare function writeSmallFile(path: string, text: string, root: string): boolean;
 export declare function writeStoredAutoHandoff(repoRoot: string, stored: StoredAutoHandoff): boolean;
 export declare function projectConfigPath(repoRoot: string): string;
 export type ProjectCompaction = {
@@ -63,6 +63,13 @@ export type ProjectConfigResult = "written" | "unchanged-user-key" | "failed" | 
 export declare function writeProjectCompaction(repoRoot: string, percent: number): ProjectConfigResult;
 /** Remove only the marked block; delete the file (and an empty `.codex`) when nothing else is left. */
 export declare function removeProjectCompaction(repoRoot: string): ProjectConfigResult;
+/**
+ * Remove the managed block when the feature is effectively off, however it got there: `lit-handoff auto
+ * off`, `LITCODEX_AUTO_HANDOFF=0`, a deleted settings file, or a percent that is not valid. Without this the
+ * block outlives the switch and Codex keeps compacting at that percent with no handoff. Only the marked
+ * block goes; a key the user wrote by hand is never touched. Never throws.
+ */
+export declare function clearManagedCompactionWhenOff(repoRoot: string, env: NodeJS.ProcessEnv): ProjectConfigResult;
 export type AutoHandoffRoute = {
     readonly action: "on";
     readonly argument: string | null;

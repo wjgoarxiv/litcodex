@@ -130,7 +130,16 @@ describe("install --model / --subagent-model matrix", () => {
 			"max",
 			"ultra",
 		]);
-		expect(modelDefinition("gpt-6-sol")?.recommendedRole).toBe("coding-lead");
+		expect(modelDefinition("gpt-6.1-sol")?.recommendedRole).toBe("coding-lead");
+		expect(modelDefinition("gpt-6.1-sol")?.supportedEfforts).toEqual([
+			"low",
+			"medium",
+			"high",
+			"xhigh",
+			"max",
+			"ultra",
+		]);
+		expect(modelDefinition("gpt-6-sol")?.recommendedRole).toBe("previous-generation");
 		expect(modelDefinition("gpt-6-luna")?.supportedEfforts).toEqual(["low", "medium", "high", "xhigh", "max"]);
 		expect(modelDefinition("gpt-5.6-sol")?.retirement).toBeUndefined();
 		expect(modelDefinition("gpt-5.6-terra")?.retirement).toBeUndefined();
@@ -166,6 +175,21 @@ describe("install --model / --subagent-model matrix", () => {
 			expect(opts.subagentModel).toBe("gpt-6-astra");
 			expect(opts.subagentEffort).toBe(effort);
 		}
+	});
+
+	it("recommends GPT-6.1 Sol as the coding-lead alternative and keeps GPT-6 Sol selectable as the previous generation", () => {
+		expect(GPT6_MODELS.sol).toBe("gpt-6.1-sol");
+		expect(renderLeadModelMenu()).toContain("gpt-6.1-sol   · xhigh   — coding-lead alternative");
+		expect(renderLeadModelMenu()).toMatch(/gpt-6-sol\s+· xhigh\s+— previous-generation/);
+		expect(renderLeadModelMenu()).not.toMatch(/gpt-6-sol\s+· \w+\s+— coding-lead/);
+		const next = parseInstallOptions(["--model", "gpt-6.1-sol", "--effort", "ultra"], CONTEXT);
+		expect(next.leadModel).toBe("gpt-6.1-sol");
+		expect(next.profile).toBe("sol");
+		expect(next.effort).toBe("ultra");
+		expect(parseInstallOptions(["--model", "gpt-6.1-sol"], CONTEXT).effort).toBe("xhigh");
+		const helper = parseInstallOptions(["--subagent-model", "gpt-6.1-sol", "--subagent-effort", "max"], CONTEXT);
+		expect(helper.subagentModel).toBe("gpt-6.1-sol");
+		expect(helper.subagentEffort).toBe("max");
 	});
 
 	it("accepts GPT-6 Sol and Luna from the catalog while rejecting Luna ultra", () => {

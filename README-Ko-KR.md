@@ -615,7 +615,8 @@ LitCodex가 바로 답하며, 이 프롬프트는 모델에게 보내지 않습�
 
 Codex가 스스로 압축하는 지점보다 낮은 퍼센트를 고르세요. 그렇지 않으면 핸드오프를 저장하기 전에 Codex가 먼저
 압축할 수 있고, 퍼센트가 그 지점에 닿으면 `litcodex doctor`가 경고합니다. 기능을 끄면 LitCodex가 `.codex/config.toml`에
-추가한 줄만 지워집니다. 선택한 값과 세션별 기록은 프로젝트 안의 `.litcodex/auto-handoff/`에 남으며, 내 컴퓨터에만
+추가한 줄만 지워집니다. 환경 변수(`LITCODEX_AUTO_HANDOFF=0`)나 삭제된 설정 파일 때문에 꺼진 경우에도 마찬가지로, 다음
+훅이나 명령이 실행될 때 그 줄을 지우며, 줄이 남아 있는 동안 `litcodex doctor`가 경고합니다. 선택한 값과 세션별 기록은 프로젝트 안의 `.litcodex/auto-handoff/`에 남으며, 내 컴퓨터에만
 있고 Git에는 들어가지 않습니다. [개인정보 안내](./docs/privacy.md#automatic-handoff)를 참고하세요.
 
 ## Jev 스킬 힌트 (선택)

@@ -11,6 +11,8 @@ const FLAG_ENV = "LITCODEX_AUTO_HANDOFF";
 const PERCENT_ENV = "LITCODEX_AUTO_HANDOFF_PERCENT";
 const HOST_KEY = "model_post_turn_compact_threshold_percent";
 const KEY_LINE = new RegExp(`^\\s*${HOST_KEY}\\s*=\\s*(\\d+)\\s*(?:#.*)?$`, "mu");
+/** The marker line `lit-handoff auto on` writes directly above the key; only a key under it is managed. */
+const MANAGED_BEGIN = "# litcodex automatic handoff (managed by `lit-handoff auto`; `lit-handoff auto off` removes it)";
 
 function percentOf(raw: string): number | null {
 	if (!/^\d{1,2}$/u.test(raw)) return null;
@@ -39,6 +41,19 @@ function projectTrusted(fs: ReadonlyFsLike, projectRoot: string, codexHome: stri
 		if (current === projectRoot && /^\s*trust_level\s*=\s*["']trusted["']\s*(?:#.*)?$/u.test(line)) return true;
 	}
 	return false;
+}
+
+/** The percent of a managed compaction block in the project config, else null. */
+function managedCompactionPercent(projectConfig: string | null): number | null {
+	if (projectConfig === null) return null;
+	const lines = projectConfig.split("\n");
+	for (let index = 1; index < lines.length; index += 1) {
+		const match = KEY_LINE.exec((lines[index] ?? "").replace(/\r$/u, ""));
+		if (match?.[1] !== undefined && (lines[index - 1] ?? "").replace(/\r$/u, "") === MANAGED_BEGIN) {
+			return Number(match[1]);
+		}
+	}
+	return null;
 }
 
 function readIfPresent(fs: ReadonlyFsLike, path: string): string | null {
@@ -94,9 +109,17 @@ export function inspectAutoHandoff(
 		);
 	}
 	const active = enabled && percent !== null;
-	if (!active || percent === null) return { state: "off", percent, source, compaction: null, warnings };
-
 	const projectConfig = readIfPresent(fs, join(projectRoot, ".codex", "config.toml"));
+	if (!active || percent === null) {
+		const left = managedCompactionPercent(projectConfig);
+		if (left !== null) {
+			warnings.push(
+				`Automatic handoff is off, but the managed block in your project .codex/config.toml keeps compacting at ${left}% with no handoff. The next hook run removes it, or run "lit-handoff auto off".`,
+			);
+		}
+		return { state: "off", percent, source, compaction: null, warnings };
+	}
+
 	const projectKey = projectConfig === null ? undefined : KEY_LINE.exec(projectConfig)?.[1];
 	const projectPercent = projectKey === undefined ? null : Number(projectKey);
 	const trusted = projectPercent !== null && projectTrusted(fs, projectRoot, codexHome);

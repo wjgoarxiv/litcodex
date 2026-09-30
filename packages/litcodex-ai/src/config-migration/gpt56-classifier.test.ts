@@ -39,6 +39,22 @@ describe("GPT-5.6 exact classifier contract", () => {
 			false,
 			true,
 		],
+		[
+			"previous-generation GPT-6 Sol",
+			{ model: "gpt-6-sol", model_reasoning_effort: "xhigh" },
+			"existing_managed",
+			"gpt-6-sol",
+			false,
+			true,
+		],
+		[
+			"GPT-6.1 Sol",
+			{ model: "gpt-6.1-sol", model_reasoning_effort: "xhigh" },
+			"existing_managed",
+			"gpt-6.1-sol",
+			false,
+			true,
+		],
 		["5.60 boundary", { model: "gpt-5.60" }, "custom", "gpt-5.60", false, false],
 		["provider-qualified custom", { model: "custom/gpt-5.6-sol" }, "custom", "custom/gpt-5.6-sol", false, false],
 	] as const)("classifies %s without changing apply behavior", (_name, current, expectedClass, original, apply, managed) => {

@@ -15,7 +15,7 @@
 import { randomBytes } from "node:crypto";
 import { closeSync, constants, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, rmdirSync, unlinkSync, writeSync, } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, isAbsolute, join } from "node:path";
+import { dirname, isAbsolute, join, relative, sep } from "node:path";
 export const AUTO_HANDOFF_FLAG_ENV = "LITCODEX_AUTO_HANDOFF";
 export const AUTO_HANDOFF_PERCENT_ENV = "LITCODEX_AUTO_HANDOFF_PERCENT";
 export const AUTO_HANDOFF_DIR = ".litcodex/auto-handoff";
@@ -122,6 +122,30 @@ export function loadAutoHandoffState(repoRoot, env) {
     return resolveAutoHandoff(env, stored, warning);
 }
 // ── Safe small-file writes ───────────────────────────────────────────────────
+/**
+ * True when no existing component of `target` below `root` is a symlink, so a write or delete cannot be
+ * redirected out of the project. Components that do not exist yet are fine; `root` itself is trusted.
+ */
+function clearOfSymlinks(root, target) {
+    const below = relative(root, target);
+    if (below === "" || below === ".." || below.startsWith(`..${sep}`) || isAbsolute(below))
+        return false;
+    let current = root;
+    try {
+        for (const part of below.split(sep)) {
+            current = join(current, part);
+            const stat = lstatSync(current, { throwIfNoEntry: false });
+            if (stat === undefined)
+                return true;
+            if (stat.isSymbolicLink())
+                return false;
+        }
+        return true;
+    }
+    catch {
+        return false;
+    }
+}
 function ensureDir(dir) {
     try {
         const stat = lstatSync(dir, { throwIfNoEntry: false });
@@ -135,9 +159,9 @@ function ensureDir(dir) {
         return false;
     }
 }
-/** Atomic write that refuses to go through a symlink or replace anything but a regular file. */
-export function writeSmallFile(path, text) {
-    if (!ensureDir(dirname(path)))
+/** Atomic write that refuses to go through a symlink (in any component below `root`) or replace anything but a regular file. */
+export function writeSmallFile(path, text, root) {
+    if (!clearOfSymlinks(root, path) || !ensureDir(dirname(path)))
         return false;
     const tmp = `${path}.${process.pid}.${randomBytes(6).toString("hex")}.tmp`;
     try {
@@ -165,7 +189,7 @@ export function writeSmallFile(path, text) {
     }
 }
 export function writeStoredAutoHandoff(repoRoot, stored) {
-    return writeSmallFile(settingsPath(repoRoot), `${JSON.stringify({ version: 1, ...stored })}\n`);
+    return writeSmallFile(settingsPath(repoRoot), `${JSON.stringify({ version: 1, ...stored })}\n`, repoRoot);
 }
 // ── Project config: Codex compacts after the handoff turn ────────────────────
 const KEY_LINE = new RegExp(`^\\s*${HOST_COMPACT_KEY}\\s*=\\s*(\\d+)\\s*(?:#.*)?$`, "u");
@@ -234,6 +258,8 @@ export function hostCompactsAt(repoRoot, percent, env) {
 /** Write (or update) the marked block. A key the user wrote by hand stays as it is. */
 export function writeProjectCompaction(repoRoot, percent) {
     const path = projectConfigPath(repoRoot);
+    if (!clearOfSymlinks(repoRoot, path))
+        return "failed";
     const stat = lstatSync(path, { throwIfNoEntry: false });
     if (stat !== undefined && !stat.isFile())
         return "failed";
@@ -248,15 +274,17 @@ export function writeProjectCompaction(repoRoot, percent) {
         const lines = raw.split("\n");
         const at = lines.findIndex((line) => KEY_LINE.test(line.replace(/\r$/u, "")));
         lines[at] = `${HOST_COMPACT_KEY} = ${percent}`;
-        return writeSmallFile(path, lines.join("\n")) ? "written" : "failed";
+        return writeSmallFile(path, lines.join("\n"), repoRoot) ? "written" : "failed";
     }
-    return writeSmallFile(path, raw === "" ? block : `${block}\n${raw}`) ? "written" : "failed";
+    return writeSmallFile(path, raw === "" ? block : `${block}\n${raw}`, repoRoot) ? "written" : "failed";
 }
 /** Remove only the marked block; delete the file (and an empty `.codex`) when nothing else is left. */
 export function removeProjectCompaction(repoRoot) {
     const path = projectConfigPath(repoRoot);
     if (readProjectCompaction(repoRoot).kind !== "managed")
         return "nothing-to-remove";
+    if (!clearOfSymlinks(repoRoot, path))
+        return "failed";
     const raw = readSmallFile(path);
     if (raw === null)
         return "failed";
@@ -283,7 +311,23 @@ export function removeProjectCompaction(repoRoot) {
             return "failed";
         }
     }
-    return writeSmallFile(path, rest) ? "removed" : "failed";
+    return writeSmallFile(path, rest, repoRoot) ? "removed" : "failed";
+}
+/**
+ * Remove the managed block when the feature is effectively off, however it got there: `lit-handoff auto
+ * off`, `LITCODEX_AUTO_HANDOFF=0`, a deleted settings file, or a percent that is not valid. Without this the
+ * block outlives the switch and Codex keeps compacting at that percent with no handoff. Only the marked
+ * block goes; a key the user wrote by hand is never touched. Never throws.
+ */
+export function clearManagedCompactionWhenOff(repoRoot, env) {
+    try {
+        if (!isAbsolute(repoRoot) || loadAutoHandoffState(repoRoot, env).active)
+            return "nothing-to-remove";
+        return removeProjectCompaction(repoRoot);
+    }
+    catch {
+        return "failed";
+    }
 }
 /** Only the complete prompt `lit-handoff auto ...` (case-insensitive, edge whitespace allowed) is a route. */
 export function parseAutoHandoffRoute(prompt) {
@@ -329,8 +373,10 @@ export function applyAutoHandoffRoute(repoRoot, env, route) {
         if (route.action === "usage")
             return USAGE;
         const { stored } = readStoredAutoHandoff(repoRoot);
-        if (route.action === "status")
+        if (route.action === "status") {
+            clearManagedCompactionWhenOff(repoRoot, env);
             return describeAutoHandoff(repoRoot, loadAutoHandoffState(repoRoot, env), env);
+        }
         const envNote = (env[AUTO_HANDOFF_FLAG_ENV]?.trim() ?? "") === ""
             ? ""
             : ` ${AUTO_HANDOFF_FLAG_ENV} is set in the environment and takes priority over this command.`;

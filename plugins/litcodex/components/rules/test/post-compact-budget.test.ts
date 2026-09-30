@@ -80,6 +80,18 @@ describe("post-compact context budget", () => {
 		});
 	});
 
+	it.each([
+		"gpt-6.1-sol",
+		"gpt-6-sol",
+		"openai/gpt-6.1-sol",
+	])("#given GPT-6 Sol form %s #when resolved #then its terminal slug is managed", (model) => {
+		const slug = model.endsWith("gpt-6.1-sol") ? "gpt-6.1-sol" : "gpt-6-sol";
+		expect(resolveModelMetadata(model, `{"models":[{"slug":"${slug}","context_window":372000}]}`)).toEqual({
+			state: "available",
+			metadata: { slug, contextWindow: 372_000 },
+		});
+	});
+
 	it("#given build-owned rules dist #when the focused suite starts #then generated metadata runtime enrolls the alias", () => {
 		const built = readFileSync(new URL("../dist/model-metadata.js", import.meta.url), "utf8");
 		expect(built).toContain('"gpt-5.6"');

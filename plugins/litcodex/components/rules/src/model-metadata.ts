@@ -50,6 +50,7 @@ export function resolveModelMetadata(model: string, structuredCatalog?: string):
 
 export type ManagedModelSlug =
 	| "gpt-6-astra"
+	| "gpt-6.1-sol"
 	| "gpt-6-sol"
 	| "gpt-6-luna"
 	| "gpt-5.6"
@@ -61,6 +62,7 @@ export function managedGpt56Slug(model: string): ManagedModelSlug | null {
 	const normalized = model.trim().toLowerCase();
 	for (const slug of [
 		"gpt-6-astra",
+		"gpt-6.1-sol",
 		"gpt-6-sol",
 		"gpt-6-luna",
 		"gpt-5.6-sol",

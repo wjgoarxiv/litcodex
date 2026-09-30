@@ -32,5 +32,5 @@ export declare function runStopPlanPersistenceHookCli(stdin: NodeJS.ReadableStre
 /** SessionStart: after a compaction inside a turn, bring this session's fresh handoff back once. */
 export declare function runSessionStartHookCli(stdin: NodeJS.ReadableStream, stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream, repoRoot?: string, auto?: AutoHandoffHookOptions): Promise<number>;
 /** PostCompact: remember that a session that saved a handoff has now been compacted. Writes nothing to stdout. */
-export declare function runPostCompactHookCli(stdin: NodeJS.ReadableStream, _stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream, repoRoot?: string): Promise<number>;
+export declare function runPostCompactHookCli(stdin: NodeJS.ReadableStream, _stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream, repoRoot?: string, auto?: AutoHandoffHookOptions): Promise<number>;
 export declare function runPreToolUseCreateGoalGuardCli(stdin: NodeJS.ReadableStream, stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream): Promise<number>;

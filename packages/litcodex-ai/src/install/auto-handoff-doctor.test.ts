@@ -5,6 +5,7 @@ import type { ReadonlyFsLike } from "./codex.js";
 import { renderDoctorText, runDoctor } from "./doctor.js";
 
 const PROJECT = "/work/project";
+const ON_55 = { LITCODEX_AUTO_HANDOFF: "1", LITCODEX_AUTO_HANDOFF_PERCENT: "55" };
 
 function fsOf(files: Record<string, string>): ReadonlyFsLike {
 	return {
@@ -114,6 +115,61 @@ describe("doctor: automatic handoff", () => {
 			codexHome,
 		);
 		expect(report.warnings.join(" ")).toContain("compacts at 45%");
+	});
+
+	describe("a managed compaction block left behind while the feature is off", () => {
+		const managed = [
+			"# litcodex automatic handoff (managed by `lit-handoff auto`; `lit-handoff auto off` removes it)",
+			"model_post_turn_compact_threshold_percent = 60",
+			"",
+		].join("\n");
+		const config = { [`${PROJECT}/.codex/config.toml`]: managed };
+
+		it("warns when the environment turned the feature off", () => {
+			const report = inspectAutoHandoff(
+				fsOf({ ...settings({ version: 1, enabled: true, percent: 60 }), ...config }),
+				{ LITCODEX_AUTO_HANDOFF: "0" },
+				PROJECT,
+				codexHome,
+			);
+			expect(report.state).toBe("off");
+			expect(report.warnings.join(" ")).toContain("keeps compacting at 60%");
+			expect(report.warnings.join(" ")).toContain("lit-handoff auto off");
+		});
+
+		it("warns when the settings file is gone", () => {
+			const report = inspectAutoHandoff(fsOf(config), {}, PROJECT, codexHome);
+			expect(report.state).toBe("off");
+			expect(report.warnings.join(" ")).toContain("keeps compacting at 60%");
+		});
+
+		it("stays quiet while the feature is on, for a hand-written key, and with no config", () => {
+			const on = inspectAutoHandoff(fsOf({ ...config, ...trustedProject() }), ON_55, PROJECT, codexHome);
+			expect(on.warnings.join(" ")).not.toContain("keeps compacting");
+			const mine = inspectAutoHandoff(
+				fsOf({ [`${PROJECT}/.codex/config.toml`]: "model_post_turn_compact_threshold_percent = 60\n" }),
+				{},
+				PROJECT,
+				codexHome,
+			);
+			expect(mine.warnings).toEqual([]);
+			expect(inspectAutoHandoff(fsOf({}), {}, PROJECT, codexHome).warnings).toEqual([]);
+		});
+
+		it("reaches the doctor warning list", () => {
+			const deps = doctorDeps([codexBin, sentinelPath]);
+			const path = `${deps.repoRoot}/.codex/config.toml`;
+			const report = runDoctor({
+				...deps,
+				env: { ...deps.env, LITCODEX_AUTO_HANDOFF: "0" },
+				fs: {
+					...deps.fs,
+					existsSync: (file) => file === path || deps.fs.existsSync(file),
+					readFileSync: (file, encoding) => (file === path ? managed : deps.fs.readFileSync(file, encoding)),
+				},
+			});
+			expect(report.warnings.some((warning) => warning.includes("keeps compacting at 60%"))).toBe(true);
+		});
 	});
 
 	it("is part of the doctor text and of the warning list", () => {

@@ -48,8 +48,8 @@ describe("dispatch (pure routing core)", () => {
 		expect(r.stdout).not.toContain("litcodex observer");
 		expect(r.stdout).not.toContain("litcodex skill-loop");
 		expect(r.stdout).toContain("--dry-run");
-		expect(r.stdout).toContain("--model <gpt-6-astra|astra|gpt-6-sol|gpt-6-luna");
-		expect(r.stdout).toContain("--subagent-model <gpt-6-astra|astra|gpt-6-sol|gpt-6-luna");
+		expect(r.stdout).toContain("--model <gpt-6-astra|astra|gpt-6.1-sol|gpt-6-sol|gpt-6-luna");
+		expect(r.stdout).toContain("--subagent-model <gpt-6-astra|astra|gpt-6.1-sol|gpt-6-sol|gpt-6-luna");
 		expect(r.stdout).toContain("--effort <low|medium|high|xhigh|max|ultra>");
 		expect(r.stdout).toContain("--reconfigure");
 		expect(r.stdout).toContain("--no-auto-update");

@@ -41,6 +41,7 @@ export function managedGpt56Slug(model) {
     const normalized = model.trim().toLowerCase();
     for (const slug of [
         "gpt-6-astra",
+        "gpt-6.1-sol",
         "gpt-6-sol",
         "gpt-6-luna",
         "gpt-5.6-sol",
