@@ -17,7 +17,7 @@ LitCodex는 Codex CLI 플러그인입니다. 계획, 검토, 조사와 오래 �
 작업이 대화가 끝난 뒤에도 이어지게 합니다. 요청에 `lit`을 붙이면 목표와 확인 기준, 결과가 프로젝트에 남고,
 다음 세션에 그 기록을 읽게 해서 이어갈 수 있습니다.
 
-**[전체 안내, 스킬 갤러리, A/B 결과는 GitHub에서](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md)** · [English](https://github.com/wjgoarxiv/litcodex#readme)
+**[전체 안내와 스킬 갤러리는 GitHub에서](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md)** · [English](https://github.com/wjgoarxiv/litcodex#readme)
 
 ## 설치
 
@@ -150,12 +150,6 @@ lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외�
 - `rules`, `lsp`, `comment-checker`는 알아서 돌아갑니다. 프롬프트마다 프로젝트 규칙을 넣고, 수정 뒤에는 LSP와
   주석을 확인합니다.
 
-## A/B 결과
-
-기본 Codex와 비교한 한 줄짜리 A/B 작업 열 개에서 최종 판정은 LitCodex 기준 8승 1무 1패(S7은 메인테이너 미검토),
-블라인드 심사 판정은 3승 2무 5패였습니다. 작업마다 한 번씩, 배포 전 로컬 빌드로 실행한 결과입니다. 작업별 내용과 두 판정, 화면은
-[GitHub의 A/B 절](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md#ab-기본-codex와-lit-비교)에 있습니다.
-
 ## 설치하면 달라지는 것
 
 Codex가 플러그인을 불러오고 훅을 실행합니다. 훅은 요청이 어떤 모드에 속하는지 가리고, 스킬은 에이전트의 작업
@@ -181,6 +175,12 @@ Codex가 플러그인을 불러오고 훅을 실행합니다. 훅은 요청이 �
 대화 기록은 보내지 않습니다. 켜기 전에
 [전체 설명](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md#jev-스킬-힌트-선택)(각 상태가 화면에서 어떻게 보이는지도 나옵니다)과
 [개인정보 안내](https://github.com/wjgoarxiv/litcodex/blob/main/docs/privacy.md#optional-jev-skill-hint)를 읽어 주세요.
+
+선택 기능인 자동 핸드오프는 대화가 정해 둔 퍼센트에 이르면 핸드오프를 대신 써 주며, 기본값은 꺼짐입니다.
+`lit-handoff auto on 60`(1에서 99 사이의 정수)을 프롬프트 전체로 보내면 켜지고, `lit-handoff auto off`로 끕니다.
+Codex에서는 모델이 핸드오프를 저장하고 그 턴이 끝나면 Codex가 압축합니다(Codex CLI 0.158 이상, 신뢰한 프로젝트).
+Codex가 압축하도록 설정되어 있지 않으면 `/compact`를 실행하라는 한 줄이 나오고, 이후 핸드오프는 저절로 다시
+불러옵니다. 각 단계는 [전체 설명](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md#자동-핸드오프-선택)을 읽어 주세요.
 
 ## 확인, 문제 해결, 제거
 

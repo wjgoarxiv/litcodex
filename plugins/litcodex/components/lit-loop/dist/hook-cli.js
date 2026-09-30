@@ -9,6 +9,8 @@
 // hint (./jev-hint.ts) and, once per session while it is on, a plain-text banner; with its switch
 // off, that path makes no request and writes nothing.
 import { isAbsolute } from "node:path";
+import { evaluateAutoHandoffStop, recordCompaction, takeReloadContext } from "./auto-handoff.js";
+import { applyAutoHandoffRoute, parseAutoHandoffRoute } from "./auto-handoff-settings.js";
 import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
 import { claimJevOnBanner, formatJevHookOutput, jevSwitchState, runJevSkillHint, withJevBanner, } from "./jev-hint.js";
 import { evaluatePlanPersistence, formatStopBlockOutput, recordLitPlanActivation } from "./plan-persistence.js";
@@ -69,7 +71,7 @@ function readStdin(stdin) {
  * NEVER throws. Writes the camelCase activation line to stdout (empty on no-op), or a LitHookError
  * line to stderr on malformed / oversized stdin.
  */
-export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot = process.cwd(), jev = {}) {
+export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot = process.cwd(), jev = {}, auto = {}) {
     const decoded = await readStdin(stdin);
     if (decoded === null) {
         stderr.write(errorLine("LIT_HOOK_STDIN_TOO_LARGE", TOO_LARGE_MESSAGE));
@@ -91,6 +93,12 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
         stderr.write(errorLine("LIT_HOOK_STDIN_INVALID_JSON", INVALID_JSON_MESSAGE));
         return 2;
     }
+    const route = autoHandoffRouteOutput(parsed, repoRoot, auto);
+    if (route !== "") {
+        stdout.write(route);
+        return 0;
+    }
+    const reload = autoHandoffReload(parsed, repoRoot, auto);
     const decision = runUserPromptSubmitHook(parsed);
     if (decision.kind === "inject" && decision.mode === "lit-plan") {
         const scope = hookSessionScope(parsed, repoRoot);
@@ -98,13 +106,52 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
             recordLitPlanActivation(scope.cwd, scope.sessionId);
     }
     if (decision.kind === "inject") {
-        stdout.write(decision.stdout);
+        stdout.write(withReloadContext(decision.stdout, reload));
         return 0;
     }
     const hint = await jevHintOutput(parsed, repoRoot, jev);
-    if (hint !== "")
-        stdout.write(hint);
+    const output = withReloadContext(hint, reload);
+    if (output !== "")
+        stdout.write(output);
     return 0;
+}
+/** `lit-handoff auto on|off|status` changes a setting and never reaches the model: the prompt is blocked with one plain reply. */
+function autoHandoffRouteOutput(parsed, repoRoot, options) {
+    if (!isLitUserPromptSubmitInput(parsed))
+        return "";
+    const route = parseAutoHandoffRoute(parsed.prompt);
+    if (route === null)
+        return "";
+    const record = parsed;
+    const cwd = typeof record["cwd"] === "string" && isAbsolute(record["cwd"]) ? record["cwd"] : repoRoot;
+    const reason = applyAutoHandoffRoute(cwd, options.env ?? process.env, route);
+    return `${JSON.stringify({ decision: "block", reason })}\n`;
+}
+/** The handoff excerpt to bring back after a compaction between turns, or null. Claims it once. */
+function autoHandoffReload(parsed, repoRoot, options) {
+    const scope = hookSessionScope(parsed, repoRoot);
+    if (scope === null)
+        return null;
+    return takeReloadContext(scope.cwd, scope.sessionId, options.env ?? process.env, false);
+}
+/** Add reload text to a UserPromptSubmit output that may already carry context; "" stays "" without one. */
+function withReloadContext(stdout, reload) {
+    if (reload === null)
+        return stdout;
+    if (stdout === "") {
+        return `${JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: reload } })}\n`;
+    }
+    try {
+        const output = JSON.parse(stdout);
+        const specific = output.hookSpecificOutput;
+        if (specific === undefined)
+            return stdout;
+        specific.additionalContext = [specific.additionalContext, reload].filter(Boolean).join("\n\n");
+        return `${JSON.stringify(output)}\n`;
+    }
+    catch {
+        return stdout;
+    }
 }
 /** Optional Jev skill hint for a turn the deterministic router left alone. Never throws. */
 async function jevHintOutput(parsed, repoRoot, options) {
@@ -142,7 +189,7 @@ function hookSessionScope(parsed, repoRoot) {
     return { sessionId, cwd: typeof cwd === "string" && isAbsolute(cwd) ? cwd : repoRoot };
 }
 /** Enforce lit-plan persistence when a Stop hook event arrives. */
-export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoRoot = process.cwd()) {
+export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoRoot = process.cwd(), auto = {}) {
     const decoded = await readStdin(stdin);
     if (decoded === null) {
         stderr.write(errorLine("LIT_HOOK_STDIN_TOO_LARGE", TOO_LARGE_MESSAGE));
@@ -164,9 +211,69 @@ export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoR
     const scope = hookSessionScope(parsed, repoRoot);
     if (scope !== null) {
         const persistence = evaluatePlanPersistence(scope.cwd, scope.sessionId);
-        if (persistence.decision === "block")
+        if (persistence.decision === "block") {
             stdout.write(formatStopBlockOutput(persistence.reason));
+            return 0;
+        }
+        const record = parsed;
+        const handoff = evaluateAutoHandoffStop({
+            repoRoot: scope.cwd,
+            sessionId: scope.sessionId,
+            transcriptPath: typeof record["transcript_path"] === "string" ? record["transcript_path"] : null,
+            stopHookActive: record["stop_hook_active"] === true,
+            env: auto.env ?? process.env,
+            ...(auto.now === undefined ? {} : { now: auto.now }),
+        });
+        if (handoff.decision === "block")
+            stdout.write(formatStopBlockOutput(handoff.reason));
     }
+    return 0;
+}
+/** Parse a hook event from stdin the way every route here does; `exit` is set when the route must stop. */
+async function readHookEvent(stdin, stderr) {
+    const decoded = await readStdin(stdin);
+    if (decoded === null) {
+        stderr.write(errorLine("LIT_HOOK_STDIN_TOO_LARGE", TOO_LARGE_MESSAGE));
+        return { exit: 2 };
+    }
+    let raw = decoded;
+    if (raw.charCodeAt(0) === 0xfeff)
+        raw = raw.slice(1);
+    if (raw.trim().length === 0)
+        return { exit: 0 };
+    try {
+        return { exit: null, parsed: JSON.parse(raw) };
+    }
+    catch {
+        stderr.write(errorLine("LIT_HOOK_STDIN_INVALID_JSON", INVALID_JSON_MESSAGE));
+        return { exit: 2 };
+    }
+}
+/** SessionStart: after a compaction inside a turn, bring this session's fresh handoff back once. */
+export async function runSessionStartHookCli(stdin, stdout, stderr, repoRoot = process.cwd(), auto = {}) {
+    const event = await readHookEvent(stdin, stderr);
+    if (event.exit !== null)
+        return event.exit;
+    const record = event.parsed;
+    if (typeof record !== "object" || record === null || record["source"] !== "compact")
+        return 0;
+    const scope = hookSessionScope(record, repoRoot);
+    if (scope === null)
+        return 0;
+    const reload = takeReloadContext(scope.cwd, scope.sessionId, auto.env ?? process.env, true);
+    if (reload !== null) {
+        stdout.write(`${JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: reload } })}\n`);
+    }
+    return 0;
+}
+/** PostCompact: remember that a session that saved a handoff has now been compacted. Writes nothing to stdout. */
+export async function runPostCompactHookCli(stdin, _stdout, stderr, repoRoot = process.cwd()) {
+    const event = await readHookEvent(stdin, stderr);
+    if (event.exit !== null)
+        return event.exit;
+    const scope = hookSessionScope(event.parsed, repoRoot);
+    if (scope !== null)
+        recordCompaction(scope.cwd, scope.sessionId);
     return 0;
 }
 export async function runPreToolUseCreateGoalGuardCli(stdin, stdout, stderr) {

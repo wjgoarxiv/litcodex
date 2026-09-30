@@ -273,13 +273,22 @@ export async function runCli(argv: readonly string[]): Promise<number> {
 			return loopCommand(rest.slice(1), { stdout: process.stdout, stderr: process.stderr, stdin: process.stdin });
 		}
 		if (head === "hook") {
-			if (rest[1] !== "user-prompt-submit" && rest[1] !== "stop") {
+			if (
+				rest[1] !== "user-prompt-submit" &&
+				rest[1] !== "stop" &&
+				rest[1] !== "session-start" &&
+				rest[1] !== "post-compact"
+			) {
 				return dispatchExit(renderUnknown(rest[1] ?? "hook"));
 			}
 			const hooks = await import("@litcodex/lit-loop/dist/hook-cli.js");
-			return rest[1] === "stop"
-				? hooks.runStopPlanPersistenceHookCli(process.stdin, process.stdout, process.stderr)
-				: hooks.runUserPromptSubmitHookCli(process.stdin, process.stdout, process.stderr);
+			if (rest[1] === "stop")
+				return hooks.runStopPlanPersistenceHookCli(process.stdin, process.stdout, process.stderr);
+			if (rest[1] === "session-start")
+				return hooks.runSessionStartHookCli(process.stdin, process.stdout, process.stderr);
+			if (rest[1] === "post-compact")
+				return hooks.runPostCompactHookCli(process.stdin, process.stdout, process.stderr);
+			return hooks.runUserPromptSubmitHookCli(process.stdin, process.stdout, process.stderr);
 		}
 	}
 

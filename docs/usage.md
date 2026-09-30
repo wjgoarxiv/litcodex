@@ -224,6 +224,24 @@ For report or proposal output, bare `lit` loads `lit-docx`; for slide or present
 | `litcodex loop checkpoint` | Complete a goal only when every criterion passes |
 | `litcodex loop doctor` | Diagnose or recover loop state |
 
+## Automatic handoff
+
+Automatic handoff is opt-in. The [README section](../README.md#automatic-handoff-optional) explains it in plain
+words; this section lists the pieces for anyone reading the hook setup.
+
+| Piece | Where it lives | What it does |
+| --- | --- | --- |
+| Switch | prompt `lit-handoff auto on <percent>`, `off`, `status`; or `LITCODEX_AUTO_HANDOFF=1` with `LITCODEX_AUTO_HANDOFF_PERCENT` | Chooses the percent (1 to 99). No default percent exists; the command blocks the prompt so the model never sees it. |
+| Watch and ask | Stop hook, `litcodex hook stop` | Reads the last token count from the session transcript and, at or above the percent, blocks the stop once per crossing with the instruction to save the handoff. `stop_hook_active` never triggers it. |
+| Compact | project `.codex/config.toml` key `model_post_turn_compact_threshold_percent`, or the user's `/compact` | Codex compacts after the handoff turn when the key is set and the project is trusted in the Codex config (Codex CLI 0.158 or newer); otherwise the model asks the user to run `/compact`. |
+| Note the compaction | PostCompact hook, `litcodex hook post-compact` | Marks a session that asked for a handoff as compacted. |
+| Bring it back | SessionStart hook (source `compact`), `litcodex hook session-start`, and the next UserPromptSubmit | Injects the start of this session's fresh handoff once. A stale handoff, or one without this session's marker line, is refused. |
+| Show the state | `litcodex doctor` line `automatic handoff`, and `lit-handoff auto status` | Reports off or on, the percent, where it came from, and warns when the percent reaches Codex's own compaction point. |
+
+The handoff file follows the [lit-handoff](../plugins/litcodex/skills/lit-handoff/SKILL.md) destination rules and
+carries the line `Auto-handoff session: <session id>`, which is how the reload recognizes it. See
+[privacy](./privacy.md#automatic-handoff) for the files involved.
+
 ## Loop state
 
 LitCodex writes state in the current project root:

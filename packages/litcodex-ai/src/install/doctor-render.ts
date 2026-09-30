@@ -1,3 +1,4 @@
+import { autoHandoffLine } from "./auto-handoff-doctor.js";
 import type { DoctorReport } from "./types.js";
 
 const MAX_RESOURCE_FAMILIES = 2;
@@ -30,6 +31,7 @@ export function renderDoctorText(report: DoctorReport): string {
 					`  auto-update: ${report.autoUpdate.enabled ? "enabled" : "disabled"} (${report.autoUpdate.status ?? "no receipt"}; ${report.autoUpdate.detail})`,
 				]),
 		...(report.jevSkillHint === undefined ? [] : [`  Jev skill hint: ${report.jevSkillHint}`]),
+		...(report.autoHandoff === undefined ? [] : [`  automatic handoff: ${autoHandoffLine(report.autoHandoff)}`]),
 		`  concurrency: ${capabilityText(report.capabilities.concurrency)}`,
 		`  probe-only explicit context/auto-compaction override: ${capabilityText(report.capabilities.autoCompaction)}`,
 	];

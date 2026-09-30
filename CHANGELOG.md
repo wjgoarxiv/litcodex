@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Optional automatic handoff, off by default. Send `lit-handoff auto on <percent>` as a whole prompt (or
+  set `LITCODEX_AUTO_HANDOFF=1` and `LITCODEX_AUTO_HANDOFF_PERCENT`) and LitCodex asks the model to save a
+  handoff when a conversation reaches that share of the context window, once per crossing. Codex then
+  compacts after that turn (Codex CLI 0.158 or newer, trusted project) or you get one line asking you to
+  run `/compact`, and the handoff comes back on its own afterwards. `litcodex doctor` shows the state.
+
 ## [1.0.11] - 2026-09-30
 
 ### Fixed

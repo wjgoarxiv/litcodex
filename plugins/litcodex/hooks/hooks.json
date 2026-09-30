@@ -72,6 +72,16 @@
 						"statusMessage": "\ud83d\udd25 LIT IGNITED \u00b7 rules \ud83d\udd25"
 					}
 				]
+			},
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "node \"${PLUGIN_ROOT}/components/lit-loop/dist/cli.js\" hook session-start",
+						"timeout": 5,
+						"statusMessage": "\ud83d\udd25 LIT IGNITED \u00b7 lit-loop \ud83d\udd25"
+					}
+				]
 			}
 		],
 		"PreToolUse": [
@@ -196,6 +206,16 @@
 						"command": "node \"${PLUGIN_ROOT}/components/rules/dist/cli.js\" hook post-compact",
 						"timeout": 5,
 						"statusMessage": "\ud83d\udd25 LIT IGNITED \u00b7 rules \ud83d\udd25"
+					}
+				]
+			},
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "node \"${PLUGIN_ROOT}/components/lit-loop/dist/cli.js\" hook post-compact",
+						"timeout": 5,
+						"statusMessage": "\ud83d\udd25 LIT IGNITED \u00b7 lit-loop \ud83d\udd25"
 					}
 				]
 			}

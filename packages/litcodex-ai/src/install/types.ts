@@ -112,6 +112,17 @@ export interface DoctorReport {
 	readonly autoUpdate?: AutoUpdateDoctorReport;
 	/** Opt-in Jev skill hint switch, read from this process's environment. Never carries the key. */
 	readonly jevSkillHint?: JevSkillHintState;
+	/** Opt-in automatic handoff: off by default; the percent comes from the user. */
+	readonly autoHandoff?: AutoHandoffDoctorReport;
+}
+
+export interface AutoHandoffDoctorReport {
+	readonly state: "on" | "off";
+	readonly percent: number | null;
+	readonly source: "default" | "command" | "environment";
+	/** Who compacts once the handoff is saved; null while off. */
+	readonly compaction: "codex-after-handoff-turn" | "run-compact" | null;
+	readonly warnings: readonly string[];
 }
 
 export type JevSkillHintState = "off" | "on" | "flag on but TYPESAFE_API_KEY missing";

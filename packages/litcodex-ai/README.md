@@ -17,7 +17,7 @@ LitCodex is a plugin for Codex CLI. It adds planning, review, research and a dur
 piece of work can outlast the conversation it started in. Add `lit` to a request, and the goal, its checks and
 the results stay in your project, where a later session can pick them up.
 
-**[Full guide, skills gallery and A/B results on GitHub](https://github.com/wjgoarxiv/litcodex#readme)** · [한국어](https://github.com/wjgoarxiv/litcodex/blob/main/packages/litcodex-ai/README-Ko-KR.md)
+**[Full guide and skills gallery on GitHub](https://github.com/wjgoarxiv/litcodex#readme)** · [한국어](https://github.com/wjgoarxiv/litcodex/blob/main/packages/litcodex-ai/README-Ko-KR.md)
 
 ## Install
 
@@ -153,13 +153,6 @@ You can pick these skills in the Codex skill picker or mention one by scoped nam
 - `rules`, `lsp` and `comment-checker` run on their own: project rules on each prompt, LSP and comment
   checks after edits.
 
-## A/B results
-
-In ten one-line A/B tasks against plain Codex, the final verdicts for LitCodex were 8 won, 1 tie, 1 lost
-(the maintainer's call, except S7, which only the blind judge reviewed); the blind judge's were
-3 won, 2 ties, 5 lost. Each arm ran once, and the lit arm used a local pre-release build. The GitHub page has
-[every task, both verdicts and the screenshots](https://github.com/wjgoarxiv/litcodex#ab-plain-codex-vs-lit).
-
 ## What it changes
 
 Codex hosts the plugin and runs its hooks. The hooks work out which mode a request belongs to, the skills
@@ -190,6 +183,13 @@ Read [the full description](https://github.com/wjgoarxiv/litcodex#jev-skill-hint
 appears on screen in each state, and the
 [privacy notes](https://github.com/wjgoarxiv/litcodex/blob/main/docs/privacy.md#optional-jev-skill-hint)
 before you turn it on.
+
+The optional automatic handoff writes a handoff for you when a conversation reaches a percent you choose,
+and is off by default. Turn it on by sending `lit-handoff auto on 60` (any whole number from 1 to 99) as your
+whole prompt, and off with `lit-handoff auto off`. On Codex the model saves the handoff and Codex compacts
+after that turn (Codex CLI 0.158 or newer, trusted project); when Codex is not set to compact, you get one
+line asking you to run `/compact`. The handoff then comes back on its own. Read
+[the full description](https://github.com/wjgoarxiv/litcodex#automatic-handoff-optional) for each step.
 
 ## Check, fix, remove
 

@@ -47,7 +47,7 @@ LIT · codex
 
 **Keep the work lit.**
 
-[한국어](./README-Ko-KR.md) · [Install](#install) · [First task](#start-with-lit) · [Skills](#skills-at-a-glance) · [A/B results](#ab-plain-codex-vs-lit) · [Commands](#commands) · [Troubleshooting](#troubleshooting) · [Docs](#docs-and-contributing)
+[한국어](./README-Ko-KR.md) · [Install](#install) · [First task](#start-with-lit) · [Skills](#skills-at-a-glance) · [Commands](#commands) · [Troubleshooting](#troubleshooting) · [Docs](#docs-and-contributing)
 
 ## What is LitCodex
 
@@ -467,106 +467,6 @@ the checks that run on their own.
 </tr>
 </table>
 
-## A/B: plain Codex vs lit
-
-Each prompt below is one casual line in Korean. The baseline got the line as typed. The lit arm got the
-same line with ` lit` added, and nothing else.
-
-Both arms ran Codex CLI 0.157.1 with `gpt-6-sol` at high effort on 2026-09-26, one trial per arm, each
-in its own disposable home. The lit arm used a local pre-release build of LitCodex. Where LitCodex was
-fixed and run again, the table compares the latest lit run with the same baseline.
-
-A blind judge (Claude Opus 5.5) compared each pair in both orders. The maintainer then looked at both
-outputs side by side and made the final call. The judge's verdict stays next to it for reference.
-
-S3 and S4 were run again in a later interface round, together with S11. S5 was run again in an office
-round, together with S8 and S9; there the lit arm used `lit-pptx` and `lit-docx`.
-
-| Task | Prompt | Final verdict | Blind judge (same round) |
-| --- | --- | --- | --- |
-| S1 terminal to-do CLI | `터미널에서 쓰는 할 일 관리 CLI 만들어줘` | **Baseline won** | Baseline won |
-| S2 API server bugs | `이 API 서버 가끔 이상하게 동작하는데 고쳐줘` | **Tie** | Baseline won |
-| S3 budget dashboard | `개인 가계부 대시보드 웹페이지 만들어줘` | **LitCodex won** | Baseline won |
-| S4 café landing page | `동네 카페 브랜드 랜딩페이지 만들어줘` | **LitCodex won** | Tie |
-| S5 report and slides from sources | `sources 폴더 자료로 보고서랑 발표자료 만들어줘` | **LitCodex won** | Tie |
-| S6 Node 22 to 24 research | `Node 22에서 24로 올릴 때 달라지는 거 조사해줘` | **LitCodex won** | LitCodex won |
-| S7 order, payment and shipping diagram | `주문-결제-배송 서비스 구조도 그려줘` | **LitCodex won** (blind judge; not reviewed by eye) | LitCodex won |
-| S8 quarterly results deck | `분기 실적 발표자료 만들어줘` | **LitCodex won** | Baseline won |
-| S9 new product plan | `신제품 기획서 써줘` | **LitCodex won** | LitCodex won |
-| S11 meeting-room booking app | `회의실 예약 웹앱 만들어줘` | **LitCodex won** | Baseline won |
-| Total | | **8 won, 1 tie, 1 lost** | 3 won, 2 ties, 5 lost |
-
-The motion skill, `lit-typographic-motion`, was rebuilt after its first A/B and has no A/B result yet. The cover at the top was made with the LitFamily motion skill.
-
-Neither round had a working screen check. In the interface round the Codex sandbox blocked the browser,
-so the lit arm's interface probe could not measure its pages, and neither arm checked its rendered
-screen. In the office round the renderer failed inside the sandbox, so the lit arm never saw previews
-of its slides and pages, and each reply said so. Looking at the office round as a whole, the maintainer
-found the LitCodex files much better suited to real work.
-
-### What each side produced
-
-- **S1, lost.** The baseline CLI can add, list, edit, complete, reopen and delete items, with checked due dates. The LitCodex CLI had fewer commands (no editing, no due dates), claimed Python 3.10 support while importing a 3.11-only API, and its own tests did not pass in the checker. The blind judge also preferred the baseline over the two earlier LitCodex runs, and the maintainer called it a clear loss.
-- **S2, tie.** Both sides fixed all six seeded bugs, with no failing visible tests. The judge leaned to the baseline because its reply mentioned that creating an item now returns 201 instead of 200, which the LitCodex reply left out. The maintainer called it a tie.
-- **S3, won.** The LitCodex dashboard shows monthly income, spending and the budget, and lets you add, delete and search transactions and change the budget. The judge preferred the baseline's richer analysis: an income and expense line chart, a category donut and budgets per category. The maintainer preferred the LitCodex page.
-- **S4, won.** The judge called it a tie: the baseline's shop-front photos and menu felt more finished, while the LitCodex page showed mock-up labels to visitors because the prompt gave no address or hours. The checker found no clipped text on the LitCodex page (9 items on the baseline) but more accessibility findings (38 against 29).
-- **S5, won.** LitCodex made a Word report and a 7-slide deck, each with an editable Markdown source. The judge called it a tie: the baseline report was better built (a data-period box, an interpretation column and numbered citations), while the LitCodex slides looked more polished. The checker counted 12 of 12 facts right for the baseline and 11 of 12 for LitCodex, with none wrong on either side. It flagged 14 invented numbers in the baseline's files and 5 in LitCodex's.
-- **S6, won.** LitCodex correctly lists `dirent.path` as removed, where the baseline called it only deprecated, and notes that `require(esm)` and type stripping already exist in Node 22. The checker found 3 of 10 expected facts against 2; 75% of LitCodex's links were official sources, against 100% for the baseline.
-- **S7, won (blind judge; not reviewed by eye).** LitCodex saved a rendered PNG and an editable HTML diagram with labelled arrows and a payment-failure path. The baseline gave Mermaid code in its reply and no rendered file, although its architecture covered more services.
-- **S8, won.** The prompt gave no figures. The baseline made a 10-slide fill-in template with blanks for every number, and the checker flagged 18 overflowing text boxes. LitCodex made an 8-slide deck for a fictional company with sample figures labelled as examples and 3 tables; the checker flagged one overflowing box and one overlap. The judge preferred the baseline's template.
-- **S9, won.** The baseline answered in chat with a short plan and made no document. LitCodex wrote a 6-page Word plan with its Markdown source: decision gates, scope, schedule, risks and unit economics, with every figure marked as an assumption. The judge agreed, noting leftover checklist files, wrong numbering in one list and too many caveats.
-- **S11, won.** The judge preferred the baseline: a weekly date strip and a room-by-time timeline with click-to-book, where the LitCodex app shows a large header and a room list with no view of existing bookings. LitCodex finds rooms by date, size and equipment, blocks overlapping bookings, includes unit tests and had 2 accessibility findings against 124.
-
-### Pictures
-
-**S3, budget dashboard (baseline left, LitCodex right).**
-
-<p><img src="./docs/ab-simple/assets/s3-baseline-desktop.webp" width="49%" alt="Baseline budget dashboard at desktop width" /> <img src="./docs/ab-simple/assets/s3-lit-desktop.webp" width="49%" alt="LitCodex budget dashboard at desktop width" /></p>
-
-<details><summary>S3 on a phone</summary>
-
-<p><img src="./docs/ab-simple/assets/s3-baseline-phone.webp" width="240" alt="Baseline budget dashboard on a phone" /> <img src="./docs/ab-simple/assets/s3-lit-phone.webp" width="240" alt="LitCodex budget dashboard on a phone" /></p>
-
-</details>
-
-**S4, café landing page (baseline left, LitCodex right).**
-
-<p><img src="./docs/ab-simple/assets/s4-baseline-desktop.webp" width="49%" alt="Baseline café landing page at desktop width" /> <img src="./docs/ab-simple/assets/s4-lit-desktop.webp" width="49%" alt="LitCodex café landing page at desktop width" /></p>
-
-<details><summary>S4 on a phone</summary>
-
-<p><img src="./docs/ab-simple/assets/s4-baseline-phone.webp" width="240" alt="Baseline café landing page on a phone" /> <img src="./docs/ab-simple/assets/s4-lit-phone.webp" width="240" alt="LitCodex café landing page on a phone" /></p>
-
-</details>
-
-**S5, first five slides (baseline above, LitCodex below).**
-
-<p><img src="./docs/ab-simple/assets/s5-baseline-slides.webp" width="100%" alt="Baseline slides for the report-and-slides task" /></p>
-<p><img src="./docs/ab-simple/assets/s5-lit-slides.webp" width="100%" alt="LitCodex slides for the report-and-slides task" /></p>
-
-**S7, the LitCodex diagram.** The baseline returned Mermaid code without a rendered file.
-
-<p><img src="./docs/ab-simple/assets/s7-lit-diagram.webp" width="720" alt="LitCodex order, payment and shipping service diagram" /></p>
-
-**S8, first five slides (baseline above, LitCodex below).**
-
-<p><img src="./docs/ab-simple/assets/s8-baseline-slides.webp" width="100%" alt="Baseline quarterly results template slides" /></p>
-<p><img src="./docs/ab-simple/assets/s8-lit-slides.webp" width="100%" alt="LitCodex quarterly results slides with sample figures" /></p>
-
-**S9, first three pages of the LitCodex plan.** The baseline answered in chat and made no file.
-
-<p><img src="./docs/ab-simple/assets/s9-lit-pages.webp" width="100%" alt="LitCodex new product plan, first three pages" /></p>
-
-**S11, meeting-room booking app (baseline left, LitCodex right).**
-
-<p><img src="./docs/ab-simple/assets/s11-baseline-desktop.webp" width="49%" alt="Baseline meeting-room booking app at desktop width" /> <img src="./docs/ab-simple/assets/s11-lit-desktop.webp" width="49%" alt="LitCodex meeting-room booking app at desktop width" /></p>
-
-<details><summary>S11 on a phone</summary>
-
-<p><img src="./docs/ab-simple/assets/s11-baseline-phone.webp" width="240" alt="Baseline meeting-room booking app on a phone" /> <img src="./docs/ab-simple/assets/s11-lit-phone.webp" width="240" alt="LitCodex meeting-room booking app on a phone" /></p>
-
-</details>
-
 ## How it works
 
 Codex hosts the plugin and runs its hooks. The hooks work out which mode a request belongs to and add
@@ -693,6 +593,53 @@ child agents actually run, give Codex a small real task.
   [privacy](./docs/privacy.md).
 - The model you pick is a setting in your config. Whether that model is open to you, and whether it
   actually runs, is up to Codex and your account. See [managed model compatibility](./docs/usage.md#safety).
+
+## Automatic handoff (optional)
+
+A long session eventually runs out of room, and the next context starts without what this one learned. A
+handoff file carries that knowledge across. This option writes the handoff for you when the conversation
+reaches a size you choose, so you never have to watch the context meter.
+
+It is off by default, and you choose the percent of the context window at which it acts. LitCodex has no
+default percent. To turn it on, send this as your whole prompt (60 is only an example; any whole number
+from 1 to 99 works):
+
+```text
+lit-handoff auto on 60
+```
+
+LitCodex answers right away and does not send that prompt to the model. The same prompt family covers the rest:
+
+- `lit-handoff auto off` turns it off and remembers your number.
+- `lit-handoff auto on` with no number brings back the last number you used, and asks you for one when you never gave one.
+- `lit-handoff auto status` shows what is set and why.
+
+If you prefer the environment, set `LITCODEX_AUTO_HANDOFF=1` and `LITCODEX_AUTO_HANDOFF_PERCENT=60` before you
+start Codex. While they are set they take priority over the command. A percent outside 1 to 99, or one that is
+not a whole number, leaves the option off, and `litcodex doctor` says so.
+
+Here is what happens at the chosen percent, and which steps LitCodex does by itself on Codex:
+
+1. **Watching (automatic).** When a turn ends, the Stop hook reads how much of the context window the last model
+   request used. That is the same number Codex compares with its own compaction setting.
+2. **Saving (automatic, once per crossing).** At or above your percent, LitCodex asks the model to write the
+   handoff now with the lit-handoff skill, and to put a line naming this session in the file. It asks once.
+   It asks again only after the context has dropped below your percent and climbed back.
+3. **Compacting (automatic when you turned it on by command, a reminder otherwise).** Turning it on by command also
+   writes your percent into the project's `.codex/config.toml`, so Codex compacts as soon as the turn that saved
+   the handoff ends. Codex reads that file only in a trusted project, and the setting needs Codex CLI 0.158 or
+   newer. LitCodex looks at your Codex config to see whether the project is trusted and promises the automatic
+   compaction only when it is. When Codex is not set up to compact (you used the environment variables, the
+   project is not trusted yet, or the project file already holds a value of its own), the model ends the turn with
+   one line: "Handoff saved. Run /compact now."
+4. **Coming back (automatic).** After the compaction, LitCodex hands the model the start of the handoff this session
+   just saved, with its path, once. A handoff written before the trigger, or one that names another session, is left out.
+
+Choose a percent below the point where Codex compacts on its own; otherwise Codex can compact before the
+handoff is saved, and `litcodex doctor` warns when your percent reaches that point. Turning the option off
+removes only the lines LitCodex added to `.codex/config.toml`. Your choice and the per-session records live in
+`.litcodex/auto-handoff/` inside the project, on your machine and out of Git. See
+[privacy](./docs/privacy.md#automatic-handoff).
 
 ## Jev skill hint (optional)
 

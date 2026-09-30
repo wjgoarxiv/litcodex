@@ -235,107 +235,18 @@ describe("readme content invariants", () => {
 		}
 	});
 
-	test("A/B table shows the maintainer's final verdicts beside the blind judge", () => {
-		const expected = [
-			["S1", "터미널에서 쓰는 할 일 관리 CLI 만들어줘", "baseline", "baseline"],
-			["S2", "이 API 서버 가끔 이상하게 동작하는데 고쳐줘", "tie", "baseline"],
-			["S3", "개인 가계부 대시보드 웹페이지 만들어줘", "lit", "baseline"],
-			["S4", "동네 카페 브랜드 랜딩페이지 만들어줘", "lit", "tie"],
-			["S5", "sources 폴더 자료로 보고서랑 발표자료 만들어줘", "lit", "tie"],
-			["S6", "Node 22에서 24로 올릴 때 달라지는 거 조사해줘", "lit", "lit"],
-			["S7", "주문-결제-배송 서비스 구조도 그려줘", "lit", "lit"],
-			["S8", "분기 실적 발표자료 만들어줘", "lit", "baseline"],
-			["S9", "신제품 기획서 써줘", "lit", "lit"],
-			["S11", "회의실 예약 웹앱 만들어줘", "lit", "baseline"],
-		];
-		const words = {
-			en: { lit: "LitCodex won", tie: "Tie", baseline: "Baseline won" },
-			ko: { lit: "LitCodex 승", tie: "무승부", baseline: "기준선 승" },
-		};
-		const judgeOnly = { en: "(blind judge; not reviewed by eye)", ko: "(블라인드 심사 판정, 메인테이너 미검토)" };
-		const totals = {
-			en: "| Total | | **8 won, 1 tie, 1 lost** | 3 won, 2 ties, 5 lost |",
-			ko: "| 합계 | | **8승 1무 1패** | 3승 2무 5패 |",
-		};
-		const motion = {
-			en: "The motion skill, `lit-typographic-motion`, was rebuilt after its first A/B and has no A/B result yet. The cover at the top was made with the LitFamily motion skill.",
-			ko: "모션 스킬 `lit-typographic-motion`은 첫 A/B 이후 새로 만들었고, 아직 A/B 결과가 없습니다. 맨 위 커버는 LitFamily 모션 스킬로 만들었습니다.",
-		};
-		for (const [source, lang] of [
-			[README, "en"],
-			[README_KO, "ko"],
+	test("no README or npm card carries the A/B comparison, and its pictures are gone", () => {
+		const wording = /A\/B|blind judge|final verdict|블라인드|최종 판정|ab-simple|ab-plain|ab-기본/iu;
+		for (const [path, source] of [
+			[README_PATH, README],
+			[README_KO_PATH, README_KO],
+			[PKG_README_PATH, PKG_README],
+			[PKG_README_KO_PATH, PKG_README_KO],
 		]) {
-			const rows = source
-				.split("\n")
-				.filter((line) => /^\| S\d+ /.test(line))
-				.map((line) => line.split("|").map((cell) => cell.trim()));
-			assert.deepEqual(
-				rows.map(([, task, prompt, final, judge]) => [task.split(" ")[0], prompt, final, judge]),
-				expected.map(([task, prompt, final, judge]) => [
-					task,
-					`\`${prompt}\``,
-					`**${words[lang][final]}**${task === "S7" ? ` ${judgeOnly[lang]}` : ""}`,
-					words[lang][judge],
-				]),
-				`${lang} A/B verdict table`,
-			);
-			assert.ok(source.includes(totals[lang]), `${lang} A/B totals`);
-			assert.ok(source.includes(motion[lang]), `${lang} motion skill has no A/B claim`);
-			assert.doesNotMatch(source, /ab-simple\/results\.json|ab-simple\/assets\/[^"]+\.png/);
+			assert.doesNotMatch(source, wording, `${path} has no A/B wording, link or picture`);
 		}
-		const shots = [
-			"s3-baseline-desktop.webp",
-			"s3-baseline-phone.webp",
-			"s3-lit-desktop.webp",
-			"s3-lit-phone.webp",
-			"s4-baseline-desktop.webp",
-			"s4-baseline-phone.webp",
-			"s4-lit-desktop.webp",
-			"s4-lit-phone.webp",
-			"s5-baseline-slides.webp",
-			"s5-lit-slides.webp",
-			"s7-lit-diagram.webp",
-			"s8-baseline-slides.webp",
-			"s8-lit-slides.webp",
-			"s9-lit-pages.webp",
-			"s11-baseline-desktop.webp",
-			"s11-baseline-phone.webp",
-			"s11-lit-desktop.webp",
-			"s11-lit-phone.webp",
-		].sort();
-		const docsShots = join(REPO_ROOT, "docs/ab-simple");
-		const pkgShots = join(REPO_ROOT, "packages/litcodex-ai/readme-assets/ab-simple");
-		for (const dir of [docsShots, pkgShots]) {
-			assert.deepEqual(readdirSync(dir), ["assets"], `${dir} holds only the shown pictures`);
-			assert.deepEqual(readdirSync(join(dir, "assets")).sort(), shots, `${dir} holds exactly the shown pictures`);
-		}
-		for (const name of shots) {
-			assert.ok(
-				readFileSync(join(docsShots, "assets", name)).equals(readFileSync(join(pkgShots, "assets", name))),
-				`package copy of ${name} matches the repository`,
-			);
-			assert.ok(README.includes(`./docs/ab-simple/assets/${name}`), `README shows ${name}`);
-			assert.ok(README_KO.includes(`./docs/ab-simple/assets/${name}`), `Korean README shows ${name}`);
-		}
-		const npmSummaries = [
-			[
-				PKG_README,
-				["8 won, 1 tie, 1 lost", "3 won, 2 ties, 5 lost", "except S7", "Each arm ran once", "pre-release build"],
-				"https://github.com/wjgoarxiv/litcodex#ab-plain-codex-vs-lit",
-			],
-			[
-				PKG_README_KO,
-				["8승 1무 1패", "3승 2무 5패", "S7은 메인테이너 미검토", "작업마다 한 번씩", "배포 전 로컬 빌드"],
-				"https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md#ab-기본-codex와-lit-비교",
-			],
-		];
-		for (const [source, facts, link] of npmSummaries) {
-			const flat = source.replace(/\s+/g, " ");
-			for (const fact of facts) {
-				assert.ok(flat.includes(fact), `npm README keeps the A/B summary and its limits: ${fact}`);
-			}
-			assert.ok(source.includes(link), "npm README links the full A/B section on GitHub");
-			assert.ok(!source.includes("| S1 "), "npm README leaves the verdict table to GitHub");
+		for (const dir of ["docs/ab-simple", "packages/litcodex-ai/readme-assets/ab-simple"]) {
+			assert.ok(!existsSync(join(REPO_ROOT, dir)), `${dir} is removed`);
 		}
 	});
 
@@ -356,25 +267,13 @@ describe("readme content invariants", () => {
 			assert.ok(bytes.length <= 81_920, `${name} stays within 80 KB`);
 		}
 		for (const [source, heading, next, nav, base] of [
-			[
-				README,
-				"## Skills at a glance",
-				"## A/B: plain Codex vs lit",
-				"(#skills-at-a-glance)",
-				"./docs/assets/skills",
-			],
-			[
-				README_KO,
-				"## 스킬 한눈에 보기",
-				"## A/B: 기본 Codex와 lit 비교",
-				"(#스킬-한눈에-보기)",
-				"./docs/assets/skills",
-			],
+			[README, "## Skills at a glance", "## How it works", "(#skills-at-a-glance)", "./docs/assets/skills"],
+			[README_KO, "## 스킬 한눈에 보기", "## 어떻게 동작하나요", "(#스킬-한눈에-보기)", "./docs/assets/skills"],
 		]) {
 			assert.ok(source.includes(nav), `${heading} is linked from the top navigation`);
 			const start = source.indexOf(`\n${heading}\n`);
 			const end = source.indexOf(`\n${next}\n`);
-			assert.ok(start > source.indexOf("\n## ") && start < end, `${heading} sits before the A/B section`);
+			assert.ok(start > source.indexOf("\n## ") && start < end, `${heading} sits before the next section`);
 			const rows = [
 				...source
 					.slice(start, end)

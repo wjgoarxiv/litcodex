@@ -248,6 +248,24 @@ Codex의 native goal과 로컬 루프 기록은 별도로 관리됩니다. pause
 전역 설치가 없다면 이후 명령도 `npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex <command>` 형식으로 실행하세요. 예를 들어
 `npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex doctor`를 사용합니다.
 
+## 자동 핸드오프
+
+자동 핸드오프는 직접 켜야 동작합니다. 쉬운 설명은 [README 해당 절](../README-Ko-KR.md#자동-핸드오프-선택)에 있고,
+이 절은 훅 구성을 보려는 분을 위해 구성 요소만 정리합니다.
+
+| 구성 요소 | 위치 | 하는 일 |
+| --- | --- | --- |
+| 스위치 | 프롬프트 `lit-handoff auto on <percent>`, `off`, `status`, 또는 `LITCODEX_AUTO_HANDOFF=1`과 `LITCODEX_AUTO_HANDOFF_PERCENT` | 퍼센트(1~99)를 정합니다. 기본 퍼센트는 없으며, 명령은 프롬프트를 막아 모델이 보지 못하게 합니다. |
+| 확인하고 요청 | Stop 훅, `litcodex hook stop` | 세션 기록에서 마지막 토큰 수를 읽고, 퍼센트 이상이면 한 번 넘을 때마다 한 번, 핸드오프를 저장하라는 지시로 종료를 막습니다. `stop_hook_active`일 때는 동작하지 않습니다. |
+| 압축 | 프로젝트 `.codex/config.toml`의 `model_post_turn_compact_threshold_percent`, 또는 사용자의 `/compact` | 키가 설정돼 있고 Codex 설정에서 프로젝트를 신뢰했다면 핸드오프 턴 뒤에 Codex가 압축합니다(Codex CLI 0.158 이상). 아니면 모델이 `/compact` 실행을 안내합니다. |
+| 압축 기록 | PostCompact 훅, `litcodex hook post-compact` | 핸드오프를 요청한 세션이 압축됐다고 표시합니다. |
+| 다시 불러오기 | SessionStart 훅(source `compact`), `litcodex hook session-start`, 그다음 UserPromptSubmit | 이 세션이 방금 저장한 핸드오프의 앞부분을 한 번 넣습니다. 오래된 핸드오프나 이 세션의 표식 줄이 없는 핸드오프는 거부합니다. |
+| 상태 보기 | `litcodex doctor`의 `automatic handoff` 줄, `lit-handoff auto status` | 켜짐/꺼짐, 퍼센트, 출처를 보여 주고, 퍼센트가 Codex 자체 압축 지점에 닿으면 경고합니다. |
+
+핸드오프 파일은 [lit-handoff](../plugins/litcodex/skills/lit-handoff/SKILL.md)의 저장 위치 규칙을 따르고,
+다시 불러올 때 알아보는 표식인 `Auto-handoff session: <session id>` 줄을 담습니다. 관련 파일은
+[개인정보 안내](./privacy.md#automatic-handoff)에 있습니다.
+
 ## 루프 상태
 
 LitCodex는 현재 프로젝트 루트의 `.litcodex/lit-loop/`에 상태를 저장합니다.

@@ -12,6 +12,7 @@ import { EXPLICIT_GPT56_SOL_MODEL, GPT56_MODELS } from "../config-migration/gpt5
 import { isNewer } from "../update-check.js";
 import { inspectAgentRouting, routingReport } from "./agent-routing.js";
 import { detectAuthMode } from "./auth-mode.js";
+import { inspectAutoHandoff } from "./auto-handoff-doctor.js";
 import { probeBundledSkills } from "./bundled-skills.js";
 import {
 	findCodexBinary,
@@ -25,7 +26,7 @@ import { inspectEffectiveConfig } from "./doctor-config.js";
 import { modelContextsForWrites, probeHostCapabilities } from "./host-capabilities.js";
 import { canonicalMarketplacePath, LITCODEX_MARKETPLACE, managedMarketplaceRoot } from "./marketplace.js";
 import { probeSkillCatalogPayload } from "./skill-catalog.js";
-import type { AutoUpdateDoctorReport, DoctorReport, JevSkillHintState } from "./types.js";
+import type { AutoHandoffDoctorReport, AutoUpdateDoctorReport, DoctorReport, JevSkillHintState } from "./types.js";
 
 export { renderDoctorText } from "./doctor-render.js";
 
@@ -105,6 +106,7 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 			capabilities: unavailableCapabilities,
 			autoUpdate: readAutoUpdateReport(deps.env),
 			jevSkillHint: jevSkillHintState(deps.env),
+			autoHandoff: autoHandoffWithWarnings(deps, null, warnings),
 			issues,
 			warnings,
 		};
@@ -202,9 +204,21 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 		capabilities,
 		autoUpdate,
 		jevSkillHint: jevSkillHintState(deps.env),
+		autoHandoff: autoHandoffWithWarnings(deps, codexHome, warnings),
 		issues,
 		warnings,
 	};
+}
+
+/** The automatic handoff report; its warnings also join the doctor's own warning list. */
+function autoHandoffWithWarnings(
+	deps: DoctorDeps,
+	codexHome: string | null,
+	warnings: string[],
+): AutoHandoffDoctorReport {
+	const report = inspectAutoHandoff(deps.fs, deps.env, deps.repoRoot, codexHome);
+	for (const warning of report.warnings) warnings.push(warning);
+	return report;
 }
 
 /** Mirrors the lit-loop hook switch: `LITCODEX_JEV=1` plus a non-empty `TYPESAFE_API_KEY`. */

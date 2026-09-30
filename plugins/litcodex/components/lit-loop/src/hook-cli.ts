@@ -10,6 +10,8 @@
 // off, that path makes no request and writes nothing.
 
 import { isAbsolute } from "node:path";
+import { evaluateAutoHandoffStop, recordCompaction, takeReloadContext } from "./auto-handoff.js";
+import { applyAutoHandoffRoute, parseAutoHandoffRoute } from "./auto-handoff-settings.js";
 import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
 import {
 	claimJevOnBanner,
@@ -98,6 +100,7 @@ export async function runUserPromptSubmitHookCli(
 	stderr: NodeJS.WritableStream,
 	repoRoot = process.cwd(),
 	jev: JevHookOptions = {},
+	auto: AutoHandoffHookOptions = {},
 ): Promise<number> {
 	const decoded = await readStdin(stdin);
 	if (decoded === null) {
@@ -122,18 +125,66 @@ export async function runUserPromptSubmitHookCli(
 		return 2;
 	}
 
+	const route = autoHandoffRouteOutput(parsed, repoRoot, auto);
+	if (route !== "") {
+		stdout.write(route);
+		return 0;
+	}
+	const reload = autoHandoffReload(parsed, repoRoot, auto);
 	const decision = runUserPromptSubmitHook(parsed);
 	if (decision.kind === "inject" && decision.mode === "lit-plan") {
 		const scope = hookSessionScope(parsed, repoRoot);
 		if (scope !== null) recordLitPlanActivation(scope.cwd, scope.sessionId);
 	}
 	if (decision.kind === "inject") {
-		stdout.write(decision.stdout);
+		stdout.write(withReloadContext(decision.stdout, reload));
 		return 0;
 	}
 	const hint = await jevHintOutput(parsed, repoRoot, jev);
-	if (hint !== "") stdout.write(hint);
+	const output = withReloadContext(hint, reload);
+	if (output !== "") stdout.write(output);
 	return 0;
+}
+
+/** Injectable environment for the automatic-handoff hooks; production uses the process environment. */
+export interface AutoHandoffHookOptions {
+	readonly env?: NodeJS.ProcessEnv;
+	readonly now?: number;
+}
+
+/** `lit-handoff auto on|off|status` changes a setting and never reaches the model: the prompt is blocked with one plain reply. */
+function autoHandoffRouteOutput(parsed: unknown, repoRoot: string, options: AutoHandoffHookOptions): string {
+	if (!isLitUserPromptSubmitInput(parsed)) return "";
+	const route = parseAutoHandoffRoute(parsed.prompt);
+	if (route === null) return "";
+	const record = parsed as unknown as Record<string, unknown>;
+	const cwd = typeof record["cwd"] === "string" && isAbsolute(record["cwd"]) ? record["cwd"] : repoRoot;
+	const reason = applyAutoHandoffRoute(cwd, options.env ?? process.env, route);
+	return `${JSON.stringify({ decision: "block", reason })}\n`;
+}
+
+/** The handoff excerpt to bring back after a compaction between turns, or null. Claims it once. */
+function autoHandoffReload(parsed: unknown, repoRoot: string, options: AutoHandoffHookOptions): string | null {
+	const scope = hookSessionScope(parsed, repoRoot);
+	if (scope === null) return null;
+	return takeReloadContext(scope.cwd, scope.sessionId, options.env ?? process.env, false);
+}
+
+/** Add reload text to a UserPromptSubmit output that may already carry context; "" stays "" without one. */
+function withReloadContext(stdout: string, reload: string | null): string {
+	if (reload === null) return stdout;
+	if (stdout === "") {
+		return `${JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: reload } })}\n`;
+	}
+	try {
+		const output = JSON.parse(stdout) as { hookSpecificOutput?: { additionalContext?: string } };
+		const specific = output.hookSpecificOutput;
+		if (specific === undefined) return stdout;
+		specific.additionalContext = [specific.additionalContext, reload].filter(Boolean).join("\n\n");
+		return `${JSON.stringify(output)}\n`;
+	} catch {
+		return stdout;
+	}
 }
 
 /** Injectable Jev dependencies; production uses the process environment and built-in `fetch`. */
@@ -182,6 +233,7 @@ export async function runStopPlanPersistenceHookCli(
 	stdout: NodeJS.WritableStream,
 	stderr: NodeJS.WritableStream,
 	repoRoot = process.cwd(),
+	auto: AutoHandoffHookOptions = {},
 ): Promise<number> {
 	const decoded = await readStdin(stdin);
 	if (decoded === null) {
@@ -201,8 +253,79 @@ export async function runStopPlanPersistenceHookCli(
 	const scope = hookSessionScope(parsed, repoRoot);
 	if (scope !== null) {
 		const persistence = evaluatePlanPersistence(scope.cwd, scope.sessionId);
-		if (persistence.decision === "block") stdout.write(formatStopBlockOutput(persistence.reason));
+		if (persistence.decision === "block") {
+			stdout.write(formatStopBlockOutput(persistence.reason));
+			return 0;
+		}
+		const record = parsed as Record<string, unknown>;
+		const handoff = evaluateAutoHandoffStop({
+			repoRoot: scope.cwd,
+			sessionId: scope.sessionId,
+			transcriptPath: typeof record["transcript_path"] === "string" ? record["transcript_path"] : null,
+			stopHookActive: record["stop_hook_active"] === true,
+			env: auto.env ?? process.env,
+			...(auto.now === undefined ? {} : { now: auto.now }),
+		});
+		if (handoff.decision === "block") stdout.write(formatStopBlockOutput(handoff.reason));
 	}
+	return 0;
+}
+
+/** Parse a hook event from stdin the way every route here does; `exit` is set when the route must stop. */
+async function readHookEvent(
+	stdin: NodeJS.ReadableStream,
+	stderr: NodeJS.WritableStream,
+): Promise<{ readonly exit: number } | { readonly exit: null; readonly parsed: unknown }> {
+	const decoded = await readStdin(stdin);
+	if (decoded === null) {
+		stderr.write(errorLine("LIT_HOOK_STDIN_TOO_LARGE", TOO_LARGE_MESSAGE));
+		return { exit: 2 };
+	}
+	let raw = decoded;
+	if (raw.charCodeAt(0) === 0xfeff) raw = raw.slice(1);
+	if (raw.trim().length === 0) return { exit: 0 };
+	try {
+		return { exit: null, parsed: JSON.parse(raw) };
+	} catch {
+		stderr.write(errorLine("LIT_HOOK_STDIN_INVALID_JSON", INVALID_JSON_MESSAGE));
+		return { exit: 2 };
+	}
+}
+
+/** SessionStart: after a compaction inside a turn, bring this session's fresh handoff back once. */
+export async function runSessionStartHookCli(
+	stdin: NodeJS.ReadableStream,
+	stdout: NodeJS.WritableStream,
+	stderr: NodeJS.WritableStream,
+	repoRoot = process.cwd(),
+	auto: AutoHandoffHookOptions = {},
+): Promise<number> {
+	const event = await readHookEvent(stdin, stderr);
+	if (event.exit !== null) return event.exit;
+	const record = event.parsed as Record<string, unknown> | null;
+	if (typeof record !== "object" || record === null || record["source"] !== "compact") return 0;
+	const scope = hookSessionScope(record, repoRoot);
+	if (scope === null) return 0;
+	const reload = takeReloadContext(scope.cwd, scope.sessionId, auto.env ?? process.env, true);
+	if (reload !== null) {
+		stdout.write(
+			`${JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: reload } })}\n`,
+		);
+	}
+	return 0;
+}
+
+/** PostCompact: remember that a session that saved a handoff has now been compacted. Writes nothing to stdout. */
+export async function runPostCompactHookCli(
+	stdin: NodeJS.ReadableStream,
+	_stdout: NodeJS.WritableStream,
+	stderr: NodeJS.WritableStream,
+	repoRoot = process.cwd(),
+): Promise<number> {
+	const event = await readHookEvent(stdin, stderr);
+	if (event.exit !== null) return event.exit;
+	const scope = hookSessionScope(event.parsed, repoRoot);
+	if (scope !== null) recordCompaction(scope.cwd, scope.sessionId);
 	return 0;
 }
 

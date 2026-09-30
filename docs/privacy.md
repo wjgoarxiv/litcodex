@@ -68,6 +68,29 @@ TypeSafe bills the key's owner. Unset `LITCODEX_JEV` and restart Codex to stop t
 
 The README shows what appears on screen in each state under [What you will see](../README.md#what-you-will-see).
 
+## Automatic handoff
+
+The [automatic handoff](../README.md#automatic-handoff-optional) is off by default and sends nothing anywhere. It
+uses four local files and no network:
+
+- `.litcodex/auto-handoff/settings.json` holds your choice: a format version, whether the option is on, and the
+  percent you picked.
+- `.litcodex/auto-handoff/<session id>.json` is a per-session record. It holds the session id, which step the
+  session is in (idle, asked for a handoff, compacted, reloaded), the time of the request, the percent that
+  triggered it, and the last percent seen. It holds no prompt text and no handoff content. LitCodex does not read
+  or write either file through a symlink.
+- `.codex/config.toml` in the project gets one marked line, `model_post_turn_compact_threshold_percent`, only when
+  you turn the option on with the `lit-handoff auto on` command. `lit-handoff auto off` removes exactly that line.
+  A value you wrote there yourself is left alone.
+- The hook and `litcodex doctor` read your Codex `config.toml` (from `CODEX_HOME`, else `~/.codex`) and never write
+  it. They look only for the trust setting of the current project, to tell you whether Codex will compact by itself.
+- The Stop hook reads the session transcript that Codex keeps under `~/.codex/sessions`, only to find the latest
+  token count. It reads the last part of the file and copies nothing out of it.
+
+After a compaction, the hook reads the project's `.handoff/HANDOFF.md` or `HANDOFF.md`, and only when the file
+was written after the trigger and names this session. It passes the first 3,000 characters to the model in the
+same session. Project `.litcodex/` state is gitignored and excluded from npm and marketplace payloads.
+
 ## Model and tool work
 
 Running model work uses your configured Codex host and provider. Prompts, selected

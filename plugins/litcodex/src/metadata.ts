@@ -170,6 +170,18 @@ export const EXPECTED_HOOKS: readonly ExpectedHook[] = Object.freeze([
 		statusMessage: activationStatusMessage(RULES_COMPONENT_DIR),
 	}),
 	Object.freeze({
+		component: LIT_LOOP_COMPONENT_DIR,
+		event: "SessionStart",
+		subcommand: "session-start",
+		statusMessage: activationStatusMessage(LIT_LOOP_COMPONENT_DIR),
+	}),
+	Object.freeze({
+		component: LIT_LOOP_COMPONENT_DIR,
+		event: "PostCompact",
+		subcommand: "post-compact",
+		statusMessage: activationStatusMessage(LIT_LOOP_COMPONENT_DIR),
+	}),
+	Object.freeze({
 		component: RULES_COMPONENT_DIR,
 		event: "UserPromptSubmit",
 		subcommand: "user-prompt-submit",

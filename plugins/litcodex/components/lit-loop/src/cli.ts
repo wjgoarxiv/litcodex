@@ -16,7 +16,9 @@
 // the dispatcher is unit-testable with an injected argv array.
 
 import {
+	runPostCompactHookCli,
 	runPreToolUseCreateGoalGuardCli,
+	runSessionStartHookCli,
 	runStopPlanPersistenceHookCli,
 	runUserPromptSubmitHookCli,
 } from "./hook-cli.js";
@@ -41,6 +43,8 @@ export async function main(
 		if (subcommand === "user-prompt-submit") return runUserPromptSubmitHookCli(stdin, stdout, stderr);
 		if (subcommand === "pre-tool-use") return runPreToolUseCreateGoalGuardCli(stdin, stdout, stderr);
 		if (subcommand === "stop") return runStopPlanPersistenceHookCli(stdin, stdout, stderr);
+		if (subcommand === "session-start") return runSessionStartHookCli(stdin, stdout, stderr);
+		if (subcommand === "post-compact") return runPostCompactHookCli(stdin, stdout, stderr);
 		stderr.write(UNKNOWN_COMMAND);
 		return 1;
 	}
