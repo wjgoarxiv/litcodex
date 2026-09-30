@@ -1,6 +1,6 @@
 {
 	"name": "@litcodex/telemetry",
-	"version": "1.0.11",
+	"version": "1.0.12",
 	"description": "LitCodex telemetry: a deliberately inert, local-only SessionStart hook (NO network, NO data collection).",
 	"type": "module",
 	"private": true,

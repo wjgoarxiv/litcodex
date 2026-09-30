@@ -1,7 +1,7 @@
 # Migrating the npm package name
 
 The local candidate changes the external npm name from `litcodex-ai` to
-`@litfamily/litcodex`. Its local release candidate is **1.0.11**. The commands below describe the
+`@litfamily/litcodex`. Its local release candidate is **1.0.12**. The commands below describe the
 candidate interface; publication and registry availability have not been
 established. Use them only once that exact package is available, or use an
 approved local tarball for pre-release testing. No automatic old-package bridge
@@ -32,7 +32,7 @@ the new one:
 
 ```sh
 npm uninstall -g litcodex-ai
-npm install -g @litfamily/litcodex@1.0.11
+npm install -g @litfamily/litcodex@1.0.12
 litcodex --version
 litcodex --dry-run install
 litcodex install --yes --no-auto-update
@@ -55,13 +55,13 @@ shell command cache may still select the old executable.
 Use the package explicitly instead of relying on npm to infer the executable:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex --dry-run install
-npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex install --yes --no-auto-update
-npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex doctor --json
+npm exec --yes --package @litfamily/litcodex@1.0.12 -- litcodex --dry-run install
+npm exec --yes --package @litfamily/litcodex@1.0.12 -- litcodex install --yes --no-auto-update
+npm exec --yes --package @litfamily/litcodex@1.0.12 -- litcodex doctor --json
 ```
 
 For local candidate verification, substitute the approved tarball's absolute path
-for `@litfamily/litcodex@1.0.11` in `--package`. Follow the isolated trial below before
+for `@litfamily/litcodex@1.0.12` in `--package`. Follow the isolated trial below before
 any local candidate command; a separate product home alone is insufficient.
 A local tarball passing doctor does not prove public npm availability or
 authenticated model execution.

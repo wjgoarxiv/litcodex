@@ -1,6 +1,6 @@
 {
 	"name": "@litcodex/rules",
-	"version": "1.0.11",
+	"version": "1.0.12",
 	"description": "LitCodex rules: injects project rule files (AGENTS.md etc.) into model context through lifecycle hooks.",
 	"type": "module",
 	"private": true,

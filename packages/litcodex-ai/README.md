@@ -1,12 +1,12 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: five armored robots power on one by one, the LitCodex robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.12/readme-assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.12/readme-assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: five armored robots power on one by one, the LitCodex robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
 
 <p align="center">
-<a href="#install"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/badge-version.svg" alt="1.0.11" /></a>
-<a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/badge-license.svg" alt="MIT license" /></a>
+<a href="#install"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.12/readme-assets/badge-version.svg" alt="1.0.12" /></a>
+<a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.12/readme-assets/badge-license.svg" alt="MIT license" /></a>
 </p>
 
 <p align="center">
-<a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/usage.md"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/lucide-book-open.svg" width="16" alt="" /> Docs</a> &nbsp; <a href="#install">Install</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/lucide-play.svg" width="16" alt="" /> Ignition</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.11/readme-assets/lucide-shield-check.svg" width="16" alt="" /> MIT</a>
+<a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/usage.md"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.12/readme-assets/lucide-book-open.svg" width="16" alt="" /> Docs</a> &nbsp; <a href="#install">Install</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.12/readme-assets/lucide-play.svg" width="16" alt="" /> Ignition</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.12/readme-assets/lucide-shield-check.svg" width="16" alt="" /> MIT</a>
 </p>
 
 # LitCodex
@@ -24,14 +24,14 @@ the results stay in your project, where a later session can pick them up.
 You need Node.js 22 or later and Codex CLI.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.12 -- litcodex install
 ```
 
 The installer registers the plugin, its hooks and its agents, and changes only the keys it manages in
 `~/.codex/config.toml`. It asks which model leads, which model helps, and which output style you like. A
 fresh install starts with `gpt-6-astra` at `xhigh` for the lead and `gpt-6-luna` at `max` for helpers. To
 see the changes before they happen, run
-`npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex --dry-run install`. To install without
+`npm exec --yes --package @litfamily/litcodex@1.0.12 -- litcodex --dry-run install`. To install without
 any questions, add `--yes` after `install`.
 
 For a global command:
@@ -52,7 +52,7 @@ To keep the script out of the global install, add `--ignore-scripts` or set `CI=
 That only postpones the downloads: `litcodex install` prepares
 the same tools after a successful install, with no switch to turn it off.
 
-> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex <command>`.
+> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.12 -- litcodex <command>`.
 
 To try LitCodex apart from your existing settings, follow the
 [isolated trial guide](https://github.com/wjgoarxiv/litcodex/blob/main/docs/npm-migration.md#isolated-local-trial).
@@ -194,7 +194,7 @@ line asking you to run `/compact`. The handoff then comes back on its own. Read
 ## Check, fix, remove
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.12 -- litcodex doctor
 ```
 
 `litcodex doctor` checks registration, hooks, config and host capabilities; `litcodex loop doctor` checks the
@@ -208,7 +208,7 @@ current project's loop state. Both look at the setup; a small real task shows wh
   time in an open terminal, note each exit status, and see [troubleshooting](https://github.com/wjgoarxiv/litcodex#troubleshooting).
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.12 -- litcodex uninstall
 ```
 
 This removes the plugin and the config LitCodex manages, and leaves your other settings alone.

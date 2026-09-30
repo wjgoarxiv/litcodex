@@ -1,6 +1,6 @@
 {
 	"name": "@litcodex/comment-checker",
-	"version": "1.0.11",
+	"version": "1.0.12",
 	"description": "LitCodex Comment-Checker hook: flags low-value / AI-slop comments introduced by edits.",
 	"type": "module",
 	"private": true,

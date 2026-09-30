@@ -9,7 +9,7 @@
 // A3 D3: The executable constant below is the sole release-version literal.
 
 /** The single source of truth. Stable semver, no leading "v", no pre-release for a release cut. */
-export const VERSION = "1.0.11";
+export const VERSION = "1.0.12";
 
 /** One manifest location whose version MUST equal VERSION. */
 export interface VersionedManifest {

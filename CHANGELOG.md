@@ -6,13 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.12] - 2026-09-30
+
 ### Added
 
-- Optional automatic handoff, off by default. Send `lit-handoff auto on <percent>` as a whole prompt (or
-  set `LITCODEX_AUTO_HANDOFF=1` and `LITCODEX_AUTO_HANDOFF_PERCENT`) and LitCodex asks the model to save a
-  handoff when a conversation reaches that share of the context window, once per crossing. Codex then
-  compacts after that turn (Codex CLI 0.158 or newer, trusted project) or you get one line asking you to
-  run `/compact`, and the handoff comes back on its own afterwards. `litcodex doctor` shows the state.
+- Optional automatic handoff, off until you turn it on, at a context percent you choose (LitCodex has
+  no built-in number). Send `lit-handoff auto on <percent>` as your whole prompt, or set
+  `LITCODEX_AUTO_HANDOFF=1` and `LITCODEX_AUTO_HANDOFF_PERCENT`. When a conversation reaches that share
+  of the context window, LitCodex asks the model to save a handoff, once per crossing. Codex then
+  compacts after that turn (Codex CLI 0.158 or newer, trusted project), or you get one line asking you
+  to run `/compact`. After the compaction the handoff comes back on its own. `litcodex doctor` shows
+  the state.
+
+### Changed
+
+- The README no longer shows the A/B comparison, on the GitHub pages or the npm page; one run per side
+  was too little to support its verdicts. Its pictures are gone too.
+- The GitHub pages show terminal pictures of what LitCodex prints during install, doctor, the lit
+  hook and loop commands. The motion film was remade in Pretendard and now has a Korean version.
 
 ## [1.0.11] - 2026-09-30
 
