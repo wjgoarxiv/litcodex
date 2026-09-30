@@ -1058,51 +1058,121 @@ describe("GitHub and npm README split", () => {
 			assert.ok(!source.includes("docs/assets/jev"), "npm cards carry no snapshots");
 	});
 
+	test("install, doctor, activation and loop snapshots appear on both GitHub pages and stay out of the npm package", () => {
+		const names = [
+			"screen-install-questions",
+			"screen-install-receipt",
+			"screen-doctor",
+			"screen-lit-ignited",
+			"screen-loop",
+		];
+		const dir = join(REPO_ROOT, "docs/assets/screens");
+		const files = names.flatMap((name) => [`${name}-dark.webp`, `${name}-light.webp`]);
+		assert.deepEqual(
+			readdirSync(dir).sort(),
+			[...files, "README.md"].sort(),
+			"docs/assets/screens holds the snapshots and the media notes",
+		);
+		for (const file of files) {
+			const bytes = readFileSync(join(dir, file));
+			assert.equal(bytes.subarray(0, 4).toString("latin1"), "RIFF", `${file} is a WebP`);
+			assert.equal(bytes.subarray(8, 12).toString("latin1"), "WEBP", `${file} is a WebP`);
+			assert.ok(bytes.length <= 65_536, `${file} stays under 64 KiB`);
+			for (const [, source] of GITHUB_READMES) {
+				assert.ok(source.includes(`./docs/assets/screens/${file}`), `GitHub README shows ${file}`);
+			}
+		}
+		for (const [path, source] of GITHUB_READMES) {
+			assert.ok(source.includes("./docs/assets/screens/README.md"), `${path} links the media notes`);
+		}
+		const packed = join(REPO_ROOT, "packages", "litcodex-ai", "readme-assets");
+		for (const file of files) assert.ok(!existsSync(join(packed, file)), `${file} is not in the npm payload`);
+		for (const [, source] of NPM_READMES)
+			assert.ok(!source.includes("docs/assets/screens"), "npm cards carry no snapshots");
+	});
+
 	test("the motion promo is embedded on both GitHub pages, stays under its caps and out of the npm package", () => {
 		const dir = join(REPO_ROOT, "docs/assets/promo");
 		assert.deepEqual(
 			readdirSync(dir).sort(),
 			[
-				"Archivo-OFL.txt",
+				"Pretendard-OFL.txt",
 				"README.md",
+				"promo-ko-poster.png",
+				"promo-ko-preview.webp",
+				"promo-ko-still.webp",
+				"promo-ko.mp4",
 				"promo-poster.png",
 				"promo-preview.webp",
 				"promo-still.webp",
 				"promo.mp4",
 				"source",
 			].sort(),
-			"docs/assets/promo holds the film, its stills, the font license, the notes and the source",
+			"docs/assets/promo holds both films, their stills, the font license, the notes and the source",
 		);
-		assert.deepEqual(readdirSync(join(dir, "source")).sort(), ["index.html", "treatment.json"]);
-		const film = readFileSync(join(dir, "promo.mp4"));
-		assert.equal(film.subarray(4, 8).toString("latin1"), "ftyp", "promo.mp4 is an MP4");
-		assert.ok(film.length <= 8 * 1_048_576, "the master stays under 8 MiB");
-		const preview = readFileSync(join(dir, "promo-preview.webp"));
-		assert.equal(preview.subarray(8, 12).toString("latin1"), "WEBP");
-		assert.ok(preview.includes(Buffer.from("ANIM")), "the inline preview is animated");
-		assert.ok(preview.length <= 2_621_440, "the inline preview stays under 2.5 MiB");
-		const still = readFileSync(join(dir, "promo-still.webp"));
-		assert.equal(still.subarray(8, 12).toString("latin1"), "WEBP");
-		assert.ok(!still.includes(Buffer.from("ANIM")), "the reduced-motion still is not animated");
-		const poster = readFileSync(join(dir, "promo-poster.png"));
-		assert.equal(poster.readUInt32BE(16), 1920);
-		assert.equal(poster.readUInt32BE(20), 1080);
-		assert.ok(poster.length <= 1_048_576 && still.length <= 1_048_576, "each still stays under 1 MiB");
-		for (const [path, source] of GITHUB_READMES) {
-			assert.match(
-				source,
-				/<source media="\(prefers-reduced-motion: reduce\)" srcset="\.\/docs\/assets\/promo\/promo-still\.webp" \/><img src="\.\/docs\/assets\/promo\/promo-preview\.webp"/,
-				`${path} shows the promo with a reduced-motion still first`,
+		assert.deepEqual(readdirSync(join(dir, "source")).sort(), [
+			"index-ko.html",
+			"index.html",
+			"treatment-ko.json",
+			"treatment.json",
+		]);
+		for (const [prefix, [path, source]] of [
+			["promo", GITHUB_READMES[0]],
+			["promo-ko", GITHUB_READMES[1]],
+		]) {
+			const film = readFileSync(join(dir, `${prefix}.mp4`));
+			assert.equal(film.subarray(4, 8).toString("latin1"), "ftyp", `${prefix}.mp4 is an MP4`);
+			assert.ok(film.length <= 8 * 1_048_576, `${prefix}.mp4 stays under 8 MiB`);
+			const preview = readFileSync(join(dir, `${prefix}-preview.webp`));
+			assert.equal(preview.subarray(8, 12).toString("latin1"), "WEBP");
+			assert.ok(preview.includes(Buffer.from("ANIM")), `${prefix} preview is animated`);
+			assert.ok(preview.length <= 2_621_440, `${prefix} preview stays under 2.5 MiB`);
+			const still = readFileSync(join(dir, `${prefix}-still.webp`));
+			assert.equal(still.subarray(8, 12).toString("latin1"), "WEBP");
+			assert.ok(!still.includes(Buffer.from("ANIM")), `${prefix} reduced-motion still is not animated`);
+			const poster = readFileSync(join(dir, `${prefix}-poster.png`));
+			assert.equal(poster.readUInt32BE(16), 1920);
+			assert.equal(poster.readUInt32BE(20), 1080);
+			assert.ok(poster.length <= 1_048_576 && still.length <= 1_048_576, `${prefix} stills stay under 1 MiB`);
+			assert.ok(
+				source.includes(
+					`<source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/promo/${prefix}-still.webp" /><img src="./docs/assets/promo/${prefix}-preview.webp"`,
+				),
+				`${path} shows its promo with a reduced-motion still first`,
 			);
-			assert.ok(source.includes("](./docs/assets/promo/promo.mp4)"), `${path} links the MP4`);
-			assert.ok(source.includes("](./docs/assets/promo/promo-poster.png)"), `${path} links the poster`);
+			assert.ok(source.includes(`](./docs/assets/promo/${prefix}.mp4)`), `${path} links the MP4`);
+			assert.ok(source.includes(`](./docs/assets/promo/${prefix}-poster.png)`), `${path} links the poster`);
 		}
 		const packed = join(REPO_ROOT, "packages", "litcodex-ai", "readme-assets");
-		for (const file of ["promo.mp4", "promo-preview.webp", "promo-poster.png", "promo-still.webp"]) {
+		for (const file of [
+			"promo.mp4",
+			"promo-preview.webp",
+			"promo-poster.png",
+			"promo-still.webp",
+			"promo-ko.mp4",
+			"promo-ko-preview.webp",
+			"promo-ko-poster.png",
+			"promo-ko-still.webp",
+		]) {
 			assert.ok(!existsSync(join(packed, file)), `${file} is not in the npm payload`);
 		}
 		for (const [, source] of NPM_READMES)
 			assert.ok(!source.includes("docs/assets/promo"), "npm cards do not embed the promo");
+	});
+
+	test("the promo pages set all copy in Pretendard and keep Archivo out", () => {
+		const dir = join(REPO_ROOT, "docs/assets/promo");
+		for (const name of ["source/index.html", "source/index-ko.html"]) {
+			const page = readFileSync(join(dir, name), "utf8");
+			assert.match(page, /font-family:"Pretendard"/, `${name} sets its body in Pretendard`);
+			assert.ok(!page.includes("Archivo"), `${name} does not use Archivo`);
+		}
+		for (const name of ["treatment.json", "treatment-ko.json"]) {
+			const treatment = JSON.parse(readFileSync(join(dir, "source", name), "utf8"));
+			assert.deepEqual(treatment.typePlan.faces, ["Pretendard", "MesloLGS NF"], `${name} lists its faces`);
+		}
+		const license = readFileSync(join(dir, "Pretendard-OFL.txt"), "utf8");
+		assert.ok(license.includes("SIL Open Font License"), "the Pretendard license text is present");
 	});
 
 	test("npm READMEs are a short install card that shares the GitHub title and tagline", () => {

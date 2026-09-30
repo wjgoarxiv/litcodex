@@ -98,6 +98,8 @@ Codex 로그인과 모델 사용 권한은 실제 모델 작업을 시작할 때
 - 설치 전에 무엇이 바뀌는지 먼저 보고 싶다면 `npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex --dry-run install`을 실행하세요.
 - 사람이 지켜보지 않는 환경에서 한 번에 설치하려면 `npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex install --yes`를 실행하세요. 직접 넘긴 `--style <id>`는 그대로 반영됩니다.
 
+실행하기 전에 설치기가 무엇을 출력하는지 보고 싶다면 [설치부터 첫 작업까지 보이는 화면](#설치부터-첫-작업까지-보이는-화면)에 질문 화면과 영수증, doctor 검사가 있습니다.
+
 예전 패키지 이름(`litcodex-ai`)으로 설치했다면 [기존 설치 이전 안내](./docs/npm-migration.md)를 먼저 읽어 주세요.
 
 ### 전역 명령으로 쓰기
@@ -200,13 +202,47 @@ Codex는 자체 목표 기능(`/goal`)을 따로 두고, LitCodex 기록은 그�
 
 전체 목록은 [명령어](#명령어)에 있습니다.
 
+## 설치부터 첫 작업까지 보이는 화면
+
+설치부터 첫 작업까지 LitCodex가 무엇을 출력하는지 사진 다섯 장으로 보여 줍니다. 모두 임시 홈에서 실제 프로그램을 실행해 캡처했고,
+사진을 짧게 하려고 뺀 줄은 사진마다 설명에 적었습니다. 사진은 Codex CLI 0.158에서 만들었으며, Codex 버전에 따라 훅 줄의 표현이나
+위치가 조금 다를 수 있습니다. 선택 기능인 Jev 스킬 힌트의 사진은 [Jev](#화면에-나타나는-모습)에 따로 있습니다.
+
+대화형으로 실행하면 설치기가 세 가지를 묻습니다. 어떤 모델이 이끌지, 어떤 모델이 거들지, 답변을 어떤 스타일로 받을지입니다.
+그때마다 Enter를 누르면 첫 번째 선택지가 골라집니다. 권장 모델과 현재 출력 스타일입니다. 이어서 설치기가 쓰려는 경로를 상자로 보여 주고, Enter를 한 번 더 누르기 전까지는
+아무것도 쓰지 않습니다.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/screens/screen-install-questions-dark.webp" /><img src="./docs/assets/screens/screen-install-questions-light.webp" width="693" alt="터미널 창에서 litcodex install을 실행한 화면입니다. &quot;Choose the LEAD model (plans and reviews).&quot;에는 gpt-6-astra · xhigh가 recommended lead로, &quot;Choose the HELPER model (spawned/delegated agents).&quot;에는 gpt-6-luna · max가 recommended helper로 나오고, &quot;Choose an output style for LitCodex responses.&quot;에는 선택지 다섯 개가 있습니다. MODEL ROUTE 상자에는 Provider openai, Lead gpt-6-astra · xhigh, Helpers gpt-6-luna · max가 보이고, 마지막에 &quot;Enter to continue · Ctrl-C to abort (nothing written yet)&quot;가 나옵니다." /></picture><br /><sub>임시 홈에서 실제 litcodex install을 실행하고 질문마다 Enter로 답해 캡처했습니다. 모델 목록은 각각 스무 줄인데 처음 두 줄과 마지막 줄만 남겼고, 경로 줄도 뺐습니다. …는 뺀 자리입니다.</sub></p>
+
+마지막 Enter 뒤에 설치기는 여섯 단계를 차례로 거치고 영수증을 출력합니다. 먼저 Status 줄을 보세요. Ready for Codex라고 나오면
+플러그인, 훅, 에이전트 역할 일곱 개, 관리하는 설정 항목이 모두 자리를 잡았고 doctor 검사도 통과했다는 뜻입니다. 영수증 위의
+두 줄은 설치가 미리 준비하는 Office 도구와 영상 도구의 상태입니다. 이 준비가 끝나지 않으면 그렇다고 알리고, 나중에 실행할
+명령을 알려 줍니다.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/screens/screen-install-receipt-dark.webp" /><img src="./docs/assets/screens/screen-install-receipt-light.webp" width="731" alt="터미널 창에 litcodex install의 끝부분이 보입니다. 01 / 06 MARKETPLACE부터 06 / 06 HEALTH CHECK까지 여섯 단계가 각각 결과 줄과 함께 나오고, 마지막은 &quot;Running doctor: doctor passed&quot;입니다. 이어서 &quot;[litcodex] Office runtime ready for presentations and documents.&quot;와 &quot;[litcodex] Motion runtime ready for film rendering.&quot; 줄이 나옵니다. INSTALL RECEIPT 상자에는 &quot;Status Ready for Codex&quot;, &quot;Codex host codex-cli 0.158.0&quot;, &quot;Model gpt-6-astra · xhigh&quot;가 있고 &quot;Installation complete&quot;로 끝납니다." /></picture><br /><sub>같은 설치에서 캡처했습니다. 단계마다 붙는 설명과 경로 줄, 영수증의 일부 줄은 뺐습니다. 이 임시 홈에는 영상 도구가 이미 캐시에 있어서 두 런타임 줄이 바로 나왔습니다.</sub></p>
+
+결과를 가장 빨리 확인하는 방법은 `litcodex doctor`입니다. 대부분의 줄이 yes 또는 no로 답하고, 이상이 없으면 All checks passed.로
+끝납니다. Jev 줄은 힌트를 켜지 않았다면 off로 나옵니다.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/screens/screen-doctor-dark.webp" /><img src="./docs/assets/screens/screen-doctor-light.webp" width="494" alt="터미널 창에서 litcodex doctor를 실행한 화면입니다. &quot;binary: yes&quot;, &quot;marketplace: yes&quot;, &quot;plugin: yes&quot;, &quot;hook: yes&quot;, &quot;managed config: yes&quot;, &quot;agents: yes&quot;, &quot;skills complete: yes&quot;, &quot;lit-handoff: yes&quot;, &quot;science payload: yes&quot;, &quot;Jev skill hint: off&quot; 줄이 이어지고, 그 뒤에 &quot;All checks passed.&quot;와 &quot;office runtime: ready&quot;가 나옵니다." /></picture><br /><sub>설치 직후 같은 홈에서 실행한 litcodex doctor 출력입니다. 모델 경로, 동시 실행, 업데이트 관련 줄과 Codex 로그인이 없는 홈에서 나오는 경고, 영상 도구 줄은 뺐습니다.</sub></p>
+
+`lit`으로 시작하는 요청을 입력하면 훅이 모델보다 먼저 답합니다. 5행짜리 LIT 마크와, 고른 경로의 이름을 적은 줄을 출력합니다.
+`handoff`와 `lit recap`에서도 같은 마크가 나오고 경로 이름만 달라서, 어떤 모드가 요청을 받았는지 한눈에 알 수 있습니다.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/screens/screen-lit-ignited-dark.webp" /><img src="./docs/assets/screens/screen-lit-ignited-light.webp" width="548" alt="Codex 터미널 창에 프롬프트 세 개가 있습니다. &quot;lit add input validation to the signup form&quot; 뒤에는 &quot;Hook ·&quot;, 5행짜리 LIT 마크, &quot;🔥 LIT IGNITED · lit-loop 🔥&quot;가 나옵니다. &quot;handoff&quot; 뒤에는 같은 마크와 &quot;🔥 LIT IGNITED · lit-handoff 🔥&quot;가, &quot;lit recap&quot; 뒤에는 마크와 &quot;🔥 LIT IGNITED · lit-recap 🔥&quot;가 나옵니다." /></picture><br /><sub>실제 Codex 0.158 세션에서 LitCodex 훅을 돌리고 모델 자리는 로컬 대역이 맡아 캡처했습니다. 그래서 컴퓨터 밖으로 나간 것은 없습니다. 시작 배너, 훅 검토 화면, 모델의 답변은 뺐습니다.</sub></p>
+
+마크 뒤에서는 루프가 프로젝트 안에 점수를 적어 둡니다. 새 목표는 확인 기준 세 개에 통과 0개로 시작합니다. 결과를 기록할 때마다
+숫자가 올라가고, 기준이 모두 통과하기 전에 목표를 끝내 달라고 하면 거절합니다.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/screens/screen-loop-dark.webp" /><img src="./docs/assets/screens/screen-loop-light.webp" width="729" alt="터미널 창에 loop 명령이 보입니다. &quot;litcodex loop create &quot;Fix login&quot;&quot;은 &quot;lit-loop plan created: 1 goal(s)&quot;와 brief, goals, ledger 파일 경로를 출력합니다. &quot;litcodex loop status&quot;는 &quot;- G001-fix-login [pending] Fix login (criteria 0/3 pass)&quot;를 출력합니다. record-evidence 명령이 &quot;lit-loop evidence recorded: G001-fix-login/C001 -&gt; pass&quot;를 출력한 뒤 status에는 &quot;criteria 2/3 pass&quot;가 나옵니다. 마지막으로 &quot;litcodex loop checkpoint&quot;가 &quot;[lit-loop] Goal G001-fix-login has unresolved criteria.&quot;를 출력합니다." /></picture><br /><sub>빈 프로젝트에서 실제 loop 명령을 실행해 캡처했습니다. 긴 명령은 백슬래시로 나눠 한 화면에 맞췄고, 두 번째 증거 기록 명령의 출력은 뺐습니다. 사진과 만든 방법은 <a href="./docs/assets/screens/README.md">미디어 안내</a>에 정리했습니다.</sub></p>
+
 ## 움직이는 모습 보기
 
-24초짜리 영상이 작은 작업 하나가 LitCodex를 거치는 과정을 따라갑니다. 요청에 `lit`을 붙이면 요청이 검사 항목 네 개가 있는 목표가 됩니다. 항목 세 개는 증거가 기록되면 초록색으로 바뀌고, 하나는 열린 채로 남습니다. 인수인계(handoff)가 열린 항목을 다음 세션으로 넘기고, 다음 세션에서 마무리합니다. 영상 속 작업과 검사 항목은 영상을 위해 만든 예시입니다.
+23초짜리 영상이 작은 작업 하나가 LitCodex를 거치는 과정을 따라갑니다. 요청에 `lit`을 붙이면 요청이 확인 네 개가 있는 목표가 됩니다. 확인 세 개는 증거가 기록되면 초록색으로 바뀌고, 하나는 열린 채로 남습니다. 인수인계(handoff)가 열린 확인을 다음 세션으로 넘기고, 다음 세션에서 마무리합니다. 영상 속 작업과 확인 항목은 영상을 위해 만든 예시입니다.
 
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/promo/promo-still.webp" /><img src="./docs/assets/promo/promo-preview.webp" width="100%" alt="LitCodex 소개 영상, 24초. lit으로 시작하는 요청이 입력되면 다섯 줄짜리 LIT 마크가 나타납니다. 요청은 검사 항목 네 개가 있는 목표 카드가 됩니다. 항목 세 개는 증거가 기록되며 초록색으로 바뀌고, 하나는 아직 확인하지 못한 상태로 열려 있습니다. 인수인계 종이에는 결정한 내용, 남은 일, 다시 시작할 위치가 적혀 있습니다. 다음 세션에서 열려 있던 항목이 초록색이 되고 고리가 닫히며, LitCodex가 Keep the work lit. 문구와 함께 자리 잡습니다." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/promo/promo-ko-still.webp" /><img src="./docs/assets/promo/promo-ko-preview.webp" width="100%" alt="LitCodex 소개 영상, 23초. 큼직한 lit 글자 옆에서 주황색 불씨가 켜지고, 불씨가 날아가 확인 고리 네 개 가운데 첫 번째가 됩니다. '목표 하나, 확인 넷.' 다음에 '초록은 증거가 있어야.'가 나오고, 고리 세 개는 증거가 기록되면 초록색으로 채워지며 네 번째는 주황색 테두리로 열려 있습니다. 'handoff만 보내세요.'와 함께 결정한 내용, 남은 일, 다시 시작할 위치가 적힌 종이가 올라와 열린 고리와 선으로 이어집니다. '다음 세션, 같은 자리.'에서 종이를 읽고 나면 네 번째 고리가 초록색이 되고, 그 고리가 커져 LIT 마크를 감싸며 LitCodex와 Keep the work lit. 문구가 자리 잡습니다." /></picture></p>
 
-[소리와 함께 영상 보기](./docs/assets/promo/promo.mp4) · [포스터](./docs/assets/promo/promo-poster.png)
+[소리와 함께 영상 보기](./docs/assets/promo/promo-ko.mp4) · [포스터](./docs/assets/promo/promo-ko-poster.png)
 
 ## 스킬 한눈에 보기
 

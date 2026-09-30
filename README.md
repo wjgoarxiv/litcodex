@@ -97,6 +97,8 @@ Two variants are worth knowing:
 - If you want to see what would change before anything does, run `npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex --dry-run install`.
 - If you are setting up a machine without anyone at the keyboard, run `npm exec --yes --package @litfamily/litcodex@1.0.11 -- litcodex install --yes`. A `--style <id>` you pass is still used.
 
+Want to see what the installer prints before you run it? [What you will see on screen](#what-you-will-see-on-screen) shows the questions, the receipt and the doctor check.
+
 Coming from the old unscoped package? The [migration guide](./docs/npm-migration.md) covers the move.
 
 ### A global command
@@ -206,11 +208,48 @@ A handoff carries your notes forward and leaves the goal as it was.
 
 The full list is under [Commands](#commands).
 
+## What you will see on screen
+
+Five pictures show what LitCodex prints, from the first install to your first task. Each one was captured from the
+real program in a temporary home, and each caption says which lines were cut to keep the picture short. They come
+from Codex CLI 0.158; other Codex versions may word or place hook lines a little differently. The optional Jev skill
+hint has its own pictures under [Jev](#what-you-will-see).
+
+Run interactively, the installer asks three questions: which model leads, which model helps, and which output style
+you like. Pressing Enter keeps the first choice each time: the recommended models and your current output style. A box then lists the route the installer is about to write,
+and nothing is written until you press Enter once more.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/screens/screen-install-questions-dark.webp" /><img src="./docs/assets/screens/screen-install-questions-light.webp" width="693" alt="A terminal window running litcodex install. It asks &quot;Choose the LEAD model (plans and reviews).&quot; with gpt-6-astra · xhigh as recommended lead, &quot;Choose the HELPER model (spawned/delegated agents).&quot; with gpt-6-luna · max as recommended helper, and &quot;Choose an output style for LitCodex responses.&quot; with five options. A MODEL ROUTE box shows Provider openai, Lead gpt-6-astra · xhigh and Helpers gpt-6-luna · max, then &quot;Enter to continue · Ctrl-C to abort (nothing written yet)&quot;." /></picture><br /><sub>Captured from a real litcodex install in a temporary home, answered with Enter at each question. The 20 model rows of each list are cut to the first two and the last, and the route box leaves out its path line; each … marks a cut.</sub></p>
+
+After the last Enter the installer works through six steps and prints a receipt. Start with the Status row: Ready for
+Codex means the plugin, the hook, the seven agent roles and the managed config keys are in place and the doctor
+check passed. The two lines above the receipt report the Office and film tools that the install prepares ahead of
+time. If that step cannot finish, the line says so and names the command to run later.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/screens/screen-install-receipt-dark.webp" /><img src="./docs/assets/screens/screen-install-receipt-light.webp" width="731" alt="A terminal window with the end of litcodex install. Six steps, 01 / 06 MARKETPLACE to 06 / 06 HEALTH CHECK, each with a result line, the last being &quot;Running doctor: doctor passed&quot;. Then &quot;[litcodex] Office runtime ready for presentations and documents.&quot; and &quot;[litcodex] Motion runtime ready for film rendering.&quot; An INSTALL RECEIPT box shows &quot;Status Ready for Codex&quot;, &quot;Codex host codex-cli 0.158.0&quot;, &quot;Model gpt-6-astra · xhigh&quot; and ends with &quot;Installation complete&quot;." /></picture><br /><sub>Captured from the same install. The description and path lines under each step and a few receipt rows are cut. This temporary home started with the film tools already cached, so the two runtime lines came up at once.</sub></p>
+
+`litcodex doctor` is the quickest way to check the result. Most rows answer yes or no, and a clean run ends with
+All checks passed. The Jev row reads off unless you switched the hint on.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/screens/screen-doctor-dark.webp" /><img src="./docs/assets/screens/screen-doctor-light.webp" width="494" alt="A terminal window running litcodex doctor. Rows read &quot;binary: yes&quot;, &quot;marketplace: yes&quot;, &quot;plugin: yes&quot;, &quot;hook: yes&quot;, &quot;managed config: yes&quot;, &quot;agents: yes&quot;, &quot;skills complete: yes&quot;, &quot;lit-handoff: yes&quot;, &quot;science payload: yes&quot; and &quot;Jev skill hint: off&quot;, followed by &quot;All checks passed.&quot; and &quot;office runtime: ready&quot;." /></picture><br /><sub>Captured from litcodex doctor in the same home after the install. Rows about model routes, concurrency and updates, the warnings that a home without a Codex sign-in produces, and the film-tool lines are cut.</sub></p>
+
+Type a request that starts with `lit` and the hook answers before the model does. It prints the five-row LIT
+mark and a line that names the route it picked. The same mark appears for `handoff` and `lit recap`, each with its
+own route name, so you can tell at a glance which mode took the request.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/screens/screen-lit-ignited-dark.webp" /><img src="./docs/assets/screens/screen-lit-ignited-light.webp" width="548" alt="A Codex terminal window with three prompts. &quot;lit add input validation to the signup form&quot; is followed by &quot;Hook ·&quot;, a five-row LIT mark and &quot;🔥 LIT IGNITED · lit-loop 🔥&quot;. &quot;handoff&quot; is followed by the same mark and &quot;🔥 LIT IGNITED · lit-handoff 🔥&quot;. &quot;lit recap&quot; is followed by the mark and &quot;🔥 LIT IGNITED · lit-recap 🔥&quot;." /></picture><br /><sub>Captured from a real Codex 0.158 session with the LitCodex hook and a local stand-in for the model, so nothing left the machine. The startup banner, the hook-review screen and the model replies are cut.</sub></p>
+
+Behind the mark, the loop keeps score in your project. A new goal starts with three criteria and none passing. Each
+recorded result moves the count, and a request to complete the goal early is refused until every criterion has
+passed.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/screens/screen-loop-dark.webp" /><img src="./docs/assets/screens/screen-loop-light.webp" width="729" alt="A terminal window with loop commands. &quot;litcodex loop create &quot;Fix login&quot;&quot; prints &quot;lit-loop plan created: 1 goal(s)&quot; and the paths of the brief, goals and ledger files. &quot;litcodex loop status&quot; prints &quot;- G001-fix-login [pending] Fix login (criteria 0/3 pass)&quot;. After one record-evidence command prints &quot;lit-loop evidence recorded: G001-fix-login/C001 -&gt; pass&quot;, status shows &quot;criteria 2/3 pass&quot;. &quot;litcodex loop checkpoint&quot; then prints &quot;[lit-loop] Goal G001-fix-login has unresolved criteria.&quot;" /></picture><br /><sub>Captured from the real loop commands in an empty project. The long commands are split with backslashes to fit, and the output of the second evidence command is cut. The pictures and how they were made are listed in the <a href="./docs/assets/screens/README.md">media notes</a>.</sub></p>
+
 ## Watch it in motion
 
-A 24-second film follows one small task through LitCodex. You add `lit` to a request, and the request becomes a goal with four checks. Three checks turn green once their evidence is recorded, and one stays open. A handoff carries the open check into the next session, where it gets finished. The task and its checks are an example made for the film.
+A 23-second film follows one small task through LitCodex. You add `lit` to a request, and the request becomes a goal with four checks. Three checks turn green once their evidence is recorded, and one stays open. A handoff carries the open check into the next session, where it gets finished. The task and its checks are an example made for the film.
 
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/promo/promo-still.webp" /><img src="./docs/assets/promo/promo-preview.webp" width="100%" alt="LitCodex promo film, 24 seconds. A prompt types a request that starts with lit and the five-row LIT mark appears. The request becomes a goal card with four checks. Three checks turn green as evidence is recorded and one stays open with an orange warning mark. A handoff sheet lists decisions, remaining work and where to resume. In the next session the open check turns green, the ring closes, and LitCodex settles beside the words Keep the work lit." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/promo/promo-still.webp" /><img src="./docs/assets/promo/promo-preview.webp" width="100%" alt="LitCodex promo film, 23 seconds. An orange ember lights beside a very large word lit, then flies away and becomes the first of four check rings. One goal. Four checks. is followed by Green takes evidence.: three rings fill lime as evidence is recorded and the fourth stays an open orange outline. Say handoff. brings up a paper sheet listing decisions, remaining work and where to resume, joined by a line to the open ring. In Next session, same place. the sheet is read, the fourth ring turns lime, grows into an emblem around the LIT mark, and LitCodex settles beside Keep the work lit." /></picture></p>
 
 [Watch the film with sound](./docs/assets/promo/promo.mp4) · [Poster](./docs/assets/promo/promo-poster.png)
 

@@ -1,5 +1,5 @@
 {
-  "request": "Make a promo film for LitCodex, the lit workflow plugin for Codex CLI, to sit in its GitHub README, set in Pretendard with fewer words, larger type and more whitespace.",
+  "request": "Make a promo film for LitCodex, the lit workflow plugin for Codex CLI, to sit in its GitHub README, set in Pretendard with fewer words, larger type and more whitespace. Korean copy variant.",
   "genre": "motion-graphics",
   "path": "stage",
   "pathReason": "The film draws four check rings, a handoff sheet and a terminal pane, which are shapes and a diagram beyond type.",
@@ -22,7 +22,7 @@
       "t0": 3.8,
       "t1": 7.8,
       "purpose": "The request becomes a goal with checks",
-      "onScreen": "The headline One goal. Four checks. rises in; the ember travels along an arc and becomes the first of four empty check rings in a row",
+      "onScreen": "The headline 목표 하나, 확인 넷. rises in; the ember travels along an arc and becomes the first of four empty check rings in a row",
       "motion": "Letters exit upward through their mask; the ember flies to the row and its fill drains into an outline; three more rings draw on in sequence",
       "sound": "Hit on the cut into the goal"
     },
@@ -30,7 +30,7 @@
       "t0": 7.8,
       "t1": 11.8,
       "purpose": "Checks earn green only with evidence; one stays open",
-      "onScreen": "Green takes evidence. Three rings fill lime with a drawn check and an evidence tag; the fourth ring holds an orange outline tagged not verified yet, with a line saying the fourth stays open",
+      "onScreen": "초록은 증거가 있어야. Three rings fill lime with a drawn check and an evidence tag; the fourth ring holds an orange outline tagged not verified yet, with a line saying the fourth stays open",
       "motion": "Fills grow from the ring centre in turn, checks draw on, the open ring breathes orange",
       "sound": "Hit on the cut into the checks; a rise into the open check"
     },
@@ -38,7 +38,7 @@
       "t0": 11.8,
       "t1": 15.8,
       "purpose": "Handoff carries the unfinished work forward",
-      "onScreen": "Say handoff. The pane types handoff and a cream sheet with Decisions, Remaining work and Where to resume rises out of it; an orange line links the open ring to Remaining work while the green rings dim",
+      "onScreen": "handoff만 보내세요. The pane types handoff and a cream sheet with Decisions, Remaining work and Where to resume rises out of it; an orange line links the open ring to Remaining work while the green rings dim",
       "motion": "The sheet rises with a slight tilt and levels; its rules draw on; the connector draws from the ring to the sheet",
       "sound": "Hit on the cut into the handoff"
     },
@@ -46,7 +46,7 @@
       "t0": 15.8,
       "t1": 19.6,
       "purpose": "A new session resumes and closes the open check",
-      "onScreen": "Next session, same place. A fresh pane types a request to read the handoff; the sheet is read heading by heading with orange underlines; the open ring turns lime with a drawn check",
+      "onScreen": "다음 세션, 같은 자리. A fresh pane types a request to read the handoff; the sheet is read heading by heading with orange underlines; the open ring turns lime with a drawn check",
       "motion": "The pane clears and retypes; underlines draw in order; the connector turns lime; the fourth ring fills and draws its check; the sheet drops away",
       "sound": "Hit on the cut into the new session"
     },
@@ -171,12 +171,12 @@
     "source": "invented",
     "lines": [
       "lit",
-      "Add it to any request.",
-      "One goal. Four checks.",
-      "Green takes evidence.",
-      "The fourth stays open.",
-      "Say handoff.",
-      "Next session, same place.",
+      "요청 앞에 lit을 붙이세요.",
+      "목표 하나, 확인 넷.",
+      "초록은 증거가 있어야.",
+      "네 번째는 열려 있습니다.",
+      "handoff만 보내세요.",
+      "다음 세션, 같은 자리.",
       "LitCodex",
       "Keep the work lit."
     ]
@@ -185,7 +185,7 @@
     "A signup-form task carried across two sessions (the subject's name)",
     "Four check rings that turn lime only when evidence is recorded, with one that stays open across the handoff (specific)",
     "A cream handoff sheet with Decisions, Remaining work and Where to resume, linked by a line to the check that is still open (specific)",
-    "All copy lines other than the product name and tagline"
+    "All Korean copy lines other than the product name and tagline"
   ],
   "ambition": "A restrained, cinematic README film: one idea per beat, very large type with generous whitespace, one continuous ember-to-ring gesture that carries the story, and a scale match cut into the closing emblem.",
   "seed": 20260930
