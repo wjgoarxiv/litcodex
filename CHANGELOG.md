@@ -6,16 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.13] - 2026-09-30
+
+### Changed
+
+- `gpt-6.1-sol` is now the recommended coding-lead alternative in the installer's lead model menu and in
+  the usage guide, since OpenAI lists `gpt-6-sol` as the previous generation. `gpt-6-sol` is still a
+  selectable model, and an install that already uses it keeps working.
+
 ### Fixed
 
-- Automatic handoff now reads the context percent from a transcript that is mostly Korean or other multi-byte
-  text. The tail read compared a character count with a byte count, so a partial tail looked like the whole file
-  and the wider reads never ran.
-- Turning automatic handoff off through `LITCODEX_AUTO_HANDOFF=0` or by deleting the settings file now removes the
-  compaction line LitCodex added to the project `.codex/config.toml` at the next hook or route run. A key you
-  wrote yourself is never touched, and `litcodex doctor` warns while the line is left behind.
-- The settings and project config writes now refuse a path that passes through a symlinked folder, and a handoff
-  reload is given back when it could not be merged into the hook output.
+- Automatic handoff now reads the context percent from a transcript that is mostly Korean or other
+  multi-byte text. Before, a partial read of the end of the file could be mistaken for the whole file.
+- Turning automatic handoff off through `LITCODEX_AUTO_HANDOFF=0` or by deleting the settings file now
+  removes the compaction line LitCodex added to the project `.codex/config.toml` at the next hook or
+  route run. A key you wrote yourself is never touched, and `litcodex doctor` warns while the line is
+  left behind. The handoff settings and project config are no longer written through a symlinked folder.
 
 ## [1.0.12] - 2026-09-30
 

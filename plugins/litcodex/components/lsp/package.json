@@ -1,6 +1,6 @@
 {
 	"name": "@litcodex/lsp",
-	"version": "1.0.12",
+	"version": "1.0.13",
 	"description": "LitCodex LSP hook (inert placeholder): post-edit diagnostics + cache reset, no-op until an LSP daemon is provided.",
 	"type": "module",
 	"private": true,
