@@ -708,6 +708,124 @@ describe("reload after compaction", () => {
 	});
 });
 
+describe("reload after compaction: a formatted marker line", () => {
+	const LABEL = HANDOFF_MARKER_LABEL;
+	const body = (markerLine: string) =>
+		`# Handoff\n\n## Current State\n\nCurrent state: halfway through the parser.\n${markerLine}\n\n## Next Steps\n\n1. Keep going.\n`;
+
+	/** Fire at the crossing, write `text` as the handoff, compact, and return the reload context of the next prompt. */
+	async function reload(text: string, sessionId = "sess-a", mtimeMs = 2_000_000): Promise<string> {
+		const root = workspace();
+		expect((await stop(root, transcript(root, 65_000), {}, sessionId)).stdout).toContain("block");
+		writeHandoff(root, text, mtimeMs);
+		await postCompact(root, sessionId);
+		return context(await submit(root, "continue", ON_60, sessionId));
+	}
+
+	it("reloads the handoff the live test wrote: the marker as a bullet with backticks", async () => {
+		const id = "01a0f731-3b9b-7551-946b-44701e667722";
+		const live = [
+			"# HANDOFF: Finish full-content display for `ref/a.md`",
+			"",
+			"## What Was Done",
+			"",
+			"### Successful Approaches",
+			"",
+			"- Created [notes.md](../notes.md) with 5 bullets for each source, then read it back.",
+			"- Checked the workspace: git root is the current directory, branch `master`.",
+			`- Auto-handoff marker: \`${LABEL} ${id}\``,
+			"",
+			"### Dead Ends",
+			"",
+			"- A direct `cat ref/a.md` response exceeded the tool's output limit and was truncated.",
+		].join("\n");
+		const text = await reload(live, id);
+		expect(text).toContain("Created [notes.md]");
+		expect(text).not.toContain("no handoff written by this session");
+		expect(text).not.toContain(LABEL);
+		expect(text).not.toContain("Auto-handoff marker");
+	});
+
+	const decorated: ReadonlyArray<string> = [
+		`- ${LABEL} sess-a`,
+		`* ${LABEL} sess-a`,
+		`+ ${LABEL} sess-a`,
+		`1. ${LABEL} sess-a`,
+		`12) ${LABEL} sess-a`,
+		`> ${LABEL} sess-a`,
+		`> - ${LABEL} sess-a`,
+		`  - ${LABEL} sess-a`,
+		`**${LABEL}** sess-a`,
+		`__${LABEL}__ sess-a`,
+		`*${LABEL}* sess-a`,
+		`_${LABEL}_ sess-a`,
+		`${LABEL} **sess-a**`,
+		`${LABEL} _sess-a_`,
+		`${LABEL} *sess-a*`,
+		`${LABEL} \`sess-a\``,
+		`\`${LABEL}\` sess-a`,
+		`\`${LABEL} sess-a\``,
+		`**${LABEL} sess-a**`,
+		`- **${LABEL}** \`sess-a\``,
+		`- Auto-handoff marker: \`${LABEL} sess-a\``,
+		`**Auto-handoff marker:** ${LABEL} sess-a`,
+		`Marker: ${LABEL} sess-a`,
+		`- <!-- ${LABEL} sess-a -->`,
+		`> <!-- ${LABEL} sess-a -->`,
+		`-   Auto-handoff   session:    sess-a   `,
+		`${LABEL} sess-a.`,
+		`${LABEL}\tsess-a\r`,
+	];
+	it.each(decorated)("reloads when the marker line reads %j", async (markerLine) => {
+		const text = await reload(body(markerLine));
+		expect(text).toContain("halfway through the parser");
+		expect(text).not.toContain("no handoff written by this session");
+		expect(text).not.toContain("Auto-handoff");
+	});
+
+	it("still reloads the plain, comment-wrapped and fenced forms accepted before", async () => {
+		for (const markerLine of [`${LABEL} sess-a`, `<!-- ${LABEL} sess-a -->`, `\`\`\`\n${LABEL} sess-a\n\`\`\``]) {
+			expect(await reload(body(markerLine))).toContain("halfway through the parser");
+		}
+	});
+
+	it("keeps underscores and dots that belong to the id", async () => {
+		for (const markerLine of [`- ${LABEL} \`sess_a.1\``, `${LABEL} _sess_a.1_`, `${LABEL} sess_a.1.`]) {
+			expect(await reload(body(markerLine), "sess_a.1")).toContain("halfway through the parser");
+		}
+	});
+
+	it("reloads when a refreshed handoff keeps an older marker next to this session's", async () => {
+		const text = await reload(body(`- ${LABEL} sess-old\n- ${LABEL} \`sess-a\``));
+		expect(text).toContain("halfway through the parser");
+	});
+
+	const refused: ReadonlyArray<[string, string]> = [
+		["another session", `- ${LABEL} \`sess-other\``],
+		["an id this one is a prefix of", `- **${LABEL}** \`sess-ab\``],
+		["an id this one is a prefix of, plain", `${LABEL} sess-a2`],
+		["an id extended by a dash", `${LABEL} sess-a-2`],
+		["an id extended by a dot and a digit", `${LABEL} \`sess-a.2\``],
+		["an id extended by an underscore", `${LABEL} sess-a_x`],
+		["an id that only ends the same", `${LABEL} xsess-a`],
+		["no label, only the id", "- sess-a"],
+		["the id in prose after the label", `The ${LABEL.toLowerCase()} of sess-a is pending`],
+		["the marker mid-sentence", `I will write ${LABEL} sess-a later`],
+		["a different label", "- Auto-handoff id: `sess-a`"],
+	];
+	it.each(refused)("refuses a handoff naming %s", async (_name, markerLine) => {
+		const text = await reload(body(markerLine));
+		expect(text).toContain("no handoff written by this session");
+		expect(text).not.toContain("halfway through the parser");
+	});
+
+	it("refuses a decorated marker when the file is older than the trigger", async () => {
+		const text = await reload(body(`- ${LABEL} \`sess-a\``), "sess-a", 500_000);
+		expect(text).toContain("no handoff written by this session");
+		expect(text).not.toContain("halfway through the parser");
+	});
+});
+
 describe("registration", () => {
 	it("wires SessionStart and PostCompact for the lit-loop component next to Stop", () => {
 		const manifest = JSON.parse(readFileSync(new URL("../../../hooks/hooks.json", import.meta.url), "utf8")) as {
