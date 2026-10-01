@@ -14,7 +14,7 @@
 	"requiredPhrases": [
 		"LitCodex",
 		"npm install -g @litfamily/litcodex",
-		"npm exec --yes --package @litfamily/litcodex@1.0.13 -- litcodex install",
+		"npm exec --yes --package @litfamily/litcodex@1.0.14 -- litcodex install",
 		"litcodex install",
 		"litcodex doctor",
 		"litcodex uninstall",
@@ -32,7 +32,7 @@
 		"litcodex install",
 		"litcodex doctor",
 		"litcodex uninstall",
-		"npm exec --yes --package @litfamily/litcodex@1.0.13 -- litcodex install",
+		"npm exec --yes --package @litfamily/litcodex@1.0.14 -- litcodex install",
 		"litcodex loop create",
 		"litcodex loop status --json",
 		"litcodex loop run",

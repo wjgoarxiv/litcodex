@@ -1,6 +1,6 @@
 {
 	"name": "@litcodex/git-bash",
-	"version": "1.0.13",
+	"version": "1.0.14",
 	"description": "LitCodex Git-Bash hook: reminds Windows sessions to prefer the git_bash MCP before the built-in shell.",
 	"type": "module",
 	"private": true,

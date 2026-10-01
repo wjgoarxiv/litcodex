@@ -1,6 +1,6 @@
 {
 	"name": "@litfamily/litcodex",
-	"version": "1.0.13",
+	"version": "1.0.14",
 	"description": "Codex loop harness installer. Run `npm exec --package @litfamily/litcodex -- litcodex install` to set up the LitCodex Codex platform: the bare `lit` hook and the durable lit-loop runtime.",
 	"keywords": [
 		"codex",
@@ -44,7 +44,7 @@
 		"readme-assets"
 	],
 	"dependencies": {
-		"@litcodex/lit-loop": "1.0.13"
+		"@litcodex/lit-loop": "1.0.14"
 	},
 	"bundledDependencies": [
 		"@litcodex/lit-loop"

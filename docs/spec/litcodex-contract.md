@@ -222,12 +222,12 @@ Packaging constants:
 
 | Constant | Canonical value |
 | --- | --- |
-| Installer npm package | `@litfamily/litcodex`, version `1.0.13`, `type: module` |
+| Installer npm package | `@litfamily/litcodex`, version `1.0.14`, `type: module` |
 | Installer bin | `litcodex` → `bin/litcodex.js` |
 | `@litfamily/litcodex` `files[]` | Allowlist in `packages/litcodex-ai/package.json`: `bin`, `dist`, `marketplace` (with explicit hidden-file exceptions), `model-catalog.json`, `README.md`, `LICENSE`; `bundledDependencies: ["@litcodex/lit-loop"]` |
 | Loop component package / bin | `@litcodex/lit-loop` / `litcodex-lit-loop` → `./dist/cli.js` |
 | Aggregate plugin package | `@litcodex/plugin` |
-| Version (all `package.json`) | `1.0.13` |
+| Version (all `package.json`) | `1.0.14` |
 
 ---
 

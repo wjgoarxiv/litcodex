@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.14] - 2026-10-01
+
+### Fixed
+
+- Automatic handoff now finds the handoff it asked for after a compaction even when the model formats the
+  marker line, for example as a bullet, in backticks or in bold. A handoff written by another session is
+  still ignored.
+
 ## [1.0.13] - 2026-09-30
 
 ### Changed
