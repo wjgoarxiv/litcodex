@@ -775,6 +775,18 @@ describe("reload after compaction: a formatted marker line", () => {
 		`-   Auto-handoff   session:    sess-a   `,
 		`${LABEL} sess-a.`,
 		`${LABEL}\tsess-a\r`,
+		"**Auto-handoff session**: sess-a",
+		"- **Auto-handoff session**: `sess-a`",
+		"*Auto-handoff session*: sess-a",
+		"__Auto-handoff session__: sess-a",
+		"## Auto-handoff session: sess-a",
+		"### **Auto-handoff session**: `sess-a`",
+		"> ## Auto-handoff session: sess-a",
+		`${LABEL} sess-a (written at 10%)`,
+		`- **Auto-handoff session**: \`sess-a\` (written at 10%)`,
+		`${LABEL} sess-a, written at 10% context`,
+		"| Auto-handoff session | sess-a |",
+		"| **Auto-handoff session** | `sess-a` |",
 	];
 	it.each(decorated)("reloads when the marker line reads %j", async (markerLine) => {
 		const text = await reload(body(markerLine));
@@ -812,6 +824,19 @@ describe("reload after compaction: a formatted marker line", () => {
 		["the id in prose after the label", `The ${LABEL.toLowerCase()} of sess-a is pending`],
 		["the marker mid-sentence", `I will write ${LABEL} sess-a later`],
 		["a different label", "- Auto-handoff id: `sess-a`"],
+		["a bold label with another session", "**Auto-handoff session**: sess-other"],
+		[
+			"a bold label, id extended by a dash, with trailing text",
+			"- **Auto-handoff session**: `sess-a-2` (written at 10%)",
+		],
+		["a headed label, prefix id with trailing text", "## Auto-handoff session: sess-ab (written at 10%)"],
+		["an id extended by hex characters, with trailing text", `${LABEL} sess-a1f (written at 10%)`],
+		["an id extended by an underscore, with trailing text", `${LABEL} sess-a_x (written at 10%)`],
+		["another session first, this one in the trailing text", `${LABEL} sess-other (see sess-a)`],
+		["a table row naming another session", "| Auto-handoff session | sess-other |"],
+		["a table row with an extended id", "| Auto-handoff session | sess-a2 |"],
+		["a bold label mid-sentence", "I will write **Auto-handoff session**: sess-a later"],
+		["a bold label without an id", "**Auto-handoff session**: pending"],
 	];
 	it.each(refused)("refuses a handoff naming %s", async (_name, markerLine) => {
 		const text = await reload(body(markerLine));

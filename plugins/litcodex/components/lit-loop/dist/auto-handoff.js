@@ -217,20 +217,24 @@ export function recordCompaction(repoRoot, sessionId) {
         // fail-open
     }
 }
-// The model often dresses the marker line up: a list bullet, a quote, bold or backticks around the label or
-// the id, a short label in front, an HTML comment. Markdown decoration is removed from each line first; the
-// id must then equal this session's id exactly, with no id character after it.
+// The model often dresses the marker line up: a list bullet, a quote, a heading, a table row, bold or
+// backticks around the label or the id (with the colon inside or outside the bold), a short label in front,
+// an HTML comment, a note after the id. Markdown decoration is removed from each line first, without
+// leaving a space behind, so "**label**:" reads "label:". The id must then equal this session's id exactly,
+// with no id character (or dash or dot that continues the id) after it; whatever follows that boundary is ignored.
 const MARKER_DECORATION = /[`*]|<!--|-->|(?<![\p{L}\p{N}])_+|_+(?![\p{L}\p{N}])/gu;
-const MARKER_LIST_PREFIX = /^(?:\s*(?:>|[-+](?=\s)|\d{1,3}[.)](?=\s)))*/u;
+const MARKER_LINE_PREFIX = /^(?:\s*(?:>|[-+](?=\s)|\d{1,3}[.)](?=\s)|#{1,6}(?=\s)|\|))*/u;
 const MARKER_LEADING_LABEL = "(?:[\\p{L}\\p{N} /-]{1,40}:\\s*)?";
+// The label's own colon may be written as a table cell break instead.
+const MARKER_LABEL_NAME = HANDOFF_MARKER_LABEL.replace(/:$/, "");
 function escapeRegExp(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-/** A test for one line: true when, undecorated, it carries this session's marker and nothing else of substance. */
+/** A test for one line: true when, undecorated, it opens with this session's marker. */
 function markerLineTest(sessionId) {
-    const marker = new RegExp(`^${MARKER_LEADING_LABEL}${escapeRegExp(HANDOFF_MARKER_LABEL)}\\s*${escapeRegExp(sessionId)}(?![A-Za-z0-9_]|[.-][A-Za-z0-9_])[\\s.,;:!)\\]}"']*$`, "u");
+    const marker = new RegExp(`^${MARKER_LEADING_LABEL}${escapeRegExp(MARKER_LABEL_NAME)}\\s*[:|]\\s*${escapeRegExp(sessionId)}(?![\\p{L}\\p{N}_]|[.-][\\p{L}\\p{N}_])`, "u");
     return (line) => {
-        const plain = line.replace(MARKER_DECORATION, " ").replace(MARKER_LIST_PREFIX, "").replace(/\s+/g, " ").trim();
+        const plain = line.replace(MARKER_DECORATION, "").replace(MARKER_LINE_PREFIX, "").replace(/\s+/g, " ").trim();
         return marker.test(plain);
     };
 }
