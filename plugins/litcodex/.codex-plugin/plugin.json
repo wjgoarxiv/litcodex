@@ -1,6 +1,6 @@
 {
   "name": "litcodex",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "LitCodex Codex plugin: the lit-loop activation, durable loop runtime, and local review-gated knowledge.",
   "license": "MIT",
   "keywords": [

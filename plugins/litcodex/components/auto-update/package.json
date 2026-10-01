@@ -1,6 +1,6 @@
 {
 	"name": "@litcodex/auto-update",
-	"version": "1.0.14",
+	"version": "1.0.15",
 	"description": "LitCodex foreground update barrier for the SessionStart and management lifecycles.",
 	"type": "module",
 	"private": true,

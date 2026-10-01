@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.15] - 2026-10-02
+
+### Fixed
+
+- Automatic handoff now also recognises the marker when the label is in bold with the colon after it, in a
+  heading, or followed by a short note.
+
 ## [1.0.14] - 2026-10-01
 
 ### Fixed
