@@ -6,6 +6,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.16] - 2026-10-08
+
+### Added
+
+- `lit-pptx` now picks one of eight looks for a deck before it builds anything. Ledger suits numbers
+  that have to survive questions, Signal a pitch to people who must decide, Atlas photographs and field
+  reports, Chalk teaching, Paper a research talk, Gazette a Korean briefing read at a desk, Studio a
+  portfolio or a product with a story, and Night a keynote or data review on a projector. The reply
+  names the look it chose, why it fits, and two alternatives; you can ask for another one after seeing
+  the slides.
+- `lit-docx` does the same for documents, with six looks that differ in structure: Report, Brief,
+  Manual, Proposal, Memo and Journal. Each one decides what stands on page one, how the summary is set
+  and whether sections are numbered. All six print in a restrained style with ink headings, plain
+  tables and at most one accent colour, and Korean documents follow Korean conventions for dates,
+  captions and units.
+- New layout checks read every slide and every page and fail the build until the layout is fixed. They
+  catch an empty area beside a full one, a column much shorter than its neighbour, a heading stranded
+  at the foot of a column or page, a short list split across pages, and uneven columns on the last
+  page. The page checks for documents need LibreOffice; without it, `lit-docx` says they did not run.
+
+### Changed
+
+- Decks and the films from `lit-typographic-motion` now use the official, unmodified Pretendard
+  Regular and Bold files, which replace the PretendardGOV files shipped before.
+
 ## [1.0.15] - 2026-10-02
 
 ### Fixed
