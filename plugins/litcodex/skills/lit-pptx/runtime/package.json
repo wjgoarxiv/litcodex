@@ -5,7 +5,7 @@
   "type": "commonjs",
   "dependencies": {
     "pptxgenjs": "^3.12.0",
-    "sharp": "0.35.4"
+    "sharp": "0.35.5"
   },
   "overrides": {
     "image-size": "2.0.3"
