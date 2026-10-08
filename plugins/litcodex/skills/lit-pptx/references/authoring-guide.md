@@ -7,12 +7,12 @@ How to author a deck in the constrained Markdown dialect that `scripts/compile-d
 node "$OFFICE" pptx compile --list-templates
 node "$OFFICE" pptx compile --list-layouts <TEMPLATE>   # blocks + regions per layout
 ```
-Bundled templates:
+Every new deck is built in one of the eight tonality packs chosen on the direction card (`references/direction-step.md`; `--list-tonalities` prints them) with `tonality: <name>` in the frontmatter. The legacy templates below stay selectable by name with `template:` or `--template` and keep their own look:
 | Template | Canvas | Font | Use |
 |----------|--------|------|-----|
 | `BOILERPLATE-PRETENDARD` | 4:3 (10×7.5in) | Pretendard | General professional/technical decks |
 | `BOILERPLATE-A2Z` | 4:3 (10×7.5in) | 에이투지체 (A2Z) | Same layout, A2Z typography |
-| `AZURE-PRO` (bare `lit` default) | 16:9 (13.333×7.5in) | Pretendard | General report and results decks |
+| `AZURE-PRO` | 16:9 (13.333×7.5in) | Pretendard | General report and results decks |
 | `AZURE-A2Z` | 16:9 (13.333×7.5in) | 에이투지체 | Same layout with A2Z typography |
 | *(learned)* | from source | from source | `node "$OFFICE" pptx learn <your.pptx> --name <NAME>` to enroll your own brand |
 
@@ -132,6 +132,15 @@ Full contract: `specs/markdown-slide-spec-v2.md`.
 **A slide built with a box, a shape or `layout: free` has to be looked at** — render it,
 gate it, then read the thumbnail. The gate reports defects; it does not report that a
 slide reads badly.
+
+## Run-in labels
+
+A point may open with a bold label: `- **요약:** 앱에서 맡기면 …`, `- **Basis:** 30 trailers a day`. Write
+the colon; the engine adds one when the label ends without a separator (`**요약** 앱에서 …` is set as
+"**요약:** 앱에서 …"), because a bold word running into its sentence reads as part of it. A bold line
+with nothing after it is a group heading and takes no colon. The gate fails a run-in label without a
+separator (OF-118). An agenda numbers its own rows, so its title stands without a numeral beside it
+(OF-119).
 
 ## Charts
 

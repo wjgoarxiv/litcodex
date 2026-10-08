@@ -326,14 +326,14 @@ Codex는 자체 목표 기능(`/goal`)을 따로 두고, LitCodex 기록은 그�
 <td>슬라이드와 문서에 넣을 다이어그램을 편집 가능한 형태로 그리고, 검사한 뒤 PNG와 SVG로 내보냅니다.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/lit-pptx.webp" width="240" alt="lit으로 발표자료를 요청하면 편집 가능한 PowerPoint 파일과 원고 Markdown이 나옵니다. 기본은 AZURE-PRO와 Pretendard이고, 파일에 배치 검사를 돌리며 LibreOffice가 있으면 렌더링된 슬라이드도 확인합니다." /></td>
+<td><img src="./docs/assets/skills/lit-pptx.webp" width="240" alt="lit으로 발표자료를 요청하면 내용에 맞는 디자인 방향 여덟 가지 중 하나를 먼저 고르고, 고른 방향과 대안 두 가지를 밝힌 뒤 Pretendard로 빽빽하게 채운 편집 가능한 PowerPoint 파일과 원고 Markdown을 만듭니다. 배치, 제목 다양성, 채움을 검사하고 LibreOffice가 있으면 렌더링된 슬라이드도 확인합니다." /></td>
 <td><code>lit-pptx</code><br /><sub><code>$litcodex:lit-pptx</code></sub></td>
-<td><code>lit</code>으로 발표자료를 요청하면 편집 가능한 PowerPoint 파일과 원고 Markdown이 나옵니다. 기본은 AZURE-PRO와 Pretendard이고, 파일에 배치 검사를 돌리며 LibreOffice가 있으면 렌더링된 슬라이드도 확인합니다.</td>
+<td><code>lit</code>으로 발표자료를 요청하면 내용에 맞는 디자인 방향 여덟 가지 중 하나를 먼저 고르고, 고른 방향과 대안 두 가지를 밝힌 뒤 Pretendard로 빽빽하게 채운 편집 가능한 PowerPoint 파일과 원고 Markdown을 만듭니다. 배치, 제목 다양성, 채움을 검사하고 LibreOffice가 있으면 렌더링된 슬라이드도 확인합니다.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/lit-docx.webp" width="240" alt="lit으로 보고서를 요청하면 서식을 갖춘 Word 파일과 원고 Markdown이 나옵니다. 한국어는 korean-generic 서식을 쓰고, 파일을 다시 열어 검사하며 LibreOffice가 있으면 페이지도 확인합니다." /></td>
+<td><img src="./docs/assets/skills/lit-docx.webp" width="240" alt="lit으로 보고서를 요청하면 문서 방향 여섯 가지 중 하나를 고르고 대안 두 가지와 함께 밝힌 뒤, 절제된 인쇄물 품질의 Word 파일과 원고 Markdown을 만듭니다. 제목, 절제 규칙, LibreOffice가 있으면 렌더링된 페이지까지 검사합니다." /></td>
 <td><code>lit-docx</code><br /><sub><code>$litcodex:lit-docx</code></sub></td>
-<td><code>lit</code>으로 보고서를 요청하면 서식을 갖춘 Word 파일과 원고 Markdown이 나옵니다. 한국어는 korean-generic 서식을 쓰고, 파일을 다시 열어 검사하며 LibreOffice가 있으면 페이지도 확인합니다.</td>
+<td><code>lit</code>으로 보고서를 요청하면 문서 방향 여섯 가지 중 하나를 고르고 대안 두 가지와 함께 밝힌 뒤, 절제된 인쇄물 품질의 Word 파일과 원고 Markdown을 만듭니다. 제목, 절제 규칙, LibreOffice가 있으면 렌더링된 페이지까지 검사합니다.</td>
 </tr>
 <tr>
 <td><img src="./docs/assets/skills/lit-fetch.webp" width="240" alt="보통 방법으로 부족할 때, 주소·DNS·본문 안전 검사를 거쳐 공개 페이지를 읽습니다." /></td>
@@ -514,8 +514,16 @@ Codex 안에서 일어납니다. 그러니 작업은 결과물과 실제로 돌�
   고르세요. `lit`으로 다이어그램을 요청해도 이 스킬을 읽도록 안내합니다. 제품 화면과 측정 데이터 그래프는 각자
   전용 스킬이 있습니다.
 - **Word와 PowerPoint.** 보고서·기획서는 `lit-docx`, 발표자료는 `lit-pptx`를 고릅니다. `lit`으로 둘 중 하나를
-  요청하면 맞는 스킬을 알아서 읽고, 둘 다 요청하면 둘 다 씁니다. 어느 쪽이든 편집 가능한 Markdown 원본이
-  DOCX/PPTX 옆에 남습니다. 두 스킬에 필요한 고정 버전 도구는 `litcodex install`이 Codex 세션 밖에서 미리 받아
+  요청하면 맞는 스킬을 알아서 읽고, 둘 다 요청하면 둘 다 씁니다. 두 스킬은 만들기 전에 자료를 읽고 이것이 어떤
+  덱이나 문서인지부터 정합니다. 숫자 위주의 실적 보고인지, 발표용 피치인지, 강의인지, 읽히는 한국어 보고서형
+  덱인지, 또는 보고서, 한 장짜리 안내문, 제안서, 절차서인지를 봅니다. 그러고는 고른 디자인 방향과 함께 검토한
+  대안 두 가지를 밝히고, 질문 없이 바로 만듭니다. 발표자료는 Ledger, Signal, Atlas, Chalk, Paper, Gazette,
+  Studio, Night 여덟 방향이 있고, 방향마다 색과 제목 위치와 레이아웃이 다르며, 슬라이드마다 요점을 받치는 사실을
+  아래쪽까지 채워 넣습니다. 제목은 주제를 이름으로 붙이고 주장은 본문 첫 줄에 두며, 숫자는 잰 그대로 씁니다.
+  문서는 Report, Brief, Manual, Proposal, Memo, Journal 여섯 방향이 있고, 첫 쪽에 무엇이 오는지, 요약을 어떻게
+  쓰는지, 절에 번호를 붙이는지 같은 구조가 서로 다릅니다. 모두 연구기관 보고서처럼 검은 제목, 칸을 칠하지 않은
+  표, 많아야 한 가지 강조색으로 인쇄되고, 한국어 문서는 날짜·표 캡션·단위·줄바꿈을 한국어 관례대로 씁니다.
+  어느 쪽이든 편집 가능한 Markdown 원본이 DOCX/PPTX 옆에 남고, 다른 방향을 원하면 결과를 보고 말하면 됩니다. 두 스킬에 필요한 고정 버전 도구는 `litcodex install`이 Codex 세션 밖에서 미리 받아
   둡니다. 준비됐는지는 `litcodex office-runtime status`나 `litcodex doctor`로 확인하세요. 네트워크 없이 설치했다면
   나중에 샌드박스 밖에서 `litcodex office-runtime install`을 실행하면 됩니다. LibreOffice·pandoc·XeLaTeX처럼 선택적으로
   쓰는 도구가 있는지는 Office 실행기의 doctor 명령이 알려 줍니다.

@@ -32,7 +32,7 @@ A2Z_WEIGHTS = {
 
 
 def _pretendard(weight):
-    p = os.path.join(ROOT, "pretendard-font", "public", "static", f"PretendardGOV-{weight}.otf")
+    p = os.path.join(ROOT, "pretendard-font", "public", "static", f"Pretendard-{weight}.otf")
     return p if os.path.exists(p) else None
 
 

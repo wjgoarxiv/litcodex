@@ -26,7 +26,7 @@ The render commands themselves (`stage`, `film`, `sound`, `look`, `gate`, `compl
 2. ffmpeg: its path and version line plus the preview encoder rung available here (`libwebp_anim` when ffmpeg lists it, else `img2webp`, else GIF), or `not found on PATH`.
 3. WebGL2 renderer: the `UNMASKED_RENDERER_WEBGL` string from a real headless page, tried on the launch ladder; `unknown (debug-info extension unavailable)` when Chrome hides it.
 4. Renderer warning: none for a real GPU; a software-GL warning (SwiftShader, llvmpipe, softpipe, lavapipe, Apple Software Renderer, Microsoft Basic Render Driver) saying samples are lowered; or the unknown-renderer warning.
-5. Pre-warm: `ready` with the cache path, or the exact missing or hash-mismatched dependencies and fonts and the command that fixes them. LitCodex's reused PretendardGOV files are checked against LitCodex's own recorded hashes.
+5. Pre-warm: `ready` with the cache path, or the exact missing or hash-mismatched dependencies and fonts and the command that fixes them. LitCodex's reused Pretendard files are checked against LitCodex's own recorded hashes.
 
 ## Chrome launch ladder
 

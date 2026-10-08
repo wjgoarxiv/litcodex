@@ -336,14 +336,14 @@ the checks that run on their own.
 <td>A checked, editable diagram for slides and documents, with PNG and Office-safe SVG exports.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/lit-pptx.webp" width="240" alt="Ask for slides with lit and get an editable PowerPoint deck with its Markdown source, AZURE-PRO and Pretendard by default. Layout QA runs on the file; rendered slides are inspected when LibreOffice is present." /></td>
+<td><img src="./docs/assets/skills/lit-pptx.webp" width="240" alt="Ask for slides with lit and the skill first picks one of eight design directions for the content, names it with two alternatives, then builds an editable, dense PowerPoint deck in Pretendard with its Markdown source. QA checks layout, title variety and fill; rendered slides are inspected when LibreOffice is present." /></td>
 <td><code>lit-pptx</code><br /><sub><code>$litcodex:lit-pptx</code></sub></td>
-<td>Ask for slides with <code>lit</code> and get an editable PowerPoint deck with its Markdown source, AZURE-PRO and Pretendard by default. Layout QA runs on the file; rendered slides are inspected when LibreOffice is present.</td>
+<td>Ask for slides with <code>lit</code> and the skill first picks one of eight design directions for the content, names it with two alternatives, then builds an editable, dense PowerPoint deck in Pretendard with its Markdown source. QA checks layout, title variety and fill; rendered slides are inspected when LibreOffice is present.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/lit-docx.webp" width="240" alt="Ask for a report with lit and get a styled Word file with its Markdown source; Korean text uses korean-generic. The file is reopened and linted, and pages are inspected when LibreOffice is present." /></td>
+<td><img src="./docs/assets/skills/lit-docx.webp" width="240" alt="Ask for a report with lit and the skill picks one of six document directions, names it with two alternatives, and builds a restrained, print-grade Word file with its Markdown source. A gate checks headings, restraint and the rendered pages when LibreOffice is present." /></td>
 <td><code>lit-docx</code><br /><sub><code>$litcodex:lit-docx</code></sub></td>
-<td>Ask for a report with <code>lit</code> and get a styled Word file with its Markdown source; Korean text uses korean-generic. The file is reopened and linted, and pages are inspected when LibreOffice is present.</td>
+<td>Ask for a report with <code>lit</code> and the skill picks one of six document directions, names it with two alternatives, and builds a restrained, print-grade Word file with its Markdown source. A gate checks headings, restraint and the rendered pages when LibreOffice is present.</td>
 </tr>
 <tr>
 <td><img src="./docs/assets/skills/lit-fetch.webp" width="240" alt="Reads a public page with URL, DNS and text-safety checks when ordinary retrieval falls short." /></td>
@@ -526,8 +526,19 @@ A few skills are worth knowing by name:
   from the Codex skill picker. A diagram request with `lit` also tells Codex to load it. Product screens
   and plots of measured data have their own skills.
 - **Word and PowerPoint.** Pick `lit-docx` for a Word report or proposal and `lit-pptx` for slides.
-  A `lit` request for either one loads the matching skill, and asking for both loads both. You always
-  get editable Markdown next to the DOCX or PPTX. Both skills need a few pinned tools, which
+  A `lit` request for either one loads the matching skill, and asking for both loads both. Before it
+  builds anything, each skill reads your material and decides what kind of deck or document it is: a
+  numbers-heavy review, a pitch, a lecture, a Korean briefing; a report, a one-page memo, a proposal,
+  a procedure. It names the design direction it chose and two it considered, then builds without
+  asking you questions. Decks come in eight directions (Ledger, Signal, Atlas, Chalk, Paper, Gazette,
+  Studio, Night), each with its own colours, title placements and layouts, and every slide carries
+  the facts that back its point down to the bottom of the page. Titles name the topic, the claim
+  opens the body, and numbers are stated as measured. Documents come in six directions (Report, Brief, Manual,
+  Proposal, Memo, Journal) that differ in structure: what stands on page one, how the summary is set,
+  whether sections are numbered. All of them print the way an institute report does, with ink
+  headings, plain booktabs tables and at most one accent colour, and Korean documents follow Korean
+  conventions for dates, captions, units and line breaks. You always get editable Markdown next to
+  the DOCX or PPTX, and if you want a different direction you can say so after seeing the pages. Both skills need a few pinned tools, which
   `litcodex install` fetches ahead of time, outside the Codex session. To see whether they are ready,
   run `litcodex office-runtime status` or `litcodex doctor`. If you installed without a network, run
   `litcodex office-runtime install` later, outside the sandbox. The Office runner's own doctor command

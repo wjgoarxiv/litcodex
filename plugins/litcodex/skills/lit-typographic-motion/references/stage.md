@@ -27,7 +27,7 @@ The page loads two product routes:
 <script src="/lit/stage-kit.js"></script>
 ```
 
-`/lit/fonts.css` declares this product's verified faces with `font-display: block`: `"Archivo"` (weights 400, 700, 900; `font-stretch` 75 %, 100 %, 125 %), `"PretendardGOV"` (400, 700) for Hangul, `"VT323"`, `"Galmuri9"` and `"MesloLGS NF"`. Name only these families; any other face is a system fallback the text check reports.
+`/lit/fonts.css` declares this product's verified faces with `font-display: block`: `"Archivo"` (weights 400, 700, 900; `font-stretch` 75 %, 100 %, 125 %), `"Pretendard"` (400, 700) for Hangul, `"VT323"`, `"Galmuri9"` and `"MesloLGS NF"`. Name only these families; any other face is a system fallback the text check reports.
 
 ## The contract
 

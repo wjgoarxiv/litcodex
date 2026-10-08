@@ -4,32 +4,32 @@
 @font-face {
   font-family: "Pretendard";
   font-weight: 300;
-  src: url("../pretendard-font/public/static/PretendardGOV-Light.otf") format("opentype");
+  src: url("../pretendard-font/public/static/Pretendard-Light.otf") format("opentype");
 }
 @font-face {
   font-family: "Pretendard";
   font-weight: 400;
-  src: url("../pretendard-font/public/static/PretendardGOV-Regular.otf") format("opentype");
+  src: url("../pretendard-font/public/static/Pretendard-Regular.otf") format("opentype");
 }
 @font-face {
   font-family: "Pretendard";
   font-weight: 500;
-  src: url("../pretendard-font/public/static/PretendardGOV-Medium.otf") format("opentype");
+  src: url("../pretendard-font/public/static/Pretendard-Medium.otf") format("opentype");
 }
 @font-face {
   font-family: "Pretendard";
   font-weight: 600;
-  src: url("../pretendard-font/public/static/PretendardGOV-SemiBold.otf") format("opentype");
+  src: url("../pretendard-font/public/static/Pretendard-SemiBold.otf") format("opentype");
 }
 @font-face {
   font-family: "Pretendard";
   font-weight: 700;
-  src: url("../pretendard-font/public/static/PretendardGOV-Bold.otf") format("opentype");
+  src: url("../pretendard-font/public/static/Pretendard-Bold.otf") format("opentype");
 }
 @font-face {
   font-family: "Pretendard";
   font-weight: 800;
-  src: url("../pretendard-font/public/static/PretendardGOV-ExtraBold.otf") format("opentype");
+  src: url("../pretendard-font/public/static/Pretendard-ExtraBold.otf") format("opentype");
 }
 
 :root {

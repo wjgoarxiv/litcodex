@@ -78,7 +78,7 @@ describe("stage launch flags (6d)", () => {
 	it("serves the product's faces with font-display: block", () => {
 		const fonts = fontRoutes("/nonexistent-cache");
 		expect(fonts.css).toContain('font-family: "Archivo"');
-		expect(fonts.css).toContain('font-family: "PretendardGOV"');
+		expect(fonts.css).toContain('font-family: "Pretendard"');
 		expect(fonts.css.match(/font-display: block/gu)?.length).toBe(fonts.routes.size);
 	});
 });

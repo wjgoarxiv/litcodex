@@ -13,9 +13,9 @@ import { normalizeText, stripQuoted } from "./treatment.mjs";
 import { readingFloor } from "./type.mjs";
 
 const QA = Object.freeze({ inkDelta: 2, minInk: 12, visibleOpacity: 0.6, settledOpacity: 0.95, settledMovePx: 2, probeFps: 10, readingTolerance: 0.1, decorShare: 0.25, presenceStd: 8 / 255, largeShare: 0.03 });
-// Internal family names start with the product family (Archivo Condensed Black, Pretendard GOV,
+// Internal family names start with the product family (Archivo Condensed Black, Pretendard Bold,
 // Galmuri9 Regular), so a face matches by normalized prefix.
-const PRODUCT_PREFIXES = ["archivo", "pretendardgov", "vt323", "galmuri9", "meslolgsnf"];
+const PRODUCT_PREFIXES = ["archivo", "pretendard", "vt323", "galmuri9", "meslolgsnf"];
 export const isProductFamily = (name) => PRODUCT_PREFIXES.some((prefix) => normalizeText(name).startsWith(prefix));
 const INTERNAL_TERM = /\b(?:path|preset|gate|beat|treatment)\b/iu;
 const FILE_NAME = /\b[\w-]+\.(?:html|json|js|mjs|css|png|svg|jpe?g|webp|wav|mp4)\b/iu;

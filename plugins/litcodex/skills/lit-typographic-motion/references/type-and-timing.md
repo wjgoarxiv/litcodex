@@ -44,13 +44,13 @@ The type kit splits every string into script runs before choosing faces.
 
 - Hangul syllables and jamo form Hangul runs; Latin letters form Latin runs.
 - Digits, punctuation and spaces belong to no script of their own. Each joins the run beside it; between two different runs it joins the run on its left; with nothing on the left it joins the run on its right. So `2026년` is one Hangul run, and `LIT팀` splits exactly at the boundary into `LIT` and `팀`.
-- Each run takes its face from the voice: for example the swiss display voice uses Archivo for Latin runs and PretendardGOV Bold for Hangul runs, in the same line.
+- Each run takes its face from the voice: for example the swiss display voice uses Archivo for Latin runs and Pretendard Bold for Hangul runs, in the same line.
 
 ## Korean type rules (hard)
 
 - Line breaks and reveal steps happen only at whitespace between 어절. A long Korean line shrinks in size before it would ever break inside a 어절.
 - Hangul runs never get tracking or width motion; their tracking is 0 even when the Latin run beside them animates.
-- Weight steps on Hangul only move between LitCodex's own lit-pptx PretendardGOV Regular (400) and Bold (700), reused by path and checked against LitCodex's recorded hashes. Nothing between or beyond is synthesised, and no horizontal scale is applied.
+- Weight steps on Hangul only move between LitCodex's own lit-pptx Pretendard Regular (400) and Bold (700), reused by path and checked against LitCodex's recorded hashes. Nothing between or beyond is synthesised, and no horizontal scale is applied.
 - Galmuri9 needs a large grid multiple to stay crisp: keep it at 36 px or more on screen.
 
 ## Latin type rules
@@ -76,7 +76,7 @@ The type kit splits every string into script runs before choosing faces.
 | Archivo, 9 static instances | bundled in `fonts/archivo/`, instanced at development time with a recorded recipe (`fonts/archivo/SHA256SUMS`) | `fonts/archivo/OFL.txt` |
 | VT323 | bundled in `fonts/vt323/` | `fonts/vt323/OFL.txt` |
 | EMS Allure, Felix, Osmotron, Readability, Tech | bundled SVG single-stroke faces in `fonts/stroke/` | `fonts/stroke/OFL.txt`, `fonts/stroke/CREDITS` |
-| PretendardGOV Regular and Bold | reused from `../lit-pptx/pretendard-font/` | `../lit-pptx/pretendard-font/LICENSE.txt` |
+| Pretendard Regular and Bold | reused from `../lit-pptx/pretendard-font/` | `../lit-pptx/pretendard-font/LICENSE.txt` |
 | Galmuri9 | fetched at pre-warm, pinned URL and sha256 | cached `fonts/licenses/Galmuri-ofl.md` |
 | MesloLGS NF | fetched at pre-warm, pinned URL and sha256 | three cached files: the Meslo Apache notice, the Apache-2.0 text and the DejaVu Bitstream Vera notice |
 

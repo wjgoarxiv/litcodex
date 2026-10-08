@@ -124,7 +124,7 @@ lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외�
 
 **문서, 그림, 화면**
 
-- `lit-docx`, `lit-pptx`: 서식을 갖춘 Word 파일이나 편집 가능한 PowerPoint 파일을 원고 Markdown과 함께 만듭니다.
+- `lit-docx`, `lit-pptx`: 여섯 방향 중 하나로 절제된 Word 문서를, 여덟 방향 중 하나로 빽빽한 PowerPoint 파일을 원고 Markdown과 함께 만듭니다. 만들기 전에 고른 방향과 대안 두 가지를 밝힙니다.
 - `lit-diagram-drawer`: 편집 가능한 다이어그램을 그리고 검사한 뒤 PNG와 Office용 SVG로 내보냅니다.
 - `lit-scientific-visualization`: 학술지 규격 그림을 벡터와 600 DPI로 내보냅니다.
 - `lit-typographic-motion`: 트리트먼트부터 쓰고 짧은 영상을 만듭니다.

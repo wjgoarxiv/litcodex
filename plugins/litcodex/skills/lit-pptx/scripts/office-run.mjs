@@ -20,6 +20,7 @@ const commands = {
   },
   docx: {
     convert: ["python", join(docRoot, "scripts/convert_md_to_docx.py")],
+    qa: ["python", join(docRoot, "scripts/docx_craft.py")],
     edit: ["python", join(docRoot, "scripts/edit_docx.py")],
     pdf: ["python", join(docRoot, "scripts/convert_md_to_pdf.py")],
     extract_pdf: ["python", join(docRoot, "scripts/convert_pdf.py")],
@@ -118,7 +119,7 @@ function main() {
   }
   const selected = commands[skill]?.[command];
   if (!selected) {
-    process.stderr.write("Usage: office-run.mjs doctor | pptx <compile|qa|inventory|embed|learn|validate> ... | docx <convert|edit|pdf|extract_pdf|slop|audit|clean|images> ...\n");
+    process.stderr.write("Usage: office-run.mjs doctor | pptx <compile|qa|inventory|embed|learn|validate> ... | docx <convert|qa|edit|pdf|extract_pdf|slop|audit|clean|images> ...\n");
     process.exitCode = 2;
     return;
   }

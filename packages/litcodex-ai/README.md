@@ -127,7 +127,7 @@ You can pick these skills in the Codex skill picker or mention one by scoped nam
 
 **Documents, figures and interfaces**
 
-- `lit-docx` and `lit-pptx`: a styled Word file or an editable PowerPoint deck, each with its Markdown source.
+- `lit-docx` and `lit-pptx`: a restrained Word document in one of six directions or a dense PowerPoint deck in one of eight, each with its Markdown source. The skill names the direction it chose and two alternatives before it builds.
 - `lit-diagram-drawer`: an editable diagram, checked and exported to PNG and Office-safe SVG.
 - `lit-scientific-visualization`: a journal-sized figure with vector and 600 DPI exports.
 - `lit-typographic-motion`: a short film, starting from a written treatment.

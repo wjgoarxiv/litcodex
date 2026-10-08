@@ -42,7 +42,7 @@ function stageTreatment(): Json {
 			{ kind: "diagram", role: "support", beats: [1, 2] },
 			{ kind: "particles", role: "texture", beats: [0] },
 		],
-		typePlan: { faces: ["Archivo", "PretendardGOV"], hierarchy: "one short label per beat, the recap line largest", maxWordsOnScreen: 7 },
+		typePlan: { faces: ["Archivo", "Pretendard"], hierarchy: "one short label per beat, the recap line largest", maxWordsOnScreen: 7 },
 		palette: [
 			{ hex: "#10202A", role: "night soil ground" },
 			{ hex: "#E8F1EC", role: "label type" },

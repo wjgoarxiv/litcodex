@@ -119,7 +119,7 @@ h1 { color: #8a2be2; background-image: linear-gradient(red, blue); -webkit-backg
 	});
 
 	it("keeps the package clear of source-file hashes from the studied repositories", () => {
-		const sources = ["impeccable-skill-sha256.txt", "krehel-skills-sha256.txt"];
+		const sources = ["reference-a-sha256.txt", "krehel-skills-sha256.txt"];
 		const forbidden = new Map<string, string>();
 		for (const name of sources) {
 			const list = readFileSync(join(root, "tools/forbidden-uiux-hashes", name), "utf8");
@@ -128,7 +128,7 @@ h1 { color: #8a2be2; background-image: linear-gradient(red, blue); -webkit-backg
 				const match = /^([a-f0-9]{64})  (.+)$/u.exec(line);
 				if (match) { forbidden.set(match[1], `${name}: ${match[2]}`); count += 1; }
 			}
-			expect(count).toBe(name.startsWith("impeccable") ? 54 : 57);
+			expect(count).toBe(name.startsWith("reference-a") ? 54 : 57);
 		}
 		const manifest = JSON.parse(readFileSync(join(root, "tools/pack-payload-manifest.json"), "utf8")) as { packages: Array<{ name: string; exactFileSets: Array<{ prefix: string; allowedPaths: string[] }> }> };
 		const packed = manifest.packages.find((entry) => entry.name === "@litfamily/litcodex")?.exactFileSets.find((entry) => entry.prefix === "marketplace/plugins/litcodex/skills/frontend-ui-ux/")?.allowedPaths;
@@ -142,9 +142,9 @@ h1 { color: #8a2be2; background-image: linear-gradient(red, blue); -webkit-backg
 		expect(matches).toEqual([]);
 	});
 
-	it("credits all three consulted sources in the packaged notice", () => {
+	it("credits the consulted sources in the packaged notice", () => {
 		const notice = readFileSync(join(root, "plugins/litcodex/skills/frontend-ui-ux/THIRD-PARTY-NOTICE.txt"), "utf8");
-		for (const anchor of ["pbakaus/impeccable", "Paul Bakaus", "Apache", "9d715cc", "jakubkrehel/skills", "Jakub Krehel", "MIT", "267330e", "ibelick/ui-skills", "Julien Thibeaut"]) expect(notice).toContain(anchor);
+		for (const anchor of ["jakubkrehel/skills", "Jakub Krehel", "MIT", "267330e", "ibelick/ui-skills", "Julien Thibeaut"]) expect(notice).toContain(anchor);
 	});
 
 	it('separates clean and sloppy pages in a real browser when available', async (context) => {

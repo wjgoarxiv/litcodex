@@ -60,7 +60,7 @@ export function passingRun() {
 			p995: null,
 			flash: { f, g: [0, 0], r: [0, 0], step: 0 },
 			textBoxes: [
-				{ elementId: `${shot.id}/text`, text: shot.text, voice: "display", fontFile: shot.script === "hangul" ? "../lit-pptx/pretendard-font/public/static/PretendardGOV-Bold.otf" : "fonts/archivo/Archivo-w75-wt900.ttf", fontSizePx: 120, capHeightPx: 90, weight: 700, fill: "#E9EBE4", bbox: [128, 400, 900, 520], script: shot.script, trackingEm: shot.script === "hangul" ? 0 : -0.02, widthPct: shot.script === "hangul" ? null : 75, scaleX: 1, outline: false, halo: false, alpha: 1, block: null },
+				{ elementId: `${shot.id}/text`, text: shot.text, voice: "display", fontFile: shot.script === "hangul" ? "../lit-pptx/pretendard-font/public/static/Pretendard-Bold.otf" : "fonts/archivo/Archivo-w75-wt900.ttf", fontSizePx: 120, capHeightPx: 90, weight: 700, fill: "#E9EBE4", bbox: [128, 400, 900, 520], script: shot.script, trackingEm: shot.script === "hangul" ? 0 : -0.02, widthPct: shot.script === "hangul" ? null : 75, scaleX: 1, outline: false, halo: false, alpha: 1, block: null },
 			],
 			elements: [{ elementId: `${shot.id}/rule`, kind: "rule", bbox: [128, 560, 900, 562] }],
 			fills: [{ source: "background", color: "#0C0E13", w: 1920, h: 1080 }, { source: "type", color: "#E9EBE4", w: 120, h: 120, glyph: true }],

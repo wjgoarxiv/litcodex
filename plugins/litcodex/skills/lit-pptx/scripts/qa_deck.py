@@ -10,6 +10,9 @@ exits non-zero if ANY real defect is found:
 
 No LibreOffice / rendering engine required: everything is read from the OOXML
 via python-pptx. A renderer is needed only for separate visual preview.
+
+With --sibling OTHER.pptx (the same source compiled under another tonality) the
+office craft check also fails two decks that draw one skeleton (OF-116).
 """
 
 from __future__ import annotations
@@ -27,7 +30,7 @@ from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE, MSO_SHAPE_TYPE
 from pptx.opc.constants import RELATIONSHIP_TYPE as RT
-from craft_extras import analyze_craft
+from craft_extras import DISPLAY_FAMILY, GRID_MARGIN, PACK_STAMP, analyze_craft, compare_skeletons, family_of, title_frame
 
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATE = ROOT / "scripts" / "validate_pptx.py"
@@ -93,10 +96,21 @@ def _bbox(shape):
         return None
 
 
-def _resolve_bg(shape, idx, filled):
+def _slide_ground(slide) -> tuple[int, int, int]:
+    """The slide's own solid background colour, white when it has none."""
+    try:
+        if slide.background.fill.type == 1:
+            return _hex_to_rgb(slide.background.fill.fore_color.rgb) or (255, 255, 255)
+    except (AttributeError, TypeError, ValueError):
+        pass
+    return (255, 255, 255)
+
+
+def _resolve_bg(shape, idx, filled, ground=(255, 255, 255)):
     """Effective background for a text shape: its own fill, else the topmost
     filled shape drawn *behind* it (lower z-order) that contains its centre,
-    else white. Prevents false positives like white text over a charcoal band."""
+    else the slide's own ground. Prevents false positives like white text over a
+    charcoal band or light text on a dark slide."""
     own = _shape_fill_rgb(shape)
     if own is not None:
         return own
@@ -111,7 +125,7 @@ def _resolve_bg(shape, idx, filled):
                 best = f_rgb  # later (higher idx) wins -> topmost behind text
         if best is not None:
             return best
-    return (255, 255, 255)
+    return ground
 
 
 def check_contrast(path: Path) -> dict[str, Any]:
@@ -122,10 +136,11 @@ def check_contrast(path: Path) -> dict[str, Any]:
     for s_idx, slide in enumerate(prs.slides, start=1):
         shapes = list(slide.shapes)
         filled = [(i, rgb, _bbox(sh)) for i, sh in enumerate(shapes) if (rgb := _shape_fill_rgb(sh)) is not None]
+        ground = _slide_ground(slide)
         for idx, shape in enumerate(shapes):
             if not getattr(shape, "has_text_frame", False):
                 continue
-            bg = _resolve_bg(shape, idx, filled)
+            bg = _resolve_bg(shape, idx, filled, ground)
             for para in shape.text_frame.paragraphs:
                 for run in para.runs:
                     if not run.text.strip():
@@ -582,11 +597,53 @@ def check_objective_quality(path: Path) -> dict[str, Any]:
     return {"pass": all(check["pass"] for check in checks.values()), **checks}
 
 
+def _pack_frame(slide, width: float, height: float, margin: float):
+    """Body frame of a pack slide in inches (x0, y0, x1, y1): beside a side rail, above a bottom
+    title, else under the title; inside the grid margin and above the foot strip."""
+    title = title_frame(list(slide.shapes))
+    x0, y0, x1, y1 = margin, margin, width - margin, min(height - margin, 6.83)
+    if title is not None:
+        tx0, ty0, tx1, ty1 = _bbox_in(title)
+        if title.name == "title@side-rail":
+            x0 = tx1 + 0.1
+        elif title.name == "title@bottom-anchor":
+            y1 = ty0 - 0.1
+        else:
+            y0 = ty1 + 0.1
+    return (x0, y0, x1, max(y0 + 0.1, y1))
+
+
+def _encloses(outer, inner, tol: float = 0.05) -> bool:
+    return (inner is not None and inner[0] >= outer[0] - tol and inner[1] >= outer[1] - tol
+            and inner[2] <= outer[2] + tol and inner[3] <= outer[3] + tol)
+
+
+def _column_extent(boxes) -> float:
+    """Area a pack body occupies: each column of blocks from its first top to its last bottom.
+
+    A pack sizes every text frame to its text, so frame areas alone read a filled column of
+    short paragraphs as empty. A column is the set of blocks that overlap by half the narrower
+    one; an empty stretch inside a column is OF-109's to judge.
+    """
+    columns: list[list[float]] = []
+    for x0, y0, x1, y1 in sorted(boxes):
+        for c in columns:
+            if min(c[2], x1) - max(c[0], x0) >= 0.5 * min(c[2] - c[0], x1 - x0):
+                c[:] = [min(c[0], x0), min(c[1], y0), max(c[2], x1), max(c[3], y1)]
+                break
+        else:
+            columns.append([x0, y0, x1, y1])
+    return sum((c[2] - c[0]) * (c[3] - c[1]) for c in columns)
+
+
 def check_content_quality(path: Path) -> dict[str, Any]:
     """Measure usable content coverage and reject table-only narratives."""
     deck = Presentation(str(path))
     width = deck.slide_width / 914400.0
+    height = deck.slide_height / 914400.0
     content_area = max(1.0, (width - 1.4) * 4.8)
+    stamp = PACK_STAMP.search(deck.core_properties.subject or "")
+    margin = GRID_MARGIN[960 if round(width * 72) == 960 else 720].get(stamp.group(3), 48.0) / 72 if stamp else 0.7
     inspected = []
     violations = []
     for number, slide in enumerate(deck.slides, 1):
@@ -607,15 +664,28 @@ def check_content_quality(path: Path) -> dict[str, Any]:
                     has_line = _hex_to_rgb(shape.line.color.rgb) is not None
                 except (TypeError, AttributeError):
                     has_line = False
-                if has_line and shape.width / 914400.0 >= 0.25 and shape.height / 914400.0 >= 0.25:
+                outline = _bbox_in(shape)
+                # A hairline drawn around a text block, picture, table or chart is that content's frame.
+                framed = any(other is not shape and (_shape_kind(other) or other.shape_type == MSO_SHAPE_TYPE.CHART)
+                             and _encloses(outline, _bbox_in(other)) for other in shapes)
+                if has_line and not framed and shape.width / 914400.0 >= 0.25 and shape.height / 914400.0 >= 0.25:
                     violations.append({"slide": number, "kind": "empty-shape", "fix": "Remove the unlabelled outlined box or put meaningful content inside it."})
-        top_title = any(
-            getattr(shape, "has_text_frame", False) and shape.text.strip()
-            and shape.top / 914400.0 < 1.35 and shape.height / 914400.0 >= 0.25
-            for shape in shapes
-        )
-        if not top_title:  # cover, divider and closing slides have different composition
-            continue
+        family = family_of(shapes)
+        if family:
+            if DISPLAY_FAMILY.search(family):
+                continue  # a pack's cover, section, statement, quote or full picture
+            bx0, by0, bx1, by1 = _pack_frame(slide, width, height, margin)
+        else:
+            top_title = any(
+                getattr(shape, "has_text_frame", False) and shape.text.strip()
+                and shape.top / 914400.0 < 1.35 and shape.height / 914400.0 >= 0.25
+                for shape in shapes
+            )
+            if not top_title:  # cover, divider and closing slides have different composition
+                continue
+            bx0, by0, bx1, by1 = 0.7, 1.8, width - 0.7, 6.6
+        frame_area = max(1.0, (bx1 - bx0) * (by1 - by0)) if family else content_area
+        title = title_frame(shapes) if family else None
         text_boxes = [_bbox_in(shape) for shape in shapes if _shape_kind(shape) == "text"]
         cards = []
         for shape in shapes:
@@ -628,12 +698,13 @@ def check_content_quality(path: Path) -> dict[str, Any]:
                 cards.append(card_box)
         coverage = 0.0
         kinds = set()
+        clipped = []
         for shape in shapes:
             bounds = _bbox_in(shape)
-            if bounds is None:
+            if bounds is None or shape is title or shape.name.startswith("lit-notice"):
                 continue
             x0, y0, x1, y1 = bounds
-            if y1 <= 1.8 or y0 >= 6.6:
+            if y1 <= by0 or y0 >= by1:
                 continue
             kind = _shape_kind(shape)
             if shape.shape_type == MSO_SHAPE_TYPE.CHART:
@@ -645,8 +716,12 @@ def check_content_quality(path: Path) -> dict[str, Any]:
                 continue
             if kind:
                 kinds.add(kind)
-                coverage += max(0, min(x1, width - 0.7) - max(x0, 0.7)) * max(0, min(y1, 6.6) - max(y0, 1.8))
-        ratio = min(1.0, coverage / content_area)
+                coverage += max(0, min(x1, bx1) - max(x0, bx0)) * max(0, min(y1, by1) - max(y0, by0))
+                if min(x1, bx1) > max(x0, bx0):
+                    clipped.append((max(x0, bx0), max(y0, by0), min(x1, bx1), min(y1, by1)))
+        if family:
+            coverage = _column_extent(clipped)
+        ratio = min(1.0, coverage / frame_area)
         inspected.append({"slide": number, "fill_ratio": round(ratio, 3), "kinds": sorted(kinds)})
         if ratio < 0.42:
             violations.append({"slide": number, "kind": "underfilled", "fill_ratio": round(ratio, 3), "fix": "Expand the chart, KPI cards, flow, image or concise body into the content area."})
@@ -711,7 +786,7 @@ def run_validate(pptx: Path) -> dict[str, Any]:
 
 
 # ── gate ───────────────────────────────────────────────────────────────────
-def qa(pptx: Path) -> dict[str, Any]:
+def qa(pptx: Path, sibling: Path | None = None) -> dict[str, Any]:
     validate_report = run_validate(pptx)
     inv_summary = summarize_inventory(load_inventory_issues(pptx))
     contrast = check_contrast(pptx)
@@ -720,6 +795,10 @@ def qa(pptx: Path) -> dict[str, Any]:
     objective = check_objective_quality(pptx)
     content_quality = check_content_quality(pptx)
     office_craft = analyze_craft(Presentation(pptx))
+    # The same source under another tonality, when given: the two decks must not share one skeleton (OF-116).
+    if sibling is not None:
+        office_craft["findings"] += compare_skeletons(pptx, sibling)
+        office_craft["pass"] = not any(f["severity"] == "HIGH" for f in office_craft["findings"])
 
     reasons: list[str] = []
     if not validate_report.get("pass", False):
@@ -785,8 +864,9 @@ def qa(pptx: Path) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Honest renderer-agnostic QA gate for PPTX decks.")
     parser.add_argument("pptx", type=Path)
+    parser.add_argument("--sibling", type=Path, help="the same source compiled under another tonality (OF-116)")
     args = parser.parse_args(argv)
-    report = qa(args.pptx.resolve())
+    report = qa(args.pptx.resolve(), args.sibling.resolve() if args.sibling else None)
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0 if report["pass"] else 1
 

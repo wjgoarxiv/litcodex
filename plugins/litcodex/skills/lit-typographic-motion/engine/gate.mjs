@@ -199,7 +199,7 @@ export function evaluate(data) {
 	let measureFault = null;
 	let measureAdvice = null;
 	let breakFault = null;
-	const allowedHangul = new Set(FONTS.filter((f) => f.family === "PretendardGOV" || f.family === "Galmuri9").map((f) => f.path));
+	const allowedHangul = new Set(FONTS.filter((f) => f.family === "Pretendard" || f.family === "Galmuri9").map((f) => f.path));
 	const strokeFiles = new Set(STROKE_FONTS.map((s) => s.file));
 	for (const line of frames) {
 		for (const box of line.textBoxes ?? []) {

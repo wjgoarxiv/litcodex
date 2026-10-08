@@ -25,6 +25,34 @@ def intersection(a, b) -> int:
     return max(0, width) * max(0, height)
 
 
+def em_width(text: str) -> float:
+    """Advance of a line in ems, a few per cent wider than Pretendard Bold measures.
+
+    Measured Bold advances: Hangul 0.86, em dash 0.97, percent 0.96, capitals about 0.70,
+    digits about 0.63, lower case about 0.54, narrow punctuation 0.28, space 0.23. Counting
+    every character as a wide glyph made a Latin line read twice its length.
+    """
+    total = 0.0
+    for ch in text:
+        if ch == " ":
+            total += 0.25
+        elif "\uac00" <= ch <= "\ud7a3" or "\u3130" <= ch <= "\u318f":
+            total += 0.90
+        elif ord(ch) >= 0x1100 or ch == "%":
+            total += 0.97
+        elif ch in ",.;:'·|!":
+            total += 0.30
+        elif ch.isupper():
+            total += 0.72
+        elif ch.isdigit():
+            total += 0.66
+        elif ch.isalpha():
+            total += 0.56
+        else:
+            total += 0.50
+    return total
+
+
 def text_overflow(shape) -> bool:
     """Flag only clear frame overflow; variable glyph metrics need rendered review."""
     if not shape.has_text_frame or not shape.text.strip():
@@ -38,8 +66,10 @@ def text_overflow(shape) -> bool:
         fonts = [run.font.size.pt for run in paragraph.runs if run.font.size]
         font_size = max(fonts, default=12.0)
         largest_font = max(largest_font, font_size)
-        chars_per_line = max(1, available_width / (font_size * EMU_PER_POINT * 0.95))
-        estimated_lines += max(1, math.ceil(len(paragraph.text) / chars_per_line))
+        line_width = available_width / (font_size * EMU_PER_POINT)
+        # A line break inside the paragraph (\v) starts a new line of its own.
+        for line in paragraph.text.split("\v"):
+            estimated_lines += max(1, math.ceil(em_width(line) / max(1e-6, line_width)))
     return estimated_lines * largest_font * EMU_PER_POINT * 1.1 > available_height * 1.35
 
 

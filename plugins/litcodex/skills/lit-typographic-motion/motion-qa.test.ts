@@ -40,7 +40,7 @@ const line = (report: string, id: string) => report.split("\n").find((l) => l.tr
 
 describe("product faces by their platform family names", () => {
 	it("accepts every internal family name the bundled and cached faces report", () => {
-		for (const name of ["Archivo", "Archivo Black", "Archivo Condensed", "Archivo Condensed Black", "Archivo Expanded", "Archivo Expanded Black", "Pretendard GOV", "PretendardGOV", "VT323", "Galmuri9 Regular", "MesloLGS NF"]) expect(isProductFamily(name), name).toBe(true);
+		for (const name of ["Archivo", "Archivo Black", "Archivo Condensed", "Archivo Condensed Black", "Archivo Expanded", "Archivo Expanded Black", "Pretendard", "Pretendard Bold", "VT323", "Galmuri9 Regular", "MesloLGS NF"]) expect(isProductFamily(name), name).toBe(true);
 	});
 	it("rejects system fallbacks", () => {
 		for (const name of ["Helvetica", "Times", "Apple SD Gothic Neo", "Menlo", "Arial"]) expect(isProductFamily(name), name).toBe(false);

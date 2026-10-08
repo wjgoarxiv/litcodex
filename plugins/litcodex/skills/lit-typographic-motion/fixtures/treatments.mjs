@@ -21,7 +21,7 @@ export function typeTreatment(lines, extra = {}) {
 		subject: { name: "the supplied lines", source: "user", specifics: ["the user's own words"] },
 		beats: lines.map((_, i) => ({ t0: i * beat, t1: (i + 1) * beat, purpose: `breath ${i + 1}`, onScreen: `line ${i + 1} set large`, motion: "slam in, then hold", sound: i === lines.length - 1 ? "closing cadence" : "a hit on the cut" })),
 		visualDevices: [],
-		typePlan: { faces: ["Archivo", "PretendardGOV"], hierarchy: "the first line leads", maxWordsOnScreen: 6 },
+		typePlan: { faces: ["Archivo", "Pretendard"], hierarchy: "the first line leads", maxWordsOnScreen: 6 },
 		palette: [
 			{ hex: "#0C0E13", role: "ground" },
 			{ hex: "#E9EBE4", role: "type" },

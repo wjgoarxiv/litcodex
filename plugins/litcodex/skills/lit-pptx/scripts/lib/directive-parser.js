@@ -4,14 +4,14 @@
  * directive-parser.js — Extract ::: fenced blocks and detect forbidden constructs.
  *
  * Responsibilities:
- * - Find ::: fenced blocks (main-box, kpi-table, notes, image, key-message)
+ * - Find ::: fenced blocks (main-box, kpi-table, chart, notes, image, key-message)
  * - Reject nested ::: blocks
  * - Reject arbitrary HTML/CSS (div, span, style, inline style attributes)
  * - Extract tables from | pipe | syntax
  * - Extract images from ![alt](path) syntax
  */
 
-const APPROVED_DIRECTIVES = new Set(["main-box", "kpi-table", "notes", "image", "key-message"]);
+const APPROVED_DIRECTIVES = new Set(["main-box", "kpi-table", "chart", "notes", "image", "key-message"]);
 
 // A void directive is a single line: it draws something and has no body, so it
 // takes no closing fence. Shapes are the only such directive.

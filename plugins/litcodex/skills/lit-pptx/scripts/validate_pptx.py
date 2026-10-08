@@ -109,6 +109,9 @@ def _slide_has_title(slide, slide_height: int | None) -> bool:
         placeholder = getattr(shape, "placeholder_format", None)
         if placeholder and placeholder.type == PP_PLACEHOLDER.TITLE and _shape_text(shape):
             return True
+    # A pack deck names its title frame by treatment; a section or bottom title sits low by design.
+    if any(str(getattr(shape, "name", "")).startswith("title@") and _shape_text(shape) for shape in slide.shapes):
+        return True
     text_shapes = []
     for shape in slide.shapes:
         if not getattr(shape, "has_text_frame", False):
@@ -166,7 +169,9 @@ def lint(path: str | Path) -> dict[str, Any]:
                 default_font_hits.append(f"slide {slide_idx}: {font_name}")
 
     last_slide_text = "\n".join(_shape_text(shape) for shape in prs.slides[-1].shapes if getattr(shape, "has_text_frame", False)).lower() if prs.slides else ""
-    has_source_note = "source:" in last_slide_text or "출처" in last_slide_text
+    # A closing references page is the deck's source note at full length.
+    has_source_note = "source:" in last_slide_text or "출처" in last_slide_text or bool(
+        re.search(r"^\s*(?:references|참고\s*문헌)\s*$", last_slide_text, re.MULTILINE))
 
     failures = {
         "missing_titles": bool(missing_titles),

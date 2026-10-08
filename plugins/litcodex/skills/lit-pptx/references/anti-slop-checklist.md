@@ -5,6 +5,8 @@ Run after building any deck. Brand specifics (palette, fonts) come from the chos
 ## Automated checks
 - `node "$OFFICE" pptx qa output.pptx` — honest gate: overflow/overlap/off-slide + WCAG contrast + anti-slop terms + objective executive/research OOXML checks (exit non-zero = FAIL).
 - `node "$OFFICE" pptx inventory output.pptx verification.json --issues-only` — geometry issues only.
+- `node "$OFFICE" pptx qa output.pptx --sibling other.pptx` — when two tonalities of one source are offered, OF-116 fails the pair unless at least two content slides differ in title zone or partition (colour alone is not an alternative).
+- On a tonality deck the gate also reads regions (OF-115): a bottom title on the floor, a side rail that carries its slide's criteria, takeaways or source, a text or picture column with no empty band over 40 % of the body beside a longer one (a chart's values table under its takeaways is part of their column, and the neighbour's length never exempts a column), a title panel as tall as its text, no plate under an empty page; OF-117 fails a mostly-white figure picture on a dark ground (give it a `.dark` variant or a `::: chart`); OF-118 a bold run-in label with no separator after it; OF-119 a numeral beside an agenda title.
 - A clean gate means **no known defects, not that the deck looks good** — render and eyeball every slide (next section).
 
 ## Human-eye checks
@@ -31,35 +33,37 @@ Run after building any deck. Brand specifics (palette, fonts) come from the chos
 - **Review-only:** unsupported absolutes (`논문이 없다`, `없다는 것이 발견`), empty rhetoric (`판이 굳었다`, `전제로 깐다`), command-like planning (`닫아야 할 게이트`, `역전 금지`), unexplained RAM/FTO/CNKI/코퍼스/전이원, and arbitrary dates or day counts without an approved source.
 - Review-only findings must be recorded and rewritten where warranted, but they do not become brittle automated failures. Prefer “검토한 데이터베이스 범위에서는 확인되지 않았다” and expand specialist terms on first use.
 
-## Visual design laws (impeccable-adapted)
-Apply with a human eye AFTER automated checks. Targets a static export (no motion/gradients; no borders/shadows on text).
+## Rendered-page review
 
-### Anti-slop visual bans (absolute)
-- [ ] No side-stripe accents (colored `border-left/right` > 1px) — use a 1px hairline, a flat tint, a leading numeral, or an icon on a wrapper `<div>`.
-- [ ] No ghost cards: one box = a 1px border OR a ≤8px shadow, never both; no empty outlined boxes as decoration.
-- [ ] One corner-radius law deck-wide (default sharp); pills only for tags/chips.
-- [ ] No identical card grid — vary span/size or mix card with non-card.
-- [ ] No eyebrow reflex / `01·02·03` on every slide unless it genuinely is an ordered sequence.
-- [ ] No hero-metric ornament — a big number only when it IS the slide's data.
-- [ ] No card-everything / card-in-card — group with spacing and hairline dividers.
-- [ ] No gradients, blobs, mesh/noise, or sketchy SVG (also blocked by html2pptx); flat ground only.
+Run this pass by eye on the rendered pages once the automated gate is green. It assumes a static
+export: no motion, no gradients, no outline or shadow on type.
 
-### Contrast & color (within the template's palette)
-- [ ] Body/running text ≥ 4.5:1; large text (≥18pt, or bold ≥14pt) and structural lines ≥ 3:1 — measure the pair (`qa_deck.py` enforces this).
-- [ ] No gray text on a colored fill; darken the fill's own hue instead. Color is never the sole signal — deltas carry a ▲/▼ glyph + sign.
-- [ ] Accent coverage ≤ ~10% of the slide; one color = one meaning deck-wide. Use the template palette; invent no inline one-off hex.
+### Confirm none of these appear
+- [ ] A coloured stripe down one side of a card (anything over 1 px). If a group needs a marker, use a 1 px hairline, a flat tint, a real numeral, or an icon placed on the wrapper.
+- [ ] A box that is both outlined and shadowed, or an empty outlined box kept for decoration. One box gets either a 1 px border or a shadow of 8 px or less.
+- [ ] Mixed corner radii. The deck follows one radius rule (sharp unless the pack says otherwise); pill shapes are for tags only.
+- [ ] A grid of identical cards. Vary span or size, or set some groups without a card.
+- [ ] Eyebrow words above titles, or `01·02·03` on slides that are not an ordered sequence.
+- [ ] A large number used as ornament. A figure is large only when it is the slide's data.
+- [ ] Cards around everything, or cards nested in cards. Group with space and hairlines.
+- [ ] Gradients, blobs, mesh or noise textures, or hand-drawn SVG (html2pptx blocks these too). The ground is flat.
 
-### Typography
-- [ ] One family in ≤ 3–4 weights, one role each; body never set in a display cut. For per-weight-family fonts (에이투지체 or Example Sans), pick weight by family name, never a bold flag.
-- [ ] ≤ 3–4 distinct sizes per slide on one ramp; no muddy near-equal sizes. Display ≤ ~40pt for the boilerplate templates.
-- [ ] UPPERCASE labels take positive tracking (override the narrow body default). Headings line-height 1.1–1.2; body 1.3–1.7 (Korean body looser).
-- [ ] No single-word widow on a heading's last line (author manual breaks — `text-wrap` does not survive export). Numeric columns right-aligned.
+### Contrast and colour, inside the pack palette
+- [ ] Running text reaches 4.5:1 against its ground; text at 18 pt and up (bold 14 pt and up) and structural lines reach 3:1. Measure the actual pair; `qa_deck.py` enforces it.
+- [ ] Grey text never sits on a coloured fill; use a darker shade of that fill's own hue. Colour never carries meaning alone: deltas also carry ▲/▼ and a sign.
+- [ ] The accent covers roughly a tenth of the slide at most, and each colour keeps one meaning across the deck. No one-off hex values outside the palette.
 
-### Layout & hierarchy
-- [ ] Squint test passes: the one primary element + the groupings are obvious at a blur.
-- [ ] Exactly one primary element per slide (≥ 2:1 to the next level); ≤ 4 items per group; even density across the deck.
-- [ ] One 4pt spacing scale (4/8/12/16/24/32/48); vary gaps for rhythm; one alignment axis per region.
-- [ ] Every border/divider/box earns its place — remove anything carrying no information before export.
+### Type
+- [ ] One family, three or four weights, each weight with one job; body text never in a display cut. With fonts that ship one family per weight (에이투지체, Example Sans), choose the weight by family name, not with a bold flag.
+- [ ] Three or four sizes per slide, all from one ramp, with no near-duplicates. On the boilerplate templates display stays around 40 pt or below.
+- [ ] Uppercase labels get positive tracking. Headings set at 1.1-1.2 line height, body at 1.3-1.7 (Korean body at the looser end).
+- [ ] No heading ends on a single orphaned word (break by hand; `text-wrap` is lost in export). Numeric columns align right.
+
+### Hierarchy and layout
+- [ ] Blurred, the slide still shows its one primary element and its groups.
+- [ ] One primary element per slide, at least twice the weight of the next level; four items per group at most; similar density from slide to slide.
+- [ ] Spacing comes from one 4 pt scale (4/8/12/16/24/32/48), varied for rhythm, with one alignment axis per region.
+- [ ] Each rule, divider and box carries information; remove the ones that do not before export.
 
 ### Objective evidence checks
 

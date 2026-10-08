@@ -18,8 +18,8 @@ function bundledFontFiles(family) {
   const f = (family || "").trim();
   if (f === "Pretendard") {
     return [
-      { file: "pretendard-font/public/static/PretendardGOV-Regular.otf", weight: 400 },
-      { file: "pretendard-font/public/static/PretendardGOV-Bold.otf", weight: 700 },
+      { file: "pretendard-font/public/static/Pretendard-Regular.otf", weight: 400 },
+      { file: "pretendard-font/public/static/Pretendard-Bold.otf", weight: 700 },
     ]
       .map((e) => ({ ...e, abs: path.join(REPO_ROOT, e.file) }))
       .filter((e) => fs.existsSync(e.abs));

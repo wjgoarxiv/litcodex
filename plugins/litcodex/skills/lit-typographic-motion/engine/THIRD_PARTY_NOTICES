@@ -17,7 +17,7 @@ Fonts bundled in this skill (paths relative to the skill directory)
   fonts/stroke/CREDITS (per-font creator, converter and base font).
 
 Fonts reused from LitCodex's lit-pptx skill (unmodified official files)
-- PretendardGOV Regular and Bold: ../lit-pptx/pretendard-font/public/static/PretendardGOV-*.otf;
+- Pretendard Regular and Bold: ../lit-pptx/pretendard-font/public/static/Pretendard-*.otf;
   licence ../lit-pptx/pretendard-font/LICENSE.txt (SIL Open Font License 1.1).
 
 Fonts fetched by `litcodex motion-runtime install` into the motion-runtime cache
