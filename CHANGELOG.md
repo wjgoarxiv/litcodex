@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.18] - 2026-10-09
+
+### Fixed
+
+- `litcodex doctor` and the installer now wait up to 30 seconds for the first `codex plugin list`, so a
+  slow listing right after an install no longer reports the plugin as missing.
+- The deck check now ships its placeholder word list. Before, the list was missing and the check found
+  nothing, so a deck still holding text such as "Lorem ipsum" passed. Now it fails.
+- The deck check treats a one-word placeholder term ("todo", "tbd", "fixme", "placeholder") as a word.
+  A word such as "Mastodon" no longer fails a deck, while "TODO:", "TODOs" and "(TBD)" still do.
+- The deck check no longer warns about short uppercase terms found inside longer words, such as the
+  "RAM" in "diagram".
+- The deck and document looks no longer list settings the engines never applied, and their reference
+  pages no longer promise them.
+
 ## [1.0.17] - 2026-10-08
 
 ### Fixed
