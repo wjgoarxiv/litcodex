@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.17] - 2026-10-08
+
+### Fixed
+
+- `litcodex doctor` no longer reports the plugin as missing (exit 4) when Codex prints its large remote
+  plugin catalog (about 1.1 MB on Codex 0.159); the plugin check now reads the whole list.
+
 ## [1.0.16] - 2026-10-08
 
 ### Added
