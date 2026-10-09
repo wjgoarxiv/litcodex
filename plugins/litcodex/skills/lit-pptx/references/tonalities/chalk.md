@@ -30,10 +30,10 @@ in the room and still works when students reopen the file a week later.
 | positive / negative | #1E7A3F / #B3261E |
 | series | #9A3412, #1F3B33, #4E5A66, #2E6A8E |
 | faces | Pretendard Bold (display, title, numerals), Pretendard Regular (body, labels); `faces: a2z` gives A2Z Bold display and titles, A2Z Black numerals |
-| type voice | tracking −1; proportional figures |
-| table | `header-fill`: accent-tint header with accent-deep text, row rules, bold totals |
-| chart | hairline gridlines, direct labels, accent on the highlighted series, annotation on |
-| image | bleed at the sides only, no crop, no frame |
+| type voice | tracking −1 |
+| table | accent-tint header with accent-deep text, row rules, bold totals |
+| chart | hairline gridlines, direct labels, accent on the highlighted series |
+| image | no frame |
 | decoration | accent rule, mark underline (listed, not drawn yet), rail fill in the field colour, numeral |
 | radius / edge | 6 / fill |
 

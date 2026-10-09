@@ -31,10 +31,10 @@ story, a public lecture.
 | positive / negative | #1E7A3F / #B3261E |
 | series | #8A5A00, #141414, #525252, #3B5F7F |
 | faces | Pretendard Bold (display, title, numerals), Pretendard Regular (body, labels); `faces: a2z` gives A2Z Black display and numerals, A2Z Medium titles |
-| type voice | tracking −1 titles, −2 display; proportional figures |
-| table | `open`: no header fill, one rule under the header, no banding, bold totals |
-| chart | no gridlines, direct labels, accent on the highlighted bar, annotation on |
-| image | bleed and crop allowed, no frame |
+| type voice | tracking −1 titles, −2 display |
+| table | no header fill, one rule under the header, no banding, bold totals |
+| chart | no gridlines, direct labels, accent on the highlighted bar |
+| image | no frame |
 | decoration | column hairlines, numeral, rail fill, colour field, caption band |
 | radius / edge | 0 / fill |
 

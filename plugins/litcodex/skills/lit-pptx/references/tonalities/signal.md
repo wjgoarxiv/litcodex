@@ -32,10 +32,10 @@ so the file holds up when it is forwarded after the meeting.
 | positive / negative | #1E7A3F / #15131A (losses in ink with ▼, because red means "look here") |
 | series | #C8361A, #15131A, #6B6870, #2F6F8F |
 | faces | Pretendard Bold (display, title, numerals), Pretendard Regular (body, labels); `faces: a2z` gives A2Z Black display and numerals, A2Z Bold titles |
-| type voice | tracking −1 titles, −2 display; proportional figures |
-| table | `open`: no header fill, rules at top and bottom, protagonist row in accent tint, bold totals |
-| chart | no gridlines, direct labels, accent on the highlighted bar over muted ones, annotation on |
-| image | bleed and crop allowed, no frame |
+| type voice | tracking −1 titles, −2 display |
+| table | no header fill, rules at top and bottom, protagonist row in accent tint, bold totals |
+| chart | no gridlines, direct labels, accent on the highlighted bar over muted ones |
+| image | no frame |
 | decoration | colour field, hairline rule, numeral |
 | radius / edge | 0 / fill |
 

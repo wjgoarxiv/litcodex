@@ -30,10 +30,10 @@ evidence without the design arguing for it.
 | positive / negative | #1E6B3A / #50565E |
 | series | #8C1C2B, #111418, #50565E, #2E5E8A |
 | faces | Pretendard Bold (display, title), Pretendard Regular (body, labels, numerals); the A2Z option changes nothing here |
-| type voice | tracking 0 titles, −1 display; tabular figures |
-| table | `booktabs`: no header fill, three rules (top, under header, bottom), no banding, bold totals |
-| chart | hairline gridlines, direct labels, series in palette order (the proposed method first), no annotation |
-| image | no bleed, no crop, no frame |
+| type voice | tracking 0 titles, −1 display |
+| table | no header fill, three rules (top, under header, bottom), no banding, bold totals |
+| chart | hairline gridlines, direct labels, series in palette order (the proposed method first) |
+| image | no frame |
 | decoration | hairline rule, box outline |
 | radius / edge | 0 / border |
 

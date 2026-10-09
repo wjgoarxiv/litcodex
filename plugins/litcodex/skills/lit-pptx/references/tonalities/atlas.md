@@ -33,10 +33,10 @@ the deck honest about what the reader is looking at.
 | positive / negative | #1E7A3F / #B3261E |
 | series | #2B4C7E, #555B63, #8A6A2E, #3E7A5A |
 | faces | Pretendard Bold titles; Pretendard Regular body, labels, display and numerals (a lighter voice than the other packs); `faces: a2z` swaps display and numerals to A2Z Light |
-| type voice | tracking 0 titles, −1 display; proportional figures |
-| table | `light-grid`: no header fill, bold ink header, hairline rows, no banding, numbers right-aligned |
-| chart | hairline gridlines, direct labels, accent on the item that matters, no annotation |
-| image | bleed and crop allowed, no frame |
+| type voice | tracking 0 titles, −1 display |
+| table | no header fill, bold ink header, hairline rows, no banding, numbers right-aligned |
+| chart | hairline gridlines, direct labels, accent on the item that matters |
+| image | no frame |
 | decoration | caption band, hairline rule, colour field |
 | radius / edge | 0 / fill |
 

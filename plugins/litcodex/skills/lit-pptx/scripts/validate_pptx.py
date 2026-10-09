@@ -52,10 +52,20 @@ def _load_terms() -> tuple[list[str], list[str], bool, bool]:
     )
 
 
-def _build_regex(terms: list[str], case_insensitive: bool, whole_word: bool) -> re.Pattern[str] | None:
+def _build_regex(terms: list[str], case_insensitive: bool, whole_word: bool, words: bool = False) -> re.Pattern[str] | None:
     if not terms:
         return None
-    escaped = [re.escape(term) for term in terms]
+    # With words (the hard terms), a one-word Latin term ("todo", "tbd") must stand as a word or its plural
+    # ("TODOs"): inside "Mastodon" or "photodocument" it is not the placeholder. In either list an all-uppercase
+    # acronym ("RAM") stands as a word too, so "diagram" and "program" hold none. Phrases, Hangul and bracketed
+    # terms still match anywhere.
+    def one(term: str) -> str:
+        if words and re.fullmatch(r"[A-Za-z]+", term):
+            return rf"(?<![A-Za-z]){re.escape(term)}s?(?![A-Za-z])"
+        if re.fullmatch(r"[A-Z]{2,}", term):
+            return rf"(?<![A-Za-z]){re.escape(term)}(?![A-Za-z])"
+        return re.escape(term)
+    escaped = [one(term) for term in terms]
     pattern = "|".join(escaped)
     if whole_word:
         pattern = rf"(?:(?<=\W)|^)(?:{pattern})(?:(?=\W)|$)"
@@ -131,7 +141,7 @@ def _slide_has_title(slide, slide_height: int | None) -> bool:
 def lint(path: str | Path) -> dict[str, Any]:
     prs = Presentation(str(path))
     hard_terms, soft_terms, case_insensitive, whole_word = _load_terms()
-    hard_re = _build_regex(hard_terms, case_insensitive, whole_word)
+    hard_re = _build_regex(hard_terms, case_insensitive, whole_word, words=True)
     soft_re = _build_regex(soft_terms, case_insensitive, whole_word)
 
     missing_titles: list[int] = []

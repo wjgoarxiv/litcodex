@@ -133,9 +133,13 @@ export function findCodexBinary(
 	return null;
 }
 
+// The first listing after an install can refresh Codex's remote catalog and take several seconds; a short
+// timeout turns that slow answer into a false "not registered" / "not installed".
+const LIST_PROBE_TIMEOUT_MS = 30_000;
+
 /** True if `codex plugin marketplace list` stdout names the LitCodex marketplace. Read-only. */
 export function probeMarketplaceRegistered(codexBin: string, spawn: SpawnLike): boolean {
-	const res = spawn(codexBin, ["plugin", "marketplace", "list"], { stdio: "pipe", timeout: 5_000 });
+	const res = spawn(codexBin, ["plugin", "marketplace", "list"], { stdio: "pipe", timeout: LIST_PROBE_TIMEOUT_MS });
 	if (res.error || res.status !== 0) {
 		// "cannot determine" → "not present" (the add step is the authoritative source of truth).
 		return false;
@@ -153,7 +157,7 @@ export interface MarketplaceRegistration {
 export function probeMarketplaceRegistration(codexBin: string, spawn: SpawnLike): MarketplaceRegistration | null {
 	const res = spawn(codexBin, ["plugin", "marketplace", "list", "--json"], {
 		stdio: "pipe",
-		timeout: 5_000,
+		timeout: LIST_PROBE_TIMEOUT_MS,
 	});
 	if (res.error || res.status !== 0) return null;
 	try {
@@ -193,7 +197,7 @@ const PLUGIN_LIST_MAX_BUFFER = 64 * 1024 * 1024;
 export function probePluginInstalled(codexBin: string, spawn: SpawnLike): boolean {
 	const res = spawn(codexBin, ["plugin", "list"], {
 		stdio: "pipe",
-		timeout: 5_000,
+		timeout: LIST_PROBE_TIMEOUT_MS,
 		maxBuffer: PLUGIN_LIST_MAX_BUFFER,
 	});
 	if (res.error || res.status !== 0) {

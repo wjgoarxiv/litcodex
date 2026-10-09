@@ -33,10 +33,10 @@ thin pale type would vanish.
 | positive / negative | #6CC08B / #F08A7E |
 | series | #E3A857, #7FB8E0, #A3AEBA, #C58FD0 |
 | faces | Pretendard Bold (display, title), Pretendard Regular (body, labels, numerals); `faces: a2z` swaps numerals to A2Z Light |
-| type voice | tracking −1 titles, −2 display; tabular figures |
-| table | `header-fill`: surface header with ink text, row rules, protagonist row in accent tint, bold totals |
-| chart | hairline gridlines, direct labels, accent on the highlighted series, annotation on |
-| image | bleed at the sides, crop allowed, no frame |
+| type voice | tracking −1 titles, −2 display |
+| table | surface header with ink text, row rules, protagonist row in accent tint, bold totals |
+| chart | hairline gridlines, direct labels, accent on the highlighted series |
+| image | no frame |
 | decoration | header band, hairline rule, numeral, rail fill |
 | radius / edge | 6 / fill |
 

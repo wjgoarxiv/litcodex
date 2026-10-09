@@ -2,7 +2,7 @@
 
 Ledger treats a deck as an account book that has to survive questions. Pages are white and
 tightly set on the compact grid; tables carry a deep green header band with white labels, a rule
-under the header and another above the totals, and right-aligned tabular figures. One teal-green
+under the header and another above the totals, and right-aligned figures. One teal-green
 accent marks the figure each slide is about. Sections open on a rule or a real part number, never
 on a colour field, so the deck stays quiet enough for a reader to compare numbers across pages.
 
@@ -21,7 +21,7 @@ on a colour field, so the deck stays quiet enough for a reader to compare number
 
 - A live pitch or a launch: its density buries a listener and its calm palette undersells the
   moment. Signal or Studio.
-- An image-led deck: pictures are framed small with a hairline and bleed only at the sides.
+- An image-led deck: pictures are framed small with a hairline.
 - A deck built on single claims or quotations: Ledger has no `statement` treatment or family.
 
 ## Tokens
@@ -35,10 +35,10 @@ on a colour field, so the deck stays quiet enough for a reader to compare number
 | positive / negative | #1E7A3F / #B3261E |
 | series | #0E6B5A, #4B5866, #9A6A12, #2F5F8A |
 | faces | Pretendard Bold (display, title, numerals), Pretendard Regular (body, labels); `faces: a2z` swaps display and numerals to A2Z Bold |
-| type voice | tracking −1 on titles and display, sentence case, tabular figures |
-| table | `ledger`: header in the field colour with on-field text, rules under the header and above totals, no banding, bold totals |
-| chart | hairline gridlines, direct labels, accent on the highlighted series over muted ones, annotation on |
-| image | bleed at the sides only, no crop, hairline frame |
+| type voice | tracking −1 on titles and display |
+| table | header in the field colour with on-field text, rules under the header and above totals, no banding, bold totals |
+| chart | hairline gridlines, direct labels, accent on the highlighted series over muted ones |
+| image | hairline frame |
 | decoration | accent rule, hairline rule, rail fill, numeral |
 | radius / edge | 0 / fill |
 

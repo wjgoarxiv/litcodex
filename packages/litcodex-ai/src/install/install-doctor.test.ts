@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { codexBin, doctorDeps, sentinelPath } from "../../test/install-doctor-fixtures.js";
-import { probeMarketplaceRegistration, probePluginInstalled } from "./codex.js";
+import { probeMarketplaceRegistered, probeMarketplaceRegistration, probePluginInstalled } from "./codex.js";
 import { renderDoctorText, runDoctor } from "./doctor.js";
 
 describe("doctor — agentsInstalled probe", () => {
@@ -228,6 +228,40 @@ describe("probePluginInstalled — parses the status column (VERIFY-LIVE codex 0
 				? { status: null, error: Object.assign(new Error("spawnSync codex ENOBUFS"), { code: "ENOBUFS" }) }
 				: { status: 0, stdout };
 		expect(probePluginInstalled(codexBin, spawn)).toBe(true);
+	});
+});
+
+describe("Codex list probes — a slow first listing is not read as absent", () => {
+	// The first `codex plugin list` after an install refreshes the remote catalog and can take seconds.
+	// Like spawnSync: a child still running past opts.timeout is killed and fails with ETIMEDOUT.
+	const slowSpawn =
+		(stdout: string, elapsedMs = 6_000) =>
+		(_cmd: string, _args: readonly string[], opts: { timeout?: number }) =>
+			opts.timeout !== undefined && elapsedMs > opts.timeout
+				? { status: null, error: Object.assign(new Error("spawnSync codex ETIMEDOUT"), { code: "ETIMEDOUT" }) }
+				: { status: 0, stdout };
+
+	it("plugin list: a 6 s listing still reports the installed plugin", () => {
+		const spawn = slowSpawn("litcodex@litcodex  installed, enabled  1.0.17  /path\n");
+		expect(probePluginInstalled("/fake/codex", spawn)).toBe(true);
+	});
+
+	it("marketplace list: a 6 s listing still reports the registration", () => {
+		expect(probeMarketplaceRegistered("/fake/codex", slowSpawn("litcodex  /path\n"))).toBe(true);
+	});
+
+	it("marketplace list --json: a 6 s listing still returns the registered source", () => {
+		const stdout = JSON.stringify([{ name: "litcodex", source: "/path", sourceType: "local" }]);
+		expect(probeMarketplaceRegistration("/fake/codex", slowSpawn(stdout))).toEqual({
+			name: "litcodex",
+			source: "/path",
+			sourceType: "local",
+		});
+	});
+
+	it("still gives up on a listing that never finishes", () => {
+		const spawn = slowSpawn("litcodex@litcodex  installed, enabled  1.0.17  /path\n", 120_000);
+		expect(probePluginInstalled("/fake/codex", spawn)).toBe(false);
 	});
 });
 

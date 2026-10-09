@@ -255,6 +255,35 @@ class PackGateCompanions(unittest.TestCase):
         words(slide, 24, 130, 900, 300, '[1] 예시 저자, 예시 보고서, 2026.', 13)
         self.assertTrue(validate_pptx.lint(saved(prs))['checks']['missing_source_note']['pass'])
 
+    def test_a_placeholder_term_in_a_deck_is_flagged(self):
+        def deck(body):
+            prs = new_deck()
+            slide = page(prs, 'text-column', '계획 대비 실적', 'top-rule')
+            words(slide, 24, 96, 900, 40, body, 16)
+            words(slide, 24, 470, 600, 16, '출처: 예시 자료', 9)
+            return validate_pptx.lint(saved(prs))['checks']['forbidden_terms']
+        flagged = deck('Lorem ipsum dolor sit amet')
+        self.assertFalse(flagged['pass'], flagged)
+        self.assertTrue(any('Lorem ipsum' in hit for hit in flagged['hard_hits']), flagged)
+        self.assertTrue(deck('3분기 출고 건수는 계획보다 4% 많았다')['pass'])
+
+    def test_a_one_word_term_is_matched_as_a_word_not_inside_a_longer_word(self):
+        def forbidden(body):
+            prs = new_deck()
+            slide = page(prs, 'text-column', '현장 기록 방식', 'top-rule')
+            words(slide, 24, 96, 900, 40, body, 16)
+            words(slide, 24, 470, 600, 16, '출처: 예시 자료', 9)
+            return validate_pptx.lint(saved(prs))['checks']['forbidden_terms']
+        for body in ('Mastodon 계정으로 공지를 올린다', 'photodocument 형식으로 현장을 기록한다'):
+            self.assertTrue(forbidden(body)['pass'], body)
+        for body in ('TODO: x', '마감은 todo.', '예산 (TBD)', 'Lorem ipsum dolor sit amet', 'open TODOs', 'two placeholders', 'FIXMEs left'):
+            self.assertFalse(forbidden(body)['pass'], body)
+        # Soft terms keep matching anywhere: a warning inside a longer word still shows.
+        self.assertTrue(forbidden('unlocked savings this quarter')['soft_warnings'])
+        # An all-uppercase acronym term stands as a word: "diagram" and "program" hold no RAM.
+        self.assertEqual(forbidden('a diagram of the program')['soft_warnings'], [])
+        self.assertTrue(forbidden('16 GB RAM per node')['soft_warnings'])
+
     def test_text_on_a_dark_slide_ground_is_judged_against_that_ground(self):
         def deck(colour):
             prs = new_deck()

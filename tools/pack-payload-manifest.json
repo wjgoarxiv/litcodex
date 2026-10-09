@@ -831,6 +831,7 @@
         "marketplace/plugins/litcodex/skills/lit-docx/templates/tonalities/memo.yaml",
         "marketplace/plugins/litcodex/skills/lit-docx/templates/tonalities/proposal.yaml",
         "marketplace/plugins/litcodex/skills/lit-docx/templates/tonalities/report.yaml",
+        "marketplace/plugins/litcodex/skills/lit-pptx/FORBIDDEN_TERMS.json",
         "marketplace/plugins/litcodex/skills/lit-pptx/NOTICE",
         "marketplace/plugins/litcodex/skills/lit-pptx/SKILL.md",
         "marketplace/plugins/litcodex/skills/lit-pptx/agents/analyst.md",
@@ -1714,6 +1715,7 @@
         {
           "prefix": "marketplace/plugins/litcodex/skills/lit-pptx/",
           "allowedPaths": [
+            "FORBIDDEN_TERMS.json",
             "NOTICE",
             "SKILL.md",
             "agents/analyst.md",

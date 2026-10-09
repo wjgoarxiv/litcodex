@@ -31,10 +31,10 @@ accent. Nobody presents a Gazette deck; it is opened at a desk, read in order, a
 | positive / negative | #1E7A3F / #1A2230 |
 | series | #A61B1B, #233A4F, #4A5568, #7A6A2A |
 | faces | Pretendard Bold (display, title, numerals), Pretendard Regular (body, labels); `faces: a2z` swaps display and numerals to A2Z Bold |
-| type voice | tracking −1, tabular figures |
-| table | `header-fill`: header in the slate field with white text, full grid rules, surface banding, bold totals |
-| chart | hairline gridlines, direct labels, accent on the highlighted series, no annotation |
-| image | no bleed, no crop, hairline frame |
+| type voice | tracking −1 |
+| table | header in the slate field with white text, full grid rules, surface banding, bold totals |
+| chart | hairline gridlines, direct labels, accent on the highlighted series |
+| image | hairline frame |
 | decoration | header band, box outline, hairline rule, numeral |
 | radius / edge | 0 / fill and border |
 
