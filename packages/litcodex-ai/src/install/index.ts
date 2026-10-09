@@ -64,6 +64,7 @@ const realSpawn: SpawnLike = (cmd, args, opts) => {
 		stdio: opts.stdio,
 		encoding: "utf8",
 		timeout: opts.timeout,
+		...(opts.maxBuffer === undefined ? {} : { maxBuffer: opts.maxBuffer }),
 		shell: invocation.shell,
 		windowsVerbatimArguments: invocation.windowsVerbatimArguments || opts.windowsVerbatimArguments === true,
 		...(opts.env === undefined ? {} : { env: opts.env }),

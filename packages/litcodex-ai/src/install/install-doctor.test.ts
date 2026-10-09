@@ -217,6 +217,18 @@ describe("probePluginInstalled — parses the status column (VERIFY-LIVE codex 0
 	it("is FALSE when `codex plugin list` errors", () => {
 		expect(probePluginInstalled(codexBin, () => ({ status: 1, stdout: "" }))).toBe(false);
 	});
+
+	it("reads a listing larger than spawnSync's 1 MiB default buffer (codex 0.159 remote catalog)", () => {
+		const catalog = "someone@openai-curated-remote  not installed  1.0.0  plugin_x\n".repeat(20_000);
+		const stdout = `${catalog}litcodex@litcodex  installed, enabled  1.0.16  /path\n`;
+		expect(stdout.length).toBeGreaterThan(1024 * 1024);
+		// Like spawnSync: output past maxBuffer (default 1 MiB) fails with ENOBUFS and no status.
+		const spawn = (_cmd: string, _args: readonly string[], opts: { maxBuffer?: number }) =>
+			stdout.length > (opts.maxBuffer ?? 1024 * 1024)
+				? { status: null, error: Object.assign(new Error("spawnSync codex ENOBUFS"), { code: "ENOBUFS" }) }
+				: { status: 0, stdout };
+		expect(probePluginInstalled(codexBin, spawn)).toBe(true);
+	});
 });
 
 describe("probeMarketplaceRegistration — parses Codex 0.144 structured source", () => {

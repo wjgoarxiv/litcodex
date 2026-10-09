@@ -22,6 +22,7 @@ export interface ReadonlyFsLike {
 export interface SpawnOptions {
 	readonly stdio: "inherit" | "pipe";
 	readonly timeout?: number;
+	readonly maxBuffer?: number;
 	readonly env?: NodeJS.ProcessEnv;
 	readonly cwd?: string;
 	readonly shell?: false;
@@ -186,8 +187,15 @@ export function probeMarketplaceRegistration(codexBin: string, spawn: SpawnLike)
  * never fires) and `doctor` report a phantom install. So parse the row's STATUS column: the ref must
  * be on a line that says `installed` and NOT `not installed`.
  */
+// `codex plugin list` prints the whole remote catalog: 1.1 MB on codex 0.159, past spawnSync's 1 MiB default.
+const PLUGIN_LIST_MAX_BUFFER = 64 * 1024 * 1024;
+
 export function probePluginInstalled(codexBin: string, spawn: SpawnLike): boolean {
-	const res = spawn(codexBin, ["plugin", "list"], { stdio: "pipe", timeout: 5_000 });
+	const res = spawn(codexBin, ["plugin", "list"], {
+		stdio: "pipe",
+		timeout: 5_000,
+		maxBuffer: PLUGIN_LIST_MAX_BUFFER,
+	});
 	if (res.error || res.status !== 0) {
 		return false;
 	}
