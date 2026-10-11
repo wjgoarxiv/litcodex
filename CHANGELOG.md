@@ -6,8 +6,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.19] - 2026-10-11
+
+### Important: one manual update from 1.0.18 or older
+
+The automatic updater in 1.0.18 and earlier versions replaces the global package but cannot install
+the new plugin into Codex, so its update to this release rolls back. Run this once by hand:
+
+```sh
+npm i -g @litfamily/litcodex@latest && litcodex install
+```
+
+From 1.0.19 on, the updater does that step itself.
+
+### Added
+
+- When every check passes and your Codex config has no `[tui]` status line or terminal title,
+  `litcodex doctor` suggests a block to paste for the keys that are missing, written in the form your
+  config already uses. You can also pick items inside Codex with `/statusline` and `/title`. Doctor
+  only reads `config.toml` and never edits it.
+
+### Changed
+
+- The README is shorter for first-time readers. It says what LitCodex does, how to install it and what
+  to type first, and the longer material moved into pages under `docs/` (install, skills, automatic
+  handoff, skill hint, media) in English and Korean. The GitHub page also shows a short film of a real
+  Codex session.
+
 ### Fixed
 
+- Automatic update now installs the new plugin into Codex before it runs the new doctor. Before, Codex
+  kept the old plugin, the doctor failed and every update rolled back. A failed update restores both
+  the package and the plugin, each install step may take up to 60 seconds, and doctor keeps reporting
+  the failure until the target version is installed.
 - `litcodex --dry-run uninstall` (or `uninstall --dry-run`) now prints the removal plan and changes nothing.
   Before, it ignored the flag and removed the plugin. A dry run of `office-runtime install`,
   `motion-runtime install`, the writing `loop` subcommands and `hook` now also prints its step and applies nothing.
