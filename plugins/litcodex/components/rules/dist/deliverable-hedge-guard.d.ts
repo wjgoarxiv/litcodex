@@ -15,6 +15,12 @@ export interface HumanizerFinding {
 type GuardOptions = {
     readonly scan?: (text: string) => readonly HumanizerFinding[];
 };
+/**
+ * Reader-facing prose formats. Block-tier rules are prose rules (a line-start `Source:` label, for
+ * example), so they apply only here; code and data files such as YAML keys or Python docstrings
+ * are never scanned.
+ */
+export declare const HUMANIZER_PROSE_EXTENSIONS: ReadonlySet<string>;
 export declare function humanizerFailOpenOutput(event: "PreToolUse" | "PostToolUse"): string;
 /** Run the bundled detector. Its exit statuses 1 and 2 represent findings; 2 is also used for block hits. */
 export declare function inspectHumanizerText(text: string, detectorPath?: string): readonly HumanizerFinding[];

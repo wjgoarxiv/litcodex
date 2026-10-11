@@ -23,6 +23,7 @@ import {
 	type SpawnLike,
 } from "./codex.js";
 import { inspectEffectiveConfig } from "./doctor-config.js";
+import { inspectTuiSuggestion } from "./doctor-tui.js";
 import { modelContextsForWrites, probeHostCapabilities } from "./host-capabilities.js";
 import { canonicalMarketplacePath, LITCODEX_MARKETPLACE, managedMarketplaceRoot } from "./marketplace.js";
 import { probeSkillCatalogPayload } from "./skill-catalog.js";
@@ -205,6 +206,7 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 		autoUpdate,
 		jevSkillHint: jevSkillHintState(deps.env),
 		autoHandoff: autoHandoffWithWarnings(deps, codexHome, warnings),
+		tuiSuggestion: inspectTuiSuggestion(deps.fs, join(codexHome, "config.toml")),
 		issues,
 		warnings,
 	};

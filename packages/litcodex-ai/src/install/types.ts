@@ -114,6 +114,18 @@ export interface DoctorReport {
 	readonly jevSkillHint?: JevSkillHintState;
 	/** Opt-in automatic handoff: off by default; the percent comes from the user. */
 	readonly autoHandoff?: AutoHandoffDoctorReport;
+	/** Built-in Codex status line / terminal title snippet; null when the config already sets both. */
+	readonly tuiSuggestion?: TuiSuggestion | null;
+}
+
+export type TuiSuggestionKey = "status_line" | "terminal_title";
+
+export interface TuiSuggestion {
+	readonly missing: readonly TuiSuggestionKey[];
+	/** Where the snippet goes: a new `[tui]` table, under the existing one, or as root `tui.` keys. */
+	readonly placement: "new-table" | "existing-table" | "root-dotted";
+	readonly configPath: string;
+	readonly snippet: string;
 }
 
 export interface AutoHandoffDoctorReport {

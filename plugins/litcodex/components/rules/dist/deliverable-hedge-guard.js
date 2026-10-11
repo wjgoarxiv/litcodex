@@ -7,39 +7,20 @@ const MAX_PATHS = 64;
 const MAX_OUTPUT_BYTES = 512 * 1024;
 const DETECTOR_TIMEOUT_MS = 1500;
 const DEFAULT_DETECTOR = resolve(dirname(fileURLToPath(import.meta.url)), "../../../skills/lit-humanizer/scripts/detect.mjs");
-const TEXT_EXTENSIONS = new Set([
+/**
+ * Reader-facing prose formats. Block-tier rules are prose rules (a line-start `Source:` label, for
+ * example), so they apply only here; code and data files such as YAML keys or Python docstrings
+ * are never scanned.
+ */
+export const HUMANIZER_PROSE_EXTENSIONS = new Set([
     ".adoc",
-    ".c",
-    ".cc",
-    ".cpp",
-    ".css",
-    ".csv",
-    ".go",
-    ".h",
     ".html",
-    ".java",
-    ".js",
-    ".jsx",
-    ".jsonc",
+    ".markdown",
     ".md",
     ".mdx",
-    ".mjs",
-    ".php",
-    ".py",
-    ".rb",
     ".rst",
-    ".rs",
-    ".sh",
-    ".sql",
-    ".svg",
     ".tex",
-    ".toml",
-    ".ts",
-    ".tsx",
     ".txt",
-    ".xml",
-    ".yaml",
-    ".yml",
 ]);
 const OFFICE_EXTENSIONS = new Set([".docx", ".pdf", ".pptx"]);
 const WRITER_TOOLS = new Set([
@@ -87,7 +68,7 @@ export function runHumanizerPreToolUse(input, options = {}) {
             return contextOutput("PreToolUse", FAIL_OPEN_NOTE);
         const text = writes
             .filter((part) => !isInternalPath(part.path) && !isOfficePath(part.path))
-            .filter((part) => part.path === undefined || TEXT_EXTENSIONS.has(extname(part.path).toLowerCase()))
+            .filter((part) => part.path === undefined || HUMANIZER_PROSE_EXTENSIONS.has(extname(part.path).toLowerCase()))
             .map((part) => changedText(part, input.cwd))
             .join("\n\n");
         if (text.length === 0)
@@ -191,9 +172,9 @@ function collectPostToolPaths(input) {
     }
     return paths;
 }
-const WRITABLE_EXTENSIONS = new Set([...TEXT_EXTENSIONS, ...OFFICE_EXTENSIONS]);
+const WRITABLE_EXTENSIONS = new Set([...HUMANIZER_PROSE_EXTENSIONS, ...OFFICE_EXTENSIONS]);
 function isTextPath(path) {
-    return TEXT_EXTENSIONS.has(extname(path).toLowerCase());
+    return HUMANIZER_PROSE_EXTENSIONS.has(extname(path).toLowerCase());
 }
 function shellOutputPaths(command) {
     const intent = /(?:^|\s)(?:>>?|\d?>)\s*|--output(?:=|\s+)|\s-o\s+/iu.test(command);

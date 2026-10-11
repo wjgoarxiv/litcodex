@@ -183,8 +183,9 @@ to read that packet and the project goals before continuing.
 | Verify | Evidence for each completed criterion; blockers stay open |
 | Hand off | Decisions, remaining work, and where to resume |
 
-Native Codex goals and the local loop ledger have separate boundaries. A paused or blocked native
-goal needs the documented recovery step below; a handoff does not silently resume it.
+Native Codex goals and the local loop ledger have separate boundaries. When the native goal tools are
+missing, the agent keeps the local records and says that it could not sync the Codex goal. A paused or
+blocked native goal needs the documented recovery step below; a handoff does not silently resume it.
 
 ## The lit command family
 
@@ -226,7 +227,7 @@ For report or proposal output, bare `lit` loads `lit-docx`; for slide or present
 
 ## Automatic handoff
 
-Automatic handoff is opt-in. The [README section](../README.md#automatic-handoff-optional) explains it in plain
+Automatic handoff is opt-in. The [automatic handoff page](./auto-handoff.md) explains it in plain
 words; this section lists the pieces for anyone reading the hook setup.
 
 | Piece | Where it lives | What it does |

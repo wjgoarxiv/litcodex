@@ -1,6 +1,6 @@
 # Motion promo
 
-A 23-second film for the READMEs, in an English and a Korean version. It follows one small task through LitCodex. A
+A 23-second film, in an English and a Korean version, shown on the media pages ([English](../../media.md), [한국어](../../media-Ko-KR.md)). It follows one small task through LitCodex. A
 request starts with `lit` and becomes a goal with four checks. Three checks turn green once evidence is recorded, and
 one stays open. A handoff sheet carries the open check into the next session, where it turns green and grows into the
 closing emblem, and `litcodex doctor` reports that all checks passed. The task, its four checks and the layout of the
@@ -11,10 +11,10 @@ Files:
 
 - `promo.mp4` and `promo-ko.mp4`: the masters. 1920x1080, 60 fps, 23.4 s, H.264 with a generated music bed (AAC),
   about 6.3 MiB each.
-- `promo-preview.webp` and `promo-ko-preview.webp`: the inline animated previews shown in the READMEs. 960x540, 30 fps,
+- `promo-preview.webp` and `promo-ko-preview.webp`: the inline animated previews shown on the media pages. 960x540, 30 fps,
   about 1.8 MiB and 1.6 MiB. The last 0.6 s dissolves into the first frame so the loop has no hard seam.
 - `promo-poster.png` and `promo-still.webp` (and the `promo-ko-` pair): the poster (the handoff beat) and the finished
-  last frame. The README uses the last frame for readers who prefer reduced motion.
+  last frame. The media pages use the last frame for readers who prefer reduced motion.
 - `source/`: the editable pages (`index.html` for English and `index-ko.html` for Korean, each with its copy in the
   `COPY_SET` object) and the plans the films were built from (`treatment.json`, `treatment-ko.json`).
 

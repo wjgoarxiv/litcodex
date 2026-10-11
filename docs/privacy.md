@@ -66,11 +66,11 @@ through a symlink. With `LITCODEX_JEV_TRACE=1`,
 latency, HTTP status and fallback reason; it never records the text, the response body or the key.
 TypeSafe bills the key's owner. Unset `LITCODEX_JEV` and restart Codex to stop the requests.
 
-The README shows what appears on screen in each state under [What you will see](../README.md#what-you-will-see).
+The [Jev page](./jev-skill-hint.md#what-you-will-see) shows what appears on screen in each state.
 
 ## Automatic handoff
 
-The [automatic handoff](../README.md#automatic-handoff-optional) is off by default and sends nothing anywhere. It
+The [automatic handoff](./auto-handoff.md) is off by default and sends nothing anywhere. It
 uses four local files and no network:
 
 - `.litcodex/auto-handoff/settings.json` holds your choice: a format version, whether the option is on, and the

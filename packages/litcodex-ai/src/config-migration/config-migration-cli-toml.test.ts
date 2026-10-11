@@ -85,9 +85,40 @@ describe("#given the validateTomlShape grammar #when checked #then R1/R2/R3 + ac
 		expect(validateTomlShape(config).ok).toBe(true);
 	});
 
+	it("accepts multi-line array rows that end in a comma, at root and inside a table", () => {
+		const root = 'pairs = [\n  ["a"],\n  ["b"],\n]\nx = 1\n\n[tui]\ny = 2\n';
+		expect(validateTomlShape(root)).toEqual({ ok: true, reason: null, line: null });
+		const section = '[tui]\nrows = [\n  ["a"],\n  { k = "v" },\n]\n';
+		expect(validateTomlShape(section)).toEqual({ ok: true, reason: null, line: null });
+	});
+
+	it("accepts a `[` line inside a table-scoped multi-line string", () => {
+		const config = '[profiles.x]\nnote = """\n[not a header\n"""\nmodel = "m"\n';
+		expect(validateTomlShape(config)).toEqual({ ok: true, reason: null, line: null });
+	});
+
+	it("still checks headers after an unclosed array", () => {
+		const result = validateTomlShape("x = [\n1,\n[features\ny = 1\n");
+		expect(result.reason).toBe("unbalanced-section-header");
+		expect(result.line).toBe(3);
+	});
+
 	it("STILL rejects a real stray bracket outside any quote (no over-acceptance)", () => {
 		expect(validateTomlShape("[a]b]\nx = 1\n").reason).toBe("unbalanced-section-header");
 		expect(validateTomlShape('[projects."ok"\ny = 1\n').reason).toBe("unbalanced-section-header");
+	});
+});
+
+describe("#given a multi-line array with comma rows #when migrating #then the config is accepted", () => {
+	it("migrates and keeps root keys at root above a commented header", async () => {
+		const codexHome = newDir();
+		writeConfig(codexHome, 'pairs = [\n  ["a"],\n  ["b"],\n]\n\n[mcp_servers.x] # server\ncommand = "srv"\n');
+		await migrateCodexConfig({ env: isolatedEnv(codexHome), cwd: newDir(), mode: "install" });
+		const out = readFileSync(join(codexHome, "config.toml"), "utf8");
+		expect(out).toContain('pairs = [\n  ["a"],\n  ["b"],\n]\n');
+		const root = out.slice(0, out.indexOf("[mcp_servers.x] # server"));
+		expect(root).toContain('model = "gpt-6-astra"');
+		expect(out.slice(out.indexOf("[mcp_servers.x] # server"))).not.toMatch(/^model/mu);
 	});
 });
 

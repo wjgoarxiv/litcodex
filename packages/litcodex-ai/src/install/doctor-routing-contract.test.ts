@@ -19,7 +19,8 @@ afterEach(() => {
 const DOCTOR_BOUNDARY_DOCS = [
 	fileURLToPath(new URL("./index.ts", import.meta.url)),
 	fileURLToPath(new URL("../../README.md", import.meta.url)),
-	fileURLToPath(new URL("../../../../README.md", import.meta.url)),
+	// The landing README keeps a short update note; the full mutation boundary lives in the install guide.
+	fileURLToPath(new URL("../../../../docs/install.md", import.meta.url)),
 	fileURLToPath(new URL("../../../../plugins/litcodex/skills/litcodex-doctor/SKILL.md", import.meta.url)),
 ] as const;
 

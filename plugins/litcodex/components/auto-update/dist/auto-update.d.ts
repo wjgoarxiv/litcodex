@@ -1,5 +1,13 @@
 export declare const AUTO_UPDATE_PACKAGE: "@litfamily/litcodex";
 export declare const DEFAULT_AUTO_UPDATE_TIMEOUT_MS = 10000;
+/**
+ * Limit for each install step: the global npm install, the target's Codex install, and both rollbacks.
+ * Measured on 2026-10-11 against the public registry from an empty npm cache: the global install with its
+ * postinstall pre-warm took 1.7-5.6 s and the target's Codex install took 7.9-14.1 s, so the old shared
+ * 10 s limit could cut the Codex step. Sixty seconds is about ten times the slowest npm install and four
+ * times the slowest Codex install, while one stuck step still cannot hold a session for long.
+ */
+export declare const DEFAULT_AUTO_UPDATE_INSTALL_TIMEOUT_MS = 60000;
 export declare const DEFAULT_AUTO_UPDATE_INTERVAL_MS: number;
 export declare const DEFAULT_AUTO_UPDATE_RETRY_INTERVAL_MS: number;
 export declare const DEFAULT_AUTO_UPDATE_LOCK_STALE_MS: number;
@@ -27,6 +35,7 @@ export interface AutoUpdateVerification {
     readonly observedVersion?: string | undefined;
     readonly doctorStatus: AutoUpdateDoctorStatus;
     readonly doctorDetail?: string | undefined;
+    readonly codexInstallAttempted?: boolean | undefined;
     readonly detail: string;
 }
 export interface AutoUpdateSpawnOptions {
@@ -48,6 +57,7 @@ export interface AutoUpdateVerifyOptions {
     readonly cwd: string;
     readonly env: NodeJS.ProcessEnv;
     readonly timeout: number;
+    readonly installTimeout?: number;
     readonly spawn: AutoUpdateSpawn;
 }
 export type AutoUpdateVerify = (expectedVersion: string, options: AutoUpdateVerifyOptions) => AutoUpdateVerification;
@@ -77,6 +87,7 @@ export interface AutoUpdateRunOptions extends AutoUpdatePlanOptions {
     readonly stateRoot?: string;
     readonly cwd?: string;
     readonly timeoutMs?: number;
+    readonly installTimeoutMs?: number;
     readonly lockStaleMs?: number;
     readonly spawn?: AutoUpdateSpawn;
     readonly verifyInstalled?: AutoUpdateVerify;
@@ -110,8 +121,12 @@ export declare function resolveAutoUpdatePlan(options: AutoUpdatePlanOptions): A
 /**
  * Prove that npm's global executable resolves to the exact version that the install command targeted.
  * npm can return exit 0 for a no-op, warning, or partially successful lifecycle, so the install result
- * is never treated as committed until this independent version probe agrees.
+ * is never treated as committed until this independent version probe agrees. Only that exact package
+ * then installs itself into Codex (managed marketplace and plugin cache); its doctor runs last, because
+ * the doctor fails while Codex still holds the previous plugin version.
  */
 export declare function verifyInstalledVersion(expectedVersion: string, options: AutoUpdateVerifyOptions): AutoUpdateVerification;
 export declare function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpdateResult;
+/** The longest one transaction can run: three probes plus four install steps (two forward, two back). */
+export declare function autoUpdateWorstCaseMs(timeout?: number, installTimeout?: number): number;
 export declare function readAutoUpdateReceipt(stateRoot?: string): AutoUpdateReceipt | null;

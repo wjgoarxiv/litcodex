@@ -82,6 +82,8 @@ export interface ExpectedHook {
 	readonly statusMessage: string;
 	/** PreToolUse-style tool matcher (regex string), or undefined for a whole-event hook. */
 	readonly matcher?: string;
+	/** Highest accepted `timeout` in seconds; 60 when absent. */
+	readonly maxTimeout?: number;
 }
 
 /** The single source of truth for every hook the aggregate manifest is allowed to register. */
@@ -162,6 +164,9 @@ export const EXPECTED_HOOKS: readonly ExpectedHook[] = Object.freeze([
 		event: "SessionStart",
 		subcommand: "session-start",
 		statusMessage: activationStatusMessage(AUTO_UPDATE_COMPONENT_DIR),
+		// The updater installs a package and its Codex plugin, and may roll both back, inside this hook.
+		// Codex does not clamp SessionStart timeouts, so this hook alone may wait out that transaction.
+		maxTimeout: 300,
 	}),
 	Object.freeze({
 		component: RULES_COMPONENT_DIR,

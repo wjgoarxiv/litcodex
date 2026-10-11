@@ -17,6 +17,14 @@ import { dirname, join } from "node:path";
 
 export const AUTO_UPDATE_PACKAGE = "@litfamily/litcodex" as const;
 export const DEFAULT_AUTO_UPDATE_TIMEOUT_MS = 10_000;
+/**
+ * Limit for each install step: the global npm install, the target's Codex install, and both rollbacks.
+ * Measured on 2026-10-11 against the public registry from an empty npm cache: the global install with its
+ * postinstall pre-warm took 1.7-5.6 s and the target's Codex install took 7.9-14.1 s, so the old shared
+ * 10 s limit could cut the Codex step. Sixty seconds is about ten times the slowest npm install and four
+ * times the slowest Codex install, while one stuck step still cannot hold a session for long.
+ */
+export const DEFAULT_AUTO_UPDATE_INSTALL_TIMEOUT_MS = 60_000;
 export const DEFAULT_AUTO_UPDATE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 export const DEFAULT_AUTO_UPDATE_RETRY_INTERVAL_MS = 30 * 60 * 1000;
 export const DEFAULT_AUTO_UPDATE_LOCK_STALE_MS = 10 * 60 * 1000;
@@ -68,6 +76,7 @@ export interface AutoUpdateVerification {
 	readonly observedVersion?: string | undefined;
 	readonly doctorStatus: AutoUpdateDoctorStatus;
 	readonly doctorDetail?: string | undefined;
+	readonly codexInstallAttempted?: boolean | undefined;
 	readonly detail: string;
 }
 
@@ -97,6 +106,7 @@ export interface AutoUpdateVerifyOptions {
 	readonly cwd: string;
 	readonly env: NodeJS.ProcessEnv;
 	readonly timeout: number;
+	readonly installTimeout?: number;
 	readonly spawn: AutoUpdateSpawn;
 }
 
@@ -143,6 +153,7 @@ export interface AutoUpdateRunOptions extends AutoUpdatePlanOptions {
 	readonly stateRoot?: string;
 	readonly cwd?: string;
 	readonly timeoutMs?: number;
+	readonly installTimeoutMs?: number;
 	readonly lockStaleMs?: number;
 	readonly spawn?: AutoUpdateSpawn;
 	readonly verifyInstalled?: AutoUpdateVerify;
@@ -192,6 +203,15 @@ const SAFE_ENV_KEYS = [
 	"TEMP",
 	"LANG",
 	"LC_ALL",
+] as const;
+
+// These name the Codex host being managed. The target package's install, version probe and doctor
+// must act on the same host as the session that started the update, so only those children get them.
+const CODEX_HOST_ENV_KEYS = [
+	"CODEX_HOME",
+	"CODEX_BIN",
+	"LITCODEX_DATA_ROOT",
+	"LITCODEX_AUTO_UPDATE_STATE_ROOT",
 ] as const;
 
 function parseStableVersion(version: unknown): readonly [bigint, bigint, bigint] | null {
@@ -275,6 +295,28 @@ function withSanitizedNpmEnvironment<T>(env: NodeJS.ProcessEnv, operation: (safe
 	} finally {
 		rmSync(sandbox.root, { recursive: true, force: true });
 	}
+}
+
+function withCodexHost(safe: NodeJS.ProcessEnv, env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+	const host: NodeJS.ProcessEnv = { ...safe };
+	for (const key of CODEX_HOST_ENV_KEYS) {
+		const value = env[key];
+		if (value !== undefined) host[key] = value;
+	}
+	return host;
+}
+
+function installIntoCodex(
+	command: string,
+	options: Pick<AutoUpdateVerifyOptions, "cwd" | "env" | "spawn">,
+	timeout: number,
+): AutoUpdateSpawnResult {
+	return options.spawn(command, ["exec", "--global", "--", "litcodex", "install", "--no-auto-update"], {
+		cwd: options.cwd,
+		env: options.env,
+		timeout,
+		stdio: "ignore",
+	});
 }
 
 export function sanitizeNpmEnvironment(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
@@ -497,7 +539,9 @@ function latestFromRegistry(
 /**
  * Prove that npm's global executable resolves to the exact version that the install command targeted.
  * npm can return exit 0 for a no-op, warning, or partially successful lifecycle, so the install result
- * is never treated as committed until this independent version probe agrees.
+ * is never treated as committed until this independent version probe agrees. Only that exact package
+ * then installs itself into Codex (managed marketplace and plugin cache); its doctor runs last, because
+ * the doctor fails while Codex still holds the previous plugin version.
  */
 export function verifyInstalledVersion(
 	expectedVersion: string,
@@ -540,6 +584,21 @@ export function verifyInstalledVersion(
 			detail: `global litcodex resolved ${observedVersion}; expected ${expectedVersion}`,
 		};
 	}
+	const codexInstall = installIntoCodex(
+		options.command,
+		options,
+		positiveTimeout(options.installTimeout, DEFAULT_AUTO_UPDATE_INSTALL_TIMEOUT_MS),
+	);
+	if (!spawnSucceeded(codexInstall)) {
+		return {
+			status: "unavailable",
+			expectedVersion,
+			observedVersion,
+			doctorStatus: "not-run",
+			codexInstallAttempted: true,
+			detail: `target litcodex install exited ${String(codexInstall.status)}`,
+		};
+	}
 	const doctorArgs = ["exec", "--global", "--", "litcodex", "doctor", "--json", "--no-auto-update"] as const;
 	const doctorResult = options.spawn(options.command, doctorArgs, {
 		cwd: options.cwd,
@@ -554,6 +613,7 @@ export function verifyInstalledVersion(
 			observedVersion,
 			doctorStatus: "failed",
 			doctorDetail: `target litcodex doctor --json exited ${String(doctorResult.status)}`,
+			codexInstallAttempted: true,
 			detail: `global litcodex resolved exact ${expectedVersion}, but target doctor did not pass`,
 		};
 	}
@@ -576,6 +636,7 @@ export function verifyInstalledVersion(
 			observedVersion,
 			doctorStatus: "failed",
 			doctorDetail: "target litcodex doctor --json reported unhealthy or malformed output",
+			codexInstallAttempted: true,
 			detail: `global litcodex resolved exact ${expectedVersion}, but target doctor did not pass`,
 		};
 	}
@@ -585,7 +646,8 @@ export function verifyInstalledVersion(
 		observedVersion,
 		doctorStatus: "passed",
 		doctorDetail: "target litcodex doctor --json passed",
-		detail: `global litcodex resolved exact ${expectedVersion}; target doctor passed`,
+		codexInstallAttempted: true,
+		detail: `global litcodex resolved exact ${expectedVersion}; installed into Codex; target doctor passed`,
 	};
 }
 
@@ -603,25 +665,35 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 		options.timeoutMs,
 		positiveInteger(env["LITCODEX_AUTO_UPDATE_TIMEOUT_MS"], DEFAULT_AUTO_UPDATE_TIMEOUT_MS),
 	);
+	const installTimeout = positiveTimeout(
+		options.installTimeoutMs,
+		positiveInteger(env["LITCODEX_AUTO_UPDATE_INSTALL_TIMEOUT_MS"], DEFAULT_AUTO_UPDATE_INSTALL_TIMEOUT_MS),
+	);
 	const state = readState(statePath);
-	const latestVersion =
-		options.latestVersion ?? env["LITCODEX_LATEST_VERSION"] ?? latestFromRegistry(env, spawn, cwd, timeout);
-	const plan = resolveAutoUpdatePlan({
+	const planOptions = {
 		...options,
 		env,
 		now,
-		latestVersion,
 		lastCheckedAt: state.lastCheckedAt,
 		lastAttemptedAt: state.lastAttemptedAt,
 		lastStatus: state.lastStatus,
-	});
+	};
+	// Every opt-out and throttle is decided before the registry is asked, so a throttled session never
+	// spends a network round trip. The registry is consulted only when nothing else stopped the run.
+	let plan = resolveAutoUpdatePlan(planOptions);
+	if (plan.reason === "unknown-latest" && (options.latestVersion ?? env["LITCODEX_LATEST_VERSION"]) === undefined) {
+		plan = resolveAutoUpdatePlan({ ...planOptions, latestVersion: latestFromRegistry(env, spawn, cwd, timeout) });
+	}
 	if (!plan.shouldRun) {
 		const result = noRunResult(plan, stateRoot, startedAt);
+		const earlierFailure = unresolvedFailure(readAutoUpdateReceipt(stateRoot), plan);
 		if (options.writeReceipt !== false) {
 			atomicJson(journalPath, { phase: "skipped", ...result });
-			atomicJson(receiptPath, result);
+			if (!earlierFailure) atomicJson(receiptPath, result);
 		}
-		if (plan.reason === "up-to-date") atomicJson(statePath, { ...state, lastCheckedAt: now, lastStatus: "success" });
+		if (plan.reason === "up-to-date") {
+			atomicJson(statePath, { ...state, lastCheckedAt: now, ...(earlierFailure ? {} : { lastStatus: "success" }) });
+		}
 		return result;
 	}
 
@@ -631,7 +703,7 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 		now,
 		Math.max(
 			positiveInteger(env["LITCODEX_AUTO_UPDATE_LOCK_STALE_MS"], DEFAULT_AUTO_UPDATE_LOCK_STALE_MS),
-			timeout * 5 + 30_000,
+			autoUpdateWorstCaseMs(timeout, installTimeout) + 30_000,
 		),
 	);
 	if (lockToken === null) {
@@ -666,7 +738,7 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 			spawn(command, args, {
 				cwd,
 				env: safeEnv,
-				timeout,
+				timeout: installTimeout,
 				stdio: "ignore",
 			}),
 		);
@@ -683,8 +755,9 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 					(options.verifyInstalled ?? verifyInstalledVersion)(plan.latestVersion as string, {
 						command,
 						cwd,
-						env: safeEnv,
+						env: withCodexHost(safeEnv, env),
 						timeout,
+						installTimeout,
 						spawn,
 					}),
 				);
@@ -753,7 +826,7 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 						{
 							cwd,
 							env: safeEnv,
-							timeout,
+							timeout: installTimeout,
 							stdio: "ignore",
 						},
 					),
@@ -762,6 +835,20 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 				rollbackSignal = rollback.signal;
 				rollbackError = rollback.error;
 				rollbackSucceeded = spawnSucceeded(rollback);
+				if (rollbackSucceeded && verification.codexInstallAttempted === true) {
+					// The target already wrote its plugin into Codex, so the restored package reinstalls its own.
+					const restore = withSanitizedNpmEnvironment(env, (safeEnv) =>
+						installIntoCodex(command, { cwd, env: withCodexHost(safeEnv, env), spawn }, installTimeout),
+					);
+					rollbackStatus = restore.status;
+					rollbackSignal = restore.signal;
+					rollbackError =
+						restore.error ??
+						(spawnSucceeded(restore)
+							? undefined
+							: new Error(`restoring the ${plan.currentVersion} Codex plugin exited ${String(restore.status)}`));
+					rollbackSucceeded = spawnSucceeded(restore);
+				}
 			} catch (error) {
 				rollbackError = error instanceof Error ? error : new Error("rollback probe failed");
 			}
@@ -810,6 +897,26 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 	} finally {
 		releaseLock(lockPath, lockToken);
 	}
+}
+
+/** The longest one transaction can run: three probes plus four install steps (two forward, two back). */
+export function autoUpdateWorstCaseMs(
+	timeout = DEFAULT_AUTO_UPDATE_TIMEOUT_MS,
+	installTimeout = DEFAULT_AUTO_UPDATE_INSTALL_TIMEOUT_MS,
+): number {
+	return timeout * 3 + installTimeout * 4;
+}
+
+/**
+ * A failed or unknown-state receipt stays the visible receipt until an update attempt replaces it, or
+ * until an up-to-date check proves the failed target is installed, which makes that failure history.
+ */
+function unresolvedFailure(previous: AutoUpdateReceipt | null, plan: AutoUpdatePlan): boolean {
+	if (previous?.status !== "failed" && previous?.status !== "unknown-state") return false;
+	if (plan.reason !== "up-to-date" || previous.latestVersion === undefined || plan.currentVersion === undefined) {
+		return true;
+	}
+	return compareStableVersions(plan.currentVersion, previous.latestVersion) < 0;
 }
 
 export function readAutoUpdateReceipt(stateRoot = resolveAutoUpdateStateRoot()): AutoUpdateReceipt | null {

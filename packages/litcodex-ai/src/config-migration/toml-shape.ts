@@ -8,6 +8,8 @@
 // Accepts exotic-but-valid TOML: multiline strings ("""/'''), arrays-of-tables
 // ([[...]]), inline arrays/tables, section-scoped clipped strings.
 
+import { stripTomlComment, tomlLineKinds } from "./toml-lines.js";
+
 export type TomlShapeRejection =
 	| "unterminated-string" // Rule R1
 	| "unbalanced-section-header" // Rule R2
@@ -25,19 +27,17 @@ const GUARD_HEADER = "[features.multi_agent_v2]";
 /** Validate the structural shape. Pure, never throws. */
 export function validateTomlShape(config: string): TomlShapeResult {
 	const lines = config.split(/\n/);
+	const kinds = tomlLineKinds(lines);
 	let inRoot = true;
 	let guardCount = 0;
-	let multilineCloser: string | null = null;
 
 	for (let i = 0; i < lines.length; i++) {
 		const raw = lines[i] ?? "";
 		const lineNo = i + 1;
 
-		// Inside an open multiline string: skip until the closer appears.
-		if (multilineCloser !== null) {
-			if (raw.includes(multilineCloser)) {
-				multilineCloser = null;
-			}
+		// Inside an open multi-line value (array, inline table, or multi-line string): an array row such
+		// as `["a"],` or a `[` line inside a string is not a header.
+		if (kinds[i] === "continuation") {
 			continue;
 		}
 
@@ -52,7 +52,7 @@ export function validateTomlShape(config: string): TomlShapeResult {
 				return reject("unbalanced-section-header", lineNo);
 			}
 			// R3 — duplicate [features.multi_agent_v2] table.
-			if (stripInlineComment(trimmed) === GUARD_HEADER) {
+			if (stripTomlComment(trimmed).trim() === GUARD_HEADER) {
 				guardCount += 1;
 				if (guardCount >= 2) {
 					return reject("duplicate-multi-agent-v2", lineNo);
@@ -64,10 +64,8 @@ export function validateTomlShape(config: string): TomlShapeResult {
 
 		// R1 — only root-scope scalar lines are checked.
 		if (inRoot) {
-			const opener = multilineOpener(raw);
-			if (opener !== null) {
-				// A multiline opener whose closer is NOT on the same line opens a block.
-				multilineCloser = opener;
+			if (multilineOpener(raw) !== null) {
+				// A multiline opener whose closer is NOT on the same line opens a block; its rows are continuation lines.
 				continue;
 			}
 			if (hasUnterminatedQuote(raw, '"') || hasUnterminatedQuote(raw, "'")) {
@@ -124,11 +122,6 @@ function hasUnterminatedQuote(line: string, delim: string): boolean {
 		backslashes = ch === "\\" ? backslashes + 1 : 0;
 	}
 	return count % 2 === 1;
-}
-
-function stripInlineComment(line: string): string {
-	const idx = line.indexOf("#");
-	return idx === -1 ? line.trim() : line.slice(0, idx).trim();
 }
 
 /**

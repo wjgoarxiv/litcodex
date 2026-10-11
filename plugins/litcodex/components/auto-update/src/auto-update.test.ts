@@ -4,6 +4,8 @@ import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+	type AutoUpdateSpawn,
+	autoUpdateWorstCaseMs,
 	DEFAULT_AUTO_UPDATE_TIMEOUT_MS,
 	resolveAutoUpdatePlan,
 	resolveNpmCommand,
@@ -291,7 +293,7 @@ describe("foreground auto-update transaction", () => {
 		expect(calls[0]?.args).toEqual(["exec", "--global", "--", "litcodex", "--version"]);
 	});
 
-	it("requires a healthy target-package doctor after the exact version probe", () => {
+	it("installs the exact target into Codex, then requires its healthy doctor", () => {
 		const calls: readonly (readonly string[])[] = [];
 		const result = verifyInstalledVersion("1.2.4", {
 			command: "npm",
@@ -308,6 +310,7 @@ describe("foreground auto-update transaction", () => {
 		expect(result).toMatchObject({ status: "verified", doctorStatus: "passed", observedVersion: "1.2.4" });
 		expect(calls).toEqual([
 			["exec", "--global", "--", "litcodex", "--version"],
+			["exec", "--global", "--", "litcodex", "install", "--no-auto-update"],
 			["exec", "--global", "--", "litcodex", "doctor", "--json", "--no-auto-update"],
 		]);
 	});
@@ -418,6 +421,191 @@ describe("foreground auto-update transaction", () => {
 		}
 	});
 
+	it("installs the new plugin into Codex before the target doctor verifies it", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-foreground-update-codex-install-"));
+		try {
+			const host = statefulHost({ globalVersion: "1.2.3", marketplaceVersion: "1.2.3", registryVersion: "1.2.4" });
+			const result = runForegroundAutoUpdate({
+				env: { PATH: "/bin", CODEX_HOME: "/codex-home" },
+				now: 100,
+				currentVersion: "1.2.3",
+				source: "session-start",
+				stateRoot: root,
+				spawn: host.spawn,
+			});
+			expect(result.reason).toBeUndefined();
+			expect(result.status).toBe("updated");
+			expect(host.globalVersion).toBe("1.2.4");
+			expect(host.marketplaceVersion).toBe("1.2.4");
+			const codexInstall = host.calls.find(
+				(call) => call.args.includes("litcodex") && call.args.includes("install"),
+			);
+			expect(codexInstall?.args).toEqual(["exec", "--global", "--", "litcodex", "install", "--no-auto-update"]);
+			// The target package must manage the same Codex home as the session that started the update.
+			expect(codexInstall?.env["CODEX_HOME"]).toBe("/codex-home");
+			expect(codexInstall?.env["LITCODEX_NO_AUTO_UPDATE"]).toBe("1");
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it("gives installs a measured limit and keeps short probes on the probe limit", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-foreground-update-limits-"));
+		try {
+			const host = statefulHost({ globalVersion: "1.2.3", marketplaceVersion: "1.2.3", registryVersion: "1.2.4" });
+			runForegroundAutoUpdate({
+				env: {},
+				now: 100,
+				currentVersion: "1.2.3",
+				source: "session-start",
+				stateRoot: root,
+				spawn: host.spawn,
+			});
+			const installs = host.calls.filter((call) => call.args.includes("install"));
+			const probes = host.calls.filter((call) => !call.args.includes("install"));
+			expect(installs).toHaveLength(2);
+			expect(probes.map((call) => call.args.at(-1))).toEqual(["--json", "--version", "--no-auto-update"]);
+			for (const call of installs) expect(call.timeout).toBeGreaterThanOrEqual(60_000);
+			for (const call of probes) expect(call.timeout).toBe(DEFAULT_AUTO_UPDATE_TIMEOUT_MS);
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it("rolls the Codex plugin back with the package when the target doctor fails", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-foreground-update-codex-rollback-"));
+		try {
+			const host = statefulHost({
+				globalVersion: "1.2.3",
+				marketplaceVersion: "1.2.3",
+				registryVersion: "1.2.4",
+				unhealthyVersion: "1.2.4",
+			});
+			const result = runForegroundAutoUpdate({
+				env: {},
+				now: 100,
+				currentVersion: "1.2.3",
+				source: "session-start",
+				stateRoot: root,
+				spawn: host.spawn,
+			});
+			expect(result.status).toBe("failed");
+			expect(result.rollbackAttempted).toBe(true);
+			expect(result.reason).toContain("post-install-verification:unavailable");
+			expect(host.globalVersion).toBe("1.2.3");
+			expect(host.marketplaceVersion).toBe("1.2.3");
+			expect(JSON.parse(readFileSync(join(root, "journal.json"), "utf8"))).toMatchObject({ phase: "rolled-back" });
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it("leaves state unknown when the old Codex plugin cannot be restored", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-foreground-update-codex-restore-fail-"));
+		try {
+			const host = statefulHost({
+				globalVersion: "1.2.3",
+				marketplaceVersion: "1.2.3",
+				registryVersion: "1.2.4",
+				unhealthyVersion: "1.2.4",
+				codexInstallFailsFor: "1.2.3",
+			});
+			const result = runForegroundAutoUpdate({
+				env: {},
+				now: 100,
+				currentVersion: "1.2.3",
+				source: "management-command",
+				stateRoot: root,
+				spawn: host.spawn,
+			});
+			expect(result.status).toBe("unknown-state");
+			expect(result.reason).toContain("rollback-failed");
+			expect(host.marketplaceVersion).toBe("1.2.4");
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it("checks the throttle before it asks the registry", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-foreground-update-throttle-first-"));
+		try {
+			writeFileSync(join(root, "state.json"), JSON.stringify({ lastCheckedAt: 50, lastStatus: "success" }));
+			const host = statefulHost({ globalVersion: "1.2.3", marketplaceVersion: "1.2.3", registryVersion: "1.2.4" });
+			const result = runForegroundAutoUpdate({
+				env: {},
+				now: 100,
+				currentVersion: "1.2.3",
+				source: "session-start",
+				stateRoot: root,
+				spawn: host.spawn,
+			});
+			expect(result.status).toBe("throttled");
+			expect(host.calls).toHaveLength(0);
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it("keeps an earlier failure visible through later throttled and up-to-date checks", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-foreground-update-failure-visible-"));
+		try {
+			const failing = statefulHost({
+				globalVersion: "1.2.3",
+				marketplaceVersion: "1.2.3",
+				registryVersion: "1.2.4",
+				npmInstallFails: true,
+			});
+			const run = (now: number, spawn: AutoUpdateSpawn, currentVersion = "1.2.3") =>
+				runForegroundAutoUpdate({ env: {}, now, currentVersion, source: "session-start", stateRoot: root, spawn });
+			expect(run(100, failing.spawn).status).toBe("failed");
+			const receipt = () => JSON.parse(readFileSync(join(root, "receipt.json"), "utf8")) as Record<string, unknown>;
+			const state = () => JSON.parse(readFileSync(join(root, "state.json"), "utf8")) as Record<string, unknown>;
+
+			expect(run(200, failing.spawn).status).toBe("throttled");
+			expect(receipt()).toMatchObject({ status: "failed", latestVersion: "1.2.4" });
+
+			// The registry briefly reports the installed version: still short of the failed 1.2.4 target.
+			const retreated = statefulHost({
+				globalVersion: "1.2.3",
+				marketplaceVersion: "1.2.3",
+				registryVersion: "1.2.3",
+			});
+			expect(run(100 + 31 * 60 * 1000, retreated.spawn).status).toBe("up-to-date");
+			expect(receipt()).toMatchObject({ status: "failed", latestVersion: "1.2.4" });
+			expect(state()).toMatchObject({ lastStatus: "failed" });
+
+			// Once the failed target is installed, the failure is history and up-to-date may replace it.
+			const reached = statefulHost({
+				globalVersion: "1.2.4",
+				marketplaceVersion: "1.2.4",
+				registryVersion: "1.2.4",
+			});
+			expect(run(100 + 62 * 60 * 1000, reached.spawn, "1.2.4").status).toBe("up-to-date");
+			expect(receipt()).toMatchObject({ status: "up-to-date" });
+			expect(state()).toMatchObject({ lastStatus: "success" });
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it("lets the SessionStart hook and the CLI wait out the longest transaction", () => {
+		const { hooks } = JSON.parse(readFileSync(new URL("../../../hooks/hooks.json", import.meta.url), "utf8")) as {
+			hooks: Record<string, Array<{ hooks: Array<{ command: string; timeout: number }> }>>;
+		};
+		const hook = hooks["SessionStart"]
+			?.flatMap((group) => group.hooks)
+			.find((entry) => entry.command.includes("components/auto-update/dist/cli.js"));
+		expect((hook?.timeout ?? 0) * 1000).toBeGreaterThan(autoUpdateWorstCaseMs());
+		const cliSource = readFileSync(
+			new URL("../../../../../packages/litcodex-ai/src/auto-update.ts", import.meta.url),
+			"utf8",
+		);
+		const cliTimeout = Number(
+			/FOREGROUND_AUTO_UPDATE_TIMEOUT_MS = ([\d_]+)/u.exec(cliSource)?.[1]?.replaceAll("_", ""),
+		);
+		expect(cliTimeout).toBeGreaterThan(autoUpdateWorstCaseMs());
+	});
+
 	it("keeps only explicitly safe npm environment variables", () => {
 		const filtered = sanitizeNpmEnvironment({
 			PATH: "/bin",
@@ -453,3 +641,54 @@ describe("foreground auto-update transaction", () => {
 		expect(filtered).not.toHaveProperty("npm_config_//authToken");
 	});
 });
+
+interface HostCall {
+	readonly args: readonly string[];
+	readonly env: NodeJS.ProcessEnv;
+	readonly timeout: number;
+}
+
+/**
+ * A fake host that remembers what npm installed globally and which version the Codex marketplace
+ * holds. The target doctor is healthy only when both agree, as the real doctor's version check is.
+ */
+function statefulHost(options: {
+	readonly globalVersion: string;
+	readonly marketplaceVersion: string;
+	readonly registryVersion: string;
+	readonly unhealthyVersion?: string;
+	readonly codexInstallFailsFor?: string;
+	readonly npmInstallFails?: boolean;
+}) {
+	const host = {
+		globalVersion: options.globalVersion,
+		marketplaceVersion: options.marketplaceVersion,
+		calls: [] as HostCall[],
+		spawn: undefined as unknown as AutoUpdateSpawn,
+	};
+	host.spawn = (_command, args, spawnOptions) => {
+		host.calls.push({ args, env: spawnOptions.env, timeout: spawnOptions.timeout });
+		const ok = (stdout = "") => ({ status: 0, stdout, signal: null, error: undefined });
+		const fail = { status: 1, signal: null, error: undefined };
+		if (args[0] === "view") return ok(`${JSON.stringify(options.registryVersion)}\n`);
+		if (args[0] === "install") {
+			if (options.npmInstallFails && args.at(-1) !== `@litfamily/litcodex@${options.globalVersion}`) return fail;
+			host.globalVersion = String(args.at(-1)).split("@").at(-1) as string;
+			return ok();
+		}
+		const litcodex = args[0] === "exec" ? args.slice(args.indexOf("litcodex") + 1) : [];
+		if (litcodex[0] === "--version") return ok(`${host.globalVersion}\n`);
+		if (litcodex[0] === "install") {
+			if (options.codexInstallFailsFor === host.globalVersion) return fail;
+			host.marketplaceVersion = host.globalVersion;
+			return ok();
+		}
+		if (litcodex[0] === "doctor") {
+			const healthy =
+				host.marketplaceVersion === host.globalVersion && host.globalVersion !== options.unhealthyVersion;
+			return healthy ? ok('{"ok":true}\n') : { ...fail, stdout: '{"ok":false}\n' };
+		}
+		return fail;
+	};
+	return host;
+}

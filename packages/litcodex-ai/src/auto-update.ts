@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 
 import { type CheckGate, shouldCheck } from "./update-check.js";
 
-export const FOREGROUND_AUTO_UPDATE_TIMEOUT_MS = 55_000;
+/** Longer than the helper's worst case (three probes and four install steps), so it is never cut mid-rollback. */
+export const FOREGROUND_AUTO_UPDATE_TIMEOUT_MS = 300_000;
 
 export interface ForegroundAutoUpdateOptions extends CheckGate {
 	readonly current: string;

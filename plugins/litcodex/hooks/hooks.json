@@ -58,7 +58,7 @@
 					{
 						"type": "command",
 						"command": "node \"${PLUGIN_ROOT}/components/auto-update/dist/cli.js\" hook session-start",
-						"timeout": 60,
+						"timeout": 300,
 						"statusMessage": "\ud83d\udd25 LIT IGNITED \u00b7 auto-update \ud83d\udd25"
 					}
 				]

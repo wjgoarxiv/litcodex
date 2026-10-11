@@ -14,12 +14,12 @@ type Spawn = (
 	error?: Error;
 };
 
-function runner(codexHome: string): string {
+export function officeRuntimeScript(codexHome: string): string {
 	return join(managedMarketplaceRoot(codexHome), "plugins/litcodex/skills/lit-pptx/scripts/office-run.mjs");
 }
 
 function invoke(codexHome: string, command: "install" | "doctor", spawn: Spawn, env: NodeJS.ProcessEnv) {
-	const path = runner(codexHome);
+	const path = officeRuntimeScript(codexHome);
 	if (!existsSync(path)) return { status: null, stdout: "", error: new Error("Office skill payload is missing") };
 	return spawn(process.execPath, [path, command], { encoding: "utf8", env });
 }

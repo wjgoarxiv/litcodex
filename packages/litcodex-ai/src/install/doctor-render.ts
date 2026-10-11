@@ -1,5 +1,5 @@
 import { autoHandoffLine } from "./auto-handoff-doctor.js";
-import type { DoctorReport } from "./types.js";
+import type { DoctorReport, TuiSuggestion } from "./types.js";
 
 const MAX_RESOURCE_FAMILIES = 2;
 const MAX_RESOURCE_EXAMPLES = 2;
@@ -43,8 +43,27 @@ export function renderDoctorText(report: DoctorReport): string {
 		lines.push("Warnings:");
 		for (const warning of report.warnings) lines.push(`  - ${warning}`);
 	}
+	// A cosmetic tip would only crowd real issues, so it waits for a clean run.
+	if (report.issues.length === 0 && report.tuiSuggestion) lines.push(...tuiSuggestionLines(report.tuiSuggestion));
 	if (report.issues.length === 0) lines.push("All checks passed.");
 	return lines.join("\n");
+}
+
+function tuiSuggestionLines(suggestion: TuiSuggestion): string[] {
+	const what = suggestion.missing
+		.map((key) => (key === "status_line" ? "status line" : "terminal title"))
+		.join(" and ");
+	const commands = suggestion.missing.map((key) => (key === "status_line" ? "/statusline" : "/title")).join(" and ");
+	const where = {
+		"new-table": `paste this into ${suggestion.configPath}`,
+		"existing-table": `add these lines under the [tui] table in ${suggestion.configPath}`,
+		"root-dotted": `add these lines above the first table in ${suggestion.configPath}`,
+	}[suggestion.placement];
+	return [
+		`Suggestion: your Codex config has no built-in ${what}. LitCodex never edits it for you.`,
+		`  Pick items in Codex with ${commands}, or ${where}:`,
+		...suggestion.snippet.split("\n").map((line) => `    ${line}`),
+	];
 }
 
 function missingResourceSummary(paths: readonly string[]): string {

@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `litcodex --dry-run uninstall` (or `uninstall --dry-run`) now prints the removal plan and changes nothing.
+  Before, it ignored the flag and removed the plugin. A dry run of `office-runtime install`,
+  `motion-runtime install`, the writing `loop` subcommands and `hook` now also prints its step and applies nothing.
+  `uninstall`, `office-runtime install` and `motion-runtime install` now refuse an option they do not document
+  (such as `-n`) before doing anything, and `--dry-run=true` and `--dry-run=false` are understood.
+- The installer's config migration now ends the top level of `config.toml` at a table header that
+  carries a trailing comment, such as `[mcp_servers.x] # server`. Before, `model` and
+  `model_reasoning_effort` landed inside that table or replaced a commented profile's own values. An
+  array row such as `["b"]` inside a multi-line value is no longer mistaken for a header either.
+- The installer no longer refuses a valid `config.toml` whose multi-line array has rows ending in a
+  comma, such as `["a"],`. `litcodex uninstall` now removes its agent binding when the next table
+  header carries a trailing comment.
+- The prose check now applies only to prose files (Markdown, text, reStructuredText, AsciiDoc, HTML,
+  TeX), both before a write and when it checks a file a shell command wrote. A YAML `source:` key or
+  a `Source:` line in a Python docstring no longer blocks the write.
+- The deck check matches uppercase terms such as "RAM" and "FTO" in capitals only, so "my ram stick"
+  or "Ram Das" no longer warns.
+
 ## [1.0.18] - 2026-10-09
 
 ### Fixed

@@ -283,6 +283,10 @@ class PackGateCompanions(unittest.TestCase):
         # An all-uppercase acronym term stands as a word: "diagram" and "program" hold no RAM.
         self.assertEqual(forbidden('a diagram of the program')['soft_warnings'], [])
         self.assertTrue(forbidden('16 GB RAM per node')['soft_warnings'])
+        # The acronym is matched in capitals only: an ordinary lowercase or capitalised word is not it.
+        for body in ('my ram stick', 'Ram Das 강연', 'fto 검토'):
+            self.assertEqual(forbidden(body)['soft_warnings'], [], body)
+        self.assertTrue(forbidden('FTO 검토 결과')['soft_warnings'])
 
     def test_text_on_a_dark_slide_ground_is_judged_against_that_ground(self):
         def deck(colour):

@@ -14,10 +14,20 @@ import {
 import { acceptedModelIds, FALLBACK_CATALOG } from "./config-migration/catalog.js";
 import { runConfigMigrateCli } from "./config-migration/cli.js";
 import { resolveCodexHome } from "./install/codex.js";
-import { runDoctorCli, runInstallCli, runUninstallCli } from "./install/index.js";
+import { renderDryRunPlan, runDoctorCli, runInstallCli, runUninstallCli } from "./install/index.js";
 import { managedMarketplaceRoot } from "./install/marketplace.js";
-import { motionRuntimeStatus, prepareMotionRuntime, renderMotionRuntime } from "./install/motion-runtime.js";
-import { officeRuntimeNotice, officeRuntimeStatus, prepareOfficeRuntime } from "./install/office-runtime.js";
+import {
+	motionRuntimeScript,
+	motionRuntimeStatus,
+	prepareMotionRuntime,
+	renderMotionRuntime,
+} from "./install/motion-runtime.js";
+import {
+	officeRuntimeNotice,
+	officeRuntimeScript,
+	officeRuntimeStatus,
+	prepareOfficeRuntime,
+} from "./install/office-runtime.js";
 import { buildInstallPlan } from "./install/plan.js";
 import { renderInstallPlan } from "./install/render-plan.js";
 import { renderBanner, shouldDecorate } from "./ui.js";
@@ -211,7 +221,15 @@ export function dispatch(argv: readonly string[]): DispatchResult {
  * (M13, in-process), and the bundled `@litcodex/lit-loop` runtime routes `loop`/`hook`. Returns the
  * integer exit code; the bin owns `process.exit`. No forwarding, no exec-wrapper, no harness.
  */
-export async function runCli(argv: readonly string[]): Promise<number> {
+export async function runCli(rawArgv: readonly string[]): Promise<number> {
+	const normalized = normalizeDryRunValue(rawArgv);
+	if (typeof normalized === "string") {
+		process.stderr.write(
+			`litcodex: ${normalized} is not a valid --dry-run; use --dry-run, --dry-run=true or --dry-run=false. Nothing was changed.\n`,
+		);
+		return USAGE_EXIT_CODE;
+	}
+	const argv = normalized;
 	const dryRun = argv.includes("--dry-run");
 	const rest = argv.filter((token) => token !== "--dry-run");
 	const head = rest[0];
@@ -241,7 +259,16 @@ export async function runCli(argv: readonly string[]): Promise<number> {
 		if (head === "office-runtime") {
 			const mode = rest[1];
 			if (mode !== "install" && mode !== "status") return dispatchExit(dispatch(argv));
+			if (mode === "install") {
+				const refused = refuseUnknownOptions("office-runtime install", rest.slice(2), []);
+				if (refused !== undefined) return refused;
+			}
 			const codexHome = resolveCodexHome(process.env);
+			if (dryRun && mode === "install") {
+				return writeDryRun("litcodex office-runtime install", [
+					`Run the pinned Office installer: ${officeRuntimeScript(codexHome)} install`,
+				]);
+			}
 			const result = mode === "install" ? prepareOfficeRuntime(codexHome) : officeRuntimeStatus(codexHome);
 			process.stdout.write(`${officeRuntimeNotice(result.ready)}\n`);
 			return result.ready ? 0 : mode === "install" ? 3 : 4;
@@ -249,11 +276,20 @@ export async function runCli(argv: readonly string[]): Promise<number> {
 		if (head === "motion-runtime") {
 			const mode = rest[1];
 			const flags = rest.slice(2);
+			if (mode === "install") {
+				const refused = refuseUnknownOptions("motion-runtime install", flags, ["--audio", "--word-timing"]);
+				if (refused !== undefined) return refused;
+			}
 			const valid =
 				(mode === "install" && flags.every((flag) => flag === "--audio" || flag === "--word-timing")) ||
 				(mode === "status" && flags.length === 0);
 			if (!valid) return dispatchExit(dispatch(argv));
 			const codexHome = resolveCodexHome(process.env);
+			if (dryRun && mode === "install") {
+				return writeDryRun(`litcodex motion-runtime ${rest.slice(1).join(" ")}`, [
+					`Run the film renderer pre-warm: ${[motionRuntimeScript(codexHome), "install", ...flags].join(" ")}`,
+				]);
+			}
 			if (mode === "install") {
 				const result = prepareMotionRuntime(codexHome, flags);
 				process.stdout.write(
@@ -266,7 +302,17 @@ export async function runCli(argv: readonly string[]): Promise<number> {
 			return report.ready ? 0 : 4;
 		}
 		if (head === "uninstall") {
-			return runUninstallCli(rest.slice(1));
+			const refused = refuseUnknownOptions("uninstall", rest.slice(1), ["--json", "--no-tui", "--no-auto-update"]);
+			if (refused !== undefined) return refused;
+			return runUninstallCli(dryRun ? [...rest.slice(1), "--dry-run"] : rest.slice(1));
+		}
+		if (head === "loop" && dryRun && rest[1] !== undefined && Object.hasOwn(LOOP_WRITE_STEPS, rest[1])) {
+			return writeDryRun(`litcodex loop ${rest[1]}`, [LOOP_WRITE_STEPS[rest[1]] as string]);
+		}
+		if (head === "hook" && dryRun) {
+			return writeDryRun(`litcodex hook ${rest[1] ?? ""}`.trimEnd(), [
+				"Read the hook payload from stdin and run the hook (skipped: hooks change session and project state)",
+			]);
 		}
 		if (head === "loop") {
 			const { loopCommand } = await import("@litcodex/lit-loop/dist/loop-cli.js");
@@ -300,6 +346,57 @@ export async function runCli(argv: readonly string[]): Promise<number> {
 		writeCliBanner(argv);
 	}
 	return exitCode;
+}
+
+/** Loop subcommands that write project state; a `--dry-run` of these prints the step instead. */
+const LOOP_WRITE_STEPS: Readonly<Record<string, string>> = {
+	create: "Derive goals and criteria from the brief and write the project's lit-loop plan and ledger",
+	run: "Schedule the next runnable goal, update the lit-loop plan and append to the ledger",
+	checkpoint: "Set the goal's terminal status in the lit-loop plan and append to the ledger",
+	"record-evidence": "Record the criterion result and its evidence in the lit-loop plan and ledger",
+};
+
+const USAGE_EXIT_CODE = 64;
+
+/**
+ * `--dry-run=true` is `--dry-run`, `--dry-run=false` is an ordinary run. Any other value returns the
+ * offending token so the caller can refuse before doing anything.
+ */
+function normalizeDryRunValue(argv: readonly string[]): readonly string[] | string {
+	const out: string[] = [];
+	for (const token of argv) {
+		if (!token.startsWith("--dry-run=")) {
+			out.push(token);
+		} else if (token === "--dry-run=true") {
+			out.push("--dry-run");
+		} else if (token !== "--dry-run=false") {
+			return token;
+		}
+	}
+	return out;
+}
+
+/**
+ * State-changing routes accept only the options they document. An unknown option (such as `-n`)
+ * is refused before anything runs, so a mistyped dry run can never fall through to the real action.
+ */
+function refuseUnknownOptions(
+	command: string,
+	args: readonly string[],
+	allowed: readonly string[],
+): number | undefined {
+	const unknown = args.find((arg) => !allowed.includes(arg));
+	if (unknown === undefined) return undefined;
+	const accepted = ["--dry-run", ...allowed].join(", ");
+	process.stderr.write(
+		`litcodex ${command}: unknown option "${unknown}". Accepted: ${accepted}. Nothing was changed.\n`,
+	);
+	return USAGE_EXIT_CODE;
+}
+
+function writeDryRun(title: string, steps: readonly string[]): number {
+	process.stdout.write(renderDryRunPlan(title, steps));
+	return 0;
 }
 
 /** Update notices run only after a successful management command has completed. */

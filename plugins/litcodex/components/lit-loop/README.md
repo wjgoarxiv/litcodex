@@ -26,7 +26,7 @@ reads the context percent from the session transcript and, once per crossing, as
 handoff. The PostCompact hook, the SessionStart hook (source `compact`) and the next prompt bring the fresh
 handoff back once. `src/auto-handoff-settings.ts` holds the switch and the project `.codex/config.toml`
 line, `src/auto-handoff.ts` holds the crossing and reload logic, and the
-[root README](../../../../README.md#automatic-handoff-optional) explains it for users.
+[automatic handoff page](../../../../docs/auto-handoff.md) explains it for users.
 
 ## Loop state
 

@@ -1,13 +1,21 @@
 {
 	"name": "@litfamily/litcodex",
 	"version": "1.0.18",
-	"description": "Codex loop harness installer. Run `npm exec --package @litfamily/litcodex -- litcodex install` to set up the LitCodex Codex platform: the bare `lit` hook and the durable lit-loop runtime.",
+	"description": "Codex CLI plugin that turns a request into a goal with checks, keeps the evidence in your project and hands unfinished work to the next session.",
 	"keywords": [
 		"codex",
+		"codex-cli",
+		"codex-plugin",
+		"openai-codex",
 		"litcodex",
 		"lit-loop",
 		"ai-agents",
-		"orchestration"
+		"agent-workflow",
+		"planning",
+		"code-review",
+		"research",
+		"korean",
+		"office-documents"
 	],
 	"author": "LitCodex Authors",
 	"license": "MIT",

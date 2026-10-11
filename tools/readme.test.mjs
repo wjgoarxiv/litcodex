@@ -39,6 +39,19 @@ const PKG_README_KO = readFileSync(PKG_README_KO_PATH, "utf8");
 const USAGE = readFileSync(join(REPO_ROOT, "docs/usage.md"), "utf8");
 const USAGE_KO = readFileSync(join(REPO_ROOT, "docs/usage-Ko-KR.md"), "utf8");
 const CHANGELOG = readFileSync(CHANGELOG_PATH, "utf8");
+// Detail moved off the landing READMEs lives in these docs pages; each pair is [English, Korean].
+const DOC_PAGES = Object.freeze({
+	install: ["docs/install.md", "docs/install-Ko-KR.md"],
+	skills: ["docs/skills.md", "docs/skills-Ko-KR.md"],
+	autoHandoff: ["docs/auto-handoff.md", "docs/auto-handoff-Ko-KR.md"],
+	jev: ["docs/jev-skill-hint.md", "docs/jev-skill-hint-Ko-KR.md"],
+	media: ["docs/media.md", "docs/media-Ko-KR.md"],
+});
+const readDocPair = (key) => DOC_PAGES[key].map((rel) => readFileSync(join(REPO_ROOT, rel), "utf8"));
+const [MEDIA, MEDIA_KO] = readDocPair("media");
+const [SKILLS_DOC, SKILLS_DOC_KO] = readDocPair("skills");
+const [INSTALL_DOC, INSTALL_DOC_KO] = readDocPair("install");
+const [JEV_DOC, JEV_DOC_KO] = readDocPair("jev");
 
 // Test receipts stay isolated from the live LitCodex evidence ledger.
 const EVIDENCE_DIR = mkdtempSync(join(tmpdir(), "litcodex-readme-evidence-"));
@@ -120,8 +133,8 @@ describe("readme content invariants", () => {
 			),
 		);
 		const expected = `${rows.banner.map((row) => row.text.trimEnd()).join("\n")}\nLIT · codex\n`;
-		// The copyable ASCII lockup belongs to the GitHub pages; the npm pages open with the cover only.
-		for (const source of [README, README_KO]) {
+		// The copyable ASCII lockup lives on the media pages; the landing and npm pages open with the cover only.
+		for (const source of [MEDIA, MEDIA_KO]) {
 			assert.equal(source.split("```", 3)[1], `\n${expected}`);
 			assert.ok(!source.includes("\x1b"));
 		}
@@ -163,14 +176,27 @@ describe("readme content invariants", () => {
 		assert.match(README_KO, /src="\.\/docs\/assets\/cover-motion\.webp"/);
 		assert.ok(PKG_README.includes(NPM_COVER), "package README loads the cover from the published package");
 		assert.doesNotMatch(PKG_README, /raw\.githubusercontent/);
-		for (const source of [README, README_KO]) {
-			assert.match(source, /<p align="center"><img src="[^"]*docs\/assets\/readme\/ascii-readme\.svg"/);
+		for (const source of [MEDIA, MEDIA_KO]) {
+			assert.match(source, /<p align="center"><img src="\.\/assets\/readme\/ascii-readme\.svg"/);
 			assert.match(source, /<details>\s*<summary>[^<]+<\/summary>\s*```\n[\s\S]*?```\s*<\/details>/);
 			for (const name of Object.keys(assetPins).filter((name) => !name.endsWith(".txt"))) {
-				assert.ok(source.includes(`docs/assets/readme/${name}`), `README uses ${name}`);
+				assert.ok(source.includes(`./assets/readme/${name}`), `media page uses ${name}`);
 			}
-			assert.ok(source.includes("docs/assets/readme/README.md"), "README links media and license credits");
+			assert.ok(source.includes("./assets/readme/README.md"), "media page links media and license credits");
 			assert.doesNotMatch(source, /README visual draft|img\.shields\.io|unpkg\.com/);
+		}
+		// The landing READMEs carry live registry and repository badges: npm version, downloads, license, stars.
+		for (const source of [README, README_KO]) {
+			for (const badge of [
+				"https://img.shields.io/npm/v/@litfamily/litcodex",
+				"https://img.shields.io/npm/dm/@litfamily/litcodex",
+				"https://img.shields.io/npm/l/@litfamily/litcodex",
+				"https://img.shields.io/github/stars/wjgoarxiv/litcodex",
+			]) {
+				assert.ok(source.includes(badge), `landing README shows ${badge}`);
+			}
+			assert.doesNotMatch(source, /README visual draft|unpkg\.com/);
+			assert.ok(source.includes("./docs/media"), "landing README links the media page");
 		}
 		const npmHeroAssets = [
 			"badge-version.svg",
@@ -186,9 +212,9 @@ describe("readme content invariants", () => {
 			}
 			assert.doesNotMatch(source, /README visual draft|img\.shields\.io|unpkg\.com|raw\.githubusercontent/);
 		}
-		assert.match(README, /href="#install"/);
-		assert.match(README_KO, /href="#설치"/);
-		assert.match(README_KO, /<summary>ASCII 로고 복사<\/summary>/);
+		assert.ok(README.includes("](#install)"));
+		assert.ok(README_KO.includes("](#설치)"));
+		assert.match(MEDIA_KO, /<summary>ASCII 로고 복사<\/summary>/);
 	});
 
 	test("README images and linked references resolve in the product repository", () => {
@@ -266,14 +292,28 @@ describe("readme content invariants", () => {
 			assert.ok(bytes.equals(readFileSync(join(pkgSkills, name))), `package copy of ${name} matches`);
 			assert.ok(bytes.length <= 81_920, `${name} stays within 80 KB`);
 		}
-		for (const [source, heading, next, nav, base] of [
-			[README, "## Skills at a glance", "## How it works", "(#skills-at-a-glance)", "./docs/assets/skills"],
-			[README_KO, "## 스킬 한눈에 보기", "## 어떻게 동작하나요", "(#스킬-한눈에-보기)", "./docs/assets/skills"],
+		for (const [source, landing, heading, next, nav, base] of [
+			[
+				SKILLS_DOC,
+				README,
+				"## Skills at a glance",
+				"## Picking a skill by name",
+				"(./docs/skills.md)",
+				"./assets/skills",
+			],
+			[
+				SKILLS_DOC_KO,
+				README_KO,
+				"## 스킬 한눈에 보기",
+				"## 이름으로 스킬 고르기",
+				"(./docs/skills-Ko-KR.md)",
+				"./assets/skills",
+			],
 		]) {
-			assert.ok(source.includes(nav), `${heading} is linked from the top navigation`);
+			assert.ok(landing.includes(nav), `${heading} is linked from the landing README`);
 			const start = source.indexOf(`\n${heading}\n`);
 			const end = source.indexOf(`\n${next}\n`);
-			assert.ok(start > source.indexOf("\n## ") && start < end, `${heading} sits before the next section`);
+			assert.ok(start >= 0 && start < end, `${heading} sits before the next section`);
 			const rows = [
 				...source
 					.slice(start, end)
@@ -897,6 +937,12 @@ describe("GitHub and npm README split", () => {
 		["https://github.com/wjgoarxiv/litcodex", README],
 		["https://github.com/wjgoarxiv/litcodex/blob/main/README.md", README],
 		["https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md", README_KO],
+		...Object.values(DOC_PAGES)
+			.flat()
+			.map((rel) => [
+				`https://github.com/wjgoarxiv/litcodex/blob/main/${rel}`,
+				readFileSync(join(REPO_ROOT, rel), "utf8"),
+			]),
 	]);
 	const targetsOf = (source) => [
 		...Array.from(source.matchAll(/\]\(([^)\s]+)\)/g), (match) => match[1]),
@@ -933,7 +979,7 @@ describe("GitHub and npm README split", () => {
 		}
 	});
 
-	test("Jev snapshots appear on both GitHub pages and stay out of the npm package", () => {
+	test("Jev snapshots appear on both Jev pages and stay out of the npm package", () => {
 		const names = ["jev-off", "jev-on-notice", "jev-hint-shown", "jev-key-missing", "jev-doctor"];
 		const dir = join(REPO_ROOT, "docs/assets/jev");
 		const files = names.flatMap((name) => [`${name}-dark.webp`, `${name}-light.webp`]);
@@ -947,9 +993,13 @@ describe("GitHub and npm README split", () => {
 			assert.equal(bytes.subarray(0, 4).toString("latin1"), "RIFF", `${file} is a WebP`);
 			assert.equal(bytes.subarray(8, 12).toString("latin1"), "WEBP", `${file} is a WebP`);
 			assert.ok(bytes.length <= 65_536, `${file} stays under 64 KiB`);
-			for (const [, source] of GITHUB_READMES) {
-				assert.ok(source.includes(`./docs/assets/jev/${file}`), `GitHub README shows ${file}`);
+			for (const source of [JEV_DOC, JEV_DOC_KO]) {
+				assert.ok(source.includes(`./assets/jev/${file}`), `Jev page shows ${file}`);
 			}
+		}
+		for (const [path, source] of GITHUB_READMES) {
+			assert.ok(/\(\.\/docs\/jev-skill-hint(?:-Ko-KR)?\.md\)/.test(source), `${path} links the Jev page`);
+			assert.ok(!source.includes("docs/assets/jev"), `${path} keeps the Jev pictures on the Jev page`);
 		}
 		const packed = join(REPO_ROOT, "packages", "litcodex-ai", "readme-assets");
 		for (const file of files) assert.ok(!existsSync(join(packed, file)), `${file} is not in the npm payload`);
@@ -957,7 +1007,7 @@ describe("GitHub and npm README split", () => {
 			assert.ok(!source.includes("docs/assets/jev"), "npm cards carry no snapshots");
 	});
 
-	test("install, doctor, activation and loop snapshots appear on both GitHub pages and stay out of the npm package", () => {
+	test("install, doctor, activation and loop snapshots appear in both install guides and stay out of the npm package", () => {
 		const names = [
 			"screen-install-questions",
 			"screen-install-receipt",
@@ -977,20 +1027,39 @@ describe("GitHub and npm README split", () => {
 			assert.equal(bytes.subarray(0, 4).toString("latin1"), "RIFF", `${file} is a WebP`);
 			assert.equal(bytes.subarray(8, 12).toString("latin1"), "WEBP", `${file} is a WebP`);
 			assert.ok(bytes.length <= 65_536, `${file} stays under 64 KiB`);
-			for (const [, source] of GITHUB_READMES) {
-				assert.ok(source.includes(`./docs/assets/screens/${file}`), `GitHub README shows ${file}`);
+			for (const source of [INSTALL_DOC, INSTALL_DOC_KO]) {
+				assert.ok(source.includes(`./assets/screens/${file}`), `install guide shows ${file}`);
 			}
 		}
+		for (const source of [INSTALL_DOC, INSTALL_DOC_KO]) {
+			assert.ok(source.includes("./assets/screens/README.md"), "install guide links the media notes");
+		}
+		// The landing READMEs show the session film, an animated WebP, in the demo slot before the first section.
+		const film = readFileSync(join(REPO_ROOT, "docs/assets/demo.webp"));
+		assert.equal(film.subarray(0, 4).toString("latin1"), "RIFF", "demo.webp is a RIFF container");
+		assert.equal(film.subarray(8, 12).toString("latin1"), "WEBP", "demo.webp is a WebP");
+		assert.ok(film.length <= 8 * 1024 * 1024, `demo.webp stays within 8 MiB (${film.length} bytes)`);
+		assert.ok(!existsSync(join(REPO_ROOT, "docs/assets/demo.gif")), "the old demo GIF is gone");
 		for (const [path, source] of GITHUB_READMES) {
-			assert.ok(source.includes("./docs/assets/screens/README.md"), `${path} links the media notes`);
+			const demo = source.split("\n").find((line) => line.includes("<!-- demo-gif -->"));
+			assert.ok(demo, `${path} marks its demo slot`);
+			assert.match(
+				demo,
+				/<img src="\.\/docs\/assets\/demo\.webp" width="960" alt="[^"]{80,}"/u,
+				`${path} demo shows the session film with a full alt text`,
+			);
+			assert.ok(source.indexOf(demo) < source.indexOf("\n## "), `${path} shows the demo before the first section`);
 		}
 		const packed = join(REPO_ROOT, "packages", "litcodex-ai", "readme-assets");
-		for (const file of files) assert.ok(!existsSync(join(packed, file)), `${file} is not in the npm payload`);
-		for (const [, source] of NPM_READMES)
+		for (const file of [...files, "demo.webp", "demo.gif"])
+			assert.ok(!existsSync(join(packed, file)), `${file} is not in the npm payload`);
+		for (const [, source] of NPM_READMES) {
 			assert.ok(!source.includes("docs/assets/screens"), "npm cards carry no snapshots");
+			assert.doesNotMatch(source, /demo\.(gif|webp)/u, "npm cards carry no demo film");
+		}
 	});
 
-	test("the motion promo is embedded on both GitHub pages, stays under its caps and out of the npm package", () => {
+	test("the motion promo is embedded on both media pages, stays under its caps and out of the npm package", () => {
 		const dir = join(REPO_ROOT, "docs/assets/promo");
 		assert.deepEqual(
 			readdirSync(dir).sort(),
@@ -1016,8 +1085,8 @@ describe("GitHub and npm README split", () => {
 			"treatment.json",
 		]);
 		for (const [prefix, [path, source]] of [
-			["promo", GITHUB_READMES[0]],
-			["promo-ko", GITHUB_READMES[1]],
+			["promo", [DOC_PAGES.media[0], MEDIA]],
+			["promo-ko", [DOC_PAGES.media[1], MEDIA_KO]],
 		]) {
 			const film = readFileSync(join(dir, `${prefix}.mp4`));
 			assert.equal(film.subarray(4, 8).toString("latin1"), "ftyp", `${prefix}.mp4 is an MP4`);
@@ -1035,12 +1104,12 @@ describe("GitHub and npm README split", () => {
 			assert.ok(poster.length <= 1_048_576 && still.length <= 1_048_576, `${prefix} stills stay under 1 MiB`);
 			assert.ok(
 				source.includes(
-					`<source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/promo/${prefix}-still.webp" /><img src="./docs/assets/promo/${prefix}-preview.webp"`,
+					`<source media="(prefers-reduced-motion: reduce)" srcset="./assets/promo/${prefix}-still.webp" /><img src="./assets/promo/${prefix}-preview.webp"`,
 				),
 				`${path} shows its promo with a reduced-motion still first`,
 			);
-			assert.ok(source.includes(`](./docs/assets/promo/${prefix}.mp4)`), `${path} links the MP4`);
-			assert.ok(source.includes(`](./docs/assets/promo/${prefix}-poster.png)`), `${path} links the poster`);
+			assert.ok(source.includes(`](./assets/promo/${prefix}.mp4)`), `${path} links the MP4`);
+			assert.ok(source.includes(`](./assets/promo/${prefix}-poster.png)`), `${path} links the poster`);
 		}
 		const packed = join(REPO_ROOT, "packages", "litcodex-ai", "readme-assets");
 		for (const file of [
@@ -1107,6 +1176,28 @@ describe("GitHub and npm README split", () => {
 				const slugs = page === "" ? own : GITHUB_PAGES.has(page) ? headingSlugs(GITHUB_PAGES.get(page)) : null;
 				if (slugs === null) continue;
 				assert.ok(slugs.has(decodeURIComponent(anchor)), `${path}: dead anchor ${target}`);
+			}
+		}
+		// Pages that link into the landing README or the moved docs pages must hit a real heading.
+		for (const rel of [
+			...Object.values(DOC_PAGES).flat(),
+			"README.md",
+			"README-Ko-KR.md",
+			"docs/usage.md",
+			"docs/usage-Ko-KR.md",
+			"docs/privacy.md",
+			"plugins/litcodex/components/lit-loop/README.md",
+		]) {
+			const path = join(REPO_ROOT, rel);
+			const source = readFileSync(path, "utf8");
+			for (const target of targetsOf(source)) {
+				if (/^(?:[a-z]+:)/i.test(target)) continue;
+				const [page, anchor] = target.split("#");
+				const file = page === "" ? path : resolve(dirname(path), page);
+				assert.ok(existsSync(file), `${rel}: unresolved ${target}`);
+				if (anchor === undefined || !file.endsWith(".md")) continue;
+				const slugs = headingSlugs(page === "" ? source : readFileSync(file, "utf8"));
+				assert.ok(slugs.has(decodeURIComponent(anchor)), `${rel}: dead anchor ${target}`);
 			}
 		}
 		const migration = readFileSync(join(REPO_ROOT, "docs/npm-migration.md"), "utf8");

@@ -28,7 +28,7 @@ describe("plugin-root skill runtime contracts", () => {
 		expect(packageReadme).toContain("does not install Python dependencies");
 		const activationIntro = repoReadme.slice(
 			repoReadme.indexOf("## Start with lit"),
-			repoReadme.indexOf("## Skills at a glance"),
+			repoReadme.indexOf("## What you get"),
 		);
 		expect(activationIntro).toContain("exact bare `handoff`");
 		expect(activationIntro).toContain("<lit-scientific-visualization-mode>");

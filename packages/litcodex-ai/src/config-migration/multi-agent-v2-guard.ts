@@ -4,6 +4,8 @@
 // metadata schema. Hiding that metadata selects the model-owned schema while
 // retaining a hard 20-thread session cap and the host's depth-one guard.
 
+import { stripTomlComment, tomlLineKinds } from "./toml-lines.js";
+
 const MANAGED_COMMENT_MARKER = "Managed by LitCodex";
 const MANAGED_GUARD_COMMENT = [
 	`# ${MANAGED_COMMENT_MARKER}: reserved-schema-safe depth-one multi-agent, hard concurrency 20.`,
@@ -158,32 +160,18 @@ function hasSectionSetting(section: string, key: string, value: string): boolean
 	return pattern.test(section);
 }
 
-/** Strip a trailing inline comment (best-effort; quoted keys with # out of scope). */
-function stripTrailingComment(line: string): string {
-	const idx = line.indexOf("#");
-	return idx === -1 ? line : line.slice(0, idx).trim();
-}
-
+/** Span of the table whose header is `headerLine`, ending at the next header the shared line scan finds. */
 function findSection(config: string, headerLine: string): SectionSpan | null {
-	const lines = config.match(/[^\n]*\n?|$/g) ?? [];
+	const lines = config.split("\n");
+	const kinds = tomlLineKinds(lines);
 	let offset = 0;
 	let start = -1;
-	for (const line of lines) {
-		if (line.length === 0) {
-			break;
+	for (const [index, line] of lines.entries()) {
+		if (kinds[index] === "header") {
+			if (start !== -1) return { start, end: offset, text: config.slice(start, offset) };
+			if (stripTomlComment(line).trim() === headerLine) start = offset;
 		}
-		const trimmed = line.trim();
-		if (start === -1) {
-			if (stripTrailingComment(trimmed) === headerLine) {
-				start = offset;
-			}
-		} else {
-			const bare = stripTrailingComment(trimmed);
-			if (bare.startsWith("[") && bare.endsWith("]")) {
-				return { start, end: offset, text: config.slice(start, offset) };
-			}
-		}
-		offset += line.length;
+		offset += line.length + 1;
 	}
 	if (start === -1) {
 		return null;

@@ -20,6 +20,15 @@ How each picture was made:
 - `screen-loop`: the real `litcodex loop` commands in an empty project. The long commands are split with backslashes to
   fit, and the output of the second evidence command is cut.
 
+The demo film in the README, `../demo.webp`, is an animated WebP made from one real Codex CLI 0.159 session with
+LitCodex 1.0.18 installed, in a small Node project made for it. The screen was captured while Codex worked on
+`lit add a --shout flag that prints the greeting in capitals, with a test`, and the captured screens were redrawn on a
+terminal window in a dark room that a camera drifts across, with focus and light picking out each step. Waiting is
+shortened, and the hook banner, the plan, the failing and the passing test run and the summary are held long enough to
+read. The scratch folder Codex prints in its header (a long temporary path) is written as `~/greet`, and a few labels
+(the permission mode, a temporary file name and the warning count) are blurred; no other text was edited. The film
+ends on a closing card with the LitCodex mark and the install command.
+
 Each picture comes in a dark and a light version. The terminal window is drawn around the captured text; the text
 itself was not edited. The light version darkens any color that would be hard to read on a light window, the way a
 terminal's minimum-contrast setting does. Lettering is set in MesloLGS NF Regular, licensed under the Apache License

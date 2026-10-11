@@ -39,7 +39,7 @@ import { buildInstallPlan } from "./plan.js";
 import { renderInstallPlan } from "./render-plan.js";
 import { createBlockingSpinnerMotion } from "./spinner-motion.js";
 import type { InstallOptions, InstallResult } from "./types.js";
-import { runUninstall } from "./uninstall.js";
+import { runUninstall, uninstallPlanSteps } from "./uninstall.js";
 
 export { renderDoctorText, runDoctor } from "./doctor.js";
 export { INSTALL_ERROR_CODES, InstallError, toErrorJson } from "./errors.js";
@@ -429,11 +429,28 @@ export function runDoctorCli(args: readonly string[], io: RouteIo = defaultIo())
 	return report.ok ? 0 : 4;
 }
 
-/** `litcodex uninstall [--json]` — remove the registered plugin via `codex plugin remove`. */
+/** Shared text for a `--dry-run` of a state-changing route: the title, then numbered steps. */
+export function renderDryRunPlan(title: string, steps: readonly string[]): string {
+	return `${title} plan (dry run: nothing was changed)\n${steps.map((step, index) => `${index + 1}. ${step}`).join("\n")}\n`;
+}
+
+/**
+ * `litcodex uninstall [--json] [--dry-run]` — remove the registered plugin via `codex plugin remove`.
+ * With `--dry-run` it prints the removal plan, runs no `codex` and changes no file.
+ */
 export function runUninstallCli(args: readonly string[], io: RouteIo = defaultIo()): number {
 	const json = args.includes("--json");
 	writeCommandBanner(io, args);
 	const codexHome = resolveCodexHome(io.env);
+	if (args.includes("--dry-run")) {
+		const steps = uninstallPlanSteps(codexHome);
+		io.stdout.write(
+			json
+				? `${JSON.stringify({ ok: true, dryRun: true, codexHome, steps })}\n`
+				: renderDryRunPlan("litcodex uninstall", steps),
+		);
+		return 0;
+	}
 	const env = io.env;
 	const codexBin = env["CODEX_BIN"]?.trim() && existsSync(env["CODEX_BIN"].trim()) ? env["CODEX_BIN"].trim() : "codex";
 	const result = runUninstall({

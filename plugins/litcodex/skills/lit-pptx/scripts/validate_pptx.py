@@ -57,13 +57,13 @@ def _build_regex(terms: list[str], case_insensitive: bool, whole_word: bool, wor
         return None
     # With words (the hard terms), a one-word Latin term ("todo", "tbd") must stand as a word or its plural
     # ("TODOs"): inside "Mastodon" or "photodocument" it is not the placeholder. In either list an all-uppercase
-    # acronym ("RAM") stands as a word too, so "diagram" and "program" hold none. Phrases, Hangul and bracketed
-    # terms still match anywhere.
+    # acronym ("RAM") stands as a word in capitals, whatever the file's case setting: "diagram", "my ram stick"
+    # and "Ram Das" hold none. Phrases, Hangul and bracketed terms still match anywhere.
     def one(term: str) -> str:
         if words and re.fullmatch(r"[A-Za-z]+", term):
             return rf"(?<![A-Za-z]){re.escape(term)}s?(?![A-Za-z])"
         if re.fullmatch(r"[A-Z]{2,}", term):
-            return rf"(?<![A-Za-z]){re.escape(term)}(?![A-Za-z])"
+            return rf"(?<![A-Za-z])(?-i:{re.escape(term)})(?![A-Za-z])"
         return re.escape(term)
     escaped = [one(term) for term in terms]
     pattern = "|".join(escaped)

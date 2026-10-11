@@ -278,6 +278,25 @@ describe("#given the aggregate hooks.json #when validated #then the command + st
 		expect(err.detail).toContain("statusMessage");
 	});
 
+	it("lets only the updater hook wait past 60 s, and only up to its own ceiling", () => {
+		const withSessionStartTimeout = (component: string, timeout: number): string => {
+			const root = stageRepo();
+			rewriteJson(pathIn(root, "plugins", "litcodex", "hooks", "hooks.json"), (json) => {
+				const events = json["hooks"] as { SessionStart: { hooks: MutableHandler[] }[] };
+				const handler = events.SessionStart.flatMap((group) => group.hooks).find((entry) =>
+					entry.command.includes(`/components/${component}/dist/cli.js`),
+				);
+				if (!handler) throw new Error(`staged hooks.json has no ${component} SessionStart handler`);
+				handler.timeout = timeout;
+			});
+			return root;
+		};
+		expect(() => loadMarketplaceMetadata(withSessionStartTimeout("auto-update", 300))).not.toThrow();
+		expect(loadErr(withSessionStartTimeout("auto-update", 301)).detail).toContain("1..=300");
+		expect(loadErr(withSessionStartTimeout("telemetry", 61)).detail).toContain("1..=60");
+		expect(loadErr(withSessionStartTimeout("telemetry", 0)).code).toBe("METADATA_SCHEMA_INVALID");
+	});
+
 	it("authoritative hooks.json path is the aggregate one", () => {
 		expect(HOOKS_JSON_RELPATH).toBe("plugins/litcodex/hooks/hooks.json");
 	});

@@ -1000,7 +1000,7 @@ export const PPTX_PAYLOAD_HASHES = {
 	"scripts/office-run.mjs": "272f9bd74db9456fe5f5cce8f1dbf04fac60469f470a41c6571afafc5f444508",
 	"scripts/package.json": "dbf8353f77358bc12169b7bb7301e1978d5b503e002ee927229a8993672818fc",
 	"scripts/qa_deck.py": "dbde757b72dffe3f5b31def40dc5f7b92444a2b768ac3c91879fc959c30a2edc",
-	"scripts/validate_pptx.py": "24032616fdfac18f42839667c601d12fd7ea425e8230b96ef3681ea290f2755a",
+	"scripts/validate_pptx.py": "2d3ddd0fd2564dab93f1bd74832c602d8df4f31e2856fd8a3b1e2c3e089d4ec4",
 	"specs/markdown-slide-spec-v1.md": "eb9b04d070d9f2774746e65a34e5e6833fefd097ea7e01fc32327934ca8ee42b",
 	"specs/markdown-slide-spec-v2.md": "3a7a91dfb21418711d5ad28f7a542603bc2f145051950478be0d2107f7fa5458",
 	"specs/slide-ast-v1.schema.json": "d6d244bd30b6747645bd4a4f81cf0e2a3d12aa5aa4d0d11f2fb8b5f93dca1187",

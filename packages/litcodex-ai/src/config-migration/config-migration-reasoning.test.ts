@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { FALLBACK_CATALOG } from "./catalog.js";
 import { readMigrationFixture, useConfigMigrationFixture } from "./config-migration-test-helpers.js";
 import { migrateCodexConfig, migrateConfigFile } from "./index.js";
-import { ensureStableMultiAgent } from "./multi-agent-v2-guard.js";
+import { ensureStableMultiAgent, hasReservedSpawnSchemaMismatch } from "./multi-agent-v2-guard.js";
 import { ensureCodexReasoningConfig, MANAGED_KEYS } from "./root-settings.js";
 
 const MARKER = "Managed by LitCodex";
@@ -172,6 +172,31 @@ describe("#given the multi_agent_v2 guard #when run twice #then it is byte-ident
 		expect(out).toContain("hide_spawn_agent_metadata = true");
 		expect(out).toContain("max_concurrent_threads_per_session = 20");
 		expect(out).toContain("other = 1");
+	});
+
+	it('does not end a table at a `["b"]` row inside a multi-line array', () => {
+		const config = [
+			"[features.multi_agent_v2] # tuned",
+			"enabled = true",
+			"pairs = [",
+			'  ["b"]',
+			"]",
+			"hide_spawn_agent_metadata = true",
+			"max_concurrent_threads_per_session = 20",
+			"",
+			"[agents]",
+			"lanes = [",
+			'  ["b"]',
+			"]",
+			"max_depth = 1",
+			"",
+		].join("\n");
+		expect(hasReservedSpawnSchemaMismatch(config)).toBe(false);
+		const out = ensureStableMultiAgent(config);
+		expect(out.match(/^hide_spawn_agent_metadata = /gmu)).toHaveLength(1);
+		expect(out.match(/^max_concurrent_threads_per_session = /gmu)).toHaveLength(1);
+		expect(out.match(/^max_depth = /gmu)).toHaveLength(1);
+		expect(out).toContain('pairs = [\n  ["b"]\n]\nhide_spawn_agent_metadata = true');
 	});
 
 	it("normalizes the prior managed V2 table to the reserved schema contract", () => {

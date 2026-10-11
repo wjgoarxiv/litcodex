@@ -70,8 +70,9 @@ export function isSemver(value: unknown): value is string {
  * Registry-driven (G14.1, generalized for the multi-component port): every handler must match an
  * `EXPECTED_HOOKS` entry EXACTLY — its `${PLUGIN_ROOT}/components/<component>/dist/cli.js hook <sub>`
  * command, its statusMessage, its PreToolUse matcher (if any), `type:"command"`, and `timeout` in
- * 1..=60. A handler that matches no registry entry is rejected (a stray/unregistered hook is a
- * security leak), and every registry entry MUST be present (no missing). The bare-component CLI form
+ * 1..=60, or 1..=`maxTimeout` for an entry that declares one. A handler that matches no registry entry
+ * is rejected (a stray/unregistered hook is a security leak), and every registry entry MUST be present
+ * (no missing). The bare-component CLI form
  * `${PLUGIN_ROOT}/dist/cli.js` is forbidden anywhere (the aggregate must target the component path).
  */
 export function parseHooks(path: string, raw: unknown): Record<string, readonly HookGroup[]> {
@@ -113,9 +114,6 @@ export function parseHooks(path: string, raw: unknown): Record<string, readonly 
 					);
 				}
 				const timeout = h["timeout"];
-				if (typeof timeout !== "number" || !Number.isInteger(timeout) || timeout < 1 || timeout > 60) {
-					schemaFail(path, "timeout: must be an integer in 1..=60");
-				}
 				const statusMessage = h["statusMessage"];
 				if (typeof statusMessage !== "string") schemaFail(path, "statusMessage: must be a string");
 				// The command uniquely identifies WHICH registered component hook this is; match on it
@@ -125,6 +123,10 @@ export function parseHooks(path: string, raw: unknown): Record<string, readonly 
 				);
 				if (entry === undefined) {
 					schemaFail(path, `hooks.${event}: unregistered hook command ${JSON.stringify(command)}`);
+				}
+				const maxTimeout = entry.maxTimeout ?? 60;
+				if (typeof timeout !== "number" || !Number.isInteger(timeout) || timeout < 1 || timeout > maxTimeout) {
+					schemaFail(path, `timeout: must be an integer in 1..=${maxTimeout} for the ${entry.component} hook`);
 				}
 				if (statusMessage !== entry.statusMessage) {
 					schemaFail(

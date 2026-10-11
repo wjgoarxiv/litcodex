@@ -1,8 +1,8 @@
 # README media and credits
 
 The outlined ASCII image presents the same banner and `LIT · codex` lockup as the
-copyable code block in both READMEs. It needs no installed font. The original
-characters remain available in each README's expandable section. Its outlined
+copyable code block on the media pages ([English](../../media.md), [한국어](../../media-Ko-KR.md)).
+It needs no installed font. The original characters remain available in each page's expandable section. Its outlined
 JetBrains Mono glyphs retain the upstream [SIL Open Font License](./JetBrainsMono-OFL.txt).
 
 The Ignition poster, 10-second MP4 and animated GIF are documentation artwork.

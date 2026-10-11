@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+	HUMANIZER_PROSE_EXTENSIONS,
 	type HumanizerFinding,
 	type HumanizerHookInput,
 	humanizerFailOpenOutput,
@@ -213,6 +214,77 @@ describe("PreToolUse text guard", () => {
 		expect(output.hookSpecificOutput.additionalContext).toBe(
 			hookOutput(humanizerFailOpenOutput("PreToolUse")).hookSpecificOutput.additionalContext,
 		);
+	});
+});
+
+describe("prose-only pre-write scope", () => {
+	const write = (root: string, path: string, content: string): HumanizerHookInput =>
+		input(root, { tool_name: "write", tool_input: { file_path: path, content } });
+
+	it("pins the prose formats that block-tier rules apply to", () => {
+		expect([...HUMANIZER_PROSE_EXTENSIONS].sort()).toEqual([
+			".adoc",
+			".html",
+			".markdown",
+			".md",
+			".mdx",
+			".rst",
+			".tex",
+			".txt",
+		]);
+	});
+
+	it("denies a block hit in every prose format", () => {
+		for (const extension of HUMANIZER_PROSE_EXTENSIONS) {
+			const output = runHumanizerPreToolUse(write(workspace(), `report${extension}`, BLOCK_TEXT), {
+				scan: () => [finding("block")],
+			});
+			expect(hookOutput(output).hookSpecificOutput.permissionDecision, extension).toBe("deny");
+		}
+	});
+
+	it("keeps code and data files out of the prose rules", () => {
+		for (const extension of [
+			".c",
+			".css",
+			".csv",
+			".go",
+			".java",
+			".js",
+			".json",
+			".jsonc",
+			".mjs",
+			".py",
+			".rb",
+			".rs",
+			".sh",
+			".sql",
+			".svg",
+			".toml",
+			".ts",
+			".tsx",
+			".xml",
+			".yaml",
+			".yml",
+		]) {
+			const output = runHumanizerPreToolUse(write(workspace(), `data${extension}`, BLOCK_TEXT), {
+				scan: () => [finding("block")],
+			});
+			expect(output, extension).toBe("");
+		}
+	});
+
+	it("lets a YAML `source:` key and a docstring `Source:` line through with the real detector", () => {
+		const root = workspace();
+		const yaml = "spec:\n  source:\n    repoURL: https://example.invalid/app.git\nprovenance: true\nevidence: logs\n";
+		expect(runHumanizerPreToolUse(write(root, "app.yaml", yaml))).toBe("");
+		const python =
+			'def load():\n    """Load the rows.\n\n    Source: annual report, table 4.\n    Limitations: none.\n    """\n';
+		expect(runHumanizerPreToolUse(write(root, "load.py", python))).toBe("");
+		expect(
+			hookOutput(runHumanizerPreToolUse(write(root, "notes.md", DETACHED_SOURCE))).hookSpecificOutput
+				.permissionDecision,
+		).toBe("deny");
 	});
 });
 

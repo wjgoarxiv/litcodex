@@ -6,6 +6,7 @@ import { unsafeEffectiveRoute } from "../config-migration/gpt56-policy.js";
 import { removeSubagentDefaults } from "../config-migration/multi-agent-v2-guard.js";
 import { ensureNativeDefaultAgentConfig } from "../config-migration/native-default-route.js";
 import { GPT56_PROFILE_FILE_NAMES, isManagedGpt56ProfileContent } from "../config-migration/profile-files.js";
+import { isTomlTableHeader } from "../config-migration/toml-lines.js";
 import { NATIVE_DEFAULT_AGENT_FILE } from "./agent-routing.js";
 import { prepareAgentSources } from "./agents-install.js";
 import type { SpawnLike } from "./codex.js";
@@ -53,6 +54,17 @@ export function runUninstall(deps: UninstallDeps): { readonly ok: boolean; reado
 	removeManagedSubagentDefaults(deps);
 	removeManagedProfileFiles(deps);
 	return { ok: pluginOk && marketplaceOk, codexHome: deps.codexHome };
+}
+
+/** The steps `runUninstall` would take, for `--dry-run`. Pure: reads and writes nothing. */
+export function uninstallPlanSteps(codexHome: string): readonly string[] {
+	return [
+		`Remove the plugin: codex plugin remove ${LITCODEX_PLUGIN_REF}`,
+		`Remove the marketplace: codex plugin marketplace remove ${LITCODEX_MARKETPLACE}, then delete ${managedMarketplaceRoot(codexHome)} only if the marketplace removal succeeds`,
+		`Remove LitCodex agent roles from ${join(codexHome, "agents")} and the native default route ${join(codexHome, NATIVE_DEFAULT_AGENT_FILE)}, when they still match what LitCodex installed`,
+		`Remove the managed [agents] defaults from ${join(codexHome, "config.toml")} and LitCodex-generated profile files from ${codexHome}`,
+		`If the marketplace root or config.toml is a symlink or otherwise unsafe, uninstall refuses to change anything`,
+	];
 }
 
 function isSafeUninstallPaths(deps: UninstallDeps): boolean {
@@ -257,7 +269,7 @@ function withoutGeneratedNativeBinding(config: string, target: string): string |
 	for (const line of after.split("\n")) {
 		const trimmed = line.trim();
 		if (trimmed === "") continue;
-		if (trimmed.startsWith("[") && trimmed.endsWith("]")) break;
+		if (isTomlTableHeader(trimmed)) break;
 		return null;
 	}
 	return config.slice(0, start) + after;

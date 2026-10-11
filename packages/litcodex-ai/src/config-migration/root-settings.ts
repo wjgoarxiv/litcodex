@@ -8,6 +8,7 @@
 // decide whether a file is authorized for mutation before invoking this helper.
 
 import type { ReasoningProfile } from "./catalog.js";
+import { tomlLineKinds } from "./toml-lines.js";
 
 export const MANAGED_KEYS = [
 	"model",
@@ -56,9 +57,10 @@ export function ensureLitCodexOutputStyleConfig(config: string, styleId: string)
 
 /** Read `litcodex_output_style` from the root scope of a TOML config string. Returns undefined if absent. */
 export function readLitCodexOutputStyleId(config: string): string | undefined {
-	for (const line of config.split(/\n/)) {
-		if (isSectionHeader(line)) break;
-		if (!isRootSetting(line, LITCODEX_OUTPUT_STYLE_KEY)) continue;
+	const lines = config.split(/\n/);
+	const scan = scanRootScope(lines);
+	for (const [index, line] of lines.slice(0, scan.end).entries()) {
+		if (scan.continuation.has(index) || !isRootSetting(line, LITCODEX_OUTPUT_STYLE_KEY)) continue;
 		const value = parseTomlScalar(line.slice(line.indexOf("=") + 1));
 		return typeof value === "string" ? value : undefined;
 	}
@@ -67,23 +69,20 @@ export function readLitCodexOutputStyleId(config: string): string | undefined {
 
 function removeRootSetting(config: string, key: string): string {
 	const lines = config.split(/\n/);
-	let inRoot = true;
+	const scan = scanRootScope(lines);
 	return lines
-		.filter((line) => {
-			if (isSectionHeader(line)) {
-				inRoot = false;
-			}
-			return !inRoot || !isRootSetting(line, key);
-		})
+		.filter((line, index) => index >= scan.end || scan.continuation.has(index) || !isRootSetting(line, key))
 		.join("\n");
 }
 
 /** Read only the five managed keys from root scope (stops at first section). Pure. */
 export function readRootSettings(config: string): Partial<ReasoningProfile> {
 	const settings: Record<string, string | number> = {};
-	for (const line of config.split(/\n/)) {
-		if (isSectionHeader(line)) {
-			break;
+	const lines = config.split(/\n/);
+	const scan = scanRootScope(lines);
+	for (const [index, line] of lines.slice(0, scan.end).entries()) {
+		if (scan.continuation.has(index)) {
+			continue;
 		}
 		for (const key of MANAGED_KEYS) {
 			if (!isRootSetting(line, key)) {
@@ -117,19 +116,15 @@ function parseTomlScalar(value: string): string | number | undefined {
 
 function replaceOrInsertRootSetting(config: string, key: string, value: string): string {
 	const lines = config.split(/\n/);
+	const scan = scanRootScope(lines);
 	const output: string[] = [];
 	let replaced = false;
-	let inserted = false;
-	let inRoot = true;
-	for (const line of lines) {
-		const sectionHeader = isSectionHeader(line);
-		if (inRoot && !inserted && sectionHeader) {
-			if (!replaced) {
-				output.push(`${key} = ${value}`);
-			}
-			inserted = true;
+	for (const [index, line] of lines.entries()) {
+		if (index === scan.end && !replaced) {
+			output.push(`${key} = ${value}`);
+			replaced = true;
 		}
-		if (inRoot && isRootSetting(line, key)) {
+		if (index < scan.end && !scan.continuation.has(index) && isRootSetting(line, key)) {
 			if (!replaced) {
 				output.push(`${key} = ${value}`);
 				replaced = true;
@@ -137,19 +132,30 @@ function replaceOrInsertRootSetting(config: string, key: string, value: string):
 			continue;
 		}
 		output.push(line);
-		if (sectionHeader) {
-			inRoot = false;
-		}
 	}
-	if (!replaced && !inserted) {
+	if (!replaced) {
 		output.push(`${key} = ${value}`);
 	}
 	return output.join("\n");
 }
 
-function isSectionHeader(line: string): boolean {
-	const trimmed = line.trim();
-	return trimmed.startsWith("[") && trimmed.endsWith("]");
+interface RootScope {
+	/** Index of the first table header line, or the line count when there is none. */
+	readonly end: number;
+	/** Root line indexes that continue a multi-line value (array, inline table, or multi-line string). */
+	readonly continuation: ReadonlySet<number>;
+}
+
+/** Where root scope ends, from the shared line scan. Every reader and writer here uses it, so they agree. */
+function scanRootScope(lines: readonly string[]): RootScope {
+	const kinds = tomlLineKinds(lines);
+	const header = kinds.indexOf("header");
+	const end = header === -1 ? lines.length : header;
+	const continuation = new Set<number>();
+	for (let index = 0; index < end; index += 1) {
+		if (kinds[index] === "continuation") continuation.add(index);
+	}
+	return { end, continuation };
 }
 
 function isRootSetting(line: string, key: string): boolean {

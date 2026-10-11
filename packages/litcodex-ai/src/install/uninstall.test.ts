@@ -604,6 +604,36 @@ keep = true
 		}
 	});
 
+	it("removes the native binding when the next table header carries a trailing comment", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-uninstall-commented-"));
+		const codexHome = join(root, ".codex");
+		mkdirSync(codexHome, { recursive: true });
+		const target = join(codexHome, "litcodex-default.toml");
+		const configPath = join(codexHome, "config.toml");
+		writeFileSync(target, MANAGED_DEFAULT);
+		writeFileSync(
+			configPath,
+			`model = "gpt-6-astra"\n\n${nativeBinding(codexHome)}\n[unrelated] # note\nkeep = true\n`,
+		);
+
+		try {
+			const result = runUninstall({
+				codexBin: "/usr/local/bin/codex",
+				codexHome,
+				spawn: () => ({ status: 0 }),
+				fs: realFs(),
+			});
+
+			expect(result.ok).toBe(true);
+			expect(existsSync(target)).toBe(false);
+			const after = readFileSync(configPath, "utf8");
+			expect(after).not.toContain("[agents.default]");
+			expect(after).toContain("[unrelated] # note\nkeep = true");
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
 	// docs/usage.md:216 promises `litcodex uninstall` removes LitCodex-managed config; the
 	// per-model profile files ensureGpt56ProfileFiles writes at codexHome were never cleaned up.
 	it("removes managed per-model profile files and preserves a user-edited one", () => {
