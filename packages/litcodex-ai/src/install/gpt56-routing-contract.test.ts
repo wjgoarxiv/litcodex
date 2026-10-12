@@ -45,24 +45,22 @@ function routeFromToml(path: string) {
 }
 
 describe("GPT-5.6 routing policy", () => {
-	it("rejects Luna below high before preflight or mutation", () => {
+	it("rejects Luna ultra before preflight or mutation", () => {
 		expect(() =>
-			parseInstallOptions(["--model", "luna", "--effort", "medium"], {
+			parseInstallOptions(["--model", "luna", "--effort", "ultra"], {
 				env: { CODEX_HOME: "/tmp/isolated-codex-home" },
 				repoRoot: "/repo",
 			}),
-		).toThrow("--effort for gpt-5.6-luna requires one of: high or max");
+		).toThrow("--effort for gpt-5.6-luna requires one of: low, medium, high, xhigh, or max");
 	});
 
 	it.each([
-		["gpt-5.6-luna", "medium"],
-		["gpt-5.6-luna", "low"],
-		["openai/gpt-5.6-luna", "medium"],
-		["custom/gpt-5.6-luna", "low"],
-		["gpt-5.6-terra", "medium"],
-		["gpt-5.6-terra", "low"],
-		["openai/gpt-5.6-terra", "medium"],
-		["custom/gpt-5.6-terra", "low"],
+		["gpt-5.6-luna", "ultra"],
+		["openai/gpt-5.6-luna", "ultra"],
+		["custom/gpt-5.6-luna", "ultra"],
+		["gpt-6-luna", "ultra"],
+		["openai/gpt-6-luna", "ultra"],
+		["custom/gpt-6-luna", "ultra"],
 	])("fails closed for unsafe effective route %s/%s without rewriting it", async (model, effort) => {
 		const original = `model = "${model}"\nmodel_reasoning_effort = "${effort}"\n`;
 		const state = fixture(original);
@@ -113,8 +111,8 @@ describe("GPT-5.6 routing policy", () => {
 	});
 
 	it.each([
-		["openai/gpt-5.6-luna", "medium"],
-		["custom/gpt-5.6-terra", "medium"],
+		["openai/gpt-5.6-luna", "ultra"],
+		["custom/gpt-6-luna", "ultra"],
 	])("rejects unsafe bundled agent route %s/%s before writing any TOML", (model, effort) => {
 		const sourceDir = "/fake/agents";
 		const codexHome = "/tmp/isolated-agent-home";

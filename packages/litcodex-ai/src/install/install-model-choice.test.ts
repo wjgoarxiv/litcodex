@@ -21,6 +21,7 @@ interface AuthoredModelMenu {
 	aliases: string[];
 	generation: string;
 	recommended_role: string;
+	recommended_effort: string;
 	legacy_profile?: string;
 	context_probe?: boolean;
 	supported_efforts: string[];
@@ -121,6 +122,48 @@ describe("install --model / --subagent-model matrix", () => {
 		}
 	});
 
+	it("offers every effort Codex accepts for each model in the lead and helper menus", () => {
+		// `supported_reasoning_levels` per listed model in `codex debug models`, Codex CLI 0.162.1.
+		const hostEfforts: Record<string, readonly string[]> = {
+			"gpt-6.1-sol": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"gpt-6-astra": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"gpt-6-sol": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"gpt-6-luna": ["low", "medium", "high", "xhigh", "max"],
+			"gpt-5.6-sol": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"gpt-5.6-terra": ["low", "medium", "high", "xhigh", "max", "ultra"],
+			"gpt-5.6-luna": ["low", "medium", "high", "xhigh", "max"],
+		};
+		const missing: string[] = [];
+		for (const [id, efforts] of Object.entries(hostEfforts)) {
+			expect(modelDefinition(id)?.supportedEfforts).toEqual(efforts);
+			for (const [role, rows] of [
+				["lead", LEAD_MENU_ROWS],
+				["helper", HELPER_MENU_ROWS],
+			] as const) {
+				const offered = rows.filter((row) => row.model === id).map((row) => row.effort as string);
+				for (const effort of efforts) if (!offered.includes(effort)) missing.push(`${role} ${id}/${effort}`);
+				expect(offered.filter((effort) => !efforts.includes(effort))).toEqual([]);
+			}
+			for (const effort of efforts) {
+				for (const flags of [
+					["--model", id, "--effort", effort],
+					["--subagent-model", id, "--subagent-effort", effort],
+				]) {
+					try {
+						parseInstallOptions(flags, CONTEXT);
+					} catch {
+						missing.push(`${flags[0]} ${id}/${effort}`);
+					}
+				}
+			}
+		}
+		expect(missing).toEqual([]);
+		// The recommended lead effort stays the first row of each model.
+		for (const model of authoredModels.filter((entry) => entry.id in hostEfforts)) {
+			expect(model.installer_menu.lead[0]).toBe(model.recommended_effort);
+		}
+	});
+
 	it("keeps the authored GPT-6 facts and the retiring-only legacy marker in the catalog", () => {
 		expect(modelDefinition("gpt-6-astra")?.supportedEfforts).toEqual([
 			"low",
@@ -144,8 +187,15 @@ describe("install --model / --subagent-model matrix", () => {
 		expect(modelDefinition("gpt-5.6-sol")?.retirement).toBeUndefined();
 		expect(modelDefinition("gpt-5.6-terra")?.retirement).toBeUndefined();
 		expect(modelDefinition("gpt-5.6-luna")?.retirement).toBeUndefined();
-		expect(modelDefinition("gpt-5.6-terra")?.safeExistingEfforts).toEqual(["high", "xhigh"]);
-		expect(modelDefinition("gpt-5.6-luna")?.safeExistingEfforts).toEqual(["high", "max"]);
+		expect(modelDefinition("gpt-5.6-terra")?.safeExistingEfforts).toEqual([
+			"low",
+			"medium",
+			"high",
+			"xhigh",
+			"max",
+			"ultra",
+		]);
+		expect(modelDefinition("gpt-5.6-luna")?.safeExistingEfforts).toEqual(["low", "medium", "high", "xhigh", "max"]);
 		expect(modelDefinition("gpt-5.5")?.retirement).toEqual({
 			retirementAt: "2026-10-14T19:00:00Z",
 			upgradeModel: "gpt-5.6-sol",
@@ -244,15 +294,15 @@ describe("install --model / --subagent-model matrix", () => {
 	});
 
 	it("rejects an effort outside the selected catalog bounds", () => {
-		expect(() => parseInstallOptions(["--model", "luna", "--effort", "xhigh"], CONTEXT)).toThrow(
-			"--effort for gpt-5.6-luna requires one of: high or max",
+		expect(() => parseInstallOptions(["--model", "luna", "--effort", "ultra"], CONTEXT)).toThrow(
+			"--effort for gpt-5.6-luna requires one of: low, medium, high, xhigh, or max",
 		);
 	});
 
-	it("rejects an effort outside the selected catalog bounds for Terra", () => {
-		expect(() => parseInstallOptions(["--model", "terra", "--effort", "max"], CONTEXT)).toThrow(
-			"--effort for gpt-5.6-terra requires one of: high or xhigh",
-		);
+	it("accepts every effort Codex lists for Terra", () => {
+		for (const effort of ["low", "medium", "high", "xhigh", "max", "ultra"]) {
+			expect(parseInstallOptions(["--model", "terra", "--effort", effort], CONTEXT).effort).toBe(effort);
+		}
 	});
 
 	it("accepts --subagent-model and --subagent-effort", () => {
@@ -262,8 +312,8 @@ describe("install --model / --subagent-model matrix", () => {
 	});
 
 	it("rejects an effort outside the selected catalog bounds for Luna helpers", () => {
-		expect(() => parseInstallOptions(["--subagent-model", "luna", "--subagent-effort", "xhigh"], CONTEXT)).toThrow(
-			"--subagent-effort for gpt-5.6-luna requires one of: high or max",
+		expect(() => parseInstallOptions(["--subagent-model", "luna", "--subagent-effort", "ultra"], CONTEXT)).toThrow(
+			"--subagent-effort for gpt-5.6-luna requires one of: low, medium, high, xhigh, or max",
 		);
 	});
 

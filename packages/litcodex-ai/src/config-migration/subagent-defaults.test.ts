@@ -94,7 +94,7 @@ describe("migrateCodexConfig subagent route compatibility", () => {
 		expect(config).toContain('model_reasoning_effort = "medium"');
 	});
 
-	it("rejects the luna+xhigh subagent route before any write", async () => {
+	it("rejects the luna+ultra subagent route before any write", async () => {
 		const state = fixture(null);
 		await expect(
 			migrateCodexConfig({
@@ -102,7 +102,7 @@ describe("migrateCodexConfig subagent route compatibility", () => {
 				cwd: state.root,
 				mode: "install",
 				subagentModel: "gpt-5.6-luna",
-				subagentEffort: "xhigh",
+				subagentEffort: "ultra",
 			}),
 		).rejects.toMatchObject({ code: "UNSAFE_MODEL_ROUTE" });
 	});

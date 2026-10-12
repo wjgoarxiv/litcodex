@@ -26,7 +26,7 @@ const README_KO_PATH = join(REPO_ROOT, "README-Ko-KR.md");
 const PKG_README_PATH = join(REPO_ROOT, "packages", "litcodex-ai", "README.md");
 const PKG_README_KO_PATH = join(REPO_ROOT, "packages", "litcodex-ai", "README-Ko-KR.md");
 const PKG_JSON = JSON.parse(readFileSync(join(REPO_ROOT, "packages", "litcodex-ai", "package.json"), "utf8"));
-const NPM_CDN = "https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.19/readme-assets";
+const NPM_CDN = "https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.20/readme-assets";
 const NPM_COVER = `${NPM_CDN}/cover-motion.webp`;
 const CHANGELOG_PATH = join(REPO_ROOT, "CHANGELOG.md");
 const AUDIT = join(HERE, "readme-audit.mjs");
@@ -144,7 +144,7 @@ describe("readme content invariants", () => {
 	test("README presentation retains the exact outlined mark, local badges, licensed icons and motion", () => {
 		const assetPins = {
 			"ascii-readme.svg": "a074e5ba5ff3f6f17611f0621669b3a14b0fa85410e5972157b8d2202760d80d",
-			"badge-version.svg": "ee6787b01262a2d3c8b5c3c63b6d04a4dac4452fc79b1de3418b69557784b512",
+			"badge-version.svg": "bf8e30b80795afe6cf82b392f3a67771cb771c272682a19116422f6e4b3255e4",
 			"badge-license.svg": "decba749e28b4b87635e62eae766899fdc3e91a8e312208ff152831f620b18d7",
 			"lucide-book-open.svg": "3ae327cc4bbff19933a3ed535978ff558985b1bcca950e5484f61aa78764ebd2",
 			"lucide-play.svg": "ab6e5f5c9e61ec2d8ddd6b93b5476b976c8a0086f5529142a7981284d85f8b83",
@@ -534,14 +534,14 @@ describe("readme content invariants", () => {
 		const nextSection = README.indexOf("## Start with lit", installIdx);
 		const installSection = README.slice(installIdx, nextSection);
 		const globalIdx = installSection.indexOf("npm install -g @litfamily/litcodex");
-		const npxIdx = installSection.indexOf("npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install");
+		const npxIdx = installSection.indexOf("npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install");
 		assert.ok(npxIdx >= 0, "npx install present in Install section");
 		assert.ok(globalIdx === -1 || npxIdx < globalIdx, "npx install precedes optional global install");
 		evidence("task-21-install-primary.txt", "npx install is first\nSTATUS: PASS");
 	});
 
 	test("documents npx no-global alternative", () => {
-		assert.ok(README.includes("npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install"));
+		assert.ok(README.includes("npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install"));
 		assert.ok(/>\s*Without a global install/i.test(README), "labeled callout present");
 		evidence("task-21-install-npx-alt.txt", "npx alt labeled\nSTATUS: PASS");
 	});
@@ -615,7 +615,11 @@ describe("readme content invariants", () => {
 				/validates these TOMLs before writing.*copies (?:all six named-role )?developer instructions unchanged.*route-looking text.*data/i,
 				`${name} documents route-data and instruction preservation`,
 			);
-			assert.match(prose, /Luna below high fails closed unchanged/i, `${name} retains safety boundaries`);
+			assert.match(
+				prose,
+				/effort the model does not support.*?fails closed unchanged/i,
+				`${name} retains safety boundaries`,
+			);
 			assert.doesNotMatch(prose, /dispatches through|subagents[^.]* run /i);
 			assert.doesNotMatch(prose, /prevents GPT-5\.6|prevents grandchildren|hard 20-thread session cap/i);
 			assert.match(
@@ -705,7 +709,7 @@ describe("readme content invariants", () => {
 		);
 		assert.match(
 			koreanProse,
-			/Luna는 high 미만이면 기존과 동일하게 실패 종료/,
+			/모델이 지원하지 않는 effort를 쓰는 라우트.*?실패 종료/,
 			"Korean README retains safety boundaries",
 		);
 		assert.doesNotMatch(koreanProse, /실제 요청|서브에이전트[^.]*실행/);
@@ -728,7 +732,7 @@ describe("readme content invariants", () => {
 		const report = auditReadme(README, CONTRACT);
 		assert.ok(!report.offenders.some((o) => o.kind === "forbidden-phrase" && o.value === "or-join"));
 		const bad = auditReadme(
-			`${README}\n\nlitcodex install or npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install\n`,
+			`${README}\n\nlitcodex install or npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install\n`,
 			CONTRACT,
 		);
 		assert.ok(bad.offenders.some((o) => o.kind === "forbidden-phrase" && o.value === "or-join"));
@@ -757,13 +761,13 @@ describe("readme content invariants", () => {
 
 	test("npx alias is route-checked too", () => {
 		assert.equal(
-			extractLitcodexSubcommand("npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install"),
+			extractLitcodexSubcommand("npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install"),
 			"install",
 		);
 		assert.equal(extractLitcodexSubcommand("litcodex doctor"), "doctor");
 		assert.equal(extractLitcodexSubcommand("not a command"), null);
 		const bad = auditReadme(
-			`${README}\n\n    npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex steer\n`,
+			`${README}\n\n    npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex steer\n`,
 			CONTRACT,
 		);
 		assert.ok(bad.offenders.some((o) => o.kind === "unknown-subcommand" && o.value.includes("steer")));
@@ -1008,7 +1012,7 @@ describe("GitHub and npm README split", () => {
 			assert.ok(!source.includes("docs/assets/jev"), "npm cards carry no snapshots");
 	});
 
-	test("automatic handoff snapshots appear on both handoff pages and stay out of the npm package", () => {
+	test("automatic handoff snapshots appear on the handoff pages and READMEs and stay out of the npm package", () => {
 		const names = ["auto-handoff-on", "auto-handoff-status-off", "auto-handoff-saved", "auto-handoff-doctor"];
 		const dir = join(REPO_ROOT, "docs/assets/auto-handoff");
 		const files = names.flatMap((name) => [`${name}-dark.webp`, `${name}-light.webp`]);
@@ -1029,8 +1033,15 @@ describe("GitHub and npm README split", () => {
 		for (const source of [AUTO_HANDOFF_DOC, AUTO_HANDOFF_DOC_KO]) {
 			assert.ok(source.includes("./assets/auto-handoff/README.md"), "handoff page links the media notes");
 		}
+		// The landing READMEs show the three key moments and send readers to the page for the rest.
 		for (const [path, source] of GITHUB_READMES) {
-			assert.ok(!source.includes("docs/assets/auto-handoff"), `${path} keeps the handoff pictures on their page`);
+			for (const name of ["auto-handoff-on", "auto-handoff-status-off", "auto-handoff-saved"]) {
+				for (const theme of ["dark", "light"]) {
+					assert.ok(source.includes(`./docs/assets/auto-handoff/${name}-${theme}.webp`), `${path} shows ${name}`);
+				}
+			}
+			assert.ok(!source.includes("auto-handoff-doctor"), `${path} leaves the doctor picture to the page`);
+			assert.ok(/\]\(\.\/docs\/auto-handoff(?:-Ko-KR)?\.md\)/.test(source), `${path} links the handoff page`);
 		}
 		const packed = join(REPO_ROOT, "packages", "litcodex-ai", "readme-assets");
 		for (const file of files) assert.ok(!existsSync(join(packed, file)), `${file} is not in the npm payload`);
@@ -1191,7 +1202,7 @@ describe("GitHub and npm README split", () => {
 				installHeading,
 				"install is the first section",
 			);
-			assert.ok(npm.includes("npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install"));
+			assert.ok(npm.includes("npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install"));
 			const ratio = npm.length / github.length;
 			assert.ok(ratio > 0.15 && ratio < 0.5, `npm README is ${Math.round(ratio * 100)}% of the GitHub README`);
 		}

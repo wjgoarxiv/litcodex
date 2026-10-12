@@ -39,7 +39,7 @@ own sign-in and models.
 You need Node.js 22 or later and Codex CLI. Then run:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install
 ```
 
 The installer asks three questions: which model leads, which model helps, and which output style you
@@ -48,7 +48,7 @@ write and waits for one more Enter before it touches anything. It registers the 
 agent roles, and it changes only the keys it manages in `~/.codex/config.toml`. When the receipt says
 `Status Ready for Codex`, the doctor check has already passed.
 
-To see the plan first, run `npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex --dry-run install`;
+To see the plan first, run `npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex --dry-run install`;
 it prints every step and writes nothing. To keep the defaults without any questions, add `--yes` after `install`.
 
 If you would rather have `litcodex` on your `PATH`:
@@ -62,7 +62,7 @@ A global install also gets the video skill's rendering tools ready ahead of time
 pinned downloads. The [install guide](./docs/install.md#a-global-command) lists them and shows how to skip
 them.
 
-> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex doctor`.
+> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex doctor`.
 
 The [install guide](./docs/install.md) also covers trying LitCodex in a home of its own, Windows, and
 pictures of every screen the installer shows. Coming from the old unscoped package? The
@@ -82,13 +82,13 @@ Install LitCodex, a plugin for Codex CLI, on this machine. Follow these steps in
 2. Use only the official npm package @litfamily/litcodex. Do not install a package with a similar
    name, and do not download install scripts from anywhere else.
 3. Show me the plan first. Run this command, which prints every step and writes nothing:
-   npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex --dry-run install
+   npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex --dry-run install
    Summarize what it will change, then ask me whether to go ahead. Do not continue until I say yes.
 4. After I say yes, run:
-   npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install --yes
+   npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install --yes
    (--yes keeps the recommended models and my current output style.)
 5. Run the check and report its result to me, quoting any issue or warning exactly:
-   npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex doctor
+   npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex doctor
 6. Remind me to restart Codex so it loads the plugin, and to approve the LitCodex hooks when Codex
    asks me to review them.
 ```
@@ -184,6 +184,36 @@ Every skill can be picked in the Codex skill picker or mentioned by name, such a
 | Keeping LitCodex healthy | `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix` |
 | Running on their own | `rules`, `lsp` and `comment-checker`: project rules on each prompt, LSP and comment checks after edits |
 
+## Let LitCodex save the handoff for you
+
+A long session fills the context window, and the next context starts without what this one learned. Sending
+`handoff` by hand works, but only if you notice in time. The automatic handoff notices for you. It stays off until
+you turn it on, and you choose the point as a percent of the context window. Send this as your whole prompt:
+
+```text
+lit-handoff auto on 60
+```
+
+LitCodex answers right away, and the prompt never reaches the model. The command also writes that percent into the
+project's `.codex/config.toml`, so in a project you have trusted in Codex, Codex compacts by itself right after the
+handoff is saved.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/auto-handoff/auto-handoff-on-dark.webp" /><img src="./docs/assets/auto-handoff/auto-handoff-on-light.webp" width="764" alt="A Codex terminal window. The prompt &quot;lit-handoff auto on 60&quot; is followed by &quot;Blocked by hook&quot; and the reply &quot;Automatic handoff is ON at 60%. When a conversation reaches 60% of the context window, Codex is asked to save a handoff. Codex compacts the conversation as soon as the turn that saved the handoff ends.&quot;" /></picture></p>
+
+`lit-handoff auto status` tells you what is set, and `lit-handoff auto off` turns it off and keeps your number for
+next time.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/auto-handoff/auto-handoff-status-off-dark.webp" /><img src="./docs/assets/auto-handoff/auto-handoff-status-off-light.webp" width="764" alt="A Codex terminal window with two prompts. &quot;lit-handoff auto status&quot; is followed by &quot;Automatic handoff is ON at 60% (set by command). Codex compacts the conversation as soon as the turn that saved the handoff ends.&quot; Then &quot;lit-handoff auto off&quot; is followed by &quot;Automatic handoff is OFF. Your last percent (60%) is kept for next time.&quot;" /></picture></p>
+
+When a turn ends at or above your percent, the model saves the handoff, starts no other work, and tells you one
+line. If Codex is not going to compact by itself, that line asks you to run `/compact`. After the compaction, the
+next context starts from the handoff that was just saved.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/auto-handoff/auto-handoff-saved-dark.webp" /><img src="./docs/assets/auto-handoff/auto-handoff-saved-light.webp" width="764" alt="A Codex terminal window. The model&#39;s line &quot;Handoff saved. Run /compact now.&quot; is followed by the prompt &quot;/compact&quot;." /></picture></p>
+
+The [automatic handoff guide](./docs/auto-handoff.md) covers the environment variables, the doctor line and what
+happens in a project you have not trusted yet.
+
 ## How it works
 
 Codex hosts the plugin and runs its hooks. The hooks work out which mode a request belongs to and add
@@ -257,7 +287,7 @@ See [state and recovery](./docs/usage.md#loop-state).
 ## Check the install
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex doctor
 ```
 
 `litcodex doctor` checks registration, hooks, config and host capabilities, and a clean run ends with
@@ -291,7 +321,7 @@ version. Set `LITCODEX_NO_UPDATE_CHECK=1` to turn both off. Details are in
 ## Uninstall
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex uninstall
 ```
 
 `litcodex uninstall` removes the plugin and the config LitCodex manages, and leaves your other settings alone.

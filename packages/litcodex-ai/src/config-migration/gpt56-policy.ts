@@ -95,9 +95,6 @@ export function unsafeEffectiveRoute(current: Partial<ReasoningProfile>): string
 		definition.safeExistingEfforts !== undefined &&
 		!definition.safeExistingEfforts.includes(effort as ReasoningEffortId)
 	) {
-		if (definition.legacyProfile === "luna" && effort === "xhigh") {
-			return `${model} cannot use xhigh reasoning effort; use max`;
-		}
 		return `${model} requires ${formatEfforts(definition.safeExistingEfforts)} reasoning effort`;
 	}
 	return null;

@@ -37,7 +37,7 @@ LitCodex는 그 흐름을 붙잡아 두는 Codex CLI 플러그인입니다. 요�
 Node.js 22 이상과 Codex CLI가 있으면 아래 명령 하나로 설치합니다.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install
 ```
 
 설치기는 세 가지를 묻습니다. 어떤 모델이 작업을 이끌지, 어떤 모델이 거들지, 답변을 어떤 스타일로 받을지입니다.
@@ -46,7 +46,7 @@ Enter만 누르면 권장 모델과 지금 쓰는 출력 스타일이 그대로 
 `~/.codex/config.toml`에서는 자기가 관리하는 항목만 고칩니다. 영수증에 `Status Ready for Codex`가 보이면 doctor
 검사까지 이미 통과한 것입니다.
 
-먼저 계획만 보고 싶다면 `npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex --dry-run install`을
+먼저 계획만 보고 싶다면 `npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex --dry-run install`을
 실행하세요. 모든 단계를 출력하고 아무것도 쓰지 않습니다. 묻는 단계 없이 기본값으로 설치하려면 `install` 뒤에
 `--yes`를 붙이면 됩니다.
 
@@ -60,7 +60,7 @@ litcodex install
 전역으로 설치하면 영상 스킬이 쓸 렌더링 도구도 미리 준비하느라 버전이 고정된 파일 몇 개를 내려받습니다.
 무엇을 받는지와 건너뛰는 방법은 [설치 안내](./docs/install-Ko-KR.md#전역-명령으로-쓰기)에 있습니다.
 
-> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex doctor`.
+> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex doctor`.
 
 [설치 안내](./docs/install-Ko-KR.md)에는 기존 설정과 떼어 놓고 써 보는 법, Windows, 설치기가 보여 주는 화면
 사진도 모두 있습니다. 예전 패키지 이름(`litcodex-ai`)으로 설치했다면 [기존 설치 이전 안내](./docs/npm-migration.md)를
@@ -80,13 +80,13 @@ doctor 검사를 돌리고 그 결과를 알려 줍니다.
 2. 공식 npm 패키지 @litfamily/litcodex만 사용해. 이름이 비슷한 다른 패키지를 설치하거나
    다른 곳에서 설치 스크립트를 내려받지 마.
 3. 먼저 계획을 보여 줘. 아래 명령은 모든 단계를 출력하고 아무것도 쓰지 않아:
-   npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex --dry-run install
+   npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex --dry-run install
    무엇이 바뀌는지 요약한 뒤 계속할지 물어봐. 내가 좋다고 하기 전에는 진행하지 마.
 4. 내가 좋다고 하면 아래 명령을 실행해:
-   npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install --yes
+   npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install --yes
    (--yes는 권장 모델과 지금 쓰는 출력 스타일을 그대로 써.)
 5. 검사를 실행하고 결과를 알려 줘. 문제(issue)나 경고(warning)가 있으면 그대로 옮겨 줘:
-   npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex doctor
+   npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex doctor
 6. 플러그인을 불러오도록 Codex를 다시 시작하고, Codex가 LitCodex 훅을 검토해 달라고 하면
    승인하라고 나에게 알려 줘.
 ```
@@ -177,6 +177,35 @@ lit notes.md로 월요일 회의용 열 장짜리 발표자료를 만들어줘
 | LitCodex 관리 | `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix` |
 | 알아서 도는 검사 | `rules`, `lsp`, `comment-checker`: 프롬프트마다 프로젝트 규칙을 넣고, 수정 뒤에는 LSP와 주석을 확인 |
 
+## 핸드오프를 LitCodex에 맡기기
+
+긴 세션은 컨텍스트 창을 채우고, 다음 컨텍스트는 이번에 배운 내용을 모른 채 시작합니다. `handoff`를 직접 보내도
+되지만, 제때 알아차려야 합니다. 자동 핸드오프는 그 시점을 대신 알아차립니다. 직접 켜기 전까지는 꺼져 있고, 언제
+동작할지는 컨텍스트 창의 몇 퍼센트인지로 정합니다. 아래 문장을 프롬프트 전체로 보내세요.
+
+```text
+lit-handoff auto on 60
+```
+
+LitCodex가 바로 답하고, 이 프롬프트는 모델에게 가지 않습니다. 이 명령은 프로젝트의 `.codex/config.toml`에도
+퍼센트를 적어 두기 때문에, Codex에서 신뢰한 프로젝트라면 핸드오프가 저장된 직후 Codex가 스스로 대화를 압축합니다.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/auto-handoff/auto-handoff-on-dark.webp" /><img src="./docs/assets/auto-handoff/auto-handoff-on-light.webp" width="764" alt="Codex 터미널 창입니다. &quot;lit-handoff auto on 60&quot; 프롬프트 아래에 &quot;Blocked by hook&quot;과 답장 &quot;Automatic handoff is ON at 60%. When a conversation reaches 60% of the context window, Codex is asked to save a handoff. Codex compacts the conversation as soon as the turn that saved the handoff ends.&quot;가 보입니다." /></picture></p>
+
+`lit-handoff auto status`는 지금 설정을 알려 주고, `lit-handoff auto off`는 기능을 끄면서 숫자는 다음을 위해
+남겨 둡니다.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/auto-handoff/auto-handoff-status-off-dark.webp" /><img src="./docs/assets/auto-handoff/auto-handoff-status-off-light.webp" width="764" alt="프롬프트 두 개가 있는 Codex 터미널 창입니다. &quot;lit-handoff auto status&quot; 아래에 &quot;Automatic handoff is ON at 60% (set by command). Codex compacts the conversation as soon as the turn that saved the handoff ends.&quot;가 나오고, 이어서 &quot;lit-handoff auto off&quot; 아래에 &quot;Automatic handoff is OFF. Your last percent (60%) is kept for next time.&quot;가 나옵니다." /></picture></p>
+
+턴이 정한 퍼센트 이상에서 끝나면 모델이 핸드오프를 저장하고, 다른 일은 시작하지 않은 채 한 줄로 알려 줍니다.
+Codex가 스스로 압축하지 않는 경우라면 그 한 줄이 `/compact`를 실행하라고 안내합니다. 압축이 끝나면 다음
+컨텍스트는 방금 저장한 핸드오프에서 시작합니다.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/auto-handoff/auto-handoff-saved-dark.webp" /><img src="./docs/assets/auto-handoff/auto-handoff-saved-light.webp" width="764" alt="Codex 터미널 창입니다. 모델이 남긴 &quot;Handoff saved. Run /compact now.&quot; 줄 아래에 &quot;/compact&quot; 프롬프트가 보입니다." /></picture></p>
+
+환경 변수, doctor 줄, 아직 신뢰하지 않은 프로젝트에서 일어나는 일은 [자동 핸드오프 안내](./docs/auto-handoff-Ko-KR.md)에
+있습니다.
+
 ## 어떻게 동작하나요
 
 Codex가 플러그인을 불러오고 훅을 실행합니다. 훅은 요청이 어떤 모드에 속하는지 가리고 맥락을 보태며,
@@ -249,7 +278,7 @@ Codex 목표 도구로 이어지는 점선은 도구가 있을 때 에이전트�
 ## 설치 확인
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex doctor
 ```
 
 `litcodex doctor`는 등록·훅·설정·호스트 기능을 확인하고, 문제가 없으면 All checks passed로 끝납니다.
@@ -282,7 +311,7 @@ npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex doctor
 ## 제거
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex uninstall
 ```
 
 `litcodex uninstall`은 플러그인과 LitCodex가 관리하는 설정을 지우고, 관련 없는 설정은 그대로 둡니다.

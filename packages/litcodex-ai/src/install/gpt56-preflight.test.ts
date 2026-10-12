@@ -200,8 +200,8 @@ describe("GPT-5.6 installer preflight", () => {
 
 	it.each([
 		["unknown model", ["--model", "mercury"]],
-		["excluded effort before model", ["--effort", "medium", "--model", "luna"]],
-		["excluded effort after model", ["--model", "luna", "--effort", "medium"]],
+		["excluded effort before model", ["--effort", "ultra", "--model", "luna"]],
+		["excluded effort after model", ["--model", "luna", "--effort", "ultra"]],
 		["missing model", ["--model"]],
 		["missing effort", ["--effort"]],
 		["unknown option", ["--unknown"]],

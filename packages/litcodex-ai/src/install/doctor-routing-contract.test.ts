@@ -155,8 +155,8 @@ describe("doctor model-routing health", () => {
 	});
 
 	it.each([
-		["openai/gpt-5.6-luna", "medium"],
-		["custom/gpt-5.6-terra", "medium"],
+		["openai/gpt-5.6-luna", "ultra"],
+		["custom/gpt-6-luna", "ultra"],
 	])("fails config health for unsafe effective root %s/%s", (model, effort) => {
 		const report = doctorReport({
 			agentFiles: completeAgentFiles(),

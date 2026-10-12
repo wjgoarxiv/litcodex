@@ -155,9 +155,9 @@ describe("G20 Codex-native agent routing", () => {
 		expect(report.preservedRoutes).toContain("default=gpt-9.9-unknown/max");
 	});
 
-	it("rejects Luna plus xhigh before writing an agent file", () => {
+	it("rejects Luna plus ultra before writing an agent file", () => {
 		const file = "litcodex-explorer.toml";
-		const content = 'model = "gpt-5.6-luna"\nmodel_reasoning_effort = "xhigh"\n';
+		const content = 'model = "gpt-5.6-luna"\nmodel_reasoning_effort = "ultra"\n';
 		const writeFs = installFixture(file, content);
 
 		expect(() =>
@@ -168,7 +168,7 @@ describe("G20 Codex-native agent routing", () => {
 				writeFs,
 				agentsSourceDir: "/fake/agents",
 			}),
-		).toThrow(/luna.*xhigh|xhigh.*luna/i);
+		).toThrow(/gpt-5\.6-luna requires/i);
 		expect(writeFs.written.size).toBe(0);
 	});
 
@@ -237,7 +237,7 @@ describe("G20 Codex-native agent routing", () => {
 	});
 
 	it.each([
-		["Luna plus xhigh", 'model = "gpt-5.6-luna"\nmodel_reasoning_effort = "xhigh"\n', /luna.*xhigh/i],
+		["Luna plus ultra", 'model = "gpt-5.6-luna"\nmodel_reasoning_effort = "ultra"\n', /gpt-5\.6-luna requires/i],
 		["an unknown model", 'model = "gpt-9.9-unknown"\nmodel_reasoning_effort = "max"\n', /unknown model/i],
 		[
 			"conflicting effort fields",

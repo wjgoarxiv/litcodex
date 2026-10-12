@@ -102,14 +102,14 @@ flowchart LR
 권장 설치는 다음 한 줄입니다.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install
 ```
 
 이 명령은 플러그인과 마켓플레이스를 등록하고 `UserPromptSubmit` 훅을 연결하며 `~/.codex/config.toml`을
 비파괴적으로 갱신합니다. 변경 계획만 보려면 다음을 먼저 실행하세요.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex --dry-run install
+npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex --dry-run install
 ```
 
 전역 명령이 필요하면 전역 설치 후 플러그인을 등록합니다.
@@ -119,7 +119,7 @@ npm install -g @litfamily/litcodex
 litcodex install
 ```
 
-무인 설치는 `litcodex install --yes` 또는 `npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install --yes`로 실행합니다.
+무인 설치는 `litcodex install --yes` 또는 `npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install --yes`로 실행합니다.
 `--yes`, 빈 값도 포함한 `CI`, 비TTY 입출력, `--no-tui`, `--json`, `--dry-run`에서는 모델·스타일 선택과
 확인 질문을 건너뜁니다. 명시한 `--style <id>`는 실제 설치에 적용됩니다. 빈 값도 포함한 `NO_COLOR`는
 대화형 선택을 유지하면서 ANSI 이스케이프 없는 질문을 표시합니다. `TERM=dumb`과 UTF-8이 아닌 로케일에서도
@@ -129,7 +129,8 @@ litcodex install
 경로를 적용하며 명시적인 모델 선택을 덮어쓰지 않습니다. 이는 제품이 선택하는 경로이지 호스트 메타데이터·사용
 권한·모델 실행을 주장하는 것이 아닙니다. GPT-6 Astra와 Sol은
 `low|medium|high|xhigh|max|ultra`를 지원하며 GPT-6 Luna에는 `ultra`가 없습니다. 기존 `sol|gpt-5.6|luna|terra`
-별칭과 모델별 effort 범위도 유지됩니다.
+별칭과 모델별 effort 범위도 유지됩니다. 설치기의 lead·helper 메뉴는 Codex가 모델마다 받아들이는 effort를 모두
+보여 줍니다. GPT-5.6 Sol과 Terra는 `low`부터 `ultra`까지, GPT-5.6 Luna는 `low`부터 `max`까지 고를 수 있습니다.
 권장 coding-lead 대안은 `gpt-6.1-sol`과 `xhigh`이며 `gpt-6-sol`과 GPT-5.6 Sol도 이전 세대 선택지로 계속 사용할 수 있습니다.
 카탈로그에는 GPT-5.6 Sol, Terra, Luna의 지원 종료일이 등록되어 있지 않습니다.
 `--model luna`는 `model = "gpt-5.6-luna"`를 작성하며 LitCodex는 `model_reasoning_effort = "max"`를 작성합니다.
@@ -138,7 +139,7 @@ litcodex install
 `gpt-5.5`뿐이며, 날짜는 2026-10-14이고 업그레이드 권장 모델은 `gpt-5.6-sol`입니다. 세션마다 `-m gpt-5.5`를
 반복해서 지정할 필요가 없습니다.
 
-일반 설치와 업데이트는 이미 설정된 모델을 바꾸지 않습니다. 기존 안전 정책을 통과하는 공급자 지정 루트 모델을 그대로 보존합니다. Luna는 high 미만이면 기존과 동일하게 실패 종료합니다.
+일반 설치와 업데이트는 이미 설정된 모델을 바꾸지 않습니다. 기존 안전 정책을 통과하는 공급자 지정 루트 모델을 그대로 보존합니다. 모델이 지원하지 않는 effort를 쓰는 라우트(예: `gpt-5.6-luna`와 `ultra`)는 바꾸지 않고 실패 종료합니다.
 기존 명시적 Sol 표현은 일반 설치에서 보존됩니다. 한 번 검토한 `litcodex install --reconfigure`만 기존 루트를 선택한 별칭으로 바꾸고,
 관련 없는 설정을 유지합니다. 새 설치와 명시적 관리 재구성에서는 `model_context_window`과 `model_auto_compact_token_limit`을
 설정하지 않고 Codex 호스트 기본값을 따릅니다. 기존의 기본값처럼 보이는 사용자 루트와 유효한 역할 TOML도 일반 재설치에서 초기화하지 않습니다.
@@ -147,7 +148,7 @@ litcodex install
 `gpt-6-astra`와 `xhigh`를 사용합니다. `litcodex-explorer`, `litcodex-librarian`, `litcodex-metis`는
 `gpt-6-luna`와 `max`를 사용합니다. 설치기는 파일을 쓰기 전에 TOML 라우트를 검증합니다. 개발자 지시문은
 여섯 named-role 모두에서 그대로 복사되며 지시문 안의 라우트처럼 보이는 텍스트는 데이터로만 처리합니다. 알 수 없거나
-안전하지 않은 라우트와 기존 `gpt-5.6-luna` 및 `xhigh` 조합은 거부합니다.
+안전하지 않은 라우트(예: `gpt-5.6-luna`나 `gpt-6-luna`와 `ultra`)는 거부합니다.
 
 일반 설치는 `model-catalog.json`에 있는 모든 canonical id와 alias(새 `gpt-6.1-sol`, `gpt-6-sol`, `gpt-6-luna` 및 선택 가능한
 GPT-5.6 항목 포함), 모델별 `--effort` 범위를 사용합니다. `--subagent-model`과 대응하는 effort는 명시적 helper
@@ -246,8 +247,8 @@ Codex의 native goal과 로컬 루프 기록은 별도로 관리됩니다. nativ
 | `litcodex loop checkpoint` | 모든 기준 통과 시 목표 완료 처리 |
 | `litcodex loop doctor` | 루프 상태 진단 또는 복구 |
 
-전역 설치가 없다면 이후 명령도 `npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex <command>` 형식으로 실행하세요. 예를 들어
-`npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex doctor`를 사용합니다.
+전역 설치가 없다면 이후 명령도 `npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex <command>` 형식으로 실행하세요. 예를 들어
+`npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex doctor`를 사용합니다.
 
 ## 자동 핸드오프
 

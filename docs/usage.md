@@ -102,18 +102,18 @@ This removes old skill directories even at the same package version and preserve
 The recommended path is one command:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install
 ```
 
 This registers the marketplace and plugin, wires `UserPromptSubmit`, installs the litwork agents, and makes a
 non-destructive update to `~/.codex/config.toml`. Preview the plan first:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex --dry-run install
+npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex --dry-run install
 ```
 
-> Without a global install, run later commands as `npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex <command>`, for example
-> `npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex doctor`.
+> Without a global install, run later commands as `npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex <command>`, for example
+> `npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex doctor`.
 
 For a persistent `litcodex` command, install globally and then install the plugin:
 
@@ -122,7 +122,7 @@ npm install -g @litfamily/litcodex
 litcodex install
 ```
 
-For an unattended install, use `litcodex install --yes` (or `npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install --yes`).
+For an unattended install, use `litcodex install --yes` (or `npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install --yes`).
 Model, style, and confirmation prompts are skipped with `--yes`, `CI` (even empty), non-TTY input/output,
 `--no-tui`, `--json`, or `--dry-run`. An explicit `--style <id>` still applies on installation.
 `NO_COLOR` (even empty) keeps interactive choices available with plain prompts and no ANSI escapes.
@@ -138,11 +138,11 @@ fails with `LITCODEX_INSTALL_CODEX_VERSION_UNSUPPORTED · codex-version-unrecogn
 certainly running a pre-0.3.66 copy from the npx cache; run the pinned recovery command:
 
 ```powershell
-npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.20 -- litcodex install
 ```
 
 > `npx` caches packages, so a bare `npm exec --package @litfamily/litcodex -- litcodex` can keep executing an older cached version.
-> Pinning the version (`@1.0.19` or `@latest`) forces npx past the stale cache entry.
+> Pinning the version (`@1.0.20` or `@latest`) forces npx past the stale cache entry.
 
 Lit-loop's descriptor-bound filesystem guarantees are POSIX-only. Node does not expose the Windows
 directory-descriptor and `openat`/`dir_fd` contract these checks require, and Python's `dir_fd` APIs
@@ -292,13 +292,14 @@ On fresh installs, the default lead route is `gpt-6-astra` with `xhigh` effort a
 explicit model choice. This is the product's selected route, not a claim about host metadata, entitlement, or model
 execution. The shipped `model-catalog.json` is authoritative: GPT-6 Astra and Sol support
 `low|medium|high|xhigh|max|ultra`, while GPT-6 Luna intentionally omits `ultra`; the listed GPT-5.6 ids remain
-selectable with their catalog bounds. `--model luna` keeps the legacy `model = "gpt-5.6-luna"` route and max effort.
+selectable with their catalog bounds. The installer's lead and helper menus list every effort Codex accepts for
+each model: GPT-5.6 Sol and Terra offer `low` through `ultra`, and GPT-5.6 Luna offers `low` through `max`. `--model luna` keeps the legacy `model = "gpt-5.6-luna"` route and max effort.
 The recommended coding-lead alternative is `gpt-6.1-sol` with `xhigh`; `gpt-6-sol` and GPT-5.6 Sol remain selectable as previous-generation options. The catalog has no retirement metadata for the GPT-5.6 Sol, Terra, or Luna ids.
 The catalog marks `gpt-5.5` as retiring on 2026-10-14 with an upgrade to `gpt-5.6-sol`; users need no recurring
 `-m gpt-5.5` workaround.
 
 An ordinary install or update never rewrites an already configured model. Existing customized and provider-qualified root models that pass the existing safety policy remain preserved by a
-normal reinstall; Luna below high fails closed unchanged. Existing explicit Sol representations remain preserved by
+normal reinstall; a route whose effort the model does not support (such as `gpt-5.6-luna` with `ultra`) fails closed unchanged. Existing explicit Sol representations remain preserved by
 a normal install. A one-time reviewed `litcodex install --reconfigure` updates an existing root to the selected
 alias, removes its old root context/compaction overrides, and preserves unrelated keys. Fresh installs and explicit
 managed reconfiguration leave `model_context_window` and `model_auto_compact_token_limit` unset so Codex applies host
@@ -308,7 +309,7 @@ Bundled litwork routing is explicit: `litcodex-plan`, `litcodex-momus`, and `lit
 `gpt-6-astra` with `xhigh`; `litcodex-explorer`, `litcodex-librarian`, and `litcodex-metis` use
 `gpt-6-luna` with `max`. The installer validates these TOMLs before writing, copies all six named-role developer
 instructions unchanged, and treats route-looking text inside those instructions as data. It rejects unknown or
-unsafe routes, including the legacy `gpt-5.6-luna` plus `xhigh` combination.
+unsafe routes, such as `gpt-5.6-luna` or `gpt-6-luna` with `ultra`.
 
 Since 0.4.2 the interactive installer asks for the LEAD model (plans and reviews) and the HELPER
 model (spawned/delegated agents) with numbered menus and prints a MODEL ROUTE summary card before

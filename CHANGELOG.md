@@ -6,6 +6,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.20] - 2026-10-12
+
+### Added
+
+- The Install section in the READMEs has a prompt you can paste into a coding agent so it installs
+  LitCodex for you. The agent checks for Node.js and Codex CLI, uses only the official npm package,
+  shows you the dry-run plan and waits for your yes, then runs `litcodex doctor`, reports what it found
+  and reminds you to restart Codex.
+
+### Changed
+
+- The README demo is a new short film. It opens on a title card and labels each step of one turn: `lit`
+  turns LitCodex on, the hook picks lit-loop, Codex reads its lit-code playbook, writes a failing test,
+  fixes the code, runs the tests and sums up.
+- The automatic handoff page now shows each step in a terminal picture, in English and Korean: turning
+  it on, checking it, turning it off, the line you see when the handoff is saved, and the doctor line.
+  It also shows the block `lit-handoff auto on` writes to the project's `.codex/config.toml` and covers
+  the environment variables.
+- The READMEs have a short automatic handoff section with the three key moments in pictures: turning it
+  on, checking and turning it off, and the line that asks you to run `/compact`. It links to the full page.
+- The lit-pptx runtime now pins sharp 0.35.5, and the readme-studio cover templates use sharp 0.35.5
+  and source-map-js 1.2.2.
+
+### Fixed
+
+- The installer's lead and helper menus now list every reasoning effort Codex accepts for each model.
+  GPT-5.6 Sol and Terra offered one effort each and GPT-5.6 Luna offered only `max`; now Sol and Terra
+  offer `low` through `ultra` and Luna offers `low` through `max`, with the recommended effort still
+  first. `--effort` and `--subagent-effort` accept the same values, and a route whose effort the model
+  does not support (such as `gpt-5.6-luna` with `ultra`) still fails closed.
+
 ## [1.0.19] - 2026-10-11
 
 ### Important: one manual update from 1.0.18 or older
