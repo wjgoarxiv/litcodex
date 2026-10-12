@@ -16,7 +16,7 @@ Codex CLI 플러그인입니다.
 
 [English](./README.md) · [설치](#설치) · [첫 작업](#lit으로-시작하기) · [할 수 있는 일](#할-수-있는-일) · [명령어](#명령어) · [더 알아보기](#더-알아보기)
 
-<p><img src="./docs/assets/demo.webp" width="960" alt="작은 Node 프로젝트에서 실제로 진행한 Codex 세션을 짧은 영상으로 만들었고, 기다리는 시간은 줄였으며 카메라가 터미널 위를 천천히 움직입니다. &quot;lit add a --shout flag that prints the greeting in capitals, with a test&quot;를 입력해 보내면 LitCodex 훅이 먼저 LIT 마크와 &quot;🔥 LIT IGNITED · lit-loop 🔥&quot;로 응답합니다. Codex는 한 줄짜리 계획을 밝히고, 테스트를 추가한 뒤 npm test가 실패하는 것을 확인하고, greet.js를 고친 다음 npm test를 다시 돌려 통과시킵니다. 마지막에 --shout가 인사말을 대문자로 출력하고, 이름 앞뒤 어디에 붙여도 되며, 이름이 없으면 HELLO, WORLD!를 출력하고 CLI 테스트가 통과한다고 정리합니다. 영상은 LitCodex 마크와 설치 명령으로 끝납니다." /><br /><sub>LitCodex 1.0.18을 설치한 실제 Codex 0.159 세션을 터미널에서 녹화한 뒤, 그린 터미널 창 위에서 카메라를 움직이며 다시 재생했습니다. 기다리는 시간을 줄이고 프로젝트 폴더를 ~/greet로 표시했으며 몇몇 표시는 흐리게 처리했습니다. 나머지 글자는 Codex가 출력한 그대로입니다.</sub></p> <!-- demo-gif -->
+<p><img src="./docs/assets/demo.webp" width="960" alt="Codex CLI에서 LitCodex를 쓰는 모습을 담은 짧은 영상입니다. LIT 마크와 함께 LitCodex, The lit workflow for Codex CLI라고 적힌 제목 화면으로 시작하고, 이어서 번호 붙은 설명이 작은 Node 프로젝트에서 진행되는 한 턴을 따라갑니다. 1: &quot;lit add a --shout flag that prints the greeting in capitals, with a test&quot;를 입력하면 LitCodex가 켜집니다. 2: 훅 블록에 LIT 마크와 &quot;🔥 LIT IGNITED · lit-loop 🔥&quot;가 나타납니다. 3: Codex가 먼저 계획을 세우고 lit-code 지침을 읽습니다(Read SKILL.md (litcodex:lit-code skill)). 4: 고치기 전에 테스트부터 씁니다. Edited test/greet.test.js가 나오고 npm test가 exit 1로 실패합니다. 5: 그다음 코드를 고칩니다(Edited greet.js). 6: Ran npm test가 나오고 테스트가 통과합니다. 7: 정리는 &quot;Added CLI tests; all pass&quot;와 Worked for 42s로 끝납니다. 영상은 설치 명령이 적힌 화면으로 마칩니다." /></p> <!-- demo-gif -->
 
 ## LitCodex란
 
@@ -65,6 +65,31 @@ litcodex install
 [설치 안내](./docs/install-Ko-KR.md)에는 기존 설정과 떼어 놓고 써 보는 법, Windows, 설치기가 보여 주는 화면
 사진도 모두 있습니다. 예전 패키지 이름(`litcodex-ai`)으로 설치했다면 [기존 설치 이전 안내](./docs/npm-migration.md)를
 먼저 읽어 주세요.
+
+### 코딩 에이전트에게 설치 맡기기
+
+Codex 같은 코딩 에이전트에게 설치를 맡길 수도 있습니다. 아래 프롬프트를 에이전트에 붙여 넣으세요. 에이전트는
+필요한 도구가 있는지 확인하고, 계획을 보여 준 뒤 사용자가 허락할 때까지 아무것도 바꾸지 않습니다. 설치가 끝나면
+doctor 검사를 돌리고 그 결과를 알려 줍니다.
+
+```text
+이 컴퓨터에 Codex CLI용 플러그인 LitCodex를 설치해 줘. 아래 순서를 그대로 따라 줘.
+
+1. Node.js 22 이상과 Codex CLI가 설치되어 있는지 확인해 (node --version, codex --version).
+   하나라도 없으면 멈추고 무엇을 설치해야 하는지 알려 줘.
+2. 공식 npm 패키지 @litfamily/litcodex만 사용해. 이름이 비슷한 다른 패키지를 설치하거나
+   다른 곳에서 설치 스크립트를 내려받지 마.
+3. 먼저 계획을 보여 줘. 아래 명령은 모든 단계를 출력하고 아무것도 쓰지 않아:
+   npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex --dry-run install
+   무엇이 바뀌는지 요약한 뒤 계속할지 물어봐. 내가 좋다고 하기 전에는 진행하지 마.
+4. 내가 좋다고 하면 아래 명령을 실행해:
+   npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install --yes
+   (--yes는 권장 모델과 지금 쓰는 출력 스타일을 그대로 써.)
+5. 검사를 실행하고 결과를 알려 줘. 문제(issue)나 경고(warning)가 있으면 그대로 옮겨 줘:
+   npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex doctor
+6. 플러그인을 불러오도록 Codex를 다시 시작하고, Codex가 LitCodex 훅을 검토해 달라고 하면
+   승인하라고 나에게 알려 줘.
+```
 
 ## lit으로 시작하기
 

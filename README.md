@@ -16,7 +16,7 @@ and hands unfinished work to the next session.
 
 [한국어](./README-Ko-KR.md) · [Install](#install) · [First task](#start-with-lit) · [What you get](#what-you-get) · [Commands](#commands) · [Learn more](#learn-more)
 
-<p><img src="./docs/assets/demo.webp" width="960" alt="A short film of a real Codex session in a small Node project, with the waiting shortened and a camera drifting across the terminal. The prompt &quot;lit add a --shout flag that prints the greeting in capitals, with a test&quot; is typed and sent. The LitCodex hook answers first with the LIT mark and &quot;🔥 LIT IGNITED · lit-loop 🔥&quot;. Codex states a one-line plan, adds the test, runs npm test and sees it fail, edits greet.js, runs npm test again and it passes, then sums up: --shout prints the greeting in capitals, works before or after the name and defaults to HELLO, WORLD!, and the CLI tests pass. The film ends on the LitCodex mark and the install command." /><br /><sub>A real Codex 0.159 session with LitCodex 1.0.18, recorded in a terminal and replayed on a drawn terminal window with camera moves. Waiting time is shortened, the project folder is shown as ~/greet and a few labels are blurred; the rest is as Codex printed it.</sub></p> <!-- demo-gif -->
+<p><img src="./docs/assets/demo.webp" width="960" alt="A short film of a LitCodex session in Codex CLI. It opens on a title card with the LIT mark: LitCodex, The lit workflow for Codex CLI. Numbered labels then follow one turn in a small Node project. 1: typing &quot;lit add a --shout flag that prints the greeting in capitals, with a test&quot; turns LitCodex on. 2: the hook block shows the LIT mark beside &quot;🔥 LIT IGNITED · lit-loop 🔥&quot;. 3: Codex plans first and reads its lit-code playbook, Read SKILL.md (litcodex:lit-code skill). 4: it writes the test before the fix, Edited test/greet.test.js, and npm test fails with exit 1. 5: then it fixes the code, Edited greet.js. 6: Ran npm test, and the tests pass. 7: the summary ends with &quot;Added CLI tests; all pass&quot; and Worked for 42s. The film closes on a card with the install command." /></p> <!-- demo-gif -->
 
 ## What is LitCodex
 
@@ -67,6 +67,31 @@ them.
 The [install guide](./docs/install.md) also covers trying LitCodex in a home of its own, Windows, and
 pictures of every screen the installer shows. Coming from the old unscoped package? The
 [migration guide](./docs/npm-migration.md) covers the move.
+
+### Let a coding agent install it
+
+You can also hand the install to a coding agent such as Codex itself. Paste the prompt below into it. The agent
+checks what you have, shows you the plan and waits for your yes before it changes anything, then runs the doctor
+check and tells you what it found.
+
+```text
+Install LitCodex, a plugin for Codex CLI, on this machine. Follow these steps in order.
+
+1. Check that Node.js 22 or later and Codex CLI are installed (node --version, codex --version).
+   If either is missing, stop and tell me what to install.
+2. Use only the official npm package @litfamily/litcodex. Do not install a package with a similar
+   name, and do not download install scripts from anywhere else.
+3. Show me the plan first. Run this command, which prints every step and writes nothing:
+   npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex --dry-run install
+   Summarize what it will change, then ask me whether to go ahead. Do not continue until I say yes.
+4. After I say yes, run:
+   npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex install --yes
+   (--yes keeps the recommended models and my current output style.)
+5. Run the check and report its result to me, quoting any issue or warning exactly:
+   npm exec --yes --package @litfamily/litcodex@1.0.19 -- litcodex doctor
+6. Remind me to restart Codex so it loads the plugin, and to approve the LitCodex hooks when Codex
+   asks me to review them.
+```
 
 ## Start with lit
 

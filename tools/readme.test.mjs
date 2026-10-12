@@ -52,6 +52,7 @@ const [MEDIA, MEDIA_KO] = readDocPair("media");
 const [SKILLS_DOC, SKILLS_DOC_KO] = readDocPair("skills");
 const [INSTALL_DOC, INSTALL_DOC_KO] = readDocPair("install");
 const [JEV_DOC, JEV_DOC_KO] = readDocPair("jev");
+const [AUTO_HANDOFF_DOC, AUTO_HANDOFF_DOC_KO] = readDocPair("autoHandoff");
 
 // Test receipts stay isolated from the live LitCodex evidence ledger.
 const EVIDENCE_DIR = mkdtempSync(join(tmpdir(), "litcodex-readme-evidence-"));
@@ -1005,6 +1006,36 @@ describe("GitHub and npm README split", () => {
 		for (const file of files) assert.ok(!existsSync(join(packed, file)), `${file} is not in the npm payload`);
 		for (const [, source] of NPM_READMES)
 			assert.ok(!source.includes("docs/assets/jev"), "npm cards carry no snapshots");
+	});
+
+	test("automatic handoff snapshots appear on both handoff pages and stay out of the npm package", () => {
+		const names = ["auto-handoff-on", "auto-handoff-status-off", "auto-handoff-saved", "auto-handoff-doctor"];
+		const dir = join(REPO_ROOT, "docs/assets/auto-handoff");
+		const files = names.flatMap((name) => [`${name}-dark.webp`, `${name}-light.webp`]);
+		assert.deepEqual(
+			readdirSync(dir).sort(),
+			[...files, "README.md"].sort(),
+			"docs/assets/auto-handoff holds the snapshots and the media notes",
+		);
+		for (const file of files) {
+			const bytes = readFileSync(join(dir, file));
+			assert.equal(bytes.subarray(0, 4).toString("latin1"), "RIFF", `${file} is a WebP`);
+			assert.equal(bytes.subarray(8, 12).toString("latin1"), "WEBP", `${file} is a WebP`);
+			assert.ok(bytes.length <= 65_536, `${file} stays under 64 KiB`);
+			for (const source of [AUTO_HANDOFF_DOC, AUTO_HANDOFF_DOC_KO]) {
+				assert.ok(source.includes(`./assets/auto-handoff/${file}`), `handoff page shows ${file}`);
+			}
+		}
+		for (const source of [AUTO_HANDOFF_DOC, AUTO_HANDOFF_DOC_KO]) {
+			assert.ok(source.includes("./assets/auto-handoff/README.md"), "handoff page links the media notes");
+		}
+		for (const [path, source] of GITHUB_READMES) {
+			assert.ok(!source.includes("docs/assets/auto-handoff"), `${path} keeps the handoff pictures on their page`);
+		}
+		const packed = join(REPO_ROOT, "packages", "litcodex-ai", "readme-assets");
+		for (const file of files) assert.ok(!existsSync(join(packed, file)), `${file} is not in the npm payload`);
+		for (const [, source] of NPM_READMES)
+			assert.ok(!source.includes("docs/assets/auto-handoff"), "npm cards carry no snapshots");
 	});
 
 	test("install, doctor, activation and loop snapshots appear in both install guides and stay out of the npm package", () => {
