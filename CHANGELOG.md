@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.22] - 2026-10-13
+
+### Changed
+
+- The README demo is a new film of one turn with this release. Its labels now also point at the
+  workflow map line under the LIT IGNITED banner, which shows the turn at WORK with review and done
+  still ahead, and at the Stop hook's `✨ turn done` line under the summary.
+- The install guide's pictures were taken again on Codex CLI 0.162: the installer questions with their
+  40-row model lists, the install receipt, the `litcodex doctor` check with its `automatic handoff` row,
+  and the activation lines with the workflow map and `✨ turn done`.
+
+### Security
+
+- The development tools now use source-map-js 1.2.2, which fixes a denial of service through crafted
+  source-map section offsets. It is only used by the test tooling and is not part of the npm package.
+
 ## [1.0.21] - 2026-10-13
 
 ### Added
