@@ -16,7 +16,7 @@ Codex CLI 플러그인입니다.
 
 [English](./README.md) · [설치](#설치) · [첫 작업](#lit으로-시작하기) · [할 수 있는 일](#할-수-있는-일) · [명령어](#명령어) · [더 알아보기](#더-알아보기)
 
-<p><img src="./docs/assets/demo.webp" width="960" alt="Codex CLI에서 LitCodex를 쓰는 모습을 담은 짧은 영상입니다. LIT 마크와 함께 LitCodex, The lit workflow for Codex CLI라고 적힌 제목 화면으로 시작하고, 이어서 번호 붙은 설명이 작은 Node 프로젝트에서 진행되는 한 턴을 따라갑니다. 1: &quot;lit add a --shout flag that prints the greeting in capitals, with a test&quot;를 입력하면 LitCodex가 켜집니다. 2: 훅 블록에 LIT 마크와 &quot;🔥 LIT IGNITED · lit-loop 🔥&quot;가 나타납니다. 3: Codex가 먼저 계획을 세우고 lit-code 지침을 읽습니다(Read SKILL.md (litcodex:lit-code skill)). 4: 고치기 전에 테스트부터 씁니다. Edited test/greet.test.js가 나오고 npm test가 exit 1로 실패합니다. 5: 그다음 코드를 고칩니다(Edited greet.js). 6: Ran npm test가 나오고 테스트가 통과합니다. 7: 정리는 &quot;Added CLI tests; all pass&quot;와 Worked for 42s로 끝납니다. 영상은 설치 명령이 적힌 화면으로 마칩니다." /></p> <!-- demo-gif -->
+<p><img src="./docs/assets/demo.webp" width="960" alt="Codex CLI에서 LitCodex를 쓰는 모습을 담은 짧은 영상입니다. LIT 마크와 함께 LitCodex, The lit workflow for Codex CLI라고 적힌 제목 화면으로 시작하고, 이어서 번호 붙은 설명이 작은 Node 프로젝트에서 진행되는 한 턴을 따라갑니다. 1: &quot;lit add a --shout flag that prints the greeting in capitals, with a test&quot;를 입력하면 LitCodex가 켜집니다. 2: 훅 블록에 LIT 마크와 &quot;🔥 LIT IGNITED · lit-loop 🔥&quot;가 나타납니다. 3: 마크 아래 줄 &quot;🔨 WORK › 🔍 · › 🏁 ·&quot;은 지금 어디쯤인지 보여 주는 지도입니다. 지금은 작업 단계이고, 검토와 완료가 뒤에 옵니다. 4: Codex가 먼저 계획을 세우고 lit-code 지침을 읽습니다(Read SKILL.md (litcodex:lit-code skill)). 5: 고치기 전에 테스트부터 씁니다. Edited test/greet.test.js가 나오고 npm test가 exit 1로 실패합니다. 6: greet.js를 고친 뒤 --shout로 CLI를 직접 실행해 보고 npm test를 다시 돌립니다. 7: 정리에 테스트와 CLI 직접 확인이 통과했다고 적히고, Stop 훅이 &quot;✨ turn done&quot;을 덧붙입니다. 영상은 설치 명령이 적힌 화면으로 마칩니다." /></p> <!-- demo-gif -->
 
 ## LitCodex란
 
