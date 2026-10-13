@@ -63,6 +63,9 @@ function tuiSuggestionLines(suggestion: TuiSuggestion): string[] {
 		`Suggestion: your Codex config has no built-in ${what}. LitCodex never edits it for you.`,
 		`  Pick items in Codex with ${commands}, or ${where}:`,
 		...suggestion.snippet.split("\n").map((line) => `    ${line}`),
+		...(suggestion.missing.includes("status_line")
+			? ["  task-progress counts the steps of Codex's own plan; the LIT workflow map shows the stage on activation."]
+			: []),
 	];
 }
 

@@ -26,6 +26,7 @@ import {
 	withJevBanner,
 } from "./jev-hint.js";
 import { evaluatePlanPersistence, formatStopBlockOutput, recordLitPlanActivation } from "./plan-persistence.js";
+import { recordWorkflowTurn, workflowMapLine, workflowStopLine } from "./workflow-map.js";
 
 /** Hard cap on stdin to bound memory / ReDoS exposure inside the 5 s Codex hook budget. 8 MB. */
 export const MAX_STDIN_BYTES = 8_000_000;
@@ -140,7 +141,10 @@ export async function runUserPromptSubmitHookCli(
 		const scope = hookSessionScope(parsed, repoRoot);
 		if (scope !== null) recordLitPlanActivation(scope.cwd, scope.sessionId);
 	}
-	const own = decision.kind === "inject" ? decision.stdout : await jevHintOutput(parsed, repoRoot, jev);
+	const own =
+		decision.kind === "inject"
+			? withWorkflowMap(decision.stdout, parsed, decision.mode)
+			: await jevHintOutput(parsed, repoRoot, jev);
 	const output = withAutoHandoffReload(own, parsed, repoRoot, auto);
 	if (output !== "") stdout.write(output);
 	return 0;
@@ -206,6 +210,34 @@ function withReloadContext(stdout: string, reload: string): string | null {
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * Add the workflow map under the activation banner and remember the turn for the Stop line. Only an
+ * event that names its own absolute `cwd` is mapped, so the map always describes the session's repo.
+ */
+function withWorkflowMap(stdout: string, parsed: unknown, mode: string): string {
+	if (!isRecord(parsed) || typeof parsed["cwd"] !== "string" || !isAbsolute(parsed["cwd"])) return stdout;
+	const cwd = parsed["cwd"];
+	const sessionId =
+		typeof parsed["session_id"] === "string" && parsed["session_id"] !== "" ? parsed["session_id"] : null;
+	try {
+		if (sessionId !== null && typeof parsed["turn_id"] === "string") {
+			recordWorkflowTurn(cwd, sessionId, parsed["turn_id"], mode);
+		}
+		const map = workflowMapLine(cwd, sessionId, mode);
+		if (map === null) return stdout;
+		const output = JSON.parse(stdout) as Record<string, unknown>;
+		if (!isRecord(output) || typeof output["systemMessage"] !== "string") return stdout;
+		output["systemMessage"] = `${output["systemMessage"]}\n${map}`;
+		return `${JSON.stringify(output)}\n`;
+	} catch {
+		return stdout;
+	}
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /** Absolute `cwd` from a hook event, else the fallback root. */
@@ -295,7 +327,18 @@ export async function runStopPlanPersistenceHookCli(
 			env: auto.env ?? process.env,
 			...(auto.now === undefined ? {} : { now: auto.now }),
 		});
-		if (handoff.decision === "block") stdout.write(formatStopBlockOutput(handoff.reason));
+		if (handoff.decision === "block") {
+			stdout.write(formatStopBlockOutput(handoff.reason));
+			return 0;
+		}
+		const line =
+			typeof record["turn_id"] === "string"
+				? workflowStopLine(scope.cwd, scope.sessionId, record["turn_id"], {
+						stopHookActive: record["stop_hook_active"] === true,
+						transcriptPath: typeof record["transcript_path"] === "string" ? record["transcript_path"] : null,
+					})
+				: null;
+		if (line !== null) stdout.write(`${JSON.stringify({ systemMessage: line })}\n`);
 	}
 	return 0;
 }

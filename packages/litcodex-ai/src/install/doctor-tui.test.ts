@@ -108,6 +108,7 @@ describe("doctor — built-in Codex status line and terminal title suggestion", 
 		expect(text).toContain(`${codexHome}/config.toml`);
 		expect(text).toContain("    [tui]");
 		expect(text).toContain('    terminal_title = ["activity", "project-name"]');
+		expect(text).toContain("  task-progress counts the steps of Codex's own plan");
 		expect(text.trimEnd().endsWith("All checks passed.")).toBe(true);
 		expect(report.ok).toBe(true);
 	});
@@ -124,6 +125,7 @@ describe("doctor — built-in Codex status line and terminal title suggestion", 
 		expect(text).toContain("no built-in terminal title");
 		expect(text).toContain("with /title, or add these lines under the [tui] table");
 		expect(text).not.toContain("/statusline");
+		expect(text).not.toContain("task-progress counts");
 		expect(text).not.toContain("    [tui]");
 	});
 

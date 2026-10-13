@@ -107,6 +107,16 @@ as plain text, and the reply opens with `🔥 **LIT IGNITED · <discipline>** �
 runs in the work loop (`<lit-loop-mode>` internally): a goal, its checks, and evidence recorded as each
 check passes.
 
+Under the mark, one more line shows where you are in the LIT workflow. It is read from what the project
+has saved, so it follows the interview, the plan, the work with a bar of finished plan tasks, review and
+done, for example `🧭 ✓ › 📝 ✓ › 🔨 WORK ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·`. A stage with nothing saved behind it is
+left out instead of guessed. `litresearch` gets its own short map, decomposition, waves, verification and
+synthesis, which picks up from the research journal still in progress and otherwise starts at decomposition.
+When a LIT turn ends, the Stop hook adds a line such as `✨ turn done · 2 tasks ✓ · next ▸ Write the docs`.
+When `lit start work` reaches a checkpoint and the plan carries on in the same turn, the line reads
+`⏳ 3/7 tasks ✓ · continuing ▸ Write the docs` instead. Both lines are plain text with emoji, because Codex
+prints hook text without colour.
+
 `lit` has to stand on its own as a word. Words that only contain the letters, such as `split`, `literal`
 or `litmus`, do nothing, and neither does `lit` inside a code span or a code block.
 Slash commands are left alone as well, with one exception: `/litresearch` starts research.
