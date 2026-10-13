@@ -6,6 +6,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.21] - 2026-10-13
+
+### Added
+
+- A LIT activation now shows where you are in the LIT workflow, on one line under the
+  `🔥 **LIT IGNITED · <discipline>** 🔥` banner: interview, plan, work with a bar of finished plan tasks,
+  review and done, for example `🧭 ✓ › 📝 ✓ › 🔨 WORK ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·`. The map is read from
+  what the project has saved, so a stage with nothing behind it is left out instead of guessed. Codex
+  prints hook text without colour, so the map uses emoji and block cells.
+- `litresearch` has its own short map, decomposition, waves, verification and synthesis. It picks up
+  from the research journal still in progress, with the current wave, and otherwise starts at
+  decomposition.
+- When a LIT turn ends, the Stop hook adds a summary line such as
+  `✨ turn done · 2 tasks ✓ · next ▸ Write the docs`. When `lit start work` reaches a checkpoint and the
+  plan carries on in the same turn, the line reads `⏳ 3/7 tasks ✓ · continuing ▸ Write the docs` instead.
+
+### Changed
+
+- The next-task title in these lines stops at the first path, code span, variable or flag and ends
+  with `…`, instead of dropping words from the middle of the sentence.
+- When `litcodex doctor` suggests a built-in status line, it now explains that `task-progress` counts
+  the steps of Codex's own plan, while the LIT workflow map shows the stage on activation.
+
 ## [1.0.20] - 2026-10-12
 
 ### Added
