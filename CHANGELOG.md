@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.23] - 2026-10-14
+
+### Added
+
+- In the Codex desktop app, LitCodex can show a LIT card in the thread. It shows which LIT skill is
+  running, the workflow map with the stage it is on, the tool working right now with a clock beside it,
+  and, between tools, the last tool that finished. A footer shows context use, the 5-hour and weekly
+  limits, the git branch and the project. When the turn ends the map finishes and the card says how long
+  the turn took. The ↗ button opens a larger view in the side pane with a timeline and usage bars. The
+  card needs the app's MCP Apps feature, which OpenAI still lists as under development; LitCodex never
+  turns it on for you. Each thread keeps its own card. In the terminal `codex` the same tool prints the
+  map as text.
+- The README shows the card in a real Codex app thread.
+
 ## [1.0.22] - 2026-10-13
 
 ### Changed
