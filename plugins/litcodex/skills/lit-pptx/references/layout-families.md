@@ -69,7 +69,7 @@ Columns: what the family does, the source shape it reads, and the packs that car
 | `image-split` | a picture beside its explanation | an image, then bullets | atlas, chalk, signal, studio |
 | `photo-grid` | two or three pictures compared | two or three image lines, then one line of text | atlas, studio |
 | `figure-pair` | before and after, or two conditions | two images, then one line of text | atlas, paper |
-| `figure-academic` | a numbered figure and how to read it | an image with numbered caption and source; observation, limitation, implication bullets | paper |
+| `figure-academic` | a numbered figure and how to read it | an image with numbered caption and source; observation, basis, sample, implication bullets | paper |
 | `asymmetric-feature` | one large element and a narrow text column | an image or a one-cell figure, then bullets | atlas, signal, studio |
 
 Older layout names still resolve under a tonality: `content` and `main` become `text-column`,

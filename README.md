@@ -230,6 +230,11 @@ In the Codex desktop app, LitCodex can show a small LIT card in the thread. It s
 the workflow map with the stage it is on, and the tool working right now with a clock beside it. The card updates
 by itself while the agent works and slows down when nothing is happening.
 
+The app keeps a card where it was first drawn, so a long thread would scroll it out of view. Each prompt that
+starts LIT therefore opens a fresh card next to the newest turn, and the earlier cards fold into one quiet line
+that says how their turn ended and stop updating. Prompts that do not start LIT get no card of their own; the
+newest card keeps following them.
+
 <p><img src="./docs/assets/app-card/app-card-thread.webp" width="764" alt="A thread in the Codex desktop app. The prompt &quot;lit add a --version flag that prints the package version, with a test&quot; is followed by &quot;Worked for 48s&quot; and the LIT card, then the agent&#39;s summary. The card reads LIT · lit-loop with DONE ✓ on the right, the map work ✓, review, done ✓, the line &quot;✓ turn done in 49s&quot;, and a footer with context use, weekly use, the git branch and the project name." /></p>
 
 <p><img src="./docs/assets/app-card/app-card-done.webp" width="760" alt="A close-up of the LIT card after the turn ends: LIT · lit-loop and DONE ✓ in the header, the workflow map work ✓, review, done ✓, the line &quot;✓ turn done in 49s&quot;, and the footer ctx 16%, 1w 7%, git master, lit-card-demo." /></p>

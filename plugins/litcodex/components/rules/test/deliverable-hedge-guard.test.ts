@@ -369,6 +369,135 @@ describe("PostToolUse document guard", () => {
 	});
 });
 
+type PledgeCases = {
+	new_rule_ids: string[];
+	pledges: { n: number; text: string; rule: string; severity: "block" | "warn" | "none" }[];
+	near_misses: { source: string; text: string }[];
+	near_misses_review: { source: string; text: string }[];
+	document_cases: { text: string; rule: string; expect: "block" | "clean" }[];
+};
+const pledgeCases = JSON.parse(
+	readFileSync(new URL("../../../skills/lit-humanizer/fixtures/pledge-cases.json", import.meta.url), "utf8"),
+) as PledgeCases;
+const PLEDGE_RULE_IDS = new Set(pledgeCases.new_rule_ids);
+const SEVERITY_RANK = { none: 0, warn: 1, block: 2 } as const;
+const USER_PLEDGE = "동일 조건의 독립 성능 비교로 쓰지 않음.";
+const OPERATING_RULES = "이 장비는 방폭 구역에서 사용하지 않습니다. 냉각수로 쓰지 않음. 한 번에 0.1 이상 바꾸지 않음.";
+
+function pledgeRuleHits(text: string): HumanizerFinding[] {
+	return inspectHumanizerText(text).filter((item) => PLEDGE_RULE_IDS.has(item.rule));
+}
+
+function writeEvent(root: string, path: string, content: string): HumanizerHookInput {
+	return input(root, { tool_name: "write", tool_input: { file_path: path, content } });
+}
+
+describe("negative pledge sentences", () => {
+	it("keeps the fixture set the size the rules were measured against", () => {
+		expect(pledgeCases.new_rule_ids).toEqual([
+			"ko-negative-pledge",
+			"ko-negative-pledge-repeat",
+			"en-negative-pledge",
+		]);
+		expect(pledgeCases.pledges).toHaveLength(15);
+		expect(pledgeCases.near_misses.length).toBeGreaterThanOrEqual(27);
+		expect(pledgeCases.near_misses_review.length).toBeGreaterThanOrEqual(85);
+		expect(pledgeCases.document_cases).toHaveLength(8);
+		expect(pledgeCases.pledges[0]?.text).toBe(USER_PLEDGE);
+	});
+
+	it("refuses the user's example sentence at the write guard and names the rule", () => {
+		const root = workspace();
+		const refused = hookOutput(runHumanizerPreToolUse(writeEvent(root, "report.md", USER_PLEDGE)));
+		expect(refused.hookSpecificOutput.permissionDecision).toBe("deny");
+		expect(refused.hookSpecificOutput.additionalContext).toContain("block ko-negative-pledge");
+		const patched = hookOutput(
+			runHumanizerPreToolUse(
+				input(root, {
+					tool_input: { command: `*** Begin Patch\n*** Add File: deck.md\n+${USER_PLEDGE}\n*** End Patch` },
+				}),
+			),
+		);
+		expect(patched.hookSpecificOutput.permissionDecision).toBe("deny");
+		expect(patched.hookSpecificOutput.additionalContext).toContain("block ko-negative-pledge");
+	});
+
+	it("lets an operating-rules document through, as sentences and as a bullet list", () => {
+		const root = workspace();
+		const bullets = OPERATING_RULES.split(/(?<=[.])\s+/u)
+			.map((line) => `- ${line}`)
+			.join("\n");
+		for (const text of [OPERATING_RULES, bullets]) {
+			const output = runHumanizerPreToolUse(writeEvent(root, "manual.md", text));
+			const decision = output === "" ? undefined : hookOutput(output).hookSpecificOutput.permissionDecision;
+			expect(decision, text).toBeUndefined();
+			expect(output, text).not.toContain("negative-pledge");
+		}
+	});
+
+	it("refuses an edit that adds a pledge and judges only the changed text on a file that already has one", () => {
+		const root = workspace();
+		const edit = input(root, {
+			tool_name: "edit",
+			tool_input: { path: "report.md", old_string: "처리량은 두 배가 되었다.", new_string: USER_PLEDGE },
+		});
+		expect(hookOutput(runHumanizerPreToolUse(edit)).hookSpecificOutput.permissionDecision).toBe("deny");
+		writeFileSync(join(root, "kept.md"), `${USER_PLEDGE}\n`, "utf8");
+		expect(runHumanizerPreToolUse(writeEvent(root, "kept.md", `${USER_PLEDGE}\n처리량은 두 배가 되었다.\n`))).toBe(
+			"",
+		);
+		const second = writeEvent(root, "kept.md", `${USER_PLEDGE}\n이 수치는 투자 권유로 해석하지 말 것.\n`);
+		const refused = hookOutput(runHumanizerPreToolUse(second));
+		expect(refused.hookSpecificOutput.permissionDecision).toBe("deny");
+		expect(refused.hookSpecificOutput.additionalContext).toContain("block ko-negative-pledge");
+	});
+
+	it("still refuses the pledge when the same write also holds a long run of padding after an emphasis-prone word", () => {
+		const root = workspace();
+		const padded = [`${USER_PLEDGE}\n검증된${" ".repeat(4096)}x`, `${USER_PLEDGE}\n해석하지${" ".repeat(65536)}x`];
+		for (const content of padded) {
+			const started = Date.now();
+			const output = runHumanizerPreToolUse(writeEvent(root, "padded.md", content));
+			const elapsed = Date.now() - started;
+			const refused = hookOutput(output);
+			expect(refused.hookSpecificOutput.permissionDecision, `padding ${content.length}`).toBe("deny");
+			expect(refused.hookSpecificOutput.additionalContext).toContain("block ko-negative-pledge");
+			expect(elapsed, `padding ${content.length} took ${elapsed} ms`).toBeLessThan(1000);
+		}
+	});
+
+	it("gives every pledge its expected rule at its expected severity", () => {
+		for (const pledge of pledgeCases.pledges) {
+			const findings = inspectHumanizerText(pledge.text);
+			const top = findings.reduce((best, item) => Math.max(best, SEVERITY_RANK[item.severity]), 0);
+			if (pledge.severity === "none") {
+				expect(findings, `pledge ${pledge.n}`).toEqual([]);
+				continue;
+			}
+			expect(top, `pledge ${pledge.n} top severity`).toBe(SEVERITY_RANK[pledge.severity]);
+			expect(
+				findings.some((item) => item.rule === pledge.rule && item.severity === pledge.severity),
+				`pledge ${pledge.n} ${pledge.rule}`,
+			).toBe(true);
+		}
+	});
+
+	it("leaves every near-miss clear of the three pledge rules, each scanned as its own document", () => {
+		for (const nearMiss of [...pledgeCases.near_misses, ...pledgeCases.near_misses_review]) {
+			expect(pledgeRuleHits(nearMiss.text), `${nearMiss.source}: ${nearMiss.text}`).toEqual([]);
+		}
+	});
+
+	it("judges whole-document cases for the repeat rule and the block rules", () => {
+		for (const item of pledgeCases.document_cases) {
+			const blocked = inspectHumanizerText(item.text).some(
+				(finding) => finding.rule === item.rule && finding.severity === "block",
+			);
+			expect(blocked, `${item.rule}: ${JSON.stringify(item.text)}`).toBe(item.expect === "block");
+		}
+	});
+});
+
 function minimalPdf(text: string): string {
 	const stream = `BT /F1 12 Tf 20 80 Td (${text.replaceAll("\\", "\\\\").replaceAll("(", "\\(").replaceAll(")", "\\)")}) Tj ET`;
 	const objects = [

@@ -46,7 +46,7 @@ layout: figure-academic
 - **Observation** Raw readings follow the reference but read 6-9 points high in wet soil
 - **Observation** After a two-point calibration per soil batch, RMSE falls from 7.8 to 2.1 VWC points
 - **Basis** 498,000 paired readings from 60 pits over 14 weeks (example data)
-- **Limitation** One soil mix and one depth; clay-rich pits were not in the sample
+- **Sample** One soil mix and one depth; clay-rich pits were not in the sample
 - **Implication** A per-batch calibration is enough; per-probe calibration adds 0.3 points of accuracy
 - Source: Example Urban Forestry Lab field data, June-September 2026 (example data)
 ---

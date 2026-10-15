@@ -69,13 +69,12 @@ These are semantic compositions of existing v1 blocks, so they remain renderer c
    ```markdown
    ![Figure 1. Pressure trend | Source: test report, p. 12](assets/pressure.png)
 
-   - **Observation** Pressure remained inside the validated band.
-     (1) Limitation: one operating condition was not sampled.
-     (2) Implication: repeat the test before scale-up.
+   - **Observation** Pressure stayed inside the validated band at the one operating condition sampled.
+   - **Implication** Repeat the test at a second condition before scale-up.
    ```
 
 2. **table plus decision takeaway** — keep units in headers, quantitative cells compact, ≤6 columns, and add a blockquote caption/source immediately after the table.
-3. **source capture** — use a legible screenshot with locator/date in the alt text and state its limitation and relevance in the body.
+3. **source capture** — use a legible screenshot with locator/date in the alt text and state its relevance in the body. If the capture covers only part of the evidence, name that part once, beside the point it supports.
 4. **two-record appendix evidence** — show at most two records per slide; include a one-line summary, source locator, and clickable DOI/canonical link when available. In a table cell, write `[원문](https://example.org/record)`; the PPTX renderer emits an external OOXML hyperlink relationship.
 
 Do not write authoring trace or unresolved placeholders. Treat overclaim, jargon, imperative tone, unsupported schedules, hierarchy, and visual density as review-only items to resolve during thumbnail review.

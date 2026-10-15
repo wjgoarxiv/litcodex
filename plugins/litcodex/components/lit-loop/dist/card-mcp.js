@@ -4,16 +4,28 @@
 // the `openai/outputTemplate` alias the Codex desktop app also reads) and returns the text map, so a
 // host that draws no card still gets something useful. `lit_card_status` is for the card only
 // (`visibility: ["app"]`, so the model and the terminal never list it); the card polls it with the
-// thread id the host adds to `_meta`. Both are read-only. The module has no side effects at import.
+// thread id the host adds to `_meta`. Each LIT turn opens a fresh card next to the newest turn: `lit_card`
+// records when it opened in the thread pointer and tells the new card that time, every poll carries the
+// newest time, and an older card that sees a later one folds into a single line and stops polling. That
+// timestamp in LitCodex's own pointer is the only write; nothing in the workspace or the user's files
+// changes, so both tools keep their read-only hint. The module has no side effects at import.
 import { createHash } from "node:crypto";
 import { CARD_HTML } from "./card-html.js";
 import { cardStatusText, readCardStatus } from "./card-status.js";
+import { recordCardOpened } from "./live-step.js";
 export const CARD_TOOL = "lit_card";
 export const CARD_STATUS_TOOL = "lit_card_status";
 export const CARD_MIME = "text/html;profile=mcp-app";
 const SERVER_INFO = { name: "litcodex", title: "LIT card", version: "1" };
 const PROTOCOL_VERSIONS = new Set(["2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25"]);
 const DEFAULT_PROTOCOL = "2025-06-18";
+/**
+ * The inline frame is max(the card's reported height, this floor); 200 by default, which left blank
+ * space under the card. The floor is the folded one-line card, so the frame follows the card.
+ */
+const MIN_FRAME_HEIGHT = 28;
+/** The working card's usual height, so the first paint is close before the card reports its own. */
+const HEIGHT_HINT = 135;
 /** Without a thread id nothing is known about the thread, so the text claims nothing about it. */
 const NO_THREAD_TEXT = "🔥 LIT · the host did not name the thread, so there is no LIT state to show here.";
 let resourceUri = null;
@@ -31,7 +43,7 @@ function tools() {
         {
             name: CARD_TOOL,
             title: "LIT card",
-            description: "Opens the live LIT card for this thread: the LIT activation, the workflow map and the step running now. It updates by itself. Call it once per thread, when the LIT activation context asks for it. In a host without cards it returns the same map as text.",
+            description: "Opens a live LIT card for this LIT turn: the LIT activation, the workflow map and the step running now. It updates by itself, and the card of the previous LIT turn folds into one line. Call it once per LIT turn, when the LIT activation context asks for it. In a host without cards it returns the same map as text.",
             inputSchema: { type: "object", properties: {}, additionalProperties: false },
             annotations: { title: "LIT card", readOnlyHint: true, destructiveHint: false, openWorldHint: false },
             _meta: { ui: { resourceUri: uri, visibility: ["model", "app"] }, "openai/outputTemplate": uri },
@@ -69,12 +81,17 @@ function threadOf(params) {
 }
 function callTool(params, context) {
     const thread = threadOf(params);
-    const status = readCardStatus(thread, context.env, context.now());
+    const now = context.now();
     if (params["name"] === CARD_STATUS_TOOL) {
+        const status = readCardStatus(thread, context.env, now);
         return { content: [{ type: "text", text: JSON.stringify(status) }], structuredContent: status };
     }
+    if (thread !== null)
+        recordCardOpened(context.env, thread, now);
+    const status = readCardStatus(thread, context.env, now);
     const text = thread === null ? NO_THREAD_TEXT : cardStatusText(status);
-    return { content: [{ type: "text", text }], structuredContent: status };
+    // The card keeps this time as its own; polls only ever say which card is the newest.
+    return { content: [{ type: "text", text }], structuredContent: { ...status, card: { openedAt: now } } };
 }
 function result(id, value) {
     return { jsonrpc: "2.0", id, result: value };
@@ -127,7 +144,11 @@ export function handleCardMessage(message, context) {
                             uri: cardResourceUri(),
                             mimeType: CARD_MIME,
                             text: CARD_HTML,
-                            _meta: { ui: { prefersBorder: false } },
+                            _meta: {
+                                ui: { prefersBorder: false },
+                                "openai/widgetMinFrameHeight": MIN_FRAME_HEIGHT,
+                                "openai/widgetHeightHint": HEIGHT_HINT,
+                            },
                         },
                     ],
                 });

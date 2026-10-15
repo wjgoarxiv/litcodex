@@ -25,6 +25,8 @@ export interface CardStatus {
     readonly branch: string | null;
     /** Folder name of the workspace only; the full path stays out of the card. */
     readonly workspace: string | null;
+    /** When the newest card of this thread opened; an older card that sees a later time folds itself. */
+    readonly cardOpenedAt: number | null;
     readonly now: number;
 }
 export interface Usage {

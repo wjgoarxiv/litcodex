@@ -12,6 +12,8 @@ export interface ThreadPointer {
     readonly cwd: string;
     readonly updatedAt: number;
     readonly cardOfferedAt: number | null;
+    /** When the `lit_card` tool last opened a card in this thread; the newest card is the live one. */
+    readonly cardOpenedAt: number | null;
 }
 export interface ToolRef {
     readonly tool: string;
@@ -53,7 +55,13 @@ export declare function endLiveStep(repoRoot: string, sessionId: string, now?: n
 export declare function codexHomeFrom(env: NodeJS.ProcessEnv): string | null;
 export declare function threadPointerPath(env: NodeJS.ProcessEnv, threadId: string): string | null;
 export declare function readThreadPointer(env: NodeJS.ProcessEnv, threadId: string): ThreadPointer | null;
-/** Point the thread at `cwd`; skips the write when the pointer already says so. */
+/** Point the thread at `cwd`, keeping the card times it already holds; skips the write when nothing changes. */
 export declare function writeThreadPointer(env: NodeJS.ProcessEnv, threadId: string, cwd: string, now?: number, options?: {
     readonly cardOffered?: boolean;
+    readonly cardOpened?: boolean;
 }): void;
+/**
+ * Remember that a card opened in this thread now, so every poll can tell the older cards to fold. Only a
+ * thread the hooks already pointed at a workspace is recorded; returns the time recorded, or null.
+ */
+export declare function recordCardOpened(env: NodeJS.ProcessEnv, threadId: string, now?: number): number | null;

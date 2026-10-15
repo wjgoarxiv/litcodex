@@ -14,7 +14,7 @@ import { claimReloadContext, evaluateAutoHandoffStop, recordCompaction, takeRelo
 import { applyAutoHandoffRoute, clearManagedCompactionWhenOff, parseAutoHandoffRoute, } from "./auto-handoff-settings.js";
 import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
 import { claimJevOnBanner, formatJevHookOutput, jevSwitchState, runJevSkillHint, withJevBanner, } from "./jev-hint.js";
-import { endLiveStep, readThreadPointer, recordLiveStepEnd, recordLiveStepStart, recordTurnStart, writeThreadPointer, } from "./live-step.js";
+import { endLiveStep, recordLiveStepEnd, recordLiveStepStart, recordTurnStart, writeThreadPointer, } from "./live-step.js";
 import { evaluatePlanPersistence, formatStopBlockOutput, recordLitPlanActivation } from "./plan-persistence.js";
 import { recordWorkflowTurn, workflowMapLine, workflowStopLine, workflowTurn } from "./workflow-map.js";
 /** Hard cap on stdin to bound memory / ReDoS exposure inside the 5 s Codex hook budget. 8 MB. */
@@ -200,21 +200,20 @@ function withWorkflowMap(stdout, parsed, mode) {
         return stdout;
     }
 }
-/** Asks the model to open the LIT card; in the terminal `codex` the same tool returns the map as text. */
-export const CARD_OFFER_CONTEXT = "LIT card: if the `lit_card` tool (litcodex MCP server) is available, call the `lit_card` tool once now, with no arguments, so the user sees the live LIT card for this thread. Do not call it again in this thread; it updates by itself.";
-function offered(env, sessionId) {
-    return (readThreadPointer(env, sessionId)?.cardOfferedAt ?? null) !== null;
-}
-/** Add the card request to the first LIT activation of a thread, and remember that it was made. */
+/**
+ * Asks the model to open the LIT card for this LIT turn, so the live card sits next to the newest turn
+ * instead of scrolling away with the first one. In the terminal `codex` the same tool returns the map as text.
+ */
+export const CARD_OFFER_CONTEXT = "LIT card: if the `lit_card` tool (litcodex MCP server) is available, call the `lit_card` tool once now, with no arguments, so the user sees the live LIT card for this turn. It replaces the previous turn's card, which folds itself into one line. Do not call it again in this turn; it updates by itself.";
+/** Add the card request to every LIT activation, and remember when it was last made. */
 function withCardOffer(stdout, scope, auto) {
-    const env = auto.env ?? process.env;
-    if (scope === null || stdout === "" || offered(env, scope.sessionId))
+    if (scope === null || stdout === "")
         return stdout;
     const merged = withReloadContext(stdout, CARD_OFFER_CONTEXT);
     if (merged === null)
         return stdout;
-    writeThreadPointer(env, scope.sessionId, scope.cwd, auto.now, { cardOffered: true });
-    return offered(env, scope.sessionId) ? merged : stdout;
+    writeThreadPointer(auto.env ?? process.env, scope.sessionId, scope.cwd, auto.now, { cardOffered: true });
+    return merged;
 }
 function isRecord(value) {
     return typeof value === "object" && value !== null && !Array.isArray(value);

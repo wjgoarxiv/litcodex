@@ -5,7 +5,8 @@
 // live step. The workspace comes from the owned pointer first; Codex's own rollout header is read only
 // when no pointer exists yet, because its format is private. The rollout's last token count gives the
 // context and quota use for the bottom row; when that format moves, the row simply stays empty. Thread ids are normalized before they
-// touch a path, every file read is size-capped and refuses symlinks, and nothing here writes.
+// touch a path, every file read is size-capped and refuses symlinks, and nothing here writes; the one
+// write of the card server, the time a card opened, lives in live-step.ts.
 
 import { closeSync, fstatSync, readdirSync, readSync } from "node:fs";
 import { basename, isAbsolute, join } from "node:path";
@@ -64,6 +65,8 @@ export interface CardStatus {
 	readonly branch: string | null;
 	/** Folder name of the workspace only; the full path stays out of the card. */
 	readonly workspace: string | null;
+	/** When the newest card of this thread opened; an older card that sees a later time folds itself. */
+	readonly cardOpenedAt: number | null;
 	readonly now: number;
 }
 
@@ -286,7 +289,7 @@ function finishedMap(map: WorkflowMap): WorkflowMap {
 	};
 }
 
-function ready(thread: string | null, workspace: string | null, now: number): CardStatus {
+function ready(thread: string | null, workspace: string | null, cardOpenedAt: number | null, now: number): CardStatus {
 	return {
 		version: 1,
 		thread,
@@ -303,6 +306,7 @@ function ready(thread: string | null, workspace: string | null, now: number): Ca
 		usage: null,
 		branch: null,
 		workspace,
+		cardOpenedAt,
 		now,
 	};
 }
@@ -324,12 +328,13 @@ function turnWorking(live: LiveStep | null, lastStepAt: number | null, now: numb
 export function readCardStatus(threadId: string | null, env: NodeJS.ProcessEnv, now = Date.now()): CardStatus {
 	const cwd = resolveThreadCwd(threadId, env);
 	const thread = cwd === null ? null : threadId;
-	if (cwd === null || thread === null) return ready(null, null, now);
+	if (cwd === null || thread === null) return ready(null, null, null, now);
 	const workspace = basename(cwd);
+	const cardOpenedAt = readThreadPointer(env, thread)?.cardOpenedAt ?? null;
 	// Every saved state lives under `.litcodex`; a symlink there would point the card at foreign files.
-	if (!plainDirs(cwd, ".litcodex")) return ready(thread, workspace, now);
+	if (!plainDirs(cwd, ".litcodex")) return ready(thread, workspace, cardOpenedAt, now);
 	const turn = workflowTurn(cwd, thread);
-	if (turn === null) return ready(thread, workspace, now);
+	if (turn === null) return ready(thread, workspace, cardOpenedAt, now);
 	const signals = readWorkflowSignals(cwd, thread, now);
 	const drawn = workflowMapCells(turn.mode, signals);
 	const live = readLiveStep(cwd, thread);
@@ -370,6 +375,7 @@ export function readCardStatus(threadId: string | null, env: NodeJS.ProcessEnv, 
 		usage: readUsage(thread, env),
 		branch: readBranch(cwd),
 		workspace,
+		cardOpenedAt,
 		now,
 	};
 }

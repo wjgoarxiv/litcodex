@@ -154,7 +154,12 @@ describe("thread pointer", () => {
 		const env = { CODEX_HOME: home };
 		writeThreadPointer(env, "01a1-thread", root, 10);
 		expect(threadPointerPath(env, "01a1-thread")).toBe(join(home, "litcodex/lit-loop/threads/01a1-thread.json"));
-		expect(readThreadPointer(env, "01a1-thread")).toEqual({ cwd: root, updatedAt: 10, cardOfferedAt: null });
+		expect(readThreadPointer(env, "01a1-thread")).toEqual({
+			cwd: root,
+			updatedAt: 10,
+			cardOfferedAt: null,
+			cardOpenedAt: null,
+		});
 	});
 
 	it("falls back to HOME/.codex and writes nothing when neither is known", () => {
@@ -414,7 +419,7 @@ describe("live step hooks", () => {
 		expect(readFileSync(victim, "utf8")).toBe("keep");
 	});
 
-	it("asks the model to open the LIT card once per thread, on the first LIT activation only", async () => {
+	it("asks the model to open a fresh LIT card on every LIT activation, and never on a plain prompt", async () => {
 		const home = dir("litcodex-codex-home-");
 		const root = dir("litcodex-ws-");
 		const contextOf = async (prompt: string): Promise<string> => {
@@ -443,7 +448,12 @@ describe("live step hooks", () => {
 		};
 		expect(await contextOf("hello there")).not.toContain("lit_card");
 		const first = await contextOf("lit add a flag");
-		expect(first).toContain("call the `lit_card` tool once");
-		expect(await contextOf("lit add another flag")).not.toContain("lit_card");
+		expect(first).toContain("call the `lit_card` tool once now");
+		expect(await contextOf("thanks, looks good")).not.toContain("lit_card");
+		const second = await contextOf("lit add another flag");
+		expect(second).toContain("call the `lit_card` tool once now");
+		expect(second).toContain("folds");
+		expect(second).not.toContain("in this thread");
+		expect(readThreadPointer({ CODEX_HOME: home }, "s5")?.cardOfferedAt).toEqual(expect.any(Number));
 	});
 });

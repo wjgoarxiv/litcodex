@@ -221,6 +221,10 @@ Codex 데스크톱 앱에서는 LitCodex가 스레드 안에 작은 LIT 카드�
 워크플로 지도와 현재 단계, 그리고 지금 실행 중인 도구와 경과 시간이 나옵니다. 에이전트가 일하는 동안 카드는 저절로
 새로 고쳐지고, 아무 일도 없을 때는 천천히 확인합니다.
 
+앱은 카드를 처음 그린 자리에 그대로 두기 때문에, 대화가 길어지면 카드가 화면 위로 밀려 올라갑니다. 그래서 LIT를 시작하는
+프롬프트마다 가장 최근 턴 옆에 새 카드가 열리고, 앞선 카드는 그 턴이 어떻게 끝났는지만 담은 한 줄로 접힌 뒤 더는
+새로 고치지 않습니다. LIT를 시작하지 않는 프롬프트에는 카드가 따로 열리지 않고, 가장 최근 카드가 계속 진행을 보여 줍니다.
+
 <p><img src="./docs/assets/app-card/app-card-thread.webp" width="764" alt="Codex 데스크톱 앱의 스레드. &quot;lit add a --version flag that prints the package version, with a test&quot; 프롬프트 아래에 &quot;Worked for 48s&quot;와 LIT 카드가 있고, 그 아래에 에이전트의 요약이 이어진다. 카드에는 LIT · lit-loop와 오른쪽의 DONE ✓, 지도 work ✓, review, done ✓, &quot;✓ turn done in 49s&quot; 줄, 그리고 컨텍스트 사용량, 주간 사용량, git 브랜치, 프로젝트 이름이 담긴 아랫줄이 보인다." /></p>
 
 <p><img src="./docs/assets/app-card/app-card-done.webp" width="760" alt="턴이 끝난 뒤 LIT 카드를 가까이 본 모습. 머리에 LIT · lit-loop와 DONE ✓, 워크플로 지도 work ✓, review, done ✓, &quot;✓ turn done in 49s&quot; 줄, 아랫줄에 ctx 16%, 1w 7%, git master, lit-card-demo가 있다." /></p>

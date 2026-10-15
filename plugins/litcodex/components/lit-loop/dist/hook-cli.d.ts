@@ -21,8 +21,11 @@ export interface AutoHandoffHookOptions {
     readonly env?: NodeJS.ProcessEnv;
     readonly now?: number;
 }
-/** Asks the model to open the LIT card; in the terminal `codex` the same tool returns the map as text. */
-export declare const CARD_OFFER_CONTEXT = "LIT card: if the `lit_card` tool (litcodex MCP server) is available, call the `lit_card` tool once now, with no arguments, so the user sees the live LIT card for this thread. Do not call it again in this thread; it updates by itself.";
+/**
+ * Asks the model to open the LIT card for this LIT turn, so the live card sits next to the newest turn
+ * instead of scrolling away with the first one. In the terminal `codex` the same tool returns the map as text.
+ */
+export declare const CARD_OFFER_CONTEXT = "LIT card: if the `lit_card` tool (litcodex MCP server) is available, call the `lit_card` tool once now, with no arguments, so the user sees the live LIT card for this turn. It replaces the previous turn's card, which folds itself into one line. Do not call it again in this turn; it updates by itself.";
 /** Injectable Jev dependencies; production uses the process environment and built-in `fetch`. */
 export interface JevHookOptions {
     readonly env?: NodeJS.ProcessEnv;

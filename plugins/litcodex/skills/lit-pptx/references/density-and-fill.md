@@ -122,7 +122,7 @@ Every rule below hands the compiler something real to place lower on the page.
   checks: the basis of each figure, a comparison (prior period, plan, peer), the period, the source,
   and the implication or next action.
 - **End data slides with a strip.** A line `출처: …` / `Source: …` naming origin and date; optionally
-  `주: …` / `Note: …` with a definition or caveat. These cost the takeaways no room, and the compiler
+  `주: …` / `Note: …` with a definition or a data fact (what a figure counts, its period, what it leaves out). A `주:` line never says what the slide is not for. These cost the takeaways no room, and the compiler
   moves them to the foot wherever they stand in the slide text. The examples keep a Korean `출처:`
   line directly under the table or picture it describes, so the attribution sits next to its
   evidence in the source file. On slides without a table or picture, and on the first slides after

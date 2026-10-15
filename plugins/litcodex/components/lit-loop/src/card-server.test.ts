@@ -404,6 +404,14 @@ describe("card MCP server", () => {
 		expect(CARD_HTML).toContain("notifyIntrinsicHeight");
 		expect(CARD_HTML).toMatch(/displayMode/u);
 		expect(CARD_HTML).toMatch(/font-family:var\(--mono\)!important/u);
+		// The host sizes an inline frame as max(reported height, min frame height ?? 200): a low floor lets the
+		// frame follow the card (and its one-line folded form), and the hint keeps the first paint near the card.
+		const meta = (reply.result.contents[0] as unknown as { _meta: Record<string, unknown> })._meta;
+		expect(meta["openai/widgetMinFrameHeight"]).toEqual(expect.any(Number));
+		expect(meta["openai/widgetMinFrameHeight"]).toBeGreaterThanOrEqual(0);
+		expect(meta["openai/widgetMinFrameHeight"]).toBeLessThanOrEqual(40);
+		expect(meta["openai/widgetHeightHint"]).toBeGreaterThanOrEqual(100);
+		expect(meta["openai/widgetHeightHint"]).toBeLessThanOrEqual(180);
 		const unknown = call(
 			{ jsonrpc: "2.0", id: 4, method: "resources/read", params: { uri: "ui://litcodex/../x" } },
 			{},
@@ -441,6 +449,60 @@ describe("card MCP server", () => {
 		expect(reply.result.content[0]?.text).toContain("🔥 LIT IGNITED · start-work");
 		expect(reply.result.content[0]?.text).toContain("🔨 WORK ▰▰▰▱▱▱▱ 3/7");
 		expect(reply.result.content[0]?.text).toContain("Bash");
+	});
+
+	it("records when each card opens, so every poll names the newest card of the thread", () => {
+		const { env, root } = workspace();
+		const open = (id: number, now: number) =>
+			call(
+				{
+					jsonrpc: "2.0",
+					id,
+					method: "tools/call",
+					params: { name: CARD_TOOL, arguments: {}, _meta: { "x-codex-turn-metadata": { thread_id: "t1" } } },
+				},
+				env,
+				now,
+			) as { result: { structuredContent: { card: { openedAt: number }; cardOpenedAt: number } } };
+		const poll = (now: number) =>
+			(
+				call(
+					{
+						jsonrpc: "2.0",
+						id: 9,
+						method: "tools/call",
+						params: { name: CARD_STATUS_TOOL, arguments: {}, _meta: { thread_id: "t1" } },
+					},
+					env,
+					now,
+				) as { result: { structuredContent: { cardOpenedAt: number | null; card?: unknown } } }
+			).result.structuredContent;
+		expect(poll(119_000).cardOpenedAt).toBeNull();
+		const first = open(10, 120_000).result.structuredContent;
+		expect(first.card).toEqual({ openedAt: 120_000 });
+		expect(first.cardOpenedAt).toBe(120_000);
+		expect(poll(121_000).cardOpenedAt).toBe(120_000);
+		// A tool step in between rewrites the pointer; the opening time survives it.
+		writeThreadPointer(env, "t1", root, 125_000);
+		expect(poll(126_000).cardOpenedAt).toBe(120_000);
+		const second = open(11, 130_000).result.structuredContent;
+		expect(second.card).toEqual({ openedAt: 130_000 });
+		const latest = poll(131_000);
+		expect(latest.cardOpenedAt).toBe(130_000);
+		// A poll never claims to be a card of its own.
+		expect(latest.card).toBeUndefined();
+	});
+
+	it("records nothing for a thread without a LIT pointer, and still opens the card", () => {
+		const home = dir("litcodex-card-home-");
+		const env = { CODEX_HOME: home };
+		const reply = call(
+			{ jsonrpc: "2.0", id: 12, method: "tools/call", params: { name: CARD_TOOL, arguments: { thread_id: "zz" } } },
+			env,
+		) as { result: { structuredContent: { state: string; card: { openedAt: number } } } };
+		expect(reply.result.structuredContent.state).toBe("ready");
+		expect(reply.result.structuredContent.card).toEqual({ openedAt: 120_000 });
+		expect(readdirSync(home)).toEqual([]);
 	});
 
 	it("serves the status poll by the thread id the host sends", () => {

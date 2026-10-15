@@ -5,7 +5,8 @@
 // clears it. It also says whether the turn is still open: a LIT prompt opens it and Stop closes it, so
 // the card can tell a model that is thinking between tools from one that has answered and waits. The pointer lives in the Codex home the hook sees (`litcodex/lit-loop/threads/<session>.json`)
 // and maps a session id, which the desktop app also sends as its thread id, to the hook's `cwd`, because
-// the card server is started in the plugin folder and learns nothing else about the thread. Every write
+// the card server is started in the plugin folder and learns nothing else about the thread. The pointer
+// also keeps when the newest card of the thread opened, so an older card can fold itself away. Every write
 // is atomic, skips symlinked folders and never throws; every read is size-capped and refuses symlinks.
 import { randomBytes } from "node:crypto";
 import { closeSync, constants, fstatSync, lstatSync, mkdirSync, openSync, readSync, renameSync, rmSync, writeFileSync, } from "node:fs";
@@ -263,12 +264,13 @@ export function readThreadPointer(env, threadId) {
     const record = readSmallJson(path);
     if (!isRecord(record) || record["version"] !== 1)
         return null;
-    const { cwd, updatedAt, cardOfferedAt } = record;
+    const { cwd, updatedAt, cardOfferedAt, cardOpenedAt } = record;
     if (typeof cwd !== "string" || !isAbsolute(cwd) || typeof updatedAt !== "number")
         return null;
-    return { cwd, updatedAt, cardOfferedAt: typeof cardOfferedAt === "number" ? cardOfferedAt : null };
+    const time = (value) => (typeof value === "number" && Number.isFinite(value) ? value : null);
+    return { cwd, updatedAt, cardOfferedAt: time(cardOfferedAt), cardOpenedAt: time(cardOpenedAt) };
 }
-/** Point the thread at `cwd`; skips the write when the pointer already says so. */
+/** Point the thread at `cwd`, keeping the card times it already holds; skips the write when nothing changes. */
 export function writeThreadPointer(env, threadId, cwd, now = Date.now(), options = {}) {
     const path = threadPointerPath(env, threadId);
     const home = codexHomeFrom(env);
@@ -276,12 +278,28 @@ export function writeThreadPointer(env, threadId, cwd, now = Date.now(), options
         return;
     const current = readThreadPointer(env, threadId);
     const cardOfferedAt = options.cardOffered === true ? now : (current?.cardOfferedAt ?? null);
-    if (current !== null && current.cwd === cwd && current.cardOfferedAt === cardOfferedAt)
+    const cardOpenedAt = options.cardOpened === true ? now : (current?.cardOpenedAt ?? null);
+    if (current !== null &&
+        current.cwd === cwd &&
+        current.cardOfferedAt === cardOfferedAt &&
+        current.cardOpenedAt === cardOpenedAt)
         return;
     writeRecord(home, POINTER_DIR, basename(path), {
         version: 1,
         cwd,
         updatedAt: now,
         cardOfferedAt,
+        cardOpenedAt,
     });
+}
+/**
+ * Remember that a card opened in this thread now, so every poll can tell the older cards to fold. Only a
+ * thread the hooks already pointed at a workspace is recorded; returns the time recorded, or null.
+ */
+export function recordCardOpened(env, threadId, now = Date.now()) {
+    const current = readThreadPointer(env, threadId);
+    if (current === null)
+        return null;
+    writeThreadPointer(env, threadId, current.cwd, now, { cardOpened: true });
+    return readThreadPointer(env, threadId)?.cardOpenedAt === now ? now : null;
 }
