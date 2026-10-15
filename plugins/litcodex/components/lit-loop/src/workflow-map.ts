@@ -6,8 +6,9 @@
 // journal. A stage with no saved signal is left out rather than guessed. Every read fails open.
 
 import { createHash } from "node:crypto";
-import { lstatSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
-import { basename, isAbsolute, join } from "node:path";
+import { lstatSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { basename, dirname, isAbsolute, join, relative, sep } from "node:path";
+import { plainDirs, plainDirsOrMissing, writeFileAtomic } from "./live-step.js";
 import { LIT_LOOP_DIR, LIT_LOOP_GOALS, normalizeSessionId } from "./state-paths.js";
 
 type Stage = "interview" | "plan" | "work" | "review" | "done";
@@ -77,19 +78,31 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Parse a small regular file (never a symlink); null on any failure. */
-function readJson(path: string): unknown {
+/**
+ * True when `path` sits inside `repoRoot` with no symlinked folder between them, so a state read never
+ * leaves the workspace through a linked `.litcodex/plans` or similar.
+ */
+function ownedPath(repoRoot: string, path: string): boolean {
+	const rel = relative(repoRoot, dirname(path));
+	if (rel === "") return true;
+	if (rel.startsWith("..") || isAbsolute(rel)) return false;
+	return plainDirs(repoRoot, rel.split(sep).join("/"));
+}
+
+/** Parse a small regular file (never a symlink, never behind a symlinked folder); null on any failure. */
+function readJson(repoRoot: string, path: string): unknown {
+	const text = readText(repoRoot, path);
+	if (text === null) return null;
 	try {
-		const stat = lstatSync(path);
-		if (!stat.isFile() || stat.size > MAX_STATE_BYTES) return null;
-		return JSON.parse(readFileSync(path, "utf8"));
+		return JSON.parse(text);
 	} catch {
 		return null;
 	}
 }
 
-function readText(path: string): string | null {
+function readText(repoRoot: string, path: string): string | null {
 	try {
+		if (!ownedPath(repoRoot, path)) return null;
 		const stat = lstatSync(path);
 		if (!stat.isFile() || stat.size > MAX_STATE_BYTES) return null;
 		return readFileSync(path, "utf8");
@@ -186,7 +199,7 @@ export function safeTitle(label: string): string | null {
 }
 
 function readWork(repoRoot: string, sessionId: string | null): WorkflowSignals["work"] {
-	const state = readJson(join(repoRoot, ".litcodex/start-work/state.json"));
+	const state = readJson(repoRoot, join(repoRoot, ".litcodex/start-work/state.json"));
 	if (!isRecord(state) || !isRecord(state["works"])) return null;
 	const works = Object.values(state["works"]).filter(isRecord);
 	const activeId = state["active_work_id"];
@@ -210,15 +223,15 @@ function readWork(repoRoot: string, sessionId: string | null): WorkflowSignals["
 	if (work === undefined || typeof work["active_plan"] !== "string") return null;
 	const file = basename(work["active_plan"]);
 	if (!file.endsWith(".md")) return null;
-	const text = readText(join(repoRoot, ".litcodex/plans", file));
+	const text = readText(repoRoot, join(repoRoot, ".litcodex/plans", file));
 	if (text === null) return null;
 	const rows = countPlanRows(text);
 	if (rows.total === 0) return null;
 	return { ...rows, status: work["status"] as "active" | "paused" | "completed" };
 }
 
-function goalProgress(path: string): Progress | null {
-	const plan = readJson(path);
+function goalProgress(repoRoot: string, path: string): Progress | null {
+	const plan = readJson(repoRoot, path);
 	if (!isRecord(plan) || !Array.isArray(plan["goals"])) return null;
 	const goals = plan["goals"].filter(isRecord);
 	if (goals.length === 0) return null;
@@ -233,16 +246,16 @@ function goalProgress(path: string): Progress | null {
 
 function readGoals(repoRoot: string, sessionId: string | null): Progress | null {
 	if (sessionId !== null) {
-		const scoped = goalProgress(join(repoRoot, LIT_LOOP_DIR, sessionId, LIT_LOOP_GOALS));
+		const scoped = goalProgress(repoRoot, join(repoRoot, LIT_LOOP_DIR, sessionId, LIT_LOOP_GOALS));
 		if (scoped !== null) return scoped;
 	}
-	const shared = goalProgress(join(repoRoot, LIT_LOOP_DIR, LIT_LOOP_GOALS));
+	const shared = goalProgress(repoRoot, join(repoRoot, LIT_LOOP_DIR, LIT_LOOP_GOALS));
 	return shared !== null && shared.done < shared.total ? shared : null;
 }
 
 function readPlanRecord(repoRoot: string, sessionId: string | null): WorkflowSignals["plan"] {
 	if (sessionId === null) return null;
-	const record = readJson(join(repoRoot, ".litcodex/lit-plan", `${sessionId}.json`));
+	const record = readJson(repoRoot, join(repoRoot, ".litcodex/lit-plan", `${sessionId}.json`));
 	if (!isRecord(record) || typeof record["satisfied"] !== "boolean") return null;
 	return record["satisfied"] ? "published" : "drafting";
 }
@@ -250,6 +263,7 @@ function readPlanRecord(repoRoot: string, sessionId: string | null): WorkflowSig
 /** The newest research journal by its last write, with the names of the files in it. */
 function newestJournal(repoRoot: string): { readonly files: readonly string[]; readonly mtime: number } | null {
 	const root = join(repoRoot, RESEARCH_DIR);
+	if (!plainDirs(repoRoot, RESEARCH_DIR)) return null;
 	try {
 		let newest: { files: string[]; mtime: number } | null = null;
 		for (const name of readdirSync(root)) {
@@ -305,55 +319,132 @@ function stageFromState(signals: WorkflowSignals): { index: number; active: bool
 	return null;
 }
 
-/** The research family: decompose › waves (the first, then expansion) › verify › synthesis. */
-function researchMap(research: ResearchProgress | null): string {
-	if (research === null || (research.wave === null && !research.verifying)) return "🔎 DECOMPOSE › 🌊 · › 🔬 · › 🏁 ·";
-	const { wave } = research;
-	if (!research.verifying) {
-		return `🔎 ✓ › 🌊 WAVE ${wave}${wave !== null && wave > 1 ? " EXPAND" : ""} › 🔬 · › 🏁 ·`;
-	}
-	const waves = wave === null ? "" : ` › 🌊 ✓ ${wave} wave${wave === 1 ? "" : "s"}`;
-	return `🔎 ✓${waves} › 🔬 VERIFY › 🏁 ·`;
+/** One stage of the map, as the text line and the LIT card both draw it. */
+export interface MapCell {
+	readonly key: string;
+	readonly icon: string;
+	/** Lowercase stage word for the card. */
+	readonly word: string;
+	/** `done` ✓, `current` (named in capitals), `partial` (an earlier stage with an open bar) or `pending` ·. */
+	readonly state: "done" | "current" | "partial" | "pending";
+	/** What the current stage says in capitals; for a done research wave stage, how many waves ran. */
+	readonly label: string | null;
+	readonly progress: { readonly done: number; readonly total: number } | null;
 }
 
-/** One map line, or null when there is nothing true to draw. Plain text: emoji and block cells only. */
-export function renderWorkflowMap(mode: string | null, signals: WorkflowSignals): string | null {
+export interface WorkflowMap {
+	readonly family: "main" | "research";
+	readonly cells: readonly MapCell[];
+	/** The next open task or goal title, cut the way the Stop line cuts it. */
+	readonly next: string | null;
+}
+
+function cell(
+	key: string,
+	icon: string,
+	state: MapCell["state"],
+	label: string | null = null,
+	progress: MapCell["progress"] = null,
+	word = key,
+): MapCell {
+	return { key, icon, word, state, label, progress };
+}
+
+/** The research family: decompose › waves (the first, then expansion) › verify › synthesis. */
+function researchCells(research: ResearchProgress | null): MapCell[] {
+	const pending = (key: string, icon: string): MapCell => cell(key, icon, "pending");
+	if (research === null || (research.wave === null && !research.verifying)) {
+		return [
+			cell("decompose", "🔎", "current", "DECOMPOSE"),
+			pending("wave", "🌊"),
+			pending("verify", "🔬"),
+			pending("synthesis", "🏁"),
+		];
+	}
+	const { wave } = research;
+	if (!research.verifying) {
+		const label = `WAVE ${wave}${wave !== null && wave > 1 ? " EXPAND" : ""}`;
+		return [
+			cell("decompose", "🔎", "done"),
+			cell("wave", "🌊", "current", label),
+			pending("verify", "🔬"),
+			pending("synthesis", "🏁"),
+		];
+	}
+	const waves = wave === null ? [] : [cell("wave", "🌊", "done", `${wave} wave${wave === 1 ? "" : "s"}`)];
+	return [
+		cell("decompose", "🔎", "done"),
+		...waves,
+		cell("verify", "🔬", "current", "VERIFY"),
+		pending("synthesis", "🏁"),
+	];
+}
+
+/** The map as stages, or null when there is nothing true to draw. */
+export function workflowMapCells(mode: string | null, signals: WorkflowSignals): WorkflowMap | null {
 	const fromMode = mode === null ? undefined : MODE_STAGE[mode];
-	if (fromMode === "research") return researchMap(signals.research);
+	const { work } = signals;
+	const progress = work ?? signals.goals;
+	const next = progress === null || progress.next === null ? null : safeTitle(progress.next);
+	if (fromMode === "research") return { family: "research", cells: researchCells(signals.research), next: null };
 	const position =
 		fromMode === undefined
 			? stageFromState(signals)
 			: { index: STAGES.findIndex(([stage]) => stage === fromMode), active: true };
 	if (position === null) return null;
-	const { work } = signals;
-	const progress = work ?? signals.goals;
 	const planKnown = work !== null || signals.plan === "published";
 	const workFinished = work !== null && (work.status === "completed" || work.done === work.total);
-	const cells: string[] = [];
+	const cells: MapCell[] = [];
 	STAGES.forEach(([stage, icon, label], index) => {
 		if (index > position.index || (index === position.index && !position.active)) {
-			cells.push(`${icon} ·`);
+			cells.push(cell(stage, icon, "pending"));
 			return;
 		}
 		if (index === position.index) {
 			const name = stage === "work" && work?.status === "paused" ? "PAUSED" : label;
-			const bar =
-				stage === "work" && progress !== null
-					? ` ${progressBar(progress.done, progress.total)} ${progress.done}/${progress.total}`
-					: "";
-			cells.push(`${icon} ${name}${bar}`);
+			const bar = stage === "work" && progress !== null ? { done: progress.done, total: progress.total } : null;
+			cells.push(cell(stage, icon, "current", name, bar));
 			return;
 		}
 		if (stage === "interview" || stage === "plan") {
-			if (planKnown) cells.push(`${icon} ✓`);
+			if (planKnown) cells.push(cell(stage, icon, "done"));
 		} else if (stage === "work") {
-			if (workFinished) cells.push(`${icon} ✓`);
-			else if (work !== null) cells.push(`${icon} ${progressBar(work.done, work.total)} ${work.done}/${work.total}`);
+			const bar = work === null ? null : { done: work.done, total: work.total };
+			if (workFinished) cells.push(cell(stage, icon, "done", null, bar));
+			else if (work !== null) cells.push(cell(stage, icon, "partial", null, bar));
 		} else if (stage === "review" && work?.status === "completed") {
-			cells.push(`${icon} ✓`);
+			cells.push(cell(stage, icon, "done"));
 		}
 	});
-	return cells.join(" › ");
+	return { family: "main", cells, next };
+}
+
+function cellText(item: MapCell): string {
+	const bar =
+		item.progress === null
+			? ""
+			: `${progressBar(item.progress.done, item.progress.total)} ${item.progress.done}/${item.progress.total}`;
+	switch (item.state) {
+		case "pending":
+			return `${item.icon} ·`;
+		case "done":
+			return item.label === null ? `${item.icon} ✓` : `${item.icon} ✓ ${item.label}`;
+		case "partial":
+			return `${item.icon} ${bar}`;
+		case "current":
+			return `${item.icon} ${item.label ?? item.word.toUpperCase()}${bar === "" ? "" : ` ${bar}`}`;
+	}
+}
+
+/** One map line, or null when there is nothing true to draw. Plain text: emoji and block cells only. */
+export function renderWorkflowMap(mode: string | null, signals: WorkflowSignals): string | null {
+	const map = workflowMapCells(mode, signals);
+	return map === null ? null : workflowMapText(map);
+}
+
+/** The text line for a map already built. */
+export function workflowMapText(map: WorkflowMap): string {
+	return map.cells.map(cellText).join(" › ");
 }
 
 export function workflowMapLine(repoRoot: string, sessionId: string | null, mode: string | null): string | null {
@@ -397,17 +488,16 @@ export function recordWorkflowTurn(
 		goalsDone: signals.goals?.done ?? null,
 	};
 	try {
+		if (!plainDirsOrMissing(repoRoot, TURN_DIR)) return;
 		mkdirSync(join(repoRoot, TURN_DIR), { recursive: true });
-		const tmp = `${path}.${process.pid}.tmp`;
-		writeFileSync(tmp, `${JSON.stringify(record)}\n`);
-		renameSync(tmp, path);
+		writeFileAtomic(path, `${JSON.stringify(record)}\n`);
 	} catch {
 		// Without the record the Stop hook simply stays quiet for this turn.
 	}
 }
 
-function readTurn(path: string): TurnRecord | null {
-	const record = readJson(path);
+function readTurn(repoRoot: string, path: string): TurnRecord | null {
+	const record = readJson(repoRoot, path);
 	if (
 		!isRecord(record) ||
 		record["version"] !== 1 ||
@@ -425,6 +515,13 @@ function readTurn(path: string): TurnRecord | null {
 		workDone: count(record["workDone"]),
 		goalsDone: count(record["goalsDone"]),
 	};
+}
+
+/** The LIT activation this session last recorded: its skill and when it started; null when none. */
+export function workflowTurn(repoRoot: string, sessionId: string): { mode: string; startedAt: number } | null {
+	const path = turnPath(repoRoot, sessionId);
+	const turn = path === null ? null : readTurn(repoRoot, path);
+	return turn === null ? null : { mode: turn.mode, startedAt: turn.startedAt };
 }
 
 /** Highest wave number in the newest research journal written since `since`, or null. */
@@ -467,7 +564,7 @@ function transcriptClear(path: string | null): boolean {
  */
 function continuingWork(repoRoot: string, sessionId: string, turnId: string, stop: StopContext): Progress | null {
 	if (stop.stopHookActive || !transcriptClear(stop.transcriptPath)) return null;
-	const state = readJson(join(repoRoot, ".litcodex/start-work/state.json"));
+	const state = readJson(repoRoot, join(repoRoot, ".litcodex/start-work/state.json"));
 	if (!isRecord(state) || !isRecord(state["works"]) || typeof state["active_work_id"] !== "string") return null;
 	const owner = `codex:${sessionId}`;
 	const owned = Object.entries(state["works"]).filter(
@@ -485,7 +582,7 @@ function continuingWork(repoRoot: string, sessionId: string, turnId: string, sto
 	if (!isRecord(work["authority"]) || typeof plan !== "string" || !/^\.litcodex\/plans\/[^/\\]+\.md$/u.test(plan)) {
 		return null;
 	}
-	const text = readText(join(repoRoot, plan));
+	const text = readText(repoRoot, join(repoRoot, plan));
 	if (text === null) return null;
 	const rows = planRows(text);
 	const done = rows.filter((row) => row.done).length;
@@ -515,7 +612,7 @@ export function workflowStopLine(
 ): string | null {
 	const path = turnPath(repoRoot, sessionId);
 	if (path === null) return null;
-	const turn = readTurn(path);
+	const turn = readTurn(repoRoot, path);
 	if (turn === null || turn.turnId !== turnId) return null;
 	const continuing = continuingWork(repoRoot, sessionId, turnId, stop);
 	if (continuing !== null) {

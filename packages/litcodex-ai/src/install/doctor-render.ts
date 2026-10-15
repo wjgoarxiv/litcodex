@@ -32,6 +32,11 @@ export function renderDoctorText(report: DoctorReport): string {
 				]),
 		...(report.jevSkillHint === undefined ? [] : [`  Jev skill hint: ${report.jevSkillHint}`]),
 		...(report.autoHandoff === undefined ? [] : [`  automatic handoff: ${autoHandoffLine(report.autoHandoff)}`]),
+		...(report.statusCard === undefined
+			? []
+			: [
+					`  card:         Codex desktop app only; needs the app's MCP Apps feature${report.statusCard.serverInstalled ? "" : " (server missing)"}`,
+				]),
 		`  concurrency: ${capabilityText(report.capabilities.concurrency)}`,
 		`  probe-only explicit context/auto-compaction override: ${capabilityText(report.capabilities.autoCompaction)}`,
 	];

@@ -13,13 +13,16 @@
 // are absent or stale in the index.
 //   1. asserts every `${PLUGIN_ROOT}/components/<c>/dist/<f>.js` referenced by hooks.json is present
 //      in the selected candidate or tracked tree (only tracked mode makes a shipping claim), and
-//   2. runs each hook command from the extracted tree and asserts it exits 0 with no MODULE_NOT_FOUND.
+//   2. runs each hook command from the extracted tree and asserts it exits 0 with no MODULE_NOT_FOUND, and
+//   3. asserts every `.mcp.json` server script exists in the tree, stays inside the plugin folder (Codex
+//      starts plugin servers in the plugin folder with plugin-relative paths; it expands no PLUGIN_ROOT) and
+//      answers one tools/list request when started from the extracted tree.
 // Exit 0 = the marketplace ships a working plugin; exit 1 = a hook would crash on a clean install.
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -48,6 +51,42 @@ function collectHookCommands(hooksJson) {
 	}
 	if (cmds.length === 0) fail("hooks.json declared no command hooks — parser drift?");
 	return cmds;
+}
+
+// Every script an `.mcp.json` server runs, resolved against the server's `cwd` inside the plugin root.
+function collectMcpTargets(pluginRoot) {
+	const path = join(pluginRoot, ".mcp.json");
+	if (!existsSync(path)) return [];
+	const servers = JSON.parse(readFileSync(path, "utf8")).mcpServers ?? {};
+	const targets = [];
+	for (const [name, server] of Object.entries(servers)) {
+		const script = Array.isArray(server?.args) ? server.args[0] : undefined;
+		if (typeof script !== "string" || isAbsolute(script))
+			fail(`.mcp.json server ${name} needs a plugin-relative script`);
+		const abs = resolve(pluginRoot, typeof server.cwd === "string" ? server.cwd : ".", script);
+		const rel = relative(pluginRoot, abs);
+		if (rel.startsWith("..") || isAbsolute(rel))
+			fail(`.mcp.json server ${name} runs ${script}, outside the plugin folder`);
+		targets.push({ name, script, abs, cwd: resolve(pluginRoot, typeof server.cwd === "string" ? server.cwd : ".") });
+	}
+	return targets;
+}
+
+// Start the server from the extracted tree the way Codex does and send one tools/list line; a reply with
+// a tools array proves every module it imports shipped too.
+function answersToolsList(target) {
+	const result = spawnSync("node", [target.abs], {
+		cwd: target.cwd,
+		input: `${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" })}\n`,
+		encoding: "utf8",
+		timeout: 10_000,
+	});
+	try {
+		const reply = JSON.parse(result.stdout.trim().split("\n")[0] ?? "");
+		return result.status === 0 && reply.id === 1 && Array.isArray(reply.result?.tools);
+	} catch {
+		return false;
+	}
 }
 
 // A superset stdin payload: each hook reads only the fields it needs, so one payload satisfies all.
@@ -119,9 +158,18 @@ function main() {
 		if (crashed.length > 0) {
 			fail(`hook(s) crash when run from the marketplace tree:\n  ${crashed.join("\n  ")}`);
 		}
+		const mcpTargets = collectMcpTargets(pluginRoot);
+		const missingMcp = mcpTargets.filter((target) => !existsSync(target.abs)).map((target) => target.script);
+		if (missingMcp.length > 0) {
+			fail(`.mcp.json references ${missingMcp.length} server script(s) not in the tree: ${missingMcp.join(", ")}`);
+		}
+		const silent = mcpTargets.filter((target) => !answersToolsList(target)).map((target) => target.script);
+		if (silent.length > 0) {
+			fail(`.mcp.json server script(s) did not answer tools/list from the tree: ${silent.join(", ")}`);
+		}
 
 		process.stdout.write(
-			`marketplace-dist: OK (mode=${mode}, source=${mode === "tracked" ? "tracked index shipping tree" : "worktree candidate"}; ${seen.size} hook command(s) run clean, ${cmds.length} reference(s) checked)\n`,
+			`marketplace-dist: OK (mode=${mode}, source=${mode === "tracked" ? "tracked index shipping tree" : "worktree candidate"}; ${seen.size} hook command(s) run clean, ${cmds.length} reference(s) checked, ${mcpTargets.length} MCP server target(s) answer tools/list)\n`,
 		);
 		return 0;
 	} catch (err) {
@@ -189,7 +237,7 @@ function assertTrackedRuntimeReady() {
 }
 
 function isRuntimePath(path) {
-	if (path === `${PLUGIN_REL}/hooks/hooks.json`) return true;
+	if (path === `${PLUGIN_REL}/hooks/hooks.json` || path === `${PLUGIN_REL}/.mcp.json`) return true;
 	return (
 		new RegExp(`^${PLUGIN_REL}/components/[^/]+/dist/`).test(path) ||
 		path.startsWith(`${PLUGIN_REL}/components/rules/node_modules/`)

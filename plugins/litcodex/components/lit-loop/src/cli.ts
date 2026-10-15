@@ -17,7 +17,9 @@
 
 import {
 	runPostCompactHookCli,
+	runPostToolUseLiveHookCli,
 	runPreToolUseCreateGoalGuardCli,
+	runPreToolUseLiveHookCli,
 	runSessionStartHookCli,
 	runStopPlanPersistenceHookCli,
 	runUserPromptSubmitHookCli,
@@ -45,6 +47,8 @@ export async function main(
 		if (subcommand === "stop") return runStopPlanPersistenceHookCli(stdin, stdout, stderr);
 		if (subcommand === "session-start") return runSessionStartHookCli(stdin, stdout, stderr);
 		if (subcommand === "post-compact") return runPostCompactHookCli(stdin, stdout, stderr);
+		if (subcommand === "pre-tool-use-live") return runPreToolUseLiveHookCli(stdin, stdout, stderr);
+		if (subcommand === "post-tool-use-live") return runPostToolUseLiveHookCli(stdin, stdout, stderr);
 		stderr.write(UNKNOWN_COMMAND);
 		return 1;
 	}

@@ -9,12 +9,14 @@
 // hint (./jev-hint.ts) and, once per session while it is on, a plain-text banner; with its switch
 // off, that path makes no request and writes nothing.
 import { isAbsolute } from "node:path";
+import { Writable } from "node:stream";
 import { claimReloadContext, evaluateAutoHandoffStop, recordCompaction, takeReloadContext } from "./auto-handoff.js";
 import { applyAutoHandoffRoute, clearManagedCompactionWhenOff, parseAutoHandoffRoute, } from "./auto-handoff-settings.js";
 import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
 import { claimJevOnBanner, formatJevHookOutput, jevSwitchState, runJevSkillHint, withJevBanner, } from "./jev-hint.js";
+import { endLiveStep, readThreadPointer, recordLiveStepEnd, recordLiveStepStart, recordTurnStart, writeThreadPointer, } from "./live-step.js";
 import { evaluatePlanPersistence, formatStopBlockOutput, recordLitPlanActivation } from "./plan-persistence.js";
-import { recordWorkflowTurn, workflowMapLine, workflowStopLine } from "./workflow-map.js";
+import { recordWorkflowTurn, workflowMapLine, workflowStopLine, workflowTurn } from "./workflow-map.js";
 /** Hard cap on stdin to bound memory / ReDoS exposure inside the 5 s Codex hook budget. 8 MB. */
 export const MAX_STDIN_BYTES = 8_000_000;
 const INVALID_JSON_MESSAGE = "lit hook: stdin was not valid JSON";
@@ -100,14 +102,20 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
         return 0;
     }
     clearManagedCompactionWhenOff(hookCwd(parsed, repoRoot), auto.env ?? process.env);
+    const pointer = hookSessionScope(parsed, repoRoot);
     const decision = runUserPromptSubmitHook(parsed);
+    // Only a LIT thread gets a pointer: this prompt ignites LIT, or an earlier one already did.
+    if (pointer !== null && (decision.kind === "inject" || workflowTurn(pointer.cwd, pointer.sessionId) !== null)) {
+        writeThreadPointer(auto.env ?? process.env, pointer.sessionId, pointer.cwd, auto.now);
+        recordTurnStart(pointer.cwd, pointer.sessionId, auto.now);
+    }
     if (decision.kind === "inject" && decision.mode === "lit-plan") {
         const scope = hookSessionScope(parsed, repoRoot);
         if (scope !== null)
             recordLitPlanActivation(scope.cwd, scope.sessionId);
     }
     const own = decision.kind === "inject"
-        ? withWorkflowMap(decision.stdout, parsed, decision.mode)
+        ? withCardOffer(withWorkflowMap(decision.stdout, parsed, decision.mode), pointer, auto)
         : await jevHintOutput(parsed, repoRoot, jev);
     const output = withAutoHandoffReload(own, parsed, repoRoot, auto);
     if (output !== "")
@@ -192,6 +200,22 @@ function withWorkflowMap(stdout, parsed, mode) {
         return stdout;
     }
 }
+/** Asks the model to open the LIT card; in the terminal `codex` the same tool returns the map as text. */
+export const CARD_OFFER_CONTEXT = "LIT card: if the `lit_card` tool (litcodex MCP server) is available, call the `lit_card` tool once now, with no arguments, so the user sees the live LIT card for this thread. Do not call it again in this thread; it updates by itself.";
+function offered(env, sessionId) {
+    return (readThreadPointer(env, sessionId)?.cardOfferedAt ?? null) !== null;
+}
+/** Add the card request to the first LIT activation of a thread, and remember that it was made. */
+function withCardOffer(stdout, scope, auto) {
+    const env = auto.env ?? process.env;
+    if (scope === null || stdout === "" || offered(env, scope.sessionId))
+        return stdout;
+    const merged = withReloadContext(stdout, CARD_OFFER_CONTEXT);
+    if (merged === null)
+        return stdout;
+    writeThreadPointer(env, scope.sessionId, scope.cwd, auto.now, { cardOffered: true });
+    return offered(env, scope.sessionId) ? merged : stdout;
+}
 function isRecord(value) {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -260,6 +284,9 @@ export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoR
     clearManagedCompactionWhenOff(hookCwd(parsed, repoRoot), auto.env ?? process.env);
     const scope = hookSessionScope(parsed, repoRoot);
     if (scope !== null) {
+        // No tool runs once Stop fires: one whose PostToolUse never came (interrupted, or denied by another hook) is over.
+        // The turn itself closes only below, after the guards that can send the model back to work.
+        endLiveStep(scope.cwd, scope.sessionId, auto.now, false);
         const persistence = evaluatePlanPersistence(scope.cwd, scope.sessionId);
         if (persistence.decision === "block") {
             stdout.write(formatStopBlockOutput(persistence.reason));
@@ -278,6 +305,7 @@ export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoR
             stdout.write(formatStopBlockOutput(handoff.reason));
             return 0;
         }
+        endLiveStep(scope.cwd, scope.sessionId, auto.now);
         const line = typeof record["turn_id"] === "string"
             ? workflowStopLine(scope.cwd, scope.sessionId, record["turn_id"], {
                 stopHookActive: record["stop_hook_active"] === true,
@@ -364,4 +392,50 @@ export async function runPreToolUseCreateGoalGuardCli(stdin, stdout, stderr) {
         stdout.write(decision.stdout);
     }
     return 0;
+}
+/** The card's own tools: opening or polling the card is not a step of the work. */
+const OWN_CARD_TOOL = /^mcp__litcodex__lit_card(?:_status)?$/u;
+/** `{ sessionId, cwd, tool, toolUseId }` from a tool event that names its own absolute cwd, else null. */
+function toolEventScope(parsed) {
+    if (!isRecord(parsed))
+        return null;
+    const { session_id: sessionId, cwd, tool_name: tool, tool_use_id: toolUseId } = parsed;
+    if (typeof sessionId !== "string" || sessionId === "" || typeof tool !== "string" || tool === "")
+        return null;
+    if (typeof cwd !== "string" || !isAbsolute(cwd))
+        return null;
+    return { sessionId, cwd, tool, toolUseId: typeof toolUseId === "string" && toolUseId !== "" ? toolUseId : null };
+}
+/**
+ * Catch-all PreToolUse: in a thread with a LIT activation, remember the running tool for the LIT card
+ * and point the thread at its workspace. It prints nothing and exits 0 on every input, so it can never block or change a tool call.
+ */
+export async function runPreToolUseLiveHookCli(stdin, _stdout, _stderr, options = {}) {
+    const event = await readHookEvent(stdin, nullSink());
+    if (event.exit !== null)
+        return 0;
+    const scope = toolEventScope(event.parsed);
+    if (scope === null || OWN_CARD_TOOL.test(scope.tool))
+        return 0;
+    const now = options.now ?? Date.now();
+    // Only a LIT thread has a card to feed, so other sessions leave no `.litcodex` folder and no pointer.
+    if (workflowTurn(scope.cwd, scope.sessionId) === null)
+        return 0;
+    recordLiveStepStart(scope.cwd, scope.sessionId, scope, now);
+    writeThreadPointer(options.env ?? process.env, scope.sessionId, scope.cwd, now);
+    return 0;
+}
+/** Catch-all PostToolUse: clear the live step this call set. Prints nothing; exits 0 on every input. */
+export async function runPostToolUseLiveHookCli(stdin, _stdout, _stderr, options = {}) {
+    const event = await readHookEvent(stdin, nullSink());
+    if (event.exit !== null)
+        return 0;
+    const scope = toolEventScope(event.parsed);
+    if (scope !== null && !OWN_CARD_TOOL.test(scope.tool))
+        recordLiveStepEnd(scope.cwd, scope.sessionId, scope, options.now ?? Date.now());
+    return 0;
+}
+/** Swallows the parse errors the shared reader reports; the live-step hooks stay silent. */
+function nullSink() {
+    return new Writable({ write: (_chunk, _encoding, callback) => callback() });
 }

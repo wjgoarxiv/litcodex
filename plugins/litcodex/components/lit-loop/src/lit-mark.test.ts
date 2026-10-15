@@ -159,8 +159,13 @@ describe("canonical Ignition B LIT mark", () => {
 			for (const [index, hook] of groups.flatMap((group) => group.hooks).entries()) {
 				const discipline = /\/components\/([^/]+)\//.exec(hook.command)?.[1];
 				expect(discipline).toBeDefined();
+				const live = / hook (?:pre|post)-tool-use-live$/.test(hook.command);
 				expect(hook.statusMessage).toBe(
-					event === "SessionStart" && index === 0 ? "🔥 LIT · codex" : `🔥 LIT IGNITED · ${discipline ?? ""} 🔥`,
+					event === "SessionStart" && index === 0
+						? "🔥 LIT · codex"
+						: live
+							? "🔥 LIT · live step"
+							: `🔥 LIT IGNITED · ${discipline ?? ""} 🔥`,
 				);
 				expect(hook.statusMessage).not.toMatch(/[\n\r\x1b]/);
 			}

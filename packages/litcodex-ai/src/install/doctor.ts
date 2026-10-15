@@ -32,6 +32,8 @@ import type { AutoHandoffDoctorReport, AutoUpdateDoctorReport, DoctorReport, Jev
 export { renderDoctorText } from "./doctor-render.js";
 
 const PACKAGE_VERSION = (createRequire(import.meta.url)("../../package.json") as { version: string }).version;
+/** The LIT card MCP server inside the installed plugin; only the Codex desktop app draws the card. */
+const CARD_SERVER_RELPATH = join("components", "lit-loop", "dist", "card-server.js");
 const MAX_DIAGNOSTIC_FAMILIES = 2;
 const MAX_DIAGNOSTIC_PATHS = 2;
 const MAX_DIAGNOSTIC_PATH_LENGTH = 120;
@@ -181,6 +183,12 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 			"Codex auth mode could not be determined (auth.json absent or unrecognized). ChatGPT-subscription accounts may fail with the public gpt-5.6 alias; run `litcodex install` after authenticating.",
 		);
 	}
+	const statusCard = {
+		serverInstalled: deps.fs.existsSync(join(managedRoot, "plugins", "litcodex", CARD_SERVER_RELPATH)),
+	};
+	if (pluginInstalled && !statusCard.serverInstalled) {
+		warnings.push("LIT card server is missing from the installed plugin. Run `litcodex install`.");
+	}
 	const autoUpdate = readAutoUpdateReport(deps.env);
 	if (autoUpdate.status === "unknown-state") {
 		issues.push(
@@ -207,6 +215,7 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 		jevSkillHint: jevSkillHintState(deps.env),
 		autoHandoff: autoHandoffWithWarnings(deps, codexHome, warnings),
 		tuiSuggestion: inspectTuiSuggestion(deps.fs, join(codexHome, "config.toml")),
+		statusCard,
 		issues,
 		warnings,
 	};

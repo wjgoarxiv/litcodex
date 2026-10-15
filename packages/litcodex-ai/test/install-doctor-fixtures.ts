@@ -49,7 +49,7 @@ export function doctorDeps(
 	payloadMutation?: {
 		readonly tamper?: "handoff" | "scientific-visualization" | "uiux-visual-qa" | "humanizer" | "lit-diagram-drawer";
 		readonly extra?: "handoff" | "scientific-visualization" | "uiux-visual-qa";
-		readonly missing?: "lit-diagram-drawer";
+		readonly missing?: "lit-diagram-drawer" | "card-server";
 	},
 ): Parameters<typeof runDoctor>[0] {
 	const configPath = `${codexHome}/config.toml`;
@@ -57,6 +57,7 @@ export function doctorDeps(
 	const pluginManifest = `${codexHome}/marketplaces/litcodex/plugins/litcodex/.codex-plugin/plugin.json`;
 	const hooksManifest = `${codexHome}/marketplaces/litcodex/plugins/litcodex/hooks/hooks.json`;
 	const pluginRoot = `${codexHome}/marketplaces/litcodex/plugins/litcodex`;
+	const cardServer = `${pluginRoot}/components/lit-loop/dist/card-server.js`;
 	const skillsRoot = `${pluginRoot}/skills`;
 	const vendorRoot = `${pluginRoot}/vendor`;
 	const handoffRoot = `${skillsRoot}/lit-handoff`;
@@ -157,6 +158,7 @@ export function doctorDeps(
 				path === marketplaceManifest ||
 				path === pluginManifest ||
 				path === hooksManifest ||
+				(path === cardServer && payloadMutation?.missing !== "card-server") ||
 				(rootConfig !== undefined && path === configPath),
 			readFileSync: (path) =>
 				completeAgentTomls.has(path)

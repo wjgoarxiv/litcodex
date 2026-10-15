@@ -14,7 +14,7 @@
 //
 // `main` NEVER calls process.exit (the shebang wrapper does); it resolves exactly one integer, so
 // the dispatcher is unit-testable with an injected argv array.
-import { runPostCompactHookCli, runPreToolUseCreateGoalGuardCli, runSessionStartHookCli, runStopPlanPersistenceHookCli, runUserPromptSubmitHookCli, } from "./hook-cli.js";
+import { runPostCompactHookCli, runPostToolUseLiveHookCli, runPreToolUseCreateGoalGuardCli, runPreToolUseLiveHookCli, runSessionStartHookCli, runStopPlanPersistenceHookCli, runUserPromptSubmitHookCli, } from "./hook-cli.js";
 import { loopCommand } from "./loop-cli.js";
 const UNKNOWN_COMMAND = "lit-loop: unknown command\n";
 /**
@@ -35,6 +35,10 @@ export async function main(argv, stdin, stdout, stderr) {
             return runSessionStartHookCli(stdin, stdout, stderr);
         if (subcommand === "post-compact")
             return runPostCompactHookCli(stdin, stdout, stderr);
+        if (subcommand === "pre-tool-use-live")
+            return runPreToolUseLiveHookCli(stdin, stdout, stderr);
+        if (subcommand === "post-tool-use-live")
+            return runPostToolUseLiveHookCli(stdin, stdout, stderr);
         stderr.write(UNKNOWN_COMMAND);
         return 1;
     }

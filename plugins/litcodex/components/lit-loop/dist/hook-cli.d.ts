@@ -21,6 +21,8 @@ export interface AutoHandoffHookOptions {
     readonly env?: NodeJS.ProcessEnv;
     readonly now?: number;
 }
+/** Asks the model to open the LIT card; in the terminal `codex` the same tool returns the map as text. */
+export declare const CARD_OFFER_CONTEXT = "LIT card: if the `lit_card` tool (litcodex MCP server) is available, call the `lit_card` tool once now, with no arguments, so the user sees the live LIT card for this thread. Do not call it again in this thread; it updates by itself.";
 /** Injectable Jev dependencies; production uses the process environment and built-in `fetch`. */
 export interface JevHookOptions {
     readonly env?: NodeJS.ProcessEnv;
@@ -34,3 +36,15 @@ export declare function runSessionStartHookCli(stdin: NodeJS.ReadableStream, std
 /** PostCompact: remember that a session that saved a handoff has now been compacted. Writes nothing to stdout. */
 export declare function runPostCompactHookCli(stdin: NodeJS.ReadableStream, _stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream, repoRoot?: string, auto?: AutoHandoffHookOptions): Promise<number>;
 export declare function runPreToolUseCreateGoalGuardCli(stdin: NodeJS.ReadableStream, stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream): Promise<number>;
+/** Injectable environment and clock for the live-step hooks. */
+export interface LiveStepHookOptions {
+    readonly env?: NodeJS.ProcessEnv;
+    readonly now?: number;
+}
+/**
+ * Catch-all PreToolUse: in a thread with a LIT activation, remember the running tool for the LIT card
+ * and point the thread at its workspace. It prints nothing and exits 0 on every input, so it can never block or change a tool call.
+ */
+export declare function runPreToolUseLiveHookCli(stdin: NodeJS.ReadableStream, _stdout: NodeJS.WritableStream, _stderr: NodeJS.WritableStream, options?: LiveStepHookOptions): Promise<number>;
+/** Catch-all PostToolUse: clear the live step this call set. Prints nothing; exits 0 on every input. */
+export declare function runPostToolUseLiveHookCli(stdin: NodeJS.ReadableStream, _stdout: NodeJS.WritableStream, _stderr: NodeJS.WritableStream, options?: LiveStepHookOptions): Promise<number>;

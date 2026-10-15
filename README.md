@@ -224,6 +224,20 @@ next context starts from the handoff that was just saved.
 The [automatic handoff guide](./docs/auto-handoff.md) covers the environment variables, the doctor line and what
 happens in a project you have not trusted yet.
 
+## Watch LIT work in the Codex app
+
+In the Codex desktop app, LitCodex can show a small LIT card in the thread. It shows which LIT skill is running,
+the workflow map with the stage it is on, and the tool working right now with a clock beside it. The card updates
+by itself while the agent works and slows down when nothing is happening.
+
+<p><img src="./docs/assets/app-card/app-card-thread.webp" width="764" alt="A thread in the Codex desktop app. The prompt &quot;lit add a --version flag that prints the package version, with a test&quot; is followed by &quot;Worked for 48s&quot; and the LIT card, then the agent&#39;s summary. The card reads LIT · lit-loop with DONE ✓ on the right, the map work ✓, review, done ✓, the line &quot;✓ turn done in 49s&quot;, and a footer with context use, weekly use, the git branch and the project name." /></p>
+
+<p><img src="./docs/assets/app-card/app-card-done.webp" width="760" alt="A close-up of the LIT card after the turn ends: LIT · lit-loop and DONE ✓ in the header, the workflow map work ✓, review, done ✓, the line &quot;✓ turn done in 49s&quot;, and the footer ctx 16%, 1w 7%, git master, lit-card-demo." /></p>
+
+The card needs the app's MCP Apps feature, which OpenAI still lists as under development; LitCodex never turns it
+on for you. The terminal `codex` cannot draw cards, so there the same request prints the map as text, and
+`litcodex doctor` shows a `card:` line.
+
 ## How it works
 
 Codex hosts the plugin and runs its hooks. The hooks work out which mode a request belongs to and add

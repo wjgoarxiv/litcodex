@@ -29,6 +29,8 @@ export const LIT_LOOP_COMPONENT_DIR = "lit-loop" as const;
 const activationStatusMessage = (component: string): string => `🔥 LIT IGNITED · ${component} 🔥`;
 export const LIT_LOOP_HOOK_STATUS_MESSAGE = activationStatusMessage(LIT_LOOP_COMPONENT_DIR);
 export const LIT_LOOP_CREATE_GOAL_MATCHER = "^create_goal$" as const;
+/** The catch-all live-step pair runs on every tool call, so its label stays short and never says IGNITED. */
+export const LIT_LOOP_LIVE_STEP_STATUS_MESSAGE = "🔥 LIT · live step" as const;
 
 // git-bash component (Windows-only git_bash MCP reminder) — two hooks via the aggregate manifest.
 export const GIT_BASH_COMPONENT_DIR = "git-bash" as const;
@@ -53,6 +55,31 @@ export const HUMANIZER_POST_MATCHER =
 	"^(Bash|apply_patch|write|Write|edit|Edit|multi_edit|multiedit|MultiEdit|mcp__filesystem__write_file|mcp__filesystem__edit_file)$" as const;
 export const WIKIFY_KNOWLEDGE_CREATE_GOAL_MATCHER = "^create_goal$" as const;
 export const WIKIFY_KNOWLEDGE_CREATE_GOAL_STATUS_MESSAGE = activationStatusMessage(WIKIFY_KNOWLEDGE_COMPONENT_DIR);
+
+/** The one MCP server the plugin registers: the LIT card for the Codex desktop app. Codex expands no
+ *  `${PLUGIN_ROOT}` in `.mcp.json`, so the server starts in the plugin folder (`cwd: "."`) with a
+ *  plugin-relative script path. */
+export const CARD_SERVER_NAME = "litcodex" as const;
+export const CARD_SERVER_SCRIPT = "components/lit-loop/dist/card-server.js" as const;
+
+/** Exactly the card server, with a plugin-relative target that stays inside the plugin folder. */
+function parseMcpServers(path: string, servers: Record<string, unknown>): void {
+	const names = Object.keys(servers);
+	if (names.length !== 1 || names[0] !== CARD_SERVER_NAME) {
+		schemaFail(path, `mcpServers: must register exactly ${JSON.stringify(CARD_SERVER_NAME)}`);
+	}
+	const entry = servers[CARD_SERVER_NAME];
+	if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
+		schemaFail(path, `mcpServers.${CARD_SERVER_NAME}: must be an object`);
+	}
+	const { command, args, cwd, ...rest } = entry as Record<string, unknown>;
+	if (Object.keys(rest).length > 0) schemaFail(path, `mcpServers.${CARD_SERVER_NAME}: unexpected keys`);
+	expectString(path, command, "node", `mcpServers.${CARD_SERVER_NAME}.command`);
+	expectString(path, cwd, ".", `mcpServers.${CARD_SERVER_NAME}.cwd`);
+	if (!Array.isArray(args) || args.length !== 1 || args[0] !== CARD_SERVER_SCRIPT) {
+		schemaFail(path, `mcpServers.${CARD_SERVER_NAME}.args: must be [${JSON.stringify(CARD_SERVER_SCRIPT)}]`);
+	}
+}
 
 /** The canonical aggregate hooks.json path, relative to repoRoot (POSIX). M14 owns it. */
 export const HOOKS_JSON_RELPATH = "plugins/litcodex/hooks/hooks.json" as const;
@@ -106,6 +133,18 @@ export const EXPECTED_HOOKS: readonly ExpectedHook[] = Object.freeze([
 		subcommand: "pre-tool-use",
 		statusMessage: activationStatusMessage(LIT_LOOP_COMPONENT_DIR),
 		matcher: LIT_LOOP_CREATE_GOAL_MATCHER,
+	}),
+	Object.freeze({
+		component: LIT_LOOP_COMPONENT_DIR,
+		event: "PreToolUse",
+		subcommand: "pre-tool-use-live",
+		statusMessage: LIT_LOOP_LIVE_STEP_STATUS_MESSAGE,
+	}),
+	Object.freeze({
+		component: LIT_LOOP_COMPONENT_DIR,
+		event: "PostToolUse",
+		subcommand: "post-tool-use-live",
+		statusMessage: LIT_LOOP_LIVE_STEP_STATUS_MESSAGE,
 	}),
 	Object.freeze({
 		component: GIT_BASH_COMPONENT_DIR,
@@ -338,6 +377,7 @@ export function loadMarketplaceMetadata(repoRoot: string): MarketplaceMetadata {
 	if (mcpServers === null || typeof mcpServers !== "object" || Array.isArray(mcpServers)) {
 		schemaFail(mcPath, "mcpServers: must be an object");
 	}
+	parseMcpServers(mcPath, mcpServers as Record<string, unknown>);
 
 	// Cross-file: version lockstep against the aggregate package.json (fail-closed — G14.2).
 	verifyVersionLockstep(repoRoot, pjVersion);

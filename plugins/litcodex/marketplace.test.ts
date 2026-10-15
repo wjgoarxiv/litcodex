@@ -18,6 +18,7 @@ import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+	EXPECTED_HOOKS,
 	FORBIDDEN_COMPONENT_BARE_CLI_SEGMENT,
 	HOOKS_JSON_RELPATH,
 	LIT_LOOP_COMPONENT_DIR,
@@ -230,9 +231,24 @@ describe("#given the shipped metadata #when loaded #then the resolver returns ca
 		}).toThrow();
 	});
 
-	it("accepts an empty mcp server registry", () => {
+	it("registers the LIT card server with a plugin-relative command", () => {
 		const md = loadMarketplaceMetadata(REPO_ROOT);
-		expect(md.mcpServers).toEqual({});
+		expect(md.mcpServers).toEqual({
+			litcodex: { command: "node", args: ["components/lit-loop/dist/card-server.js"], cwd: "." },
+		});
+	});
+
+	it("rejects a card server entry that leaves the plugin folder or names an absolute target", () => {
+		for (const args of [["../outside.js"], ["/abs/card-server.js"], []]) {
+			const root = stageRepo();
+			rewriteJson(pathIn(root, "plugins", "litcodex", ".mcp.json"), (json) => {
+				(json["mcpServers"] as Record<string, { args: string[] }>)["litcodex"] = {
+					...((json["mcpServers"] as Record<string, { args: string[] }>)["litcodex"] as { args: string[] }),
+					args,
+				};
+			});
+			expect(loadErr(root).code).toBe("METADATA_SCHEMA_INVALID");
+		}
 	});
 });
 
@@ -295,6 +311,27 @@ describe("#given the aggregate hooks.json #when validated #then the command + st
 		expect(loadErr(withSessionStartTimeout("auto-update", 301)).detail).toContain("1..=300");
 		expect(loadErr(withSessionStartTimeout("telemetry", 61)).detail).toContain("1..=60");
 		expect(loadErr(withSessionStartTimeout("telemetry", 0)).code).toBe("METADATA_SCHEMA_INVALID");
+	});
+
+	it("registers the catch-all live-step pair for every tool, quietly labelled", () => {
+		const hooks = JSON.parse(readFileSync(join(REPO_ROOT, "plugins", "litcodex", "hooks", "hooks.json"), "utf8")) as {
+			hooks: Record<string, { matcher?: string; hooks: MutableHandler[] }[]>;
+		};
+		for (const [event, subcommand] of [
+			["PreToolUse", "pre-tool-use-live"],
+			["PostToolUse", "post-tool-use-live"],
+		] as const) {
+			const command = `node "\${PLUGIN_ROOT}/components/lit-loop/dist/cli.js" hook ${subcommand}`;
+			const groups = (hooks.hooks[event] ?? []).filter((group) => group.hooks.some((h) => h.command === command));
+			expect(groups).toHaveLength(1);
+			expect(groups[0]?.matcher).toBeUndefined();
+			expect(groups[0]?.hooks).toEqual([
+				{ type: "command", command, timeout: 5, statusMessage: "🔥 LIT · live step" },
+			]);
+			expect(EXPECTED_HOOKS.filter((entry) => entry.event === event && entry.subcommand === subcommand)).toEqual([
+				{ component: "lit-loop", event, subcommand, statusMessage: "🔥 LIT · live step" },
+			]);
+		}
 	});
 
 	it("authoritative hooks.json path is the aggregate one", () => {

@@ -117,3 +117,62 @@ test("candidate and tracked flags are mutually exclusive", () => {
 		rmSync(repo, { recursive: true, force: true });
 	}
 });
+
+// Answers one tools/list line the way the card server does, and ends with stdin.
+const ANSWERING_SERVER = [
+	'import { createInterface } from "node:readline";',
+	'createInterface({ input: process.stdin }).on("line", (line) => {',
+	"\tconst { id } = JSON.parse(line);",
+	'\tprocess.stdout.write(JSON.stringify({ jsonrpc: "2.0", id, result: { tools: [{ name: "lit_card" }] } }) + "\\n");',
+	"});",
+	"",
+].join("\n");
+
+function mcpFor(target, cwd = ".") {
+	return `${JSON.stringify({ mcpServers: { litcodex: { command: "node", args: [target], cwd } } }, null, 2)}\n`;
+}
+
+test("candidate mode fails when an .mcp.json server target is missing from the plugin tree", () => {
+	const repo = createRepo();
+	try {
+		writeFileSync(join(repo, "plugins/litcodex/.mcp.json"), mcpFor("components/probe/dist/card-server.js"));
+		const missing = runVerifier(repo, ["--candidate"]);
+		assert.equal(missing.status, 1, missing.stdout);
+		assert.match(missing.stderr, /\.mcp\.json.*components\/probe\/dist\/card-server\.js/);
+
+		writeFileSync(join(repo, "plugins/litcodex/components/probe/dist/card-server.js"), ANSWERING_SERVER);
+		const present = runVerifier(repo, ["--candidate"]);
+		assert.equal(present.status, 0, present.stderr);
+		assert.match(present.stdout, /1 MCP server target\(s\) answer tools\/list/);
+	} finally {
+		rmSync(repo, { recursive: true, force: true });
+	}
+});
+
+test("an .mcp.json server target outside the plugin folder is rejected", () => {
+	const repo = createRepo();
+	try {
+		writeFileSync(join(repo, "plugins/litcodex/.mcp.json"), mcpFor("../../tools/assert-marketplace-dist.mjs"));
+		const result = runVerifier(repo, ["--candidate"]);
+		assert.equal(result.status, 1, result.stdout);
+		assert.match(result.stderr, /outside the plugin/);
+	} finally {
+		rmSync(repo, { recursive: true, force: true });
+	}
+});
+
+test("an .mcp.json server whose script does not answer tools/list fails, so missing imports are caught", () => {
+	const repo = createRepo();
+	try {
+		writeFileSync(join(repo, "plugins/litcodex/.mcp.json"), mcpFor("components/probe/dist/card-server.js"));
+		writeFileSync(
+			join(repo, "plugins/litcodex/components/probe/dist/card-server.js"),
+			'import "./missing-module.js";\n',
+		);
+		const result = runVerifier(repo, ["--candidate"]);
+		assert.equal(result.status, 1, result.stdout);
+		assert.match(result.stderr, /did not answer tools\/list/);
+	} finally {
+		rmSync(repo, { recursive: true, force: true });
+	}
+});

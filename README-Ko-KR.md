@@ -215,6 +215,20 @@ Codex가 스스로 압축하지 않는 경우라면 그 한 줄이 `/compact`를
 환경 변수, doctor 줄, 아직 신뢰하지 않은 프로젝트에서 일어나는 일은 [자동 핸드오프 안내](./docs/auto-handoff-Ko-KR.md)에
 있습니다.
 
+## Codex 앱에서 LIT 진행 보기
+
+Codex 데스크톱 앱에서는 LitCodex가 스레드 안에 작은 LIT 카드를 보여 줄 수 있습니다. 카드에는 지금 돌아가는 LIT 스킬,
+워크플로 지도와 현재 단계, 그리고 지금 실행 중인 도구와 경과 시간이 나옵니다. 에이전트가 일하는 동안 카드는 저절로
+새로 고쳐지고, 아무 일도 없을 때는 천천히 확인합니다.
+
+<p><img src="./docs/assets/app-card/app-card-thread.webp" width="764" alt="Codex 데스크톱 앱의 스레드. &quot;lit add a --version flag that prints the package version, with a test&quot; 프롬프트 아래에 &quot;Worked for 48s&quot;와 LIT 카드가 있고, 그 아래에 에이전트의 요약이 이어진다. 카드에는 LIT · lit-loop와 오른쪽의 DONE ✓, 지도 work ✓, review, done ✓, &quot;✓ turn done in 49s&quot; 줄, 그리고 컨텍스트 사용량, 주간 사용량, git 브랜치, 프로젝트 이름이 담긴 아랫줄이 보인다." /></p>
+
+<p><img src="./docs/assets/app-card/app-card-done.webp" width="760" alt="턴이 끝난 뒤 LIT 카드를 가까이 본 모습. 머리에 LIT · lit-loop와 DONE ✓, 워크플로 지도 work ✓, review, done ✓, &quot;✓ turn done in 49s&quot; 줄, 아랫줄에 ctx 16%, 1w 7%, git master, lit-card-demo가 있다." /></p>
+
+카드는 앱의 MCP Apps 기능이 있어야 보입니다. OpenAI는 이 기능을 아직 개발 중으로 표시하고 있고, LitCodex가 대신
+켜지는 않습니다. 터미널 `codex`는 카드를 그릴 수 없으므로 같은 요청이 지도를 글로 보여 주고, `litcodex doctor`에는
+`card:` 줄이 나옵니다.
+
 ## 어떻게 동작하나요
 
 Codex가 플러그인을 불러오고 훅을 실행합니다. 훅은 요청이 어떤 모드에 속하는지 가리고 맥락을 보태며,

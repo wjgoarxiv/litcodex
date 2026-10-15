@@ -1,1 +1,9 @@
-{ "mcpServers": {} }
+{
+	"mcpServers": {
+		"litcodex": {
+			"command": "node",
+			"args": ["components/lit-loop/dist/card-server.js"],
+			"cwd": "."
+		}
+	}
+}

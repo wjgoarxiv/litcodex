@@ -112,7 +112,9 @@
         "bin/litcodex.js",
         "dist/cli.js",
         "dist/postinstall.js",
+        "marketplace/plugins/litcodex/.mcp.json",
         "marketplace/plugins/litcodex/assets/logo.png",
+        "marketplace/plugins/litcodex/components/lit-loop/dist/card-server.js",
         "marketplace/plugins/litcodex/skills/autoconference/LICENSE",
         "marketplace/plugins/litcodex/skills/autoconference/PROVENANCE.md",
         "marketplace/plugins/litcodex/skills/autoconference/SKILL.md",
@@ -2141,6 +2143,7 @@
       "name": "@litcodex/lit-loop",
       "requiredPaths": [
         "package.json",
+        "dist/card-server.js",
         "dist/cli.js",
         "skills/lit-crucible/SKILL.md",
         "skills/lit-init/SKILL.md",

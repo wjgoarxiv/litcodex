@@ -116,6 +116,8 @@ export interface DoctorReport {
 	readonly autoHandoff?: AutoHandoffDoctorReport;
 	/** Built-in Codex status line / terminal title snippet; null when the config already sets both. */
 	readonly tuiSuggestion?: TuiSuggestion | null;
+	/** The LIT card MCP server: present in the installed plugin or not. Read-only; never touches `[features]`. */
+	readonly statusCard?: { readonly serverInstalled: boolean };
 }
 
 export type TuiSuggestionKey = "status_line" | "terminal_title";
