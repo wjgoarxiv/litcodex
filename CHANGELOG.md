@@ -6,6 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.24] - 2026-10-15
+
+### Added
+
+- The pre-write guard now refuses negative pledge sentences in a report or deck the model is about
+  to write: a line that tells the reader what the document is not for, such as
+  `동일 조건의 독립 성능 비교로 쓰지 않음.`, a disclaimer repeated in several places, and the English
+  forms of the same line. Three new rules cover them (`ko-negative-pledge`,
+  `ko-negative-pledge-repeat`, `en-negative-pledge`), and `ko-status-negation` now matches more
+  phrasings. The model gets the refusal and rewrites the line. Legal and financial notices, safety
+  warnings, real negative findings and operating rules are left alone.
+- In the Codex desktop app, every prompt that starts LIT now opens a fresh LIT card next to the
+  newest turn. The earlier cards fold into one quiet line that stops updating.
+
+### Changed
+
+- The `lit-docx` and `lit-pptx` skills now ask for a real limit once, as a fact beside the number it
+  affects. Anything about what the document is not for stays in the reply instead of the file.
+- The LIT card no longer leaves empty space below it, its header shows the turn clock, and the usage
+  bars turn amber and red only when usage is actually high.
+
 ## [1.0.23] - 2026-10-14
 
 ### Added

@@ -41,7 +41,7 @@ LIT · codex
 <p align="center"><img src="./assets/clay-icon.png" width="160" alt="LitCodex clay mark" /></p>
 
 <p align="center">
-<a href="../README.md#install"><img src="./assets/readme/badge-version.svg" alt="1.0.23" /></a>
+<a href="../README.md#install"><img src="./assets/readme/badge-version.svg" alt="1.0.24" /></a>
 <a href="../LICENSE"><img src="./assets/readme/badge-license.svg" alt="MIT license" /></a>
 </p>
 
