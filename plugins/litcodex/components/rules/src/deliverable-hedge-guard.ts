@@ -415,11 +415,15 @@ function isInternalPath(path: string | undefined): boolean {
 		);
 }
 
+const BOLD_LABEL_CALLOUT = /^\s{0,3}>\s?(?:\*\*|__)[^*_\n]{1,24}(?:\*\*|__)/u;
+
 function maskQuotedUserText(text: string): string {
 	return text
 		.split("\n")
 		.map((line) => {
-			if (/^\s{0,3}>/u.test(line)) return "";
+			// A quote is skipped, except one that opens with a bold label (> **Note:** ...): that is the author's own
+			// callout, so it reaches the detector, which reads it for the rules that opt in.
+			if (/^\s{0,3}>/u.test(line) && !BOLD_LABEL_CALLOUT.test(line)) return "";
 			return line
 				.replace(/"(?:\\.|[^"\\])*"/gu, " ")
 				.replace(/“[^”]*”/gu, " ")
@@ -427,6 +431,25 @@ function maskQuotedUserText(text: string): string {
 				.replace(/(?<![\p{L}\p{N}_])'[^'\n]+'(?![\p{L}\p{N}_])/gu, " ");
 		})
 		.join("\n");
+}
+
+const REASON_RULE_LIMIT = 5;
+const REASON_LINE_LIMIT = 3;
+
+/** Names each blocking rule once, with its first few line numbers, so a refusal says which rule fired. */
+function blockedRuleSummary(blocks: readonly HumanizerFinding[]): string {
+	const linesByRule = new Map<string, number[]>();
+	for (const item of blocks) {
+		const lines = linesByRule.get(item.rule) ?? [];
+		if (!lines.includes(item.line)) lines.push(item.line);
+		linesByRule.set(item.rule, lines);
+	}
+	const named = [...linesByRule].slice(0, REASON_RULE_LIMIT).map(([rule, lines]) => {
+		const shown = lines.slice(0, REASON_LINE_LIMIT).join(", ");
+		return `${rule} (line ${shown}${lines.length > REASON_LINE_LIMIT ? ", ..." : ""})`;
+	});
+	const hidden = linesByRule.size - named.length;
+	return hidden > 0 ? `${named.join("; ")}; ${hidden} more rule(s)` : named.join("; ");
 }
 
 function findingsOutput(
@@ -452,7 +475,7 @@ function findingsOutput(
 	if (event === "PreToolUse" && blocks.length > 0) {
 		hookSpecificOutput["permissionDecision"] = "deny";
 		hookSpecificOutput["permissionDecisionReason"] =
-			`lit-humanizer blocked ${blocks.length} high-confidence drafting residue hit(s).`;
+			`lit-humanizer blocked ${blocks.length} high-confidence drafting residue hit(s): ${blockedRuleSummary(blocks)}. Rewrite those lines and retry.`;
 	}
 	return JSON.stringify({ hookSpecificOutput });
 }

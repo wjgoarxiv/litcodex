@@ -54,10 +54,20 @@ function input(root: string, overrides: Partial<HumanizerHookInput> = {}): Human
 }
 
 function hookOutput(text: string): {
-	hookSpecificOutput: { hookEventName: string; additionalContext: string; permissionDecision?: string };
+	hookSpecificOutput: {
+		hookEventName: string;
+		additionalContext: string;
+		permissionDecision?: string;
+		permissionDecisionReason?: string;
+	};
 } {
 	return JSON.parse(text) as {
-		hookSpecificOutput: { hookEventName: string; additionalContext: string; permissionDecision?: string };
+		hookSpecificOutput: {
+			hookEventName: string;
+			additionalContext: string;
+			permissionDecision?: string;
+			permissionDecisionReason?: string;
+		};
 	};
 }
 
@@ -372,6 +382,7 @@ describe("PostToolUse document guard", () => {
 type PledgeCases = {
 	new_rule_ids: string[];
 	pledges: { n: number; text: string; rule: string; severity: "block" | "warn" | "none" }[];
+	pledges_observed: { source: string; text: string; rule: string; severity: "block" | "warn" | "none" }[];
 	near_misses: { source: string; text: string }[];
 	near_misses_review: { source: string; text: string }[];
 	document_cases: { text: string; rule: string; expect: "block" | "clean" }[];
@@ -382,6 +393,8 @@ const pledgeCases = JSON.parse(
 const PLEDGE_RULE_IDS = new Set(pledgeCases.new_rule_ids);
 const SEVERITY_RANK = { none: 0, warn: 1, block: 2 } as const;
 const USER_PLEDGE = "동일 조건의 독립 성능 비교로 쓰지 않음.";
+const CALLOUT_PLEDGE = "> **주의:** 이 표는 순위가 아닙니다.";
+const PLAIN_QUOTE_PLEDGE = "> 이 표는 순위가 아닙니다.";
 const OPERATING_RULES = "이 장비는 방폭 구역에서 사용하지 않습니다. 냉각수로 쓰지 않음. 한 번에 0.1 이상 바꾸지 않음.";
 
 function pledgeRuleHits(text: string): HumanizerFinding[] {
@@ -400,9 +413,10 @@ describe("negative pledge sentences", () => {
 			"en-negative-pledge",
 		]);
 		expect(pledgeCases.pledges).toHaveLength(15);
+		expect(pledgeCases.pledges_observed).toHaveLength(26);
 		expect(pledgeCases.near_misses.length).toBeGreaterThanOrEqual(27);
-		expect(pledgeCases.near_misses_review.length).toBeGreaterThanOrEqual(85);
-		expect(pledgeCases.document_cases).toHaveLength(8);
+		expect(pledgeCases.near_misses_review.length).toBeGreaterThanOrEqual(215);
+		expect(pledgeCases.document_cases).toHaveLength(13);
 		expect(pledgeCases.pledges[0]?.text).toBe(USER_PLEDGE);
 	});
 
@@ -420,6 +434,20 @@ describe("negative pledge sentences", () => {
 		);
 		expect(patched.hookSpecificOutput.permissionDecision).toBe("deny");
 		expect(patched.hookSpecificOutput.additionalContext).toContain("block ko-negative-pledge");
+	});
+
+	it("names the rule ids and line numbers in the refusal reason, not only a count", () => {
+		const root = workspace();
+		const reason = (text: string): string =>
+			hookOutput(runHumanizerPreToolUse(writeEvent(root, "report.md", text))).hookSpecificOutput
+				.permissionDecisionReason ?? "";
+		const single = reason(`# 보고서\n${USER_PLEDGE}`);
+		expect(single).toContain("ko-negative-pledge");
+		expect(single).toMatch(/line 2\b/u);
+		const flood = reason(Array.from({ length: 40 }, () => USER_PLEDGE).join("\n"));
+		expect(flood).toContain("ko-negative-pledge");
+		expect(flood.length).toBeLessThan(400);
+		expect(flood.match(/ko-negative-pledge\b/gu)).toHaveLength(1);
 	});
 
 	it("lets an operating-rules document through, as sentences and as a bullet list", () => {
@@ -466,18 +494,69 @@ describe("negative pledge sentences", () => {
 		}
 	});
 
-	it("gives every pledge its expected rule at its expected severity", () => {
-		for (const pledge of pledgeCases.pledges) {
+	it("refuses a widened pledge at the write guard, in Korean and in English", () => {
+		const root = workspace();
+		for (const [text, rule] of [
+			["이 문서는 제품을 비교하려는 것이 아닙니다.", "ko-negative-pledge"],
+			["This table is not a ranking.", "en-negative-pledge"],
+		] as const) {
+			const refused = hookOutput(runHumanizerPreToolUse(writeEvent(root, "report.md", text)));
+			expect(refused.hookSpecificOutput.permissionDecision, text).toBe("deny");
+			expect(refused.hookSpecificOutput.permissionDecisionReason, text).toContain(rule);
+		}
+	});
+
+	it("reads a bold-label callout at the write guard and still ignores a plain quote", () => {
+		const root = workspace();
+		const callout = hookOutput(
+			runHumanizerPreToolUse(writeEvent(root, "report.md", `# 보고서\n\n${CALLOUT_PLEDGE}\n`)),
+		);
+		expect(callout.hookSpecificOutput.permissionDecision).toBe("deny");
+		expect(callout.hookSpecificOutput.permissionDecisionReason).toContain("ko-negative-pledge (line 3)");
+		const patched = hookOutput(
+			runHumanizerPreToolUse(
+				input(root, {
+					tool_input: { command: `*** Begin Patch\n*** Add File: deck.md\n+${CALLOUT_PLEDGE}\n*** End Patch` },
+				}),
+			),
+		);
+		expect(patched.hookSpecificOutput.permissionDecision).toBe("deny");
+		const plain = runHumanizerPreToolUse(writeEvent(root, "report.md", `${PLAIN_QUOTE_PLEDGE}\n`));
+		expect(plain === "" ? undefined : hookOutput(plain).hookSpecificOutput.permissionDecision).toBeUndefined();
+		expect(plain).not.toContain("negative-pledge");
+	});
+
+	it("lets reviewed false positives through the write guard", () => {
+		const root = workspace();
+		for (const text of [
+			"숫자와 문자열은 서로 비교할 수 없습니다.",
+			"Do not compare these values directly; convert to SI first.",
+		]) {
+			const output = runHumanizerPreToolUse(writeEvent(root, "manual.md", text));
+			expect(
+				output === "" ? undefined : hookOutput(output).hookSpecificOutput.permissionDecision,
+				text,
+			).toBeUndefined();
+			expect(output, text).not.toContain("negative-pledge");
+		}
+	});
+
+	it("gives every pledge, and every pledge seen in model output, its expected rule at its expected severity", () => {
+		const judged = [
+			...pledgeCases.pledges.map((pledge) => ({ label: `pledge ${pledge.n}`, ...pledge })),
+			...pledgeCases.pledges_observed.map((pledge) => ({ label: `observed ${pledge.source}`, ...pledge })),
+		];
+		for (const pledge of judged) {
 			const findings = inspectHumanizerText(pledge.text);
 			const top = findings.reduce((best, item) => Math.max(best, SEVERITY_RANK[item.severity]), 0);
 			if (pledge.severity === "none") {
-				expect(findings, `pledge ${pledge.n}`).toEqual([]);
+				expect(findings, pledge.label).toEqual([]);
 				continue;
 			}
-			expect(top, `pledge ${pledge.n} top severity`).toBe(SEVERITY_RANK[pledge.severity]);
+			expect(top, `${pledge.label} top severity`).toBe(SEVERITY_RANK[pledge.severity]);
 			expect(
 				findings.some((item) => item.rule === pledge.rule && item.severity === pledge.severity),
-				`pledge ${pledge.n} ${pledge.rule}`,
+				`${pledge.label} ${pledge.rule}`,
 			).toBe(true);
 		}
 	});
@@ -486,7 +565,7 @@ describe("negative pledge sentences", () => {
 		for (const nearMiss of [...pledgeCases.near_misses, ...pledgeCases.near_misses_review]) {
 			expect(pledgeRuleHits(nearMiss.text), `${nearMiss.source}: ${nearMiss.text}`).toEqual([]);
 		}
-	});
+	}, 120_000);
 
 	it("judges whole-document cases for the repeat rule and the block rules", () => {
 		for (const item of pledgeCases.document_cases) {
