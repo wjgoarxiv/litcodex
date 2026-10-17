@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.25] - 2026-10-16
+
+### Changed
+
+- The pre-write guard now refuses more of the lines that tell a reader what a document is not for,
+  such as `This table is not a ranking.` or `이 문서는 제품을 비교하려는 것이 아닙니다.` These
+  forms came from real sessions. Bold-label callouts such as `> **주의:** ...` are now read too;
+  ordinary quoted text is still skipped. Lines from manuals and lab reports that only look similar
+  stay allowed.
+- A refused write now names the rule ids and line numbers that blocked it, so the model can fix the
+  exact sentence.
+
 ## [1.0.24] - 2026-10-15
 
 ### Added
