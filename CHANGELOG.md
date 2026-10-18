@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.27] - 2026-10-18
+
+### Changed
+
+- The README opens with what putting `lit` in a request does, the install command and a first prompt,
+  and says what the demo film shows before it plays: one real turn with a test written first, a failing
+  run, the fix and a passing run. It names who LitCodex is for, gives the workflow map its own example
+  block, uses plain headings for the feature list and turns troubleshooting into short if-then lines.
+  The npm and Korean pages follow, with the same images.
+
+### Removed
+
+- The last notes about the retired skill hint are gone. The privacy page no longer points at its old
+  per-session folder, and the screenshot notes no longer describe its doctor row by name. The guard
+  test that keeps the hint out has a plainer name and the same checks.
+
 ## [1.0.26] - 2026-10-18
 
 ### Changed

@@ -20,7 +20,7 @@ today's stopped.
 Try it now. You need Node.js 22 or later and Codex CLI:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.26 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.27 -- litcodex install
 ```
 
 Then open Codex in your project, approve the LitCodex hooks when Codex asks, and type a request with
@@ -61,7 +61,7 @@ unchecked work done, and you stop explaining the same project twice.
 You need Node.js 22 or later and Codex CLI. Then run:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.26 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.27 -- litcodex install
 ```
 
 The installer asks three questions: which model leads, which model helps, and which output style you
@@ -70,7 +70,7 @@ write and waits for one more Enter before it touches anything. It registers the 
 agent roles, and it changes only the keys it manages in `~/.codex/config.toml`. When the receipt says
 `Status Ready for Codex`, the doctor check has already passed.
 
-To see the plan first, run `npm exec --yes --package @litfamily/litcodex@1.0.26 -- litcodex --dry-run install`;
+To see the plan first, run `npm exec --yes --package @litfamily/litcodex@1.0.27 -- litcodex --dry-run install`;
 it prints every step and writes nothing. To keep the defaults without any questions, add `--yes` after `install`.
 
 If you would rather have `litcodex` on your `PATH`:
@@ -84,7 +84,7 @@ A global install also gets the video skill's rendering tools ready ahead of time
 pinned downloads. The [install guide](./docs/install.md#a-global-command) lists them and shows how to skip
 them.
 
-> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.26 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.26 -- litcodex doctor`.
+> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.27 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.27 -- litcodex doctor`.
 
 The [install guide](./docs/install.md) also covers trying LitCodex in a home of its own, Windows, and
 pictures of every screen the installer shows. Coming from the old unscoped package? The
@@ -104,13 +104,13 @@ Install LitCodex, a plugin for Codex CLI, on this machine. Follow these steps in
 2. Use only the official npm package @litfamily/litcodex. Do not install a package with a similar
    name, and do not download install scripts from anywhere else.
 3. Show me the plan first. Run this command, which prints every step and writes nothing:
-   npm exec --yes --package @litfamily/litcodex@1.0.26 -- litcodex --dry-run install
+   npm exec --yes --package @litfamily/litcodex@1.0.27 -- litcodex --dry-run install
    Summarize what it will change, then ask me whether to go ahead. Do not continue until I say yes.
 4. After I say yes, run:
-   npm exec --yes --package @litfamily/litcodex@1.0.26 -- litcodex install --yes
+   npm exec --yes --package @litfamily/litcodex@1.0.27 -- litcodex install --yes
    (--yes keeps the recommended models and my current output style.)
 5. Run the check and report its result to me, quoting any issue or warning exactly:
-   npm exec --yes --package @litfamily/litcodex@1.0.26 -- litcodex doctor
+   npm exec --yes --package @litfamily/litcodex@1.0.27 -- litcodex doctor
 6. Remind me to restart Codex so it loads the plugin, and to approve the LitCodex hooks when Codex
    asks me to review them.
 ```
@@ -356,7 +356,7 @@ See [state and recovery](./docs/usage.md#loop-state).
 ## Check the install
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.26 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.27 -- litcodex doctor
 ```
 
 `litcodex doctor` checks registration, hooks, config and host capabilities, and a clean run ends with
@@ -395,7 +395,7 @@ next Codex session. `litcodex doctor` shows the update state and what to do abou
 ## Uninstall
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.26 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.27 -- litcodex uninstall
 ```
 
 `litcodex uninstall` removes the plugin and the config LitCodex manages, and leaves your other settings alone.

@@ -67,7 +67,7 @@ function stageRepo(prefix = "litcodex-meta-"): string {
 	// Aggregate package.json carries the sole version source (G14.2).
 	writeFileSync(
 		join(root, "plugins", "litcodex", "package.json"),
-		`${JSON.stringify({ name: "@litcodex/plugin", version: "1.0.26", private: true }, null, "\t")}\n`,
+		`${JSON.stringify({ name: "@litcodex/plugin", version: "1.0.27", private: true }, null, "\t")}\n`,
 	);
 	return root;
 }
@@ -152,7 +152,7 @@ describe("#given the shipped metadata #when loaded #then the resolver returns ca
 		expect(md.marketplaceName).toBe("litcodex");
 		expect(md.pluginName).toBe("litcodex");
 		expect(md.pluginSource).toBe("./plugins/litcodex");
-		expect(md.pluginVersion).toBe("1.0.26");
+		expect(md.pluginVersion).toBe("1.0.27");
 	});
 
 	it("resource pointers are exact strings", () => {
@@ -409,7 +409,7 @@ describe("#given the plugin version source #when checked #then the lockstep fail
 		const md = loadMarketplaceMetadata(root);
 		const agg = JSON.parse(readFileSync(pathIn(root, "plugins", "litcodex", "package.json"), "utf8"));
 		expect(md.pluginVersion).toBe(agg.version);
-		expect(agg.version).toBe("1.0.26");
+		expect(agg.version).toBe("1.0.27");
 	});
 
 	it("absent aggregate package.json fails CLOSED", () => {
@@ -439,7 +439,7 @@ describe("#given the plugin version source #when checked #then the lockstep fail
 		);
 		const err = loadErr(root);
 		expect(err.code).toBe("METADATA_CROSSFILE_MISMATCH");
-		expect(err.detail).toContain("1.0.26");
+		expect(err.detail).toContain("1.0.27");
 		expect(err.detail).toContain("9.9.9");
 	});
 });
