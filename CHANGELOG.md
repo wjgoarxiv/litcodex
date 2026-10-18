@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.26] - 2026-10-18
+
+### Changed
+
+- Codex cuts the middle out of hook context above about 9.8 KB, and every LIT route sent 11 to
+  54 KB, so the model often missed the banner and the route's gates. Each route now sends a short
+  head with the banner, the LIT card request, the gates and rules, and names the full route
+  directive and installed `SKILL.md` by path. No route is above 5.1 KB.
+- Doctor now explains each update receipt with a cause and a remedy, says an update applies from the
+  next Codex session, reports when Codex has no approval recorded for the auto-update hook, and
+  names a split between the plugin and the `litcodex` command versions.
+- The always-on prose rule no longer opens the `lit-humanizer` skill first for reviews, plans, decks
+  and handoffs. It applies when reader prose is written and tells the model to pick the task's own
+  skill first. The write guard still runs either way.
+- New tests cover the write guard, the LIT card, the installer and the update path, and each one
+  fails when its guard is broken on purpose.
+
 ### Removed
 
 - The opt-in Jev skill hint is gone: the `UserPromptSubmit` hook no longer sends prompts to the
@@ -14,6 +31,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `LITCODEX_JEV_TRACE` and `TYPESAFE_API_KEY` are now ignored and can be deleted from your shell
   setup, and so can any leftover per-project `.litcodex/jev/` folder. LitCodex does not delete that
   folder for you.
+
+### Fixed
+
+- An automatic update at session start no longer deletes the plugin folder the running Codex
+  session started from. That session keeps its skills and hooks on the old version, and the hook
+  says the update applies from the next session. The next session's check no longer overwrites the
+  update receipt, and the receipt records the real finish time.
+- The check that runs after an automatic update now skips the Codex host probes, which the update's
+  own install had just run. It finishes in under a second instead of 4 to 9 seconds, so a busy
+  machine no longer hits its time limit and rolls the update back. A plain `litcodex doctor` is
+  unchanged.
 
 ## [1.0.25] - 2026-10-16
 
