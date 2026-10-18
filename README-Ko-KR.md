@@ -4,8 +4,8 @@
 
 **Keep the work lit.**
 
-요청을 확인 기준이 붙은 목표로 바꾸고, 그 증거를 프로젝트에 남기고, 끝내지 못한 일은 다음 세션에 넘겨 주는
-Codex CLI 플러그인입니다.
+요청 앞에 `lit`을 붙이면 Codex CLI가 통과·실패를 가릴 수 있는 기준을 세우고, 기준마다 증거가 남아야 일을 끝냅니다.
+증거는 프로젝트 안에 남기 때문에 내일 세션은 오늘 멈춘 자리에서 시작합니다.
 
 <p>
 <a href="https://www.npmjs.com/package/@litfamily/litcodex"><img src="https://img.shields.io/npm/v/@litfamily/litcodex?color=FF6337&label=npm" alt="npm 버전" /></a>
@@ -15,6 +15,21 @@ Codex CLI 플러그인입니다.
 </p>
 
 [English](./README.md) · [설치](#설치) · [첫 작업](#lit으로-시작하기) · [할 수 있는 일](#할-수-있는-일) · [명령어](#명령어) · [더 알아보기](#더-알아보기)
+
+바로 써 보려면 Node.js 22 이상과 Codex CLI를 준비하고 이 명령을 실행하세요.
+
+```sh
+npm exec --yes --package @litfamily/litcodex@1.0.26 -- litcodex install
+```
+
+그다음 프로젝트에서 Codex를 열고, Codex가 LitCodex 훅 검토를 요청하면 승인한 뒤 `lit`을 넣어 요청하면 됩니다.
+
+```text
+lit 회원가입 폼에 입력 검증을 추가해줘
+```
+
+아래 짧은 영상은 실제 한 턴을 그대로 담았습니다. 테스트를 먼저 쓰고, 실패를 확인하고, 코드를 고치고, 테스트가
+통과한 뒤 Codex가 턴을 마칩니다.
 
 <p><img src="./docs/assets/demo.webp" width="960" alt="Codex CLI에서 LitCodex를 쓰는 모습을 담은 짧은 영상입니다. LIT 마크와 함께 LitCodex, The lit workflow for Codex CLI라고 적힌 제목 화면으로 시작하고, 이어서 번호 붙은 설명이 작은 Node 프로젝트에서 진행되는 한 턴을 따라갑니다. 1: &quot;lit add a --shout flag that prints the greeting in capitals, with a test&quot;를 입력하면 LitCodex가 켜집니다. 2: 훅 블록에 LIT 마크와 &quot;🔥 LIT IGNITED · lit-loop 🔥&quot;가 나타납니다. 3: 마크 아래 줄 &quot;🔨 WORK › 🔍 · › 🏁 ·&quot;은 지금 어디쯤인지 보여 주는 지도입니다. 지금은 작업 단계이고, 검토와 완료가 뒤에 옵니다. 4: Codex가 먼저 계획을 세우고 lit-code 지침을 읽습니다(Read SKILL.md (litcodex:lit-code skill)). 5: 고치기 전에 테스트부터 씁니다. Edited test/greet.test.js가 나오고 npm test가 exit 1로 실패합니다. 6: greet.js를 고친 뒤 --shout로 CLI를 직접 실행해 보고 npm test를 다시 돌립니다. 7: 정리에 테스트와 CLI 직접 확인이 통과했다고 적히고, Stop 훅이 &quot;✨ turn done&quot;을 덧붙입니다. 영상은 설치 명령이 적힌 화면으로 마칩니다." /></p> <!-- demo-gif -->
 
@@ -31,6 +46,11 @@ LitCodex는 그 흐름을 붙잡아 두는 Codex CLI 플러그인입니다. 요�
 
 이 루프와 함께 계획, 코드 리뷰, 조사, 디버깅, Word·PowerPoint 파일, 영어·한국어 글 다듬기를 맡는 스킬이 마흔
 개 넘게 들어 있습니다. 작업은 내 컴퓨터의 Codex 안에서, 내 로그인과 내 모델로 돌아갑니다.
+
+이미 Codex CLI를 쓰고 있고, 한 번에 끝나지 않는 일을 맡기는 분께 잘 맞습니다. 며칠 걸리는 기능 개발, 손대기
+전에 계획부터 세우고 싶은 리팩터링, 출처가 꼭 필요한 조사, 실제 파일로 나와야 하는 보고서나 발표자료 같은
+일이 그렇습니다. 한 줄로 소개하면 이렇습니다. Codex가 확인하지 않은 일을 끝났다고 하지 않고, 같은 프로젝트를 두 번
+설명할 필요도 없습니다.
 
 ## 설치
 
@@ -104,22 +124,28 @@ lit 회원가입 폼에 입력 검증을 추가해줘
 이어서 답변이 `🔥 **LIT IGNITED · <discipline>** 🔥` 한 줄로 시작합니다. 여기서부터 요청은 작업 루프(내부 이름은
 `<lit-loop-mode>`)에서 돌아갑니다. 목표와 그 확인 기준이 생기고, 기준을 통과할 때마다 증거가 기록됩니다.
 
-마크 아래에는 지금 LIT 작업 흐름의 어디쯤에 있는지 알려 주는 줄이 하나 더 붙습니다. 프로젝트에 저장된 기록을 읽어
-인터뷰, 계획, 작업(끝낸 계획 항목을 막대로 표시), 검토, 완료 순서로 보여 줍니다. 예를 들면
-`🧭 ✓ › 📝 ✓ › 🔨 WORK ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·`입니다. 저장된 근거가 없는 단계는 짐작으로 채우지 않고 빼며,
-`litresearch`는 분해, 웨이브, 검증, 종합으로 이어지는 짧은 지도를 따로 씁니다. 아직 진행 중인 조사 기록이 있으면
-그 지점부터 보여 주고, 없으면 분해 단계에서 시작합니다. LIT 턴이 끝나면 Stop 훅이
-`✨ turn done · 2 tasks ✓ · next ▸ Write the docs` 같은 줄을 남깁니다. `lit start work`가 중간 점검 지점에 닿아 같은 턴
-안에서 계획이 이어질 때는 `⏳ 3/7 tasks ✓ · continuing ▸ Write the docs`로 바뀝니다. Codex가 훅 문구를 색 없이 출력하기
-때문에 두 줄 모두 이모지를 쓴 일반 텍스트입니다.
+마크 아래에는 LIT 작업 흐름을 줄인 작은 지도가 붙어서, 일이 어디까지 왔는지 한눈에 보입니다.
 
-`lit`은 독립된 단어로 들어 있어야 합니다. `split`, `literal`, `litmus`처럼 글자만 섞여 있을 때는 반응하지 않고,
-코드 스팬이나 코드 블록 안의 `lit`에도 반응하지 않습니다. 슬래시 명령도 건드리지 않는데, `/litresearch` 하나만
+```text
+🧭 ✓ › 📝 ✓ › 🔨 WORK ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·
+```
+
+왼쪽부터 인터뷰, 계획, 작업(끝낸 계획 항목을 막대로 표시), 검토, 완료 순서입니다. 지도는 프로젝트에 실제로 저장된
+기록을 읽어 그리기 때문에, 근거가 없는 단계는 짐작으로 채우지 않고 뺍니다. 조사에는 분해, 웨이브, 검증, 종합으로
+이어지는 지도가 따로 있는데, 진행 중인 조사 기록이 있으면 그 지점부터, 없으면 분해 단계부터 보여 줍니다.
+
+LIT 턴이 끝나면 Stop 훅이 `✨ turn done · 2 tasks ✓ · next ▸ Write the docs` 같은 줄을 하나 남깁니다.
+`lit start work`가 중간 점검 지점에 닿은 뒤 같은 턴 안에서 계속 진행할 때는
+`⏳ 3/7 tasks ✓ · continuing ▸ Write the docs`로 바뀝니다. Codex가 훅 문구를 색 없이 출력하므로, 이 줄들은 색
+대신 이모지로 구분합니다.
+
+LitCodex는 `lit`이 따로 떨어진 단어일 때만 알아듣습니다. `split`, `literal`, `litmus`처럼 글자만 섞인 단어나
+코드 스팬, 코드 블록 안의 `lit`은 그냥 지나갑니다. 슬래시 명령도 건드리지 않는데, `/litresearch` 하나만
 예외로 조사를 시작합니다.
 
-메시지 전체가 그 한 단어일 때만 동작하는 단어가 두 개 있습니다. 세션을 마치기 전에 `handoff`만 보내면 인수인계
-문서를 만듭니다. `lit-scientific-visualization`만 보내면 시각화 작업 모드(`<lit-scientific-visualization-mode>`)로
-바뀌고, Python 패키지는 설치하지 않습니다.
+메시지 전체가 그 한 단어일 때만 동작하는 단어가 두 개 있습니다. 세션을 마치기 전에 `handoff`만 보내면 다음
+세션이 이어받을 인수인계 문서를 씁니다. 출판용 그래프가 필요할 때 `lit-scientific-visualization`만 보내면
+시각화 작업 모드(`<lit-scientific-visualization-mode>`)로 바뀌고, Python 패키지는 설치하지 않습니다.
 
 ### 작은 결과물 하나부터
 
@@ -136,14 +162,18 @@ lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외�
 
 ## 할 수 있는 일
 
-**정말로 끝나는 작업.** `lit`은 요청을 확인 기준이 붙은 목표로 바꿉니다. 모든 기준에 통과 증거가 있어야 목표를
+### 정말로 끝나는 작업
+
+`lit`은 요청을 확인 기준이 붙은 목표로 바꿉니다. 모든 기준에 통과 증거가 있어야 목표를
 완료할 수 있고, Codex가 확인하지 못한 부분은 눈에 띄는 곳에 적어 둡니다.
 
 ```text
 lit 자꾸 깨지는 로그인 테스트를 고치고, 고쳐졌다는 실행 결과도 보여줘
 ```
 
-**고치기 전에 계획부터.** `lit plan`은 번호 붙은 단계와 성공 기준을 담은 계획을 `.litcodex/plans/`에 쓰고, 그
+### 고치기 전에 계획부터
+
+`lit plan`은 번호 붙은 단계와 성공 기준을 담은 계획을 `.litcodex/plans/`에 쓰고, 그
 밖에는 아무것도 고치지 않습니다. 계획을 승인하면 `lit start work <계획 이름>`이 각 단계를 다섯 관문(계획 재확인,
 자동 검증, 수동 QA, 적대적 QA, 정리)에 통과시키고, 다섯 리뷰가 모두 통과해야 마칩니다.
 
@@ -151,17 +181,23 @@ lit 자꾸 깨지는 로그인 테스트를 고치고, 고쳐졌다는 실행 �
 lit plan 설정 페이지를 새 폼 라이브러리로 옮기기
 ```
 
-**거절할 줄 아는 리뷰.** `lit review`는 계획이나 끝난 변경을 놓고 리뷰 다섯 개를 따로 돌립니다. 하나라도
+### 거절할 줄 아는 리뷰
+
+`lit review`는 계획이나 끝난 변경을 놓고 리뷰 다섯 개를 따로 돌립니다. 하나라도
 통과하지 못하면 승인이 나지 않습니다.
 
-**출처가 붙는 조사.** `lit research`는 여러 갈래로 증거를 모은 뒤 출처를 단 종합을 씁니다. 사실과 가설, 아직
+### 출처가 붙는 조사
+
+`lit research`는 여러 갈래로 증거를 모은 뒤 출처를 단 종합을 씁니다. 사실과 가설, 아직
 풀리지 않은 질문은 따로 적습니다.
 
 ```text
 lit research Node 22에서 PKCE를 지원하는 OAuth 라이브러리를 출처와 함께 정리해줘
 ```
 
-**Word와 PowerPoint 파일.** `lit`으로 보고서나 발표자료를 부탁하면 맞는 스킬(`lit-docx`, `lit-pptx`)이 자료를
+### Word와 PowerPoint 파일
+
+`lit`으로 보고서나 발표자료를 부탁하면 맞는 스킬(`lit-docx`, `lit-pptx`)이 자료를
 읽고 디자인 방향을 고릅니다. 고른 방향과 대안 두 가지를 밝힌 뒤, 편집할 수 있는 파일을 Markdown 원본과 함께
 만듭니다.
 
@@ -169,7 +205,9 @@ lit research Node 22에서 PKCE를 지원하는 OAuth 라이브러리를 출처�
 lit notes.md로 월요일 회의용 열 장짜리 발표자료를 만들어줘
 ```
 
-**영어·한국어 글 다듬기.** `$litcodex:lit-humanizer`는 사실과 단서는 남기고 딱딱한 AI 문장을 다시 씁니다. 파일에
+### 영어·한국어 글 다듬기
+
+`$litcodex:lit-humanizer`는 사실과 단서는 남기고 딱딱한 AI 문장을 다시 씁니다. 파일에
 쓰기 직전에는 훅이 누가 봐도 초안 티가 나는 표현 몇 가지를 막아 줍니다.
 
 ### 그 밖의 스킬
@@ -331,13 +369,15 @@ Codex 안에서는 세션을 시작할 때도 하루에 한 번 정도 확인합
 
 ## 문제 해결
 
-- **터미널 창이 바로 닫힌다면.** 계속 열려 있는 터미널을 열고 도움말, 설치, doctor를 하나씩 실행해 각 종료
-  코드를 적어 두세요. 그다음
-  [단계별 확인](./docs/npm-migration.md#isolated-local-trial)을 따르되, Codex는 직접 실행하세요.
-- **활성화되지 않는다면.** `litcodex doctor`를 실행하고 Codex에서 훅을 승인했는지 확인하세요.
-- **명령을 찾지 못한다면.** 위의 `npm exec` 형식을 쓰거나, npm 전역 bin 경로가 `PATH`에 있는지 확인하세요.
-- **Codex 목표가 멈췄거나(paused) 막혔다면(blocked).** `/goal resume`으로 재개하고 활성 상태인지 확인한 뒤
-  `litcodex loop run --retry-failed`로 다시 시도하세요. 미완료 목표는 지우지 말고 남겨 두세요. 자세한 내용은 [복구 참고서](./docs/usage-Ko-KR.md#문제-해결)에 있습니다.
+- 터미널 창이 바로 닫힌다면 계속 열려 있는 터미널을 열고 도움말, 설치, doctor를 하나씩 실행해 각 종료 코드를
+  적어 두세요. 그다음 [단계별 확인](./docs/npm-migration.md#isolated-local-trial)을 따르되, Codex는 직접
+  실행하세요.
+- `lit`을 넣어도 반응이 없다면 `litcodex doctor`를 실행하고 Codex에서 훅을 승인했는지 확인하세요.
+- `litcodex` 명령을 찾지 못한다면 위의 `npm exec` 형식을 쓰거나, npm 전역 bin 경로가 `PATH`에 있는지
+  확인하세요.
+- Codex 목표가 멈췄거나(paused) 막혔다면(blocked) `/goal resume`으로 재개하고 활성 상태인지 확인한 뒤
+  `litcodex loop run --retry-failed`로 다시 시도하세요. 미완료 목표는 지우지 말고 남겨 두세요. 자세한 내용은
+  [복구 참고서](./docs/usage-Ko-KR.md#문제-해결)에 있습니다.
 
 ## 제거
 

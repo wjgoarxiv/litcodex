@@ -4,8 +4,9 @@
 
 **Keep the work lit.**
 
-A plugin for Codex CLI that turns a request into a goal with checks, keeps the evidence in your project,
-and hands unfinished work to the next session.
+Put `lit` in front of a request and Codex CLI works toward checks that can pass or fail, calling the job
+done only when each one has proof. The proof stays in your project, so tomorrow's session starts where
+today's stopped.
 
 <p>
 <a href="https://www.npmjs.com/package/@litfamily/litcodex"><img src="https://img.shields.io/npm/v/@litfamily/litcodex?color=FF6337&label=npm" alt="npm version" /></a>
@@ -15,6 +16,22 @@ and hands unfinished work to the next session.
 </p>
 
 [한국어](./README-Ko-KR.md) · [Install](#install) · [First task](#start-with-lit) · [What you get](#what-you-get) · [Commands](#commands) · [Learn more](#learn-more)
+
+Try it now. You need Node.js 22 or later and Codex CLI:
+
+```sh
+npm exec --yes --package @litfamily/litcodex@1.0.26 -- litcodex install
+```
+
+Then open Codex in your project, approve the LitCodex hooks when Codex asks, and type a request with
+`lit` in it:
+
+```text
+lit add input validation to the signup form
+```
+
+The short film below is one real turn: a test written first, a failing run, the fix, and a passing run
+before Codex says the turn is done.
 
 <p><img src="./docs/assets/demo.webp" width="960" alt="A short film of a LitCodex session in Codex CLI. It opens on a title card with the LIT mark: LitCodex, The lit workflow for Codex CLI. Numbered labels then follow one turn in a small Node project. 1: typing &quot;lit add a --shout flag that prints the greeting in capitals, with a test&quot; turns LitCodex on. 2: the hook block shows the LIT mark beside &quot;🔥 LIT IGNITED · lit-loop 🔥&quot;. 3: the line under the mark, &quot;🔨 WORK › 🔍 · › 🏁 ·&quot;, is a map of where the turn stands: work now, then review and done. 4: Codex plans first and reads its lit-code playbook, Read SKILL.md (litcodex:lit-code skill). 5: it writes the test before the fix, Edited test/greet.test.js, and npm test fails with exit 1. 6: it fixes greet.js, runs the CLI with --shout and runs npm test again. 7: the summary says the tests and the direct CLI checks pass, and the Stop hook adds &quot;✨ turn done&quot;. The film closes on a card with the install command." /></p> <!-- demo-gif -->
 
@@ -33,6 +50,11 @@ word `handoff` before you stop, and the next session starts from a written note 
 Around that loop come more than forty skills for planning, code review, research, debugging, Word and
 PowerPoint files, and English or Korean prose. The work runs inside Codex on your machine, with your
 own sign-in and models.
+
+It is built for people who already use Codex CLI on work that outlasts one sitting: a feature that takes a
+few days, a refactor you want planned before anyone edits, research you need with sources, a report or
+deck that has to end up as a real file. If you want the one-line version for a friend: Codex stops calling
+unchecked work done, and you stop explaining the same project twice.
 
 ## Install
 
@@ -107,24 +129,30 @@ as plain text, and the reply opens with `🔥 **LIT IGNITED · <discipline>** �
 runs in the work loop (`<lit-loop-mode>` internally): a goal, its checks, and evidence recorded as each
 check passes.
 
-Under the mark, one more line shows where you are in the LIT workflow. It is read from what the project
-has saved, so it follows the interview, the plan, the work with a bar of finished plan tasks, review and
-done, for example `🧭 ✓ › 📝 ✓ › 🔨 WORK ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·`. A stage with nothing saved behind it is
-left out instead of guessed. `litresearch` gets its own short map, decomposition, waves, verification and
-synthesis, which picks up from the research journal still in progress and otherwise starts at decomposition.
-When a LIT turn ends, the Stop hook adds a line such as `✨ turn done · 2 tasks ✓ · next ▸ Write the docs`.
-When `lit start work` reaches a checkpoint and the plan carries on in the same turn, the line reads
-`⏳ 3/7 tasks ✓ · continuing ▸ Write the docs` instead. Both lines are plain text with emoji, because Codex
-prints hook text without colour.
+Under the mark sits a small map of the LIT workflow, so you can see at a glance how far the work has come:
 
-`lit` has to stand on its own as a word. Words that only contain the letters, such as `split`, `literal`
-or `litmus`, do nothing, and neither does `lit` inside a code span or a code block.
+```text
+🧭 ✓ › 📝 ✓ › 🔨 WORK ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·
+```
+
+Read left to right, that is the interview, the plan, the work with a bar of finished plan tasks, review and
+done. The map is drawn from what the project has actually saved, so a stage with nothing behind it is left
+out. Research has a map of its own (decomposition, waves, verification, synthesis) that resumes from the
+research journal in progress, or starts at decomposition when there is none.
+
+When a LIT turn ends, the Stop hook leaves one line such as `✨ turn done · 2 tasks ✓ · next ▸ Write the docs`.
+If `lit start work` reaches a checkpoint and keeps going in the same turn, the line reads
+`⏳ 3/7 tasks ✓ · continuing ▸ Write the docs` instead. Codex prints hook text without colour, which is why
+these lines lean on emoji.
+
+LitCodex listens for `lit` as a word of its own. Words that merely contain the letters, such as `split`,
+`literal` or `litmus`, pass through untouched, and so does `lit` inside a code span or a code block.
 Slash commands are left alone as well, with one exception: `/litresearch` starts research.
 
-`handoff` and `lit-scientific-visualization` are exact-only routes: each works only when it is the whole
-message. Send exact bare `handoff` to write a continuation packet before you leave a session. Send exact
-bare `lit-scientific-visualization` to switch to plotting mode (`<lit-scientific-visualization-mode>`);
-it installs no Python packages.
+Two words are exact-only routes: they work only when they are the whole message. Send exact bare `handoff` before you leave a session,
+and LitCodex writes a continuation packet for the next one. Send exact bare `lit-scientific-visualization`
+when you want publication plots; it switches to plotting mode (`<lit-scientific-visualization-mode>`) and
+installs no Python packages.
 
 ### Make one small thing
 
@@ -142,7 +170,9 @@ first.
 
 ## What you get
 
-**Work that finishes for real.** `lit` turns a request into a goal with checks. A goal can be completed
+### Work that finishes for real
+
+`lit` turns a request into a goal with checks. A goal can be completed
 only once every check has passing evidence, and anything Codex could not verify is written down where
 you will see it.
 
@@ -150,7 +180,9 @@ you will see it.
 lit fix the flaky login test and show me the run that proves it
 ```
 
-**A plan before the edits.** `lit plan` writes a plan with numbered steps and success criteria into
+### A plan before the edits
+
+`lit plan` writes a plan with numbered steps and success criteria into
 `.litcodex/plans/` and edits nothing else. Once you approve it, `lit start work <plan-name>` runs each step
 through five gates (re-read, automated checks, manual QA, adversarial QA, cleanup) and finishes only after
 all five review lanes pass.
@@ -159,17 +191,23 @@ all five review lanes pass.
 lit plan move the settings page to the new form library
 ```
 
-**Reviews that can say no.** `lit review` runs five separate reviews of a plan or a finished change, and
+### Reviews that can say no
+
+`lit review` runs five separate reviews of a plan or a finished change, and
 any one of them can hold back approval.
 
-**Research with sources.** `lit research` gathers evidence in parallel and writes a cited synthesis that
+### Research with sources
+
+`lit research` gathers evidence in parallel and writes a cited synthesis that
 keeps facts, hypotheses and open questions apart.
 
 ```text
 lit research which Node 22 OAuth libraries support PKCE, with sources
 ```
 
-**Word and PowerPoint files.** Ask for a report or slides with `lit` and the matching skill (`lit-docx`
+### Word and PowerPoint files
+
+Ask for a report or slides with `lit` and the matching skill (`lit-docx`
 or `lit-pptx`) reads your material, picks a design direction, names it with two alternatives, and builds
 an editable file with its Markdown source next to it.
 
@@ -177,7 +215,9 @@ an editable file with its Markdown source next to it.
 lit turn notes.md into a ten-slide deck for the Monday review
 ```
 
-**Cleaner prose, in English or Korean.** `$litcodex:lit-humanizer` rewrites stiff model writing while
+### Cleaner prose, in English or Korean
+
+`$litcodex:lit-humanizer` rewrites stiff model writing while
 keeping facts and hedges. Before a file is written, its hook stops a few clear drafting tells.
 
 ### Also in the box
@@ -342,14 +382,15 @@ next Codex session. `litcodex doctor` shows the update state and what to do abou
 
 ## Troubleshooting
 
-- **The terminal window closes right away.** Open a terminal that stays open, run help, install and
-  doctor one at a time, and note each exit code. Then follow the [staged trial](./docs/npm-migration.md#isolated-local-trial) and
-  start Codex yourself.
-- **Nothing activates.** Run `litcodex doctor` and check that the hooks are approved in Codex.
-- **The command is missing.** Use the `npm exec` form above, or check that npm's global bin directory is on
-  your `PATH`.
-- **A native goal is paused or blocked.** Run `/goal resume`, confirm the goal is active, then retry with
-  `litcodex loop run --retry-failed`. Keep the unfinished goal. [Recovery details](./docs/usage.md#troubleshooting).
+- If the terminal window closes right away, open a terminal that stays open, run help, install and doctor
+  one at a time, and note each exit code. Then follow the
+  [staged trial](./docs/npm-migration.md#isolated-local-trial) and start Codex yourself.
+- If `lit` does nothing, run `litcodex doctor` and check that the hooks are approved in Codex.
+- If the `litcodex` command is missing, use the `npm exec` form above, or check that npm's global bin
+  directory is on your `PATH`.
+- If a native goal is paused or blocked, run `/goal resume`, confirm the goal is active, then retry with
+  `litcodex loop run --retry-failed`. Keep the unfinished goal.
+  [Recovery details](./docs/usage.md#troubleshooting).
 
 ## Uninstall
 

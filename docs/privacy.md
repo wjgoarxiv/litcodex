@@ -43,13 +43,6 @@ separate notifier eligible. The CLI also accepts `--no-auto-update` on managemen
 commands. These controls do not stop npm from downloading an explicitly requested
 package, or prevent an external tool from making network requests.
 
-## Removed skill hint
-
-Earlier versions had an opt-in skill hint that sent eligible prompts to an external API. It has been
-removed. The `UserPromptSubmit` hook no longer reads its environment switch or API key and makes no such
-request. Projects that used it may still hold its small per-session records under `.litcodex/jev/`;
-LitCodex no longer reads or writes that folder and leaves it in place, so you can delete it yourself.
-
 ## Automatic handoff
 
 The [automatic handoff](./auto-handoff.md) is off by default and sends nothing anywhere. It

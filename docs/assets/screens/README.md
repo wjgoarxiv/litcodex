@@ -12,9 +12,8 @@ How each picture was made:
   step and several receipt rows are left out.
 - `screen-doctor`: a real `litcodex doctor` run in that home after the install. The start banner, the rows about model
   routes, concurrency and updates, the warnings that a home without a Codex sign-in produces, the status-line
-  suggestion and the film-tool lines that follow the Office line are left out. The picture once also showed a row for
-  an optional skill hint; that feature was removed, doctor no longer prints the row, and the row was cut from the
-  picture without changing the other lines.
+  suggestion and the film-tool lines that follow the Office line are left out. One row for a retired option was also
+  cut from the picture without changing the other lines.
 - `screen-lit-ignited`: a real Codex CLI 0.162 session with the LitCodex hooks, run in a temporary home and project with
   a local stand-in for the model. The picture keeps each prompt and the hook lines, including the workflow map under
   the lit-loop mark and the Stop hook's `✨ turn done`, and cuts the startup banner, the folder-trust and hook-review

@@ -13,8 +13,9 @@
 
 **Keep the work lit.**
 
-A plugin for Codex CLI that turns a request into a goal with checks, keeps the evidence in your project,
-and hands unfinished work to the next session.
+Put `lit` in front of a request and Codex CLI works toward checks that can pass or fail, calling the job
+done only when each one has proof. The proof stays in your project, so tomorrow's session starts where
+today's stopped.
 
 **[Full guide on GitHub](https://github.com/wjgoarxiv/litcodex#readme)** · [한국어](https://github.com/wjgoarxiv/litcodex/blob/main/packages/litcodex-ai/README-Ko-KR.md)
 
@@ -50,11 +51,12 @@ Open Codex in your project, approve the LitCodex hooks in the startup review, an
 lit add input validation to the signup form
 ```
 
-The reply opens with `🔥 **LIT IGNITED · <discipline>** 🔥`. A goal is complete once every check has
-passing evidence, and the records live under `.litcodex/lit-loop/` in your project; `lit recap` reads them
-back. Send exact bare `handoff` before you leave, and the next session gets a continuation packet to start
-from. The exact bare `lit-scientific-visualization` hook route loads the plotting adapter;
-it does not install Python dependencies.
+The reply opens with `🔥 **LIT IGNITED · <discipline>** 🔥`, and from there the request is a goal with
+checks. It counts as done once every check has passing evidence. The records live under
+`.litcodex/lit-loop/` in your project, and `lit recap` reads them back. Before you leave, send
+exact bare `handoff` and the next session gets a continuation packet to start from. When you need
+publication plots, send the exact bare `lit-scientific-visualization` hook route; it loads the plotting
+adapter and does not install Python dependencies.
 
 ## Skills
 
@@ -62,16 +64,16 @@ Pick any skill in the Codex skill picker or mention it by scoped name, such as `
 `$litcodex:lit-fetch`, `$litcodex:lit-handoff` or `$litcodex:lit-scientific-visualization`. The
 [skills page](https://github.com/wjgoarxiv/litcodex/blob/main/docs/skills.md) has a picture of each one.
 
-- **Loop and planning:** `lit-loop` (`lit`), `litwork`, `lit-plan`, Start Work (`lit start work <approved-plan>`),
+- Loop and planning: `lit-loop` (`lit`), `litwork`, `lit-plan`, Start Work (`lit start work <approved-plan>`),
   `litgoal`, `deep-interview`, `lit-crucible`, `lit-team`, `lit-recap` and `lit-handoff`.
-- **Review and research:** `review-work`, `litresearch`, `autoresearch`, `autoconference`, `lit-fetch`,
+- Review and research: `review-work`, `litresearch`, `autoresearch`, `autoconference`, `lit-fetch`,
   `wikify`, `coding-session-audit` and `lit-comprehend`.
-- **Documents, figures and screens:** `lit-docx`, `lit-pptx`, `lit-diagram-drawer`,
+- Documents, figures and screens: `lit-docx`, `lit-pptx`, `lit-diagram-drawer`,
   `lit-scientific-visualization`, `lit-typographic-motion`, `lit-humanizer`, `readme-studio`,
   `frontend-ui-ux`, `visual-qa` and `browser-drive`.
-- **Code:** `debugging`, `refactor`, `lit-code`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`,
+- Code: `debugging`, `refactor`, `lit-code`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`,
   `structural-search`, `lsp-setup` and `lit-init`.
-- **Upkeep:** `litcodex-doctor`, `litcodex-report-bug` and `litcodex-contribute-bug-fix`. `rules`, `lsp`
+- Upkeep: `litcodex-doctor`, `litcodex-report-bug` and `litcodex-contribute-bug-fix`. `rules`, `lsp`
   and `comment-checker` run on their own.
 
 ## What it changes
@@ -79,17 +81,18 @@ Pick any skill in the Codex skill picker or mention it by scoped name, such as `
 - Codex gets the plugin, hooks and agents, plus the managed keys in `~/.codex/config.toml`. Your unrelated
   Codex settings stay as they are.
 - Each project gets local records under `.litcodex/lit-loop/`, kept out of Git and packages.
-- The doctor diagnostic core never modifies Codex config, install state or plugin state. An eligible
-  interactive doctor run (a successful one you start by hand) may show a cached advisory notice about a
-  newer version; a detached worker keeps it fresh with a fixed registry refresh saved at
-  `~/.litcodex/update-check.json`, and installs nothing. A separate foreground updater can install a newer
-  global package after an eligible interactive management command. Set `LITCODEX_NO_UPDATE_CHECK=1` to
-  turn off both. A doctor run that failed, or ran with `--json`, `--dry-run`, in a non-TTY or CI shell, or
-  with the opt-out set, stays side-effect-free.
 - [Automatic handoff](https://github.com/wjgoarxiv/litcodex/blob/main/docs/auto-handoff.md) is optional and
   off by default.
 - Tests, fixtures, test helpers and the Vitest configuration live only in the repository. Neither the npm
   package nor the installed marketplace plugin includes them.
+
+LitCodex also keeps an eye on new releases. The doctor diagnostic core never modifies Codex config, install
+state or plugin state. After an eligible interactive doctor run (a successful one you start by hand) it may
+show a cached advisory notice about a newer version; a detached worker keeps that notice fresh with a fixed
+registry refresh saved at `~/.litcodex/update-check.json`, and installs nothing. A separate foreground
+updater can install a newer global package after an eligible interactive management command. If you would
+rather have neither, set `LITCODEX_NO_UPDATE_CHECK=1`. A doctor run that failed, or ran with `--json`,
+`--dry-run`, in a non-TTY or CI shell, or with the opt-out set, stays side-effect-free.
 
 ## Check, fix, remove
 

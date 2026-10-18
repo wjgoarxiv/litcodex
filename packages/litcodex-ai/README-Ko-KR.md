@@ -13,8 +13,8 @@
 
 **Keep the work lit.**
 
-요청을 확인 기준이 붙은 목표로 바꾸고, 그 증거를 프로젝트에 남기고, 끝내지 못한 일은 다음 세션에 넘겨 주는
-Codex CLI 플러그인입니다.
+요청 앞에 `lit`을 붙이면 Codex CLI가 통과·실패를 가릴 수 있는 기준을 세우고, 기준마다 증거가 남아야 일을 끝냅니다.
+증거는 프로젝트 안에 남기 때문에 내일 세션은 오늘 멈춘 자리에서 시작합니다.
 
 **[GitHub에서 전체 안내 보기](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md)** · [English](https://github.com/wjgoarxiv/litcodex#readme)
 
@@ -49,10 +49,10 @@ litcodex install
 lit 회원가입 폼에 입력 검증을 추가해줘
 ```
 
-답변이 `🔥 **LIT IGNITED · <discipline>** 🔥` 한 줄로 시작합니다. 목표는 모든 기준에 통과 증거가 있어야 완료되고,
-기록은 프로젝트의 `.litcodex/lit-loop/` 아래에 남습니다. `lit recap`으로 다시 읽을 수 있습니다. 세션을 마치기 전에
-`handoff`만 따로 보내면 다음 세션이 시작할 인수인계 문서가 생깁니다. `lit-scientific-visualization`만 보내면 시각화
-어댑터를 불러오며, Python 패키지는 설치하지 않습니다.
+답변이 `🔥 **LIT IGNITED · <discipline>** 🔥` 한 줄로 시작하고, 그때부터 요청은 확인 기준이 붙은 목표가 됩니다.
+모든 기준에 통과 증거가 있어야 완료되고, 기록은 프로젝트의 `.litcodex/lit-loop/` 아래에 남아 `lit recap`으로 다시
+읽을 수 있습니다. 세션을 마치기 전에 `handoff`만 따로 보내면 다음 세션이 시작할 인수인계 문서가 생깁니다. 출판용
+그래프가 필요할 때 `lit-scientific-visualization`만 보내면 시각화 어댑터를 불러오고, Python 패키지는 설치하지 않습니다.
 
 ## 스킬
 
@@ -60,15 +60,15 @@ lit 회원가입 폼에 입력 검증을 추가해줘
 `$litcodex:lit-handoff`, `$litcodex:lit-scientific-visualization`처럼 이름으로 부를 수 있습니다. 스킬마다 그림은
 [스킬 안내](https://github.com/wjgoarxiv/litcodex/blob/main/docs/skills-Ko-KR.md)에 있습니다.
 
-- **루프와 계획:** `lit-loop`(`lit`), `litwork`, `lit-plan`, Start Work(`lit start work <승인된 계획>`), `litgoal`,
+- 루프와 계획: `lit-loop`(`lit`), `litwork`, `lit-plan`, Start Work(`lit start work <승인된 계획>`), `litgoal`,
   `deep-interview`, `lit-crucible`, `lit-team`, `lit-recap`, `lit-handoff`.
-- **검토와 조사:** `review-work`, `litresearch`, `autoresearch`, `autoconference`, `lit-fetch`, `wikify`,
+- 검토와 조사: `review-work`, `litresearch`, `autoresearch`, `autoconference`, `lit-fetch`, `wikify`,
   `coding-session-audit`, `lit-comprehend`.
-- **문서, 그림, 화면:** `lit-docx`, `lit-pptx`, `lit-diagram-drawer`, `lit-scientific-visualization`,
+- 문서, 그림, 화면: `lit-docx`, `lit-pptx`, `lit-diagram-drawer`, `lit-scientific-visualization`,
   `lit-typographic-motion`, `lit-humanizer`, `readme-studio`, `frontend-ui-ux`, `visual-qa`, `browser-drive`.
-- **코드:** `debugging`, `refactor`, `lit-code`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`,
+- 코드: `debugging`, `refactor`, `lit-code`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`,
   `structural-search`, `lsp-setup`, `lit-init`.
-- **관리:** `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix`. `rules`, `lsp`,
+- 관리: `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix`. `rules`, `lsp`,
   `comment-checker`는 알아서 돌아갑니다.
 
 ## 설치하면 달라지는 것
@@ -76,16 +76,17 @@ lit 회원가입 폼에 입력 검증을 추가해줘
 - Codex에 플러그인·훅·에이전트가 등록되고 `~/.codex/config.toml`의 관리 항목이 갱신됩니다. 관련 없는 Codex
   설정은 그대로 둡니다.
 - 프로젝트마다 `.litcodex/lit-loop/` 아래에 로컬 기록이 생기며, Git과 패키지에서는 제외됩니다.
-- doctor 진단은 Codex 설정, 설치 상태, 플러그인 상태를 바꾸지 않고 살펴보기만 합니다. 조건에 맞는 대화형 doctor
-  실행 뒤에는 캐시해 둔 새 버전 안내가 뜰 수 있고, 백그라운드 작업이 정해진 레지스트리만 조회해
-  `~/.litcodex/update-check.json`에 적어 둡니다. 이 작업은 아무것도 설치하지 않습니다. 이와 별개로, 조건에 맞는
-  대화형 관리 명령 뒤에는 업데이트 실행기가 새 전역 패키지를 설치할 수 있습니다. `LITCODEX_NO_UPDATE_CHECK=1`을
-  설정하면 둘 다 꺼집니다. 실패했거나 `--json`·`--dry-run`으로 돌렸거나, 비TTY·CI 환경이거나 이 설정으로 끈
-  doctor 실행은 부수 효과가 없습니다.
 - [자동 핸드오프](https://github.com/wjgoarxiv/litcodex/blob/main/docs/auto-handoff-Ko-KR.md)는 선택 기능이며
   기본값은 꺼짐입니다.
 - 테스트, 픽스처, 테스트 헬퍼, Vitest 설정은 저장소에만 있습니다. npm 패키지와 설치된 마켓플레이스 플러그인에는
   들어가지 않습니다.
+
+업데이트 확인은 이렇게 동작합니다. doctor 진단은 Codex 설정, 설치 상태, 플러그인 상태를 살펴보기만 하고 바꾸지 않습니다.
+조건에 맞는 대화형 doctor 실행 뒤에는 캐시해 둔 새 버전 안내가 뜰 수 있습니다. 이 안내는 백그라운드 작업이 정해진
+레지스트리만 조회해 `~/.litcodex/update-check.json`에 적어 둔 내용이며, 이 작업은 아무것도 설치하지 않습니다. 이와
+별개로 조건에 맞는 대화형 관리 명령 뒤에는 업데이트 실행기가 새 전역 패키지를 설치할 수 있습니다. 둘 다 끄려면
+`LITCODEX_NO_UPDATE_CHECK=1`을 설정하세요. 실패했거나 `--json`·`--dry-run`으로 돌렸거나, 비TTY·CI 환경이거나
+이 설정으로 끈 doctor 실행은 아무것도 바꾸지 않습니다.
 
 ## 확인, 문제 해결, 제거
 

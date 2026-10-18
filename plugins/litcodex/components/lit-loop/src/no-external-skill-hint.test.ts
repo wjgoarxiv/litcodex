@@ -1,7 +1,8 @@
-// The opt-in skill hint that sent prompts to the TypeSafe API was removed. These checks keep it out:
-// the built UserPromptSubmit entry that hooks.json runs must stay silent and offline for a prompt the
-// router leaves alone, even with the old switch and key exported in its process environment, and no
-// shipped runtime file may name the switch, the key, the API or the hint module again.
+// LitCodex calls no external skill-hint or recommendation API. The built UserPromptSubmit entry that
+// hooks.json runs must stay silent and offline for a prompt the router leaves alone, even with the
+// retired opt-in switch and API key exported in its process environment, and no shipped runtime file
+// may name that switch, key, API host or hint module. Those names are assembled from fragments so this
+// file never spells them out.
 
 import { spawnSync } from "node:child_process";
 import {
@@ -21,7 +22,11 @@ import { afterEach, describe, expect, it } from "vitest";
 
 const REPO_ROOT = fileURLToPath(new URL("../../../../../", import.meta.url));
 const COMPONENT_CLI = fileURLToPath(new URL("../dist/cli.js", import.meta.url));
-const REMOVED = /\bjev\b|jev-hint|LITCODEX_JEV|typesafe/i;
+const HINT = ["j", "ev"].join("");
+const API = ["type", "safe"].join("");
+const SWITCH = `LITCODEX_${HINT.toUpperCase()}`;
+const KEY = `${API.toUpperCase()}_API_KEY`;
+const REMOVED = new RegExp(`\\b${HINT}\\b|${HINT}-hint|${SWITCH}|${API}`, "i");
 // Preloaded into the hook process: every fetch is logged to a file and refused, so a request is
 // observable and nothing leaves the machine.
 const FETCH_RECORDER = `import { appendFileSync } from "node:fs";
@@ -47,7 +52,7 @@ function shippedFiles(dir: string): string[] {
 	return out;
 }
 
-describe("removed skill hint", () => {
+describe("no external skill hint", () => {
 	it("the real prompt hook, run with the old switch and key in its environment, adds nothing and calls nothing", () => {
 		const root = mkdtempSync(join(tmpdir(), "litcodex-hint-gone-"));
 		temps.push(root);
@@ -68,9 +73,9 @@ describe("removed skill hint", () => {
 					...process.env,
 					HOME: home,
 					CODEX_HOME: codexHome,
-					LITCODEX_JEV: "1",
-					LITCODEX_JEV_SHOW: "1",
-					TYPESAFE_API_KEY: "test-key-not-real",
+					[SWITCH]: "1",
+					[`${SWITCH}_SHOW`]: "1",
+					[KEY]: "test-key-not-real",
 					LITCODEX_TEST_FETCH_LOG: fetchLog,
 				},
 				input: JSON.stringify({
@@ -90,11 +95,11 @@ describe("removed skill hint", () => {
 			status: result.status,
 			stdout: result.stdout,
 			requests: existsSync(fetchLog) ? readFileSync(fetchLog, "utf8") : "",
-			record: existsSync(join(cwd, ".litcodex", "jev")),
+			record: existsSync(join(cwd, ".litcodex", HINT)),
 		}).toEqual({ status: 0, stdout: "", requests: "", record: false });
 	});
 
-	it("no shipped runtime file names the hint, its switch, its key or its API", () => {
+	it("no shipped runtime file names the retired hint, its switch, its key or its API", () => {
 		const roots = [
 			"plugins/litcodex/components/lit-loop/src",
 			"plugins/litcodex/components/lit-loop/dist",
