@@ -1092,7 +1092,30 @@
         "node_modules/@litcodex/lit-loop/skills/litresearch/SKILL.md",
         "node_modules/@litcodex/lit-loop/skills/start-work/SKILL.md",
         "node_modules/@litcodex/lit-loop/skills/lit-recap/SKILL.md",
-        "node_modules/@litcodex/lit-loop/skills/lit-comprehend/SKILL.md"
+        "node_modules/@litcodex/lit-loop/skills/lit-comprehend/SKILL.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directive.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/browser-drive.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/deep-interview.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/lit-comprehend.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/lit-crucible.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/lit-handoff.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/lit-init.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/lit-recap.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/lit-scientific-visualization.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/litgoal.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/litresearch.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/litwork.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/review-work.md",
+        "marketplace/plugins/litcodex/components/lit-loop/directives/start-work.md",
+        "marketplace/plugins/litcodex/skills/deep-interview/SKILL.md",
+        "marketplace/plugins/litcodex/skills/lit-comprehend/SKILL.md",
+        "marketplace/plugins/litcodex/skills/lit-plan/SKILL.md",
+        "marketplace/plugins/litcodex/skills/lit-recap/SKILL.md",
+        "marketplace/plugins/litcodex/skills/litgoal/SKILL.md",
+        "marketplace/plugins/litcodex/skills/litresearch/SKILL.md",
+        "marketplace/plugins/litcodex/skills/litwork/SKILL.md",
+        "marketplace/plugins/litcodex/skills/review-work/SKILL.md",
+        "marketplace/plugins/litcodex/skills/start-work/SKILL.md"
       ],
       "allowedBundled": [
         "@litcodex/lit-loop"
@@ -2282,7 +2305,14 @@
         "agents/litcodex-momus.toml",
         "agents/litcodex-plan.toml",
         "README.md",
-        "LICENSE"
+        "LICENSE",
+        "directives/browser-drive.md",
+        "directives/deep-interview.md",
+        "directives/lit-comprehend.md",
+        "directives/lit-crucible.md",
+        "directives/lit-init.md",
+        "directives/lit-recap.md",
+        "skills/deep-interview/SKILL.md"
       ],
       "allowedGlobs": [
         "package.json",

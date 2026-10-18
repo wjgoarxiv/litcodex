@@ -14,14 +14,8 @@ export declare class LitLoopDirectiveError extends Error {
  * Normalization: CRLF→LF, lone CR→LF, then trim(). Fail-loud with a typed error (codes are generic).
  */
 export declare function loadDirectiveFrom(resolvedPath: string, openMarker: string, closeMarker: string): string;
-/** Hook adapter for explicit skill invocations without a separate workflow directive. */
-export declare function loadSkillInvocationContext(skillName: string, skillPath: string): string;
-/**
- * Load a mode directive and splice the matching bundled SKILL.md body inside the same wrapper.
- * This keeps the small host-adapted directive as the safety envelope while satisfying the
- * bare-invocation contract: the model receives the full installed skill text for the selected mode.
- */
-export declare function loadDirectiveWithSkillBodyFrom(resolvedPath: string, openMarker: string, closeMarker: string, skillName: string, skillPath: string): string;
+/** Read and normalize a bundled text file, failing with a typed error when it is unreadable or empty. */
+export declare function readNormalizedBody(resolvedPath: string, label: string): string;
 /**
  * Read + normalize + validate the lit-loop directive at an explicit path. Test-only seam (S10
  * §Test plan) so corrupt / CRLF / missing-file cases can be exercised without swapping the bundled

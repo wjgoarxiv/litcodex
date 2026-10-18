@@ -75,6 +75,40 @@ describe("auto-update management fail-closed boundary", () => {
 		}
 	});
 
+	it("tells the updating session that the new version starts with the next Codex session", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-auto-update-cli-next-session-"));
+		const npmDir = mkdtempSync(join(root, "npm-bin-"));
+		fakeNpm(
+			npmDir,
+			[
+				'if [ "$1" = "install" ]; then /usr/bin/touch "$0.installed"; exit 0; fi',
+				'case "$*" in',
+				'  *--version*) if [ -e "$0.installed" ]; then printf "0.3.57\\n"; else printf "0.3.56\\n"; fi; exit 0;;',
+				"  *doctor*) printf '{\"ok\":true}\\n'; exit 0;;",
+				"esac",
+				"exit 0",
+			].join("\n"),
+		);
+		try {
+			const stdout = execFileSync(process.execPath, [distCli, "hook", "session-start"], {
+				input: JSON.stringify({ hook_event_name: "SessionStart", cwd: process.cwd() }),
+				encoding: "utf8",
+				env: {
+					PATH: npmDir,
+					LITCODEX_AUTO_UPDATE_STATE_ROOT: join(root, "state"),
+					LITCODEX_CURRENT_VERSION: "0.3.56",
+					LITCODEX_LATEST_VERSION: "0.3.57",
+				},
+			});
+			const context = JSON.parse(stdout.trim()).hookSpecificOutput.additionalContext as string;
+			expect(context).toContain("0.3.57");
+			expect(context).toContain("This session keeps 0.3.56");
+			expect(context).toContain("next Codex session");
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
 	it("blocks SessionStart before host use when the receipt is unknown-state", () => {
 		const root = mkdtempSync(join(tmpdir(), "litcodex-auto-update-cli-hook-"));
 		const npmDir = mkdtempSync(join(root, "npm-bin-"));

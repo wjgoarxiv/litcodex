@@ -5,15 +5,12 @@
 // hands the parsed value to the pure engine, and writes the decision. Exit map: any structurally
 // valid event → 0 (no-op writes zero bytes); unparseable or oversized stdin → 2 with a
 // machine-readable LitHookError JSON line on stderr. NEVER calls process.exit (the dispatcher does)
-// and NEVER throws. A UserPromptSubmit turn the router leaves alone may carry the opt-in Jev skill
-// hint (./jev-hint.ts) and, once per session while it is on, a plain-text banner; with its switch
-// off, that path makes no request and writes nothing.
+// and NEVER throws.
 import { isAbsolute } from "node:path";
 import { Writable } from "node:stream";
 import { claimReloadContext, evaluateAutoHandoffStop, recordCompaction, takeReloadContext } from "./auto-handoff.js";
 import { applyAutoHandoffRoute, clearManagedCompactionWhenOff, parseAutoHandoffRoute, } from "./auto-handoff-settings.js";
 import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
-import { claimJevOnBanner, formatJevHookOutput, jevSwitchState, runJevSkillHint, withJevBanner, } from "./jev-hint.js";
 import { endLiveStep, recordLiveStepEnd, recordLiveStepStart, recordTurnStart, writeThreadPointer, } from "./live-step.js";
 import { evaluatePlanPersistence, formatStopBlockOutput, recordLitPlanActivation } from "./plan-persistence.js";
 import { recordWorkflowTurn, workflowMapLine, workflowStopLine, workflowTurn } from "./workflow-map.js";
@@ -74,7 +71,7 @@ function readStdin(stdin) {
  * NEVER throws. Writes the camelCase activation line to stdout (empty on no-op), or a LitHookError
  * line to stderr on malformed / oversized stdin.
  */
-export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot = process.cwd(), jev = {}, auto = {}) {
+export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot = process.cwd(), auto = {}) {
     const decoded = await readStdin(stdin);
     if (decoded === null) {
         stderr.write(errorLine("LIT_HOOK_STDIN_TOO_LARGE", TOO_LARGE_MESSAGE));
@@ -116,7 +113,7 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
     }
     const own = decision.kind === "inject"
         ? withCardOffer(withWorkflowMap(decision.stdout, parsed, decision.mode), pointer, auto)
-        : await jevHintOutput(parsed, repoRoot, jev);
+        : "";
     const output = withAutoHandoffReload(own, parsed, repoRoot, auto);
     if (output !== "")
         stdout.write(output);
@@ -205,15 +202,37 @@ function withWorkflowMap(stdout, parsed, mode) {
  * instead of scrolling away with the first one. In the terminal `codex` the same tool returns the map as text.
  */
 export const CARD_OFFER_CONTEXT = "LIT card: if the `lit_card` tool (litcodex MCP server) is available, call the `lit_card` tool once now, with no arguments, so the user sees the live LIT card for this turn. It replaces the previous turn's card, which folds itself into one line. Do not call it again in this turn; it updates by itself.";
-/** Add the card request to every LIT activation, and remember when it was last made. */
+/**
+ * Add the card request to every LIT activation, right under the banner line so it stays inside the part
+ * of the context Codex always shows, and remember when it was last made.
+ */
 function withCardOffer(stdout, scope, auto) {
     if (scope === null || stdout === "")
         return stdout;
-    const merged = withReloadContext(stdout, CARD_OFFER_CONTEXT);
+    const merged = withContextAfterBanner(stdout, CARD_OFFER_CONTEXT) ?? withReloadContext(stdout, CARD_OFFER_CONTEXT);
     if (merged === null)
         return stdout;
     writeThreadPointer(auto.env ?? process.env, scope.sessionId, scope.cwd, auto.now, { cardOffered: true });
     return merged;
+}
+/** Insert a line after the context's `LIT IGNITED` banner line; null when there is no banner to anchor on. */
+function withContextAfterBanner(stdout, text) {
+    try {
+        const output = JSON.parse(stdout);
+        const context = output?.hookSpecificOutput?.additionalContext;
+        if (output === null || typeof context !== "string")
+            return null;
+        const banner = /^.*LIT IGNITED · .*$/mu.exec(context);
+        if (banner === null)
+            return null;
+        const end = banner.index + banner[0].length;
+        output.hookSpecificOutput.additionalContext =
+            `${context.slice(0, end)}\n${text}${context.slice(end)}`;
+        return `${JSON.stringify(output)}\n`;
+    }
+    catch {
+        return null;
+    }
 }
 function isRecord(value) {
     return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -224,30 +243,6 @@ function hookCwd(parsed, repoRoot) {
         return repoRoot;
     const cwd = parsed["cwd"];
     return typeof cwd === "string" && isAbsolute(cwd) ? cwd : repoRoot;
-}
-/** Optional Jev skill hint for a turn the deterministic router left alone. Never throws. */
-async function jevHintOutput(parsed, repoRoot, options) {
-    const env = options.env ?? process.env;
-    if (jevSwitchState(env) === "off" || !isLitUserPromptSubmitInput(parsed))
-        return "";
-    const record = parsed;
-    const sessionId = typeof record["session_id"] === "string" ? record["session_id"] : null;
-    const cwd = typeof record["cwd"] === "string" && isAbsolute(record["cwd"]) ? record["cwd"] : repoRoot;
-    try {
-        const banner = claimJevOnBanner(cwd, sessionId, env);
-        const result = await runJevSkillHint({
-            prompt: parsed.prompt,
-            sessionId,
-            repoRoot: cwd,
-            env,
-            ...(options.http === undefined ? {} : { http: options.http }),
-            ...(options.skillsRoot === undefined ? {} : { skillsRoot: options.skillsRoot }),
-        });
-        return formatJevHookOutput(withJevBanner(result, banner));
-    }
-    catch {
-        return "";
-    }
 }
 /** Read `{ session_id, cwd }` from a hook event; `cwd` falls back to `repoRoot` when absent or relative. */
 function hookSessionScope(parsed, repoRoot) {

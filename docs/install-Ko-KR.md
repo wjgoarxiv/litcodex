@@ -73,7 +73,7 @@ Windows에서 돌 수 없어서 `BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME`으로
 
 설치부터 첫 작업까지 LitCodex가 무엇을 출력하는지 사진 다섯 장으로 보여 줍니다. 모두 임시 홈에서 실제 프로그램을 실행해 캡처했고,
 사진을 짧게 하려고 뺀 줄은 사진마다 설명에 적었습니다. 사진은 Codex CLI 0.162에서 만들었으며, Codex 버전에 따라 훅 줄의 표현이나
-위치가 조금 다를 수 있습니다. 선택 기능인 Jev 스킬 힌트의 사진은 [Jev](./jev-skill-hint-Ko-KR.md#화면에-나타나는-모습)에 따로 있습니다.
+위치가 조금 다를 수 있습니다.
 
 대화형으로 실행하면 설치기가 세 가지를 묻습니다. 어떤 모델이 이끌지, 어떤 모델이 거들지, 답변을 어떤 스타일로 받을지입니다.
 그때마다 Enter를 누르면 첫 번째 선택지가 골라집니다. 권장 모델과 현재 출력 스타일입니다. 이어서 설치기가 쓰려는 경로를 상자로 보여 주고, Enter를 한 번 더 누르기 전까지는
@@ -89,9 +89,9 @@ Windows에서 돌 수 없어서 `BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME`으로
 <p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-receipt-dark.webp" /><img src="./assets/screens/screen-install-receipt-light.webp" width="728" alt="터미널 창에 litcodex install의 끝부분이 보입니다. 01 / 06 MARKETPLACE부터 06 / 06 HEALTH CHECK까지 여섯 단계가 각각 결과 줄과 함께 나오고, 마지막은 &quot;Running doctor: doctor passed&quot;입니다. 이어서 &quot;[litcodex] Office runtime ready for presentations and documents.&quot;와 &quot;[litcodex] Motion runtime ready for film rendering.&quot; 줄이 나옵니다. INSTALL RECEIPT 상자에는 &quot;Status Ready for Codex&quot;, &quot;Codex host codex-cli 0.162.1&quot;, &quot;Model gpt-6-astra · xhigh&quot;가 있고 &quot;Installation complete&quot;로 끝납니다." /></picture><br /><sub>같은 설치에서 캡처했습니다. 단계마다 붙는 설명과 경로 줄, 01단계 앞의 호스트 확인 줄, 영수증의 여러 줄은 뺐습니다.</sub></p>
 
 결과를 가장 빨리 확인하는 방법은 `litcodex doctor`입니다. 대부분의 줄이 yes 또는 no로 답하고, 이상이 없으면 All checks passed.로
-끝납니다. Jev 줄은 힌트를 켜지 않았다면 off로 나옵니다.
+끝납니다.
 
-<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-doctor-dark.webp" /><img src="./assets/screens/screen-doctor-light.webp" width="317" alt="터미널 창에서 litcodex doctor를 실행한 화면입니다. &quot;binary: yes&quot;, &quot;marketplace: yes&quot;, &quot;plugin: yes&quot;, &quot;hook: yes&quot;, &quot;managed config: yes&quot;, &quot;agents: yes&quot;, &quot;skills complete: yes&quot;, &quot;lit-handoff: yes&quot;, &quot;science payload: yes&quot;, &quot;Jev skill hint: off&quot;, &quot;automatic handoff: off&quot; 줄이 이어지고, 그 뒤에 &quot;All checks passed.&quot;와 &quot;office runtime: ready&quot;가 나옵니다." /></picture><br /><sub>설치 직후 같은 홈에서 실행한 litcodex doctor 출력입니다. 시작 배너, 모델 경로, 동시 실행, 업데이트 관련 줄, Codex 로그인이 없는 홈에서 나오는 경고, 상태 줄 제안, 영상 도구 줄은 뺐습니다.</sub></p>
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-doctor-dark.webp" /><img src="./assets/screens/screen-doctor-light.webp" width="317" alt="터미널 창에서 litcodex doctor를 실행한 화면입니다. &quot;binary: yes&quot;, &quot;marketplace: yes&quot;, &quot;plugin: yes&quot;, &quot;hook: yes&quot;, &quot;managed config: yes&quot;, &quot;agents: yes&quot;, &quot;skills complete: yes&quot;, &quot;lit-handoff: yes&quot;, &quot;science payload: yes&quot;, &quot;automatic handoff: off&quot; 줄이 이어지고, 그 뒤에 &quot;All checks passed.&quot;와 &quot;office runtime: ready&quot;가 나옵니다." /></picture><br /><sub>설치 직후 같은 홈에서 실행한 litcodex doctor 출력입니다. 시작 배너, 모델 경로, 동시 실행, 업데이트 관련 줄, Codex 로그인이 없는 홈에서 나오는 경고, 상태 줄 제안, 영상 도구 줄은 뺐습니다.</sub></p>
 
 `lit`으로 시작하는 요청을 입력하면 훅이 모델보다 먼저 답합니다. 5행짜리 LIT 마크와, 고른 경로의 이름을 적은 줄을 출력합니다.
 `handoff`와 `lit recap`에서도 같은 마크가 나오고 경로 이름만 달라서, 어떤 모드가 요청을 받았는지 한눈에 알 수 있습니다.

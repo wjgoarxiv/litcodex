@@ -7,8 +7,10 @@ import { activationMessage } from "./lit-mark.js";
 import { LIT_LOOP_DIRECTIVE_MARKER } from "./markers.js";
 
 const HOOK_SOURCE = readFileSync(fileURLToPath(new URL("./codex-hook.ts", import.meta.url)), "utf8");
-const skillBody = (name: string): string =>
-	readFileSync(fileURLToPath(new URL(`../../../skills/${name}/SKILL.md`, import.meta.url)), "utf8").trim();
+const skillPath = (name: string): string => fileURLToPath(new URL(`../../../skills/${name}/SKILL.md`, import.meta.url));
+/** The file a route context names for on-demand reading, as `<kind> <name>: <absolute path>`. */
+const namedFile = (context: string, kind: "skill" | "directive", name: string): string =>
+	new RegExp(`^${kind} ${name}: (.+)$`, "mu").exec(context)?.[1] ?? "";
 const upsSnake = (prompt: string, transcriptPath?: string | null): unknown => {
 	const base: Record<string, unknown> = { hook_event_name: "UserPromptSubmit", prompt };
 	if (transcriptPath !== undefined) base["transcript_path"] = transcriptPath;
@@ -140,7 +142,10 @@ describe("runUserPromptSubmitHook activation #given/#when/#then", () => {
 
 	it("injects the conflict-safe native-goal agent protocol without automatic clear or update language", () => {
 		const context = parseInject(runUserPromptSubmitHook(upsSnake("lit"))).additionalContext as string;
-		const normalized = context.replace(/\s+/g, " ");
+		expect(context.replace(/\s+/g, " ")).toContain("Call `get_goal` first");
+		expect(context).toContain("`/goal clear` is a user-only action");
+		// The full protocol moved out of the per-prompt context into the route directive the context names.
+		const normalized = readFileSync(namedFile(context, "directive", "lit-loop"), "utf8").replace(/\s+/g, " ");
 		expect(normalized).toContain("Call `get_goal` first");
 		expect(normalized).toContain("If `get_goal` reports no goal record, the agent may call `create_goal`");
 		expect(normalized).toContain("exactly matches the expected objective");
@@ -191,7 +196,7 @@ describe("runUserPromptSubmitHook activation #given/#when/#then", () => {
 		);
 	});
 
-	it("injects the full bundled SKILL.md body for every lit-family hook mode", () => {
+	it("names the installed SKILL.md for every lit-family hook mode instead of pasting its body", () => {
 		const cases = [
 			["lit", "lit-loop"],
 			["litwork", "litwork"],
@@ -207,9 +212,8 @@ describe("runUserPromptSubmitHook activation #given/#when/#then", () => {
 		] as const;
 		for (const [prompt, name] of cases) {
 			const context = parseInject(runUserPromptSubmitHook(upsSnake(prompt))).additionalContext as string;
-			expect(context).toContain(`<litcodex-skill-body name="${name}">`);
-			expect(context).toContain(skillBody(name));
-			expect(context).toContain("</litcodex-skill-body>");
+			expect(namedFile(context, "skill", name)).toBe(skillPath(name));
+			expect(context).not.toContain("<litcodex-skill-body");
 		}
 	});
 
@@ -218,8 +222,7 @@ describe("runUserPromptSubmitHook activation #given/#when/#then", () => {
 		expect(context.startsWith("<lit-plan-mode>")).toBe(true);
 		expect(context.endsWith("</lit-plan-mode>")).toBe(true);
 		expect(context).toContain("🔥 **LIT IGNITED · lit-plan** 🔥");
-		expect(context).toContain('<litcodex-skill-body name="lit-plan">');
-		expect(context).toContain(skillBody("lit-plan"));
+		expect(namedFile(context, "skill", "lit-plan")).toBe(skillPath("lit-plan"));
 		expect(context).toContain("Wait for the user's explicit okay before generating the plan");
 		expect(context).toContain("Native Codex Plan Mode is a host UI mode");
 		expect(context).toContain("Prompt-injection and stale-state planning rules");
@@ -229,7 +232,7 @@ describe("runUserPromptSubmitHook activation #given/#when/#then", () => {
 		const context = parseInject(runUserPromptSubmitHook(upsSnake("lit plan this"))).additionalContext as string;
 		expect(Buffer.byteLength(context)).toBeLessThan(30_000);
 		expect(context).not.toContain("## Plan template (write verbatim, fill placeholders)");
-		expect(context.match(/<litcodex-skill-body name="lit-plan">/g)).toHaveLength(1);
+		expect(context.match(/^skill lit-plan: /gmu)).toHaveLength(1);
 		const otherMode = parseInject(runUserPromptSubmitHook(upsSnake("lit goal this"))).additionalContext as string;
 		expect(otherMode).toContain("# Step 1 — Restate the objective as one crisp goal");
 	});

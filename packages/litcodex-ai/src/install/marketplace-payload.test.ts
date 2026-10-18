@@ -276,6 +276,24 @@ describe("materializeManagedMarketplace", () => {
 		expect(readFileSync(sentinel, "utf8")).toBe("user-owned");
 	});
 
+	it("refuses a marketplace folder whose own manifest names another marketplace", () => {
+		const paths = fixture("0.3.44");
+		mkdirSync(join(paths.targetRoot, ".agents", "plugins"), { recursive: true });
+		mkdirSync(join(paths.targetRoot, "plugins", "litcodex", ".codex-plugin"), { recursive: true });
+		writeFileSync(
+			join(paths.targetRoot, ".agents", "plugins", "marketplace.json"),
+			JSON.stringify({ name: "someone-else", plugins: [{ name: "litcodex", source: "./plugins/litcodex" }] }),
+		);
+		writeFileSync(
+			join(paths.targetRoot, "plugins", "litcodex", ".codex-plugin", "plugin.json"),
+			JSON.stringify({ name: "litcodex", version: "0.3.40" }),
+		);
+		const sentinel = join(paths.targetRoot, "keep.txt");
+		writeFileSync(sentinel, "user-owned");
+		expect(() => materializeManagedMarketplace(paths)).toThrow(/unsafe|ownership/i);
+		expect(readFileSync(sentinel, "utf8")).toBe("user-owned");
+	});
+
 	it("uses a Node 20-compatible explicit directory walk", () => {
 		// Given
 		const source = ["./file-walk.ts", "./marketplace-payload.ts", "./index.ts"]

@@ -720,7 +720,7 @@ describe("browser-drive hook route", () => {
 		for (const prompt of ["browser-drive", "$litcodex:browser-drive", "  BROWSER-DRIVE  "]) {
 			const context = injectedContext(runUserPromptSubmitHook(userPrompt(prompt)));
 			expect(context).toContain("<browser-drive-mode>");
-			expect(context).toContain('<litcodex-skill-body name="browser-drive">');
+			expect(context).toMatch(/^skill browser-drive: .+\/skills\/browser-drive\/SKILL\.md$/mu);
 		}
 	});
 

@@ -1,4 +1,3 @@
-import { type JevHttpClient } from "./jev-hint.js";
 /** Hard cap on stdin to bound memory / ReDoS exposure inside the 5 s Codex hook budget. 8 MB. */
 export declare const MAX_STDIN_BYTES = 8000000;
 /** Machine-readable error envelope emitted to stderr on a NON-zero exit. */
@@ -15,7 +14,7 @@ export type LitHookErrorCode = "LIT_HOOK_STDIN_INVALID_JSON" | "LIT_HOOK_STDIN_T
  * NEVER throws. Writes the camelCase activation line to stdout (empty on no-op), or a LitHookError
  * line to stderr on malformed / oversized stdin.
  */
-export declare function runUserPromptSubmitHookCli(stdin: NodeJS.ReadableStream, stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream, repoRoot?: string, jev?: JevHookOptions, auto?: AutoHandoffHookOptions): Promise<number>;
+export declare function runUserPromptSubmitHookCli(stdin: NodeJS.ReadableStream, stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream, repoRoot?: string, auto?: AutoHandoffHookOptions): Promise<number>;
 /** Injectable environment for the automatic-handoff hooks; production uses the process environment. */
 export interface AutoHandoffHookOptions {
     readonly env?: NodeJS.ProcessEnv;
@@ -26,12 +25,6 @@ export interface AutoHandoffHookOptions {
  * instead of scrolling away with the first one. In the terminal `codex` the same tool returns the map as text.
  */
 export declare const CARD_OFFER_CONTEXT = "LIT card: if the `lit_card` tool (litcodex MCP server) is available, call the `lit_card` tool once now, with no arguments, so the user sees the live LIT card for this turn. It replaces the previous turn's card, which folds itself into one line. Do not call it again in this turn; it updates by itself.";
-/** Injectable Jev dependencies; production uses the process environment and built-in `fetch`. */
-export interface JevHookOptions {
-    readonly env?: NodeJS.ProcessEnv;
-    readonly http?: JevHttpClient;
-    readonly skillsRoot?: string;
-}
 /** Enforce lit-plan persistence when a Stop hook event arrives. */
 export declare function runStopPlanPersistenceHookCli(stdin: NodeJS.ReadableStream, stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream, repoRoot?: string, auto?: AutoHandoffHookOptions): Promise<number>;
 /** SessionStart: after a compaction inside a turn, bring this session's fresh handoff back once. */

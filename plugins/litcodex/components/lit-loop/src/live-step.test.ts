@@ -258,14 +258,9 @@ describe("live step hooks", () => {
 					prompt,
 				}),
 			);
-			const code = await runUserPromptSubmitHookCli(
-				stdin,
-				new PassThrough(),
-				new PassThrough(),
-				root,
-				{ env: { LITCODEX_JEV: "0" } },
-				{ env: { CODEX_HOME: home } },
-			);
+			const code = await runUserPromptSubmitHookCli(stdin, new PassThrough(), new PassThrough(), root, {
+				env: { CODEX_HOME: home },
+			});
 			expect(code).toBe(0);
 		};
 		await submit("plain", "hello there");
@@ -311,14 +306,10 @@ describe("live step hooks", () => {
 			}),
 		);
 		expect(
-			await runUserPromptSubmitHookCli(
-				prompt,
-				new PassThrough(),
-				new PassThrough(),
-				root,
-				{ env: { LITCODEX_JEV: "0" } },
-				{ env: { CODEX_HOME: home }, now: 2_000 },
-			),
+			await runUserPromptSubmitHookCli(prompt, new PassThrough(), new PassThrough(), root, {
+				env: { CODEX_HOME: home },
+				now: 2_000,
+			}),
 		).toBe(0);
 		expect(readLiveStep(root, "s1")).toMatchObject({ tool: null, turnStartedAt: 2_000, turnEndedAt: null });
 		await runHook(runPreToolUseLiveHookCli, event(root), { CODEX_HOME: home });
@@ -432,14 +423,7 @@ describe("live step hooks", () => {
 			stdin.end(
 				JSON.stringify({ hook_event_name: "UserPromptSubmit", session_id: "s5", turn_id: "t", cwd: root, prompt }),
 			);
-			await runUserPromptSubmitHookCli(
-				stdin,
-				stdout,
-				new PassThrough(),
-				root,
-				{ env: { LITCODEX_JEV: "0" } },
-				{ env: { CODEX_HOME: home } },
-			);
+			await runUserPromptSubmitHookCli(stdin, stdout, new PassThrough(), root, { env: { CODEX_HOME: home } });
 			if (out === "") return "";
 			return (
 				(JSON.parse(out) as { hookSpecificOutput?: { additionalContext?: string } }).hookSpecificOutput

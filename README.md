@@ -336,6 +336,10 @@ can update itself after an interactive command, and an interactive `litcodex doc
 version. Set `LITCODEX_NO_UPDATE_CHECK=1` to turn both off. Details are in
 [privacy](./docs/privacy.md#registry-traffic-and-updates).
 
+Inside Codex the check also runs when a session starts, about once a day. Codex runs it only after you approve
+the LitCodex hooks in its hook review, and `codex exec` never shows that review. A new version takes effect in the
+next Codex session. `litcodex doctor` shows the update state and what to do about it.
+
 ## Troubleshooting
 
 - **The terminal window closes right away.** Open a terminal that stays open, run help, install and
@@ -362,8 +366,6 @@ npm exec --yes --package @litfamily/litcodex@1.0.25 -- litcodex uninstall
 - [Skills](./docs/skills.md): every bundled skill with a picture, and which ones are worth knowing by name.
 - [Automatic handoff](./docs/auto-handoff.md): writes the handoff for you when the context reaches a
   percent you choose. Off by default.
-- [Jev skill hint](./docs/jev-skill-hint.md): an optional skill suggestion from a hosted model. Turning it
-  on sends prompts to a third party, so read this page first. Off by default.
 - [Usage reference](./docs/usage.md): every route, model configuration, platform limits and recovery.
 - [Privacy and network behavior](./docs/privacy.md) and the [migration guide](./docs/npm-migration.md).
 - [Media and brand](./docs/media.md): the films, the logo and the story behind the name.

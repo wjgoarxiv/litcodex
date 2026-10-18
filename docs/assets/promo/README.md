@@ -25,5 +25,5 @@ and run the skill's stage command against that folder.
 
 Type is set in Pretendard Regular and Bold (SIL Open Font License, see [Pretendard-OFL.txt](./Pretendard-OFL.txt)),
 and the terminal text inside the drawn pane and its tags in MesloLGS NF (Apache License 2.0, see the
-[notice](../jev/MesloLGS-NF-LICENSE.txt)). Like the other files under `docs/assets/`, these files stay out of the npm
+[notice](../MesloLGS-NF-LICENSE.txt)). Like the other files under `docs/assets/`, these files stay out of the npm
 package and the installed plugin.

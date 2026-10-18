@@ -69,8 +69,6 @@ export const USER_FACING_DOCS = Object.freeze([
 	"docs/skills-Ko-KR.md",
 	"docs/auto-handoff.md",
 	"docs/auto-handoff-Ko-KR.md",
-	"docs/jev-skill-hint.md",
-	"docs/jev-skill-hint-Ko-KR.md",
 	"docs/media.md",
 	"docs/media-Ko-KR.md",
 	"docs/spec/litcodex-contract.md",

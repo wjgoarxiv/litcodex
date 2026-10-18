@@ -18,4 +18,4 @@ How each picture was made:
 
 Each picture comes in a dark and a light version. The terminal window and its colors are drawn around the text,
 and long lines wrap at the window edge the way a terminal wraps them. Lettering is set in MesloLGS NF Regular,
-licensed under the Apache License 2.0 ([notice](../jev/MesloLGS-NF-LICENSE.txt)).
+licensed under the Apache License 2.0 ([notice](../MesloLGS-NF-LICENSE.txt)).

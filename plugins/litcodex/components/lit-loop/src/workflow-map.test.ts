@@ -476,8 +476,6 @@ async function drive(
 	return { code, stdout: out };
 }
 
-const OFF: NodeJS.ProcessEnv = { LITCODEX_JEV: "0" };
-
 async function submit(root: string, prompt: string, extra: Record<string, unknown> = {}) {
 	const stdin = new PassThrough();
 	const stdout = new PassThrough();
@@ -498,7 +496,7 @@ async function submit(root: string, prompt: string, extra: Record<string, unknow
 			...extra,
 		}),
 	);
-	const code = await runUserPromptSubmitHookCli(stdin, stdout, new PassThrough(), root, { env: OFF }, { env: {} });
+	const code = await runUserPromptSubmitHookCli(stdin, stdout, new PassThrough(), root, { env: {} });
 	return { code, stdout: out };
 }
 

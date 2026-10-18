@@ -86,10 +86,8 @@ Pick any skill in the Codex skill picker or mention it by scoped name, such as `
   global package after an eligible interactive management command. Set `LITCODEX_NO_UPDATE_CHECK=1` to
   turn off both. A doctor run that failed, or ran with `--json`, `--dry-run`, in a non-TTY or CI shell, or
   with the opt-out set, stays side-effect-free.
-- Two optional features are off by default:
-  [automatic handoff](https://github.com/wjgoarxiv/litcodex/blob/main/docs/auto-handoff.md) and the
-  [Jev skill hint](https://github.com/wjgoarxiv/litcodex/blob/main/docs/jev-skill-hint.md), which sends
-  prompts to a third party once you turn it on.
+- [Automatic handoff](https://github.com/wjgoarxiv/litcodex/blob/main/docs/auto-handoff.md) is optional and
+  off by default.
 - Tests, fixtures, test helpers and the Vitest configuration live only in the repository. Neither the npm
   package nor the installed marketplace plugin includes them.
 

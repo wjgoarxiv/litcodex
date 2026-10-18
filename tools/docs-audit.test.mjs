@@ -433,8 +433,6 @@ describe("docs-audit doc set", () => {
 			"docs/skills-Ko-KR.md",
 			"docs/auto-handoff.md",
 			"docs/auto-handoff-Ko-KR.md",
-			"docs/jev-skill-hint.md",
-			"docs/jev-skill-hint-Ko-KR.md",
 			"docs/media.md",
 			"docs/media-Ko-KR.md",
 			"docs/spec/litcodex-contract.md",
@@ -482,7 +480,7 @@ describe("docs-audit cli", () => {
 	test("audit passes on the real repo docs", () => {
 		const r = runAuditCli();
 		assert.equal(r.code, 0, r.stdout + r.stderr);
-		assert.match(r.stdout, /ok: 32 doc\(s\) consistent/);
+		assert.match(r.stdout, /ok: 30 doc\(s\) consistent/);
 		assert.match(r.stdout, /docs-audit: PASS/);
 		evidence("task-27-cli-pass.txt", r.stdout.trim());
 	});

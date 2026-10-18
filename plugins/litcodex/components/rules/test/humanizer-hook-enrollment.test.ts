@@ -43,4 +43,12 @@ describe("Lit Humanizer Codex enrollment", () => {
 		expect(bundledRule).toMatch(/block/iu);
 		expect(bundledRule).toMatch(/warn/iu);
 	});
+
+	it("scopes the always-on rule to reader prose so it never picks the skill for other work", () => {
+		const body = bundledRule.replace(/^---\n[\s\S]*?\n---\n/u, "");
+		expect(bundledRule).not.toMatch(/Apply `lit-humanizer` to new chat/u);
+		expect(body).toMatch(/pick the skill for the task from the task itself/iu);
+		expect(body).toMatch(/do not open `lit-humanizer` first/iu);
+		expect(body).toMatch(/write guard runs on every file edit/iu);
+	});
 });

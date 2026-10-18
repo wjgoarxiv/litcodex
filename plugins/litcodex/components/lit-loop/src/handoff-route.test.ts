@@ -38,7 +38,7 @@ describe("exact bare handoff UserPromptSubmit route", () => {
 		// Then: the trusted route, banner, and native adapter are injected together.
 		expect(context).toContain("<lit-handoff-mode>");
 		expect(context).toContain("🔥 **LIT IGNITED · lit-handoff** 🔥");
-		expect(context).toContain('<litcodex-skill-body name="lit-handoff">');
+		expect(context).toMatch(/^skill lit-handoff: .+\/vendor\/handoff\/SKILL\.md$/mu);
 		expect(context).toContain("$litcodex:lit-handoff");
 		expect(context).toContain("The handoff is not a status report. It is a reboot packet.");
 	});

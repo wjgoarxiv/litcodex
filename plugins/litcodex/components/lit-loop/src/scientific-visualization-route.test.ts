@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -35,13 +35,14 @@ describe("exact bare scientific visualization UserPromptSubmit route", () => {
 		// When: the real hook decision engine evaluates it.
 		const context = injectedContext(runUserPromptSubmitHook(userPrompt("lit-scientific-visualization")));
 
-		// Then: the trusted route and complete installed adapter arrive in one native envelope.
+		// Then: the trusted route arrives in one native envelope and names the complete installed adapter.
 		expect(context).toContain("<lit-scientific-visualization-mode>");
 		expect(context).toContain("🔥 **LIT IGNITED · lit-scientific-visualization** 🔥");
-		expect(context).toContain('<litcodex-skill-body name="lit-scientific-visualization">');
-		expect(context).toContain("authored_skill_root:");
 		expect(context).toContain("scripts/dependency-preflight.py --json");
-		expect(context).toContain("b1b8f1bf8791daecdbb00dc70631cd955e72976664d302af0bc81e218b9cec3b");
+		const adapterPath = /^skill lit-scientific-visualization: (.+)$/mu.exec(context)?.[1] ?? "";
+		const adapter = readFileSync(adapterPath, "utf8");
+		expect(adapter).toContain("authored_skill_root:");
+		expect(adapter).toContain("b1b8f1bf8791daecdbb00dc70631cd955e72976664d302af0bc81e218b9cec3b");
 	});
 
 	it("accepts casing and edge whitespace while every non-exact form remains inert", () => {

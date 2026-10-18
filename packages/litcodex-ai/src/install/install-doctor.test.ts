@@ -1,10 +1,11 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { codexBin, doctorDeps, sentinelPath } from "../../test/install-doctor-fixtures.js";
 import { probeMarketplaceRegistered, probeMarketplaceRegistration, probePluginInstalled } from "./codex.js";
-import { renderDoctorText, runDoctor } from "./doctor.js";
+import { doctorScopeFor, renderDoctorText, runDoctor } from "./doctor.js";
+import { runDoctorCli } from "./index.js";
 
 describe("doctor — agentsInstalled probe", () => {
 	it("agentsInstalled is true when the complete desired agent bundle is present", () => {
@@ -131,6 +132,107 @@ describe("doctor — agentsInstalled probe", () => {
 		} finally {
 			rmSync(stateRoot, { recursive: true, force: true });
 		}
+	});
+
+	describe("auto-update state and remedies", () => {
+		const doctorWithReceipt = (receipt: Record<string, unknown>, config?: string, hooksJson?: string) => {
+			const stateRoot = mkdtempSync(join(tmpdir(), "litcodex-doctor-update-state-"));
+			try {
+				writeFileSync(
+					join(stateRoot, "receipt.json"),
+					JSON.stringify({
+						schemaVersion: 1,
+						packageName: "@litfamily/litcodex",
+						source: "session-start",
+						...receipt,
+					}),
+				);
+				const deps = doctorDeps([codexBin, sentinelPath], config);
+				const hooksPath = `${deps.env["CODEX_HOME"]}/marketplaces/litcodex/plugins/litcodex/hooks/hooks.json`;
+				const fs =
+					hooksJson === undefined
+						? deps.fs
+						: {
+								...deps.fs,
+								readFileSync: (path: string, encoding: "utf8") =>
+									path === hooksPath ? hooksJson : deps.fs.readFileSync(path, encoding),
+							};
+				return runDoctor({ ...deps, fs, env: { ...deps.env, LITCODEX_AUTO_UPDATE_STATE_ROOT: stateRoot } });
+			} finally {
+				rmSync(stateRoot, { recursive: true, force: true });
+			}
+		};
+
+		it("says an installed update takes effect in the next Codex session", () => {
+			const report = doctorWithReceipt({
+				status: "updated",
+				currentVersion: "1.0.24",
+				latestVersion: "1.0.25",
+				finishedAt: "2026-10-17T10:00:00.000Z",
+			});
+			const text = renderDoctorText(report);
+			expect(text).toContain("updated; 1.0.24 → 1.0.25 at 2026-10-17T10:00:00.000Z");
+			expect(text).toContain("takes effect in the next Codex session");
+			expect(text).toContain("cannot see which version an open Codex session runs");
+		});
+
+		it.each([
+			[{ status: "skipped", reason: "unknown-latest" }, "registry.npmjs.org", "Check the network"],
+			[{ status: "throttled", reason: "retry-throttled" }, "last attempt failed", "30 minutes"],
+			[
+				{ status: "failed", reason: "spawnSync npm ETIMEDOUT", latestVersion: "1.0.26" },
+				"60-second limit",
+				"npm install -g @litfamily/litcodex@1.0.26",
+			],
+			[
+				{ status: "failed", reason: "exit:243", latestVersion: "1.0.26" },
+				"npm could not install 1.0.26",
+				"npm install -g @litfamily/litcodex@1.0.26",
+			],
+			[{ status: "skipped", reason: "disabled" }, "LITCODEX_NO_AUTO_UPDATE", "update by hand"],
+			[{ status: "skipped", reason: "existing-opt-out" }, "LITCODEX_NO_UPDATE_CHECK", "update by hand"],
+			[{ status: "skipped", reason: "marketplace-flow" }, "Codex marketplace", "marketplace"],
+			[{ status: "locked", reason: "locked" }, "another session", "Wait"],
+		] as const)("names the cause and the remedy for %o", (receipt, cause, remedy) => {
+			const text = renderDoctorText(doctorWithReceipt(receipt));
+			expect(text).toContain(cause);
+			expect(text).toContain(remedy);
+		});
+
+		const realHooks = readFileSync(new URL("../../../../plugins/litcodex/hooks/hooks.json", import.meta.url), "utf8");
+
+		it("says when Codex has no approval recorded for the auto-update hook", () => {
+			const text = renderDoctorText(doctorWithReceipt({ status: "up-to-date" }, 'model = "gpt-5.6"\n', realHooks));
+			expect(text).toContain("auto-update hook: not approved in Codex");
+			expect(text).toContain("codex exec never asks");
+		});
+
+		it("stays quiet about the hook once Codex recorded an approval for it", () => {
+			const config =
+				'model = "gpt-5.6"\n[hooks.state."litcodex@litcodex:hooks/hooks.json:session_start:1:0"]\ntrusted_hash = "sha256:00"\n';
+			const text = renderDoctorText(doctorWithReceipt({ status: "up-to-date" }, config, realHooks));
+			expect(text).not.toContain("auto-update hook:");
+		});
+
+		it("says when the auto-update hook is turned off in Codex", () => {
+			const config =
+				'model = "gpt-5.6"\n[hooks.state."litcodex@litcodex:hooks/hooks.json:session_start:1:0"]\ntrusted_hash = "sha256:00"\nenabled = false\n';
+			const text = renderDoctorText(doctorWithReceipt({ status: "up-to-date" }, config, realHooks));
+			expect(text).toContain("auto-update hook: turned off in Codex");
+		});
+
+		it("names a plugin and command version split instead of a generic payload error", () => {
+			const report = runDoctor(
+				doctorDeps(
+					[codexBin, sentinelPath],
+					"model_context_window = 372000\nmodel_auto_compact_token_limit = 334800\n",
+					undefined,
+					"1.0.26",
+				),
+			);
+			expect(report.issues).toContainEqual(expect.stringContaining("payload is LitCodex 1.0.26"));
+			expect(report.issues).toContainEqual(expect.stringContaining("another npm global folder"));
+		});
 	});
 
 	describe("stale foreground updater receipt", () => {
@@ -287,29 +389,76 @@ describe("probeMarketplaceRegistration — parses Codex 0.144 structured source"
 	});
 });
 
-describe("doctor — Jev skill hint line", () => {
-	const fakeKey = "test-key-not-real-0000";
-	const withEnv = (deps: ReturnType<typeof doctorDeps>, extra: NodeJS.ProcessEnv) => ({
-		...deps,
-		env: { ...deps.env, ...extra },
+describe("doctor — the check that runs right after an automatic update", () => {
+	const withRecorder = (deps: ReturnType<typeof doctorDeps>) => {
+		const calls: string[][] = [];
+		const spawn: typeof deps.spawn = (command, args, options) => {
+			calls.push([command, ...args]);
+			return deps.spawn(command, args, options);
+		};
+		return { deps: { ...deps, spawn, scope: "post-install" as const }, calls };
+	};
+
+	it("skips the Codex host probes that the update's own litcodex install has just run", () => {
+		const healthy = doctorDeps(
+			[codexBin, sentinelPath],
+			'model = "gpt-5.6"\nmodel_reasoning_effort = "xhigh"\nmodel_auto_compact_token_limit = 650000\n',
+		);
+		const { deps, calls } = withRecorder(healthy);
+		const report = runDoctor(deps);
+		expect(report.issues).toEqual([]);
+		expect(report.ok).toBe(true);
+		expect(report.scope).toBe("post-install");
+		expect(calls.some((call) => call.includes("--strict-config"))).toBe(false);
+		expect(calls.some((call) => call.includes("debug"))).toBe(false);
+		expect(calls.some((call) => call.includes("--version"))).toBe(false);
+		expect(calls).toContainEqual([codexBin, "plugin", "list"]);
+		expect(calls).toContainEqual([codexBin, "plugin", "marketplace", "list", "--json"]);
 	});
 
-	it("shows off, on, or the missing key, and never the key itself", () => {
-		const cases: Array<[NodeJS.ProcessEnv, string]> = [
-			[{}, "off"],
-			[{ TYPESAFE_API_KEY: fakeKey }, "off"],
-			[{ LITCODEX_JEV: "1", TYPESAFE_API_KEY: fakeKey }, "on"],
-			[{ LITCODEX_JEV: "1" }, "flag on but TYPESAFE_API_KEY missing"],
-			[{ LITCODEX_JEV: "1", TYPESAFE_API_KEY: " " }, "flag on but TYPESAFE_API_KEY missing"],
+	it("still fails a broken install: stale payload, missing agent roles, or a missing skill", () => {
+		const config = "model_context_window = 372000\nmodel_auto_compact_token_limit = 334800\n";
+		const broken = [
+			doctorDeps([codexBin, sentinelPath], config, undefined, "0.3.28"),
+			doctorDeps([codexBin]),
+			doctorDeps([codexBin, sentinelPath], undefined, undefined, undefined, undefined, true, true, {
+				missing: "lit-diagram-drawer",
+			}),
 		];
-		for (const files of [[codexBin, sentinelPath], []]) {
-			for (const [extra, state] of cases) {
-				const report = runDoctor(withEnv(doctorDeps(files), extra));
-				const text = renderDoctorText(report);
-				expect(report.jevSkillHint).toBe(state);
-				expect(text).toContain(`  Jev skill hint: ${state}`);
-				expect(`${text}\n${JSON.stringify(report)}`).not.toContain(fakeKey);
-			}
+		for (const deps of broken) {
+			const report = runDoctor(withRecorder(deps).deps);
+			expect(report.ok).toBe(false);
+			expect(report.issues.length).toBeGreaterThan(0);
+		}
+	});
+
+	it("is chosen by the marker every updater sets on its children, and only by it", () => {
+		expect(doctorScopeFor({ LITCODEX_AUTO_UPDATE_IN_PROGRESS: "1" })).toBe("post-install");
+		expect(doctorScopeFor({})).toBe("full");
+	});
+
+	it("leaves the optional office and film runtimes out of the post-install JSON", () => {
+		const codexHomeDir = mkdtempSync(join(tmpdir(), "litcodex-doctor-post-install-"));
+		try {
+			let out = "";
+			const io = {
+				stdout: {
+					write: (chunk: string) => {
+						out += chunk;
+						return true;
+					},
+				} as unknown as NodeJS.WritableStream,
+				stderr: { write: () => true } as unknown as NodeJS.WritableStream,
+				env: { PATH: "", CODEX_HOME: codexHomeDir, LITCODEX_AUTO_UPDATE_IN_PROGRESS: "1" },
+				repoRoot: codexHomeDir,
+			};
+			runDoctorCli(["--json", "--no-auto-update"], io);
+			const parsed = JSON.parse(out.trim().split("\n").at(-1) ?? "{}") as Record<string, unknown>;
+			expect(parsed["scope"]).toBe("post-install");
+			expect(parsed).not.toHaveProperty("officeRuntime");
+			expect(parsed).not.toHaveProperty("motionRuntime");
+		} finally {
+			rmSync(codexHomeDir, { recursive: true, force: true });
 		}
 	});
 });

@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- The opt-in Jev skill hint is gone: the `UserPromptSubmit` hook no longer sends prompts to the
+  TypeSafe API, and doctor no longer prints a Jev row. In testing the hint made no measurable
+  difference and the model did not follow it. `LITCODEX_JEV`, `LITCODEX_JEV_SHOW`,
+  `LITCODEX_JEV_TRACE` and `TYPESAFE_API_KEY` are now ignored and can be deleted from your shell
+  setup, and so can any leftover per-project `.litcodex/jev/` folder. LitCodex does not delete that
+  folder for you.
+
 ## [1.0.25] - 2026-10-16
 
 ### Changed

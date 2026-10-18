@@ -1,4 +1,5 @@
 import { autoHandoffLine } from "./auto-handoff-doctor.js";
+import { hookReviewLine } from "./auto-update-doctor.js";
 import type { DoctorReport, TuiSuggestion } from "./types.js";
 
 const MAX_RESOURCE_FAMILIES = 2;
@@ -29,8 +30,9 @@ export function renderDoctorText(report: DoctorReport): string {
 			? []
 			: [
 					`  auto-update: ${report.autoUpdate.enabled ? "enabled" : "disabled"} (${report.autoUpdate.status ?? "no receipt"}; ${report.autoUpdate.detail})`,
+					...(report.autoUpdate.remedy === undefined ? [] : [`    → ${report.autoUpdate.remedy}`]),
+					...autoUpdateHookLines(report.autoUpdate.hookReview),
 				]),
-		...(report.jevSkillHint === undefined ? [] : [`  Jev skill hint: ${report.jevSkillHint}`]),
 		...(report.autoHandoff === undefined ? [] : [`  automatic handoff: ${autoHandoffLine(report.autoHandoff)}`]),
 		...(report.statusCard === undefined
 			? []
@@ -95,6 +97,11 @@ function missingResourceSummary(paths: readonly string[]): string {
 	if (remainingFamilies > 0) examples.push(`+${remainingFamilies} more families`);
 	const familyLabel = families.length === 1 ? "family" : "families";
 	return `${paths.length} across ${families.length} ${familyLabel} (${examples.join("; ")}; full paths: --json)`;
+}
+
+function autoUpdateHookLines(review: import("./types.js").AutoUpdateHookReview | undefined): string[] {
+	const line = review === undefined ? null : hookReviewLine(review);
+	return line === null ? [] : [`  ${line}`];
 }
 
 function yn(value: boolean): string {

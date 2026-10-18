@@ -164,7 +164,8 @@ describe("reader-facing communication contract scenarios A-J", () => {
 		}
 		for (const [prompt, name] of hookSkillRoutes) {
 			const context = directSkillContext(prompt);
-			if (name !== "lit-handoff") expect(context, name).toContain(skill(name).trim());
+			if (name !== "lit-handoff")
+				expect(context, name).toContain(`skill ${name}: ${join(skillDirectory, name, "SKILL.md")}`);
 			expect(context, name).toContain("reader-facing communication");
 		}
 	});

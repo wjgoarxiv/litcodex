@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import {
 	closeSync,
+	cpSync,
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
@@ -13,7 +14,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 
 export const AUTO_UPDATE_PACKAGE = "@litfamily/litcodex" as const;
 export const DEFAULT_AUTO_UPDATE_TIMEOUT_MS = 10_000;
@@ -158,6 +159,13 @@ export interface AutoUpdateRunOptions extends AutoUpdatePlanOptions {
 	readonly spawn?: AutoUpdateSpawn;
 	readonly verifyInstalled?: AutoUpdateVerify;
 	readonly writeReceipt?: boolean;
+	/** Read at the start (unless `now` is given) and again at the end, so the receipt shows the real finish. */
+	readonly clock?: () => number;
+	/**
+	 * The versioned plugin folder the running Codex session started from. Codex removes it when the new plugin
+	 * is installed, yet the session keeps using its hooks and skill files, so the updater puts it back.
+	 */
+	readonly keepPluginRoot?: string;
 }
 
 export interface AutoUpdateReceipt {
@@ -653,7 +661,8 @@ export function verifyInstalledVersion(
 
 export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpdateResult {
 	const env = options.env ?? process.env;
-	const now = options.now ?? Date.now();
+	const clock = options.clock ?? Date.now;
+	const now = options.now ?? clock();
 	const stateRoot = options.stateRoot ?? resolveAutoUpdateStateRoot(env);
 	const statePath = join(stateRoot, "state.json");
 	const journalPath = join(stateRoot, "journal.json");
@@ -686,10 +695,13 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 	}
 	if (!plan.shouldRun) {
 		const result = noRunResult(plan, stateRoot, startedAt);
-		const earlierFailure = unresolvedFailure(readAutoUpdateReceipt(stateRoot), plan);
+		const previous = readAutoUpdateReceipt(stateRoot);
+		const earlierFailure = unresolvedFailure(previous, plan);
+		// A throttled session start says nothing new, so the update stays the visible receipt for the doctor.
+		const keepsUpdate = previous?.status === "updated" && plan.reason === "throttled";
 		if (options.writeReceipt !== false) {
 			atomicJson(journalPath, { phase: "skipped", ...result });
-			if (!earlierFailure) atomicJson(receiptPath, result);
+			if (!earlierFailure && !keepsUpdate) atomicJson(receiptPath, result);
 		}
 		if (plan.reason === "up-to-date") {
 			atomicJson(statePath, { ...state, lastCheckedAt: now, ...(earlierFailure ? {} : { lastStatus: "success" }) });
@@ -717,6 +729,7 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 	let rollbackSucceeded = false;
 	let rollbackError: Error | undefined;
 	let rollbackSignal: NodeJS.Signals | null | undefined;
+	let keptPluginRoot: string | null = null;
 	try {
 		const journal = {
 			schemaVersion: AUTO_UPDATE_SCHEMA_VERSION,
@@ -750,6 +763,7 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 		};
 		if (spawnSucceeded(result)) {
 			atomicJson(journalPath, { ...journal, phase: "verifying" });
+			keptPluginRoot = copyRunningPluginRoot(options.keepPluginRoot, stateRoot);
 			try {
 				verification = withSanitizedNpmEnvironment(env, (safeEnv) =>
 					(options.verifyInstalled ?? verifyInstalledVersion)(plan.latestVersion as string, {
@@ -786,7 +800,7 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 				doctorStatus: verification.doctorStatus,
 				...(verification.doctorDetail === undefined ? {} : { doctorDetail: verification.doctorDetail }),
 				startedAt,
-				finishedAt: iso(now),
+				finishedAt: iso(Math.max(now, clock())),
 				journalPath,
 				receiptPath,
 			};
@@ -853,7 +867,7 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 				rollbackError = error instanceof Error ? error : new Error("rollback probe failed");
 			}
 		}
-		const finishedAt = iso(now);
+		const finishedAt = iso(Math.max(now, clock()));
 		const rollbackFailed = rollbackAttempted && !rollbackSucceeded;
 		const receipt: AutoUpdateResult = {
 			schemaVersion: AUTO_UPDATE_SCHEMA_VERSION,
@@ -895,7 +909,46 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 		if (options.writeReceipt !== false) atomicJson(receiptPath, receipt);
 		return receipt;
 	} finally {
+		if (keptPluginRoot !== null && options.keepPluginRoot !== undefined) {
+			restoreRunningPluginRoot(keptPluginRoot, options.keepPluginRoot);
+		}
 		releaseLock(lockPath, lockToken);
+	}
+}
+
+/**
+ * Copy the running session's plugin folder aside before the Codex install replaces the plugin cache. Only a
+ * versioned cache folder qualifies; a checkout or the npm package copy is never touched. Best effort: a failed
+ * copy only means the running session loses its hooks, as it did before.
+ */
+function copyRunningPluginRoot(root: string | undefined, stateRoot: string): string | null {
+	if (root === undefined || parseStableVersion(basename(root)) === null || !existsSync(root)) return null;
+	const kept = join(stateRoot, "kept-plugin", basename(root));
+	try {
+		rmSync(kept, { recursive: true, force: true });
+		cpSync(root, kept, { recursive: true, verbatimSymlinks: true });
+		return kept;
+	} catch {
+		rmSync(kept, { recursive: true, force: true });
+		return null;
+	}
+}
+
+/** Put the copy back only if Codex removed the folder; a rollback that reinstalled it wins. */
+function restoreRunningPluginRoot(kept: string, root: string): void {
+	try {
+		if (!existsSync(root)) {
+			mkdirSync(dirname(root), { recursive: true });
+			try {
+				renameSync(kept, root);
+			} catch {
+				cpSync(kept, root, { recursive: true, verbatimSymlinks: true });
+			}
+		}
+	} catch {
+		// The session then runs without its old folder, which is the pre-existing behaviour.
+	} finally {
+		rmSync(dirname(kept), { recursive: true, force: true });
 	}
 }
 

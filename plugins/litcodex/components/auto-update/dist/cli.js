@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 import { createRequire } from "node:module";
 import { stdin as processStdin, stdout as processStdout } from "node:process";
+import { fileURLToPath } from "node:url";
 import { runForegroundAutoUpdate } from "./auto-update.js";
 const packageManifest = createRequire(import.meta.url)("../package.json");
 const currentVersion = typeof packageManifest.version === "string" ? packageManifest.version : undefined;
 const effectiveCurrentVersion = process.env["LITCODEX_CURRENT_VERSION"] ?? currentVersion;
+/** The plugin folder this hook runs from; the updater keeps it only when it is a versioned Codex cache folder. */
+const pluginRoot = fileURLToPath(new URL("../../../", import.meta.url)).replace(/[\\/]+$/u, "");
 const command = process.argv[2];
 const subcommand = process.argv[3];
 if (command === "hook" && subcommand === "session-start") {
@@ -28,6 +31,7 @@ async function runSessionStartHook() {
         ...(process.env["LITCODEX_INSTALL_FLOW"] === "marketplace" ? { installFlow: "marketplace" } : {}),
         cwd: parsed.cwd,
         env: process.env,
+        keepPluginRoot: pluginRoot,
     });
     writeLifecycleResult(result, "SessionStart");
 }
@@ -52,7 +56,7 @@ function writeLifecycleResult(result, hookEventName) {
     if (result.status !== "updated" && result.status !== "failed" && result.status !== "unknown-state")
         return;
     const detail = result.status === "updated"
-        ? `Foreground update barrier applied ${result.packageName}@${result.latestVersion ?? "the latest stable release"} (version + doctor verified).`
+        ? `Foreground update barrier applied ${result.packageName}@${result.latestVersion ?? "the latest stable release"} (version + doctor verified). This session keeps ${result.currentVersion ?? "the earlier version"}; the new version takes effect in the next Codex session.`
         : result.status === "unknown-state"
             ? `BLOCKED: Foreground update barrier left installation state unknown (${result.reason ?? "rollback failed"}); stop before using this host and run litcodex doctor.`
             : `Foreground update barrier failed (${result.reason ?? "unknown error"}); the current installation was preserved when possible.`;

@@ -74,7 +74,7 @@ describe("litresearch scientific-record contract", () => {
 		if (decision.kind !== "inject") throw new Error("litresearch hook did not inject");
 		const context = readAdditionalContext(decision.stdout);
 		expect(context).toContain("<litresearch-mode>");
-		expect(context).toContain(skill.trim());
+		expect(context).toContain(`skill litresearch: ${skillPath}`);
 		expect(context).toContain("routeCoverageComplete");
 		expect(context).toContain("needs_review");
 		expectCurrentCollaborationContract(context);

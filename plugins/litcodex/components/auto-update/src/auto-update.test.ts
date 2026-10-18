@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -49,6 +49,7 @@ describe("foreground auto-update plan", () => {
 		["existing notifier opt-out", [], { NO_UPDATE_NOTIFIER: "1" }],
 		["existing check opt-out", [], { LITCODEX_NO_UPDATE_CHECK: "1" }],
 		["recursion guard", [], { LITCODEX_AUTO_UPDATE_IN_PROGRESS: "1" }],
+		["CI", [], { CI: "true" }],
 	] as const)("honors %s before scheduling", (_label, argv, env) => {
 		expect(
 			resolveAutoUpdatePlan({
@@ -115,6 +116,7 @@ describe("foreground auto-update transaction", () => {
 				verifiedVersion: "1.2.4",
 			});
 			expect(DEFAULT_AUTO_UPDATE_TIMEOUT_MS).toBeGreaterThan(0);
+			expect(existsSync(join(root, "lock"))).toBe(false);
 		} finally {
 			rmSync(root, { recursive: true, force: true });
 		}
@@ -586,6 +588,109 @@ describe("foreground auto-update transaction", () => {
 		} finally {
 			rmSync(root, { recursive: true, force: true });
 		}
+	});
+
+	it("keeps an update receipt through the throttled sessions that follow it", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-foreground-update-keeps-updated-"));
+		try {
+			const host = statefulHost({ globalVersion: "1.2.3", marketplaceVersion: "1.2.3", registryVersion: "1.2.4" });
+			const offline: AutoUpdateSpawn = (command, args, options) =>
+				args[0] === "view" ? { status: 1, signal: null, error: undefined } : host.spawn(command, args, options);
+			const run = (now: number, currentVersion: string, spawn = host.spawn) =>
+				runForegroundAutoUpdate({ env: {}, now, currentVersion, source: "session-start", stateRoot: root, spawn });
+			const receipt = () => JSON.parse(readFileSync(join(root, "receipt.json"), "utf8")) as Record<string, unknown>;
+			const dayLater = 100 + 25 * 60 * 60 * 1000;
+			expect(run(100, "1.2.3").status).toBe("updated");
+			// The next session is throttled; the doctor must still be able to say an update happened.
+			expect(run(200, "1.2.4").status).toBe("throttled");
+			expect(receipt()).toMatchObject({ status: "updated", currentVersion: "1.2.3", latestVersion: "1.2.4" });
+			// A day later a check that cannot reach the registry is news, so it replaces the update receipt.
+			expect(run(dayLater, "1.2.4", offline)).toMatchObject({ status: "skipped", reason: "unknown-latest" });
+			expect(receipt()).toMatchObject({ status: "skipped", reason: "unknown-latest" });
+			expect(run(dayLater + 1, "1.2.4").status).toBe("up-to-date");
+			expect(receipt()).toMatchObject({ status: "up-to-date" });
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it("records when the update finished, not only when it started", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-foreground-update-finish-time-"));
+		try {
+			const host = statefulHost({ globalVersion: "1.2.3", marketplaceVersion: "1.2.3", registryVersion: "1.2.4" });
+			let tick = 1_000;
+			const result = runForegroundAutoUpdate({
+				env: {},
+				currentVersion: "1.2.3",
+				source: "session-start",
+				stateRoot: root,
+				spawn: host.spawn,
+				clock: () => {
+					tick += 5_000;
+					return tick;
+				},
+			});
+			expect(result.status).toBe("updated");
+			expect(Date.parse(result.finishedAt)).toBeGreaterThan(Date.parse(result.startedAt));
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it("puts back the plugin folder the running session started from when Codex removes it", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-foreground-update-keep-root-"));
+		try {
+			const cache = join(root, "codex", "plugins", "cache", "litcodex", "litcodex");
+			const running = join(cache, "1.2.3");
+			mkdirSync(join(running, "skills", "lit-loop"), { recursive: true });
+			writeFileSync(join(running, "skills", "lit-loop", "SKILL.md"), "old skill\n");
+			const host = statefulHost({ globalVersion: "1.2.3", marketplaceVersion: "1.2.3", registryVersion: "1.2.4" });
+			const spawn: AutoUpdateSpawn = (command, args, options) => {
+				const result = host.spawn(command, args, options);
+				// The real host replaces the whole cache folder when the new plugin is installed.
+				if (args.includes("install") && args.includes("litcodex") && result.status === 0) {
+					rmSync(cache, { recursive: true, force: true });
+					mkdirSync(join(cache, host.marketplaceVersion), { recursive: true });
+				}
+				return result;
+			};
+			const result = runForegroundAutoUpdate({
+				env: {},
+				now: 100,
+				currentVersion: "1.2.3",
+				source: "session-start",
+				stateRoot: join(root, "state"),
+				spawn,
+				keepPluginRoot: running,
+			});
+			expect(result.status).toBe("updated");
+			expect(readFileSync(join(running, "skills", "lit-loop", "SKILL.md"), "utf8")).toBe("old skill\n");
+			expect(existsSync(join(cache, "1.2.4"))).toBe(true);
+			expect(existsSync(join(root, "state", "kept-plugin"))).toBe(false);
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it("keeps the auto-update hook entry and its place stable, so Codex keeps trusting it", () => {
+		// Codex stores a trust hash per hook under `session_start:<group>:<hook>`. Changing this entry or moving it
+		// makes every user's earlier approval stale, and Codex then skips the updater without a word.
+		const { hooks } = JSON.parse(readFileSync(new URL("../../../hooks/hooks.json", import.meta.url), "utf8")) as {
+			hooks: Record<string, Array<{ hooks: Array<Record<string, unknown>> }>>;
+		};
+		const groups = hooks["SessionStart"] ?? [];
+		const index = groups.findIndex((group) =>
+			group.hooks.some((entry) => String(entry["command"]).includes("components/auto-update/dist/cli.js")),
+		);
+		expect(index).toBe(1);
+		expect(groups[index]?.hooks).toEqual([
+			{
+				type: "command",
+				command: `node "\${PLUGIN_ROOT}/components/auto-update/dist/cli.js" hook session-start`,
+				timeout: 300,
+				statusMessage: "🔥 LIT IGNITED · auto-update 🔥",
+			},
+		]);
 	});
 
 	it("lets the SessionStart hook and the CLI wait out the longest transaction", () => {

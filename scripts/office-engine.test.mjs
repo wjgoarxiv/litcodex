@@ -25,7 +25,6 @@ const deckSkill = join(root, "plugins/litcodex/skills/lit-pptx");
 const docSkill = join(root, "plugins/litcodex/skills/lit-docx");
 const runner = join(deckSkill, "scripts/office-run.mjs");
 const env = { ...process.env, PYTHONDONTWRITEBYTECODE: "1" };
-delete env.TYPESAFE_API_KEY;
 const doctor = spawnSync(process.execPath, [runner, "doctor"], { encoding: "utf8", env });
 const runtime = doctor.status === 0 ? JSON.parse(doctor.stdout) : { pptx: {}, docx: {} };
 const deckReady = runtime.pptx.ready ? false : "office pptx runtime not installed";

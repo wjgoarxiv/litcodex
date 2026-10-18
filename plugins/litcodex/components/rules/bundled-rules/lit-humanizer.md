@@ -1,9 +1,11 @@
 ---
-description: Check only new or changed reader-facing prose. Preserve meaning, voice, facts, and useful caveats.
+description: Prose checks for reader-facing text the model is about to write. They never choose the skill for a task.
 alwaysApply: true
 ---
 
-Apply `lit-humanizer` to new chat and file text. Check only text the model adds. Keep existing text and exact user quotations; skip fenced and inline code and internal records such as plans, evidence, handoffs, ledgers, status output, and `.lit*` state.
+These checks apply at the moment the model writes prose for a reader: a document, README, report, slide text, release note, commit or PR text, or a reply that is itself the deliverable. Check only text the model adds. Keep existing text and exact user quotations; skip fenced and inline code and internal records such as plans, evidence, handoffs, ledgers, status output, and `.lit*` state.
+
+Pick the skill for the task from the task itself. Do not open `lit-humanizer` first or as a warm-up for other work. Read its SKILL.md only when the request is to write, rewrite, polish, or translate prose. When another skill owns the task (a review, plan, deck, document, figure, research run, or handoff), use that skill; the lines below cover its prose, and the write guard runs on every file edit whether or not the skill was read.
 
 Block only high-confidence drafting residue: label-only evidence/source lines, stacked limitation lists, model disclaimers, and chatbot sign-offs. Warn on vocabulary lists, repeated em dashes, contrast formulas, triads, and rhythm. Warnings are advisory. Never infer authorship from a pattern.
 

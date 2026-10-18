@@ -14,12 +14,13 @@
 // (primary) AND the camelCase `hookEventName` (fallback). The emitted envelope is ALWAYS camelCase
 // (`hookSpecificOutput.hookEventName`).
 //
-// On activation the payload is the trusted bundled directive, loaded behind a FAIL-SILENT boundary:
+// On activation the payload is the route's short head with its bundled directive and installed skill
+// named as files (route-heads.ts), loaded behind a FAIL-SILENT boundary:
 // a directive-load error resolves to "" (→ noop), so a missing dist/directive.md degrades the hook
 // to a silent no-op + exit 0 rather than throwing into the Codex host.
 
 import { isExactBrowserDrivePrompt, shouldSuppressBrowserDriveInjection } from "./browser-drive-route.js";
-import { LitLoopDirectiveError, loadDirectiveWithSkillBodyFrom, loadSkillInvocationContext } from "./directive.js";
+import { LitLoopDirectiveError } from "./directive.js";
 import {
 	type GuardTranscriptInput,
 	hasContextPressureMarker,
@@ -39,6 +40,7 @@ import {
 	SCIENTIFIC_VISUALIZATION_MODE_SPEC,
 } from "./modes.js";
 import { motionRouteContext } from "./motion-route.js";
+import { loadRouteContext, loadSkillInvocationContext } from "./route-context.js";
 import {
 	isExactBareScientificVisualizationPrompt,
 	isScientificVisualizationWhitespaceNearMiss,
@@ -203,13 +205,7 @@ export function applyPreToolUseCreateGoalGuard(input: unknown): PreToolUseCreate
  */
 function loadDirectiveForModeFailSilent(mode: LitModeSpec): string {
 	try {
-		return loadDirectiveWithSkillBodyFrom(
-			mode.directivePath,
-			mode.openMarker,
-			mode.closeMarker,
-			mode.skillName,
-			mode.skillPath,
-		);
+		return loadRouteContext(mode);
 	} catch {
 		return "";
 	}

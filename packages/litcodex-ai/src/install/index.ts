@@ -24,7 +24,7 @@ import {
 	shouldDecorate,
 } from "../ui.js";
 import { codexSpawnInvocation, type ReadonlyFsLike, resolveCodexHome, type SpawnLike } from "./codex.js";
-import { renderDoctorText, runDoctor } from "./doctor.js";
+import { doctorScopeFor, renderDoctorText, runDoctor } from "./doctor.js";
 import { exitCodeForInstallError, InstallError, toErrorJson } from "./errors.js";
 import { type ExecuteDeps, executeInstallPlan } from "./execute.js";
 import { listPayloadEntries, readRegularFileBuffer } from "./file-walk.js";
@@ -416,7 +416,14 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 export function runDoctorCli(args: readonly string[], io: RouteIo = defaultIo()): number {
 	const json = args.includes("--json");
 	writeCommandBanner(io, args);
-	const report = runDoctor({ spawn: realSpawn, fs: realFs, env: io.env, repoRoot: io.repoRoot });
+	const scope = doctorScopeFor(io.env);
+	const report = runDoctor({ spawn: realSpawn, fs: realFs, env: io.env, repoRoot: io.repoRoot, scope });
+	if (scope === "post-install") {
+		// The optional office and film runtimes never decide health; the update's 10 s check skips them.
+		if (json) io.stdout.write(`${JSON.stringify(report)}\n`);
+		else io.stdout.write(`${renderDoctorText(report)}\n`);
+		return report.ok ? 0 : 4;
+	}
 	const officeRuntime = officeRuntimeStatus(resolveCodexHome(io.env), spawnSync, io.env);
 	const motionRuntime = motionRuntimeStatus(resolveCodexHome(io.env), spawnSync, io.env);
 	if (json) {

@@ -92,6 +92,8 @@ export interface InstallResult {
 
 export interface DoctorReport {
 	readonly ok: boolean;
+	/** Present only for the short check an automatic update runs right after its own install. */
+	readonly scope?: "post-install";
 	readonly marketplaceRegistered: boolean;
 	readonly pluginInstalled: boolean;
 	readonly hooksWired: boolean;
@@ -110,8 +112,6 @@ export interface DoctorReport {
 	readonly warnings: readonly string[];
 	/** Read-only foreground update barrier state; the updater owns the receipt/journal files. */
 	readonly autoUpdate?: AutoUpdateDoctorReport;
-	/** Opt-in Jev skill hint switch, read from this process's environment. Never carries the key. */
-	readonly jevSkillHint?: JevSkillHintState;
 	/** Opt-in automatic handoff: off by default; the percent comes from the user. */
 	readonly autoHandoff?: AutoHandoffDoctorReport;
 	/** Built-in Codex status line / terminal title snippet; null when the config already sets both. */
@@ -139,14 +139,18 @@ export interface AutoHandoffDoctorReport {
 	readonly warnings: readonly string[];
 }
 
-export type JevSkillHintState = "off" | "on" | "flag on but TYPESAFE_API_KEY missing";
-
 export interface AutoUpdateDoctorReport {
 	readonly enabled: boolean;
 	readonly status: string | null;
 	readonly receiptPath: string;
 	readonly detail: string;
+	/** One thing the user can do about the recorded state; absent when nothing is needed. */
+	readonly remedy?: string;
+	/** Whether Codex has an approval recorded for the SessionStart updater hook; absent when unknown. */
+	readonly hookReview?: AutoUpdateHookReview;
 }
+
+export type AutoUpdateHookReview = "approved" | "not-approved" | "turned-off";
 
 export interface EffectiveConfigReport {
 	readonly state: "applied" | "preserved" | "unavailable";

@@ -75,8 +75,7 @@ descriptors cannot run there, so on Windows they stop with `BLOCKED_UNSUPPORTED_
 
 Five pictures show what LitCodex prints, from the first install to your first task. Each one was captured from the
 real program in a temporary home, and each caption says which lines were cut to keep the picture short. They come
-from Codex CLI 0.162; other Codex versions may word or place hook lines a little differently. The optional Jev skill
-hint has its own pictures under [Jev](./jev-skill-hint.md#what-you-will-see).
+from Codex CLI 0.162; other Codex versions may word or place hook lines a little differently.
 
 Run interactively, the installer asks three questions: which model leads, which model helps, and which output style
 you like. Pressing Enter keeps the first choice each time: the recommended models and your current output style. A box then lists the route the installer is about to write,
@@ -92,9 +91,9 @@ time. If that step cannot finish, the line says so and names the command to run 
 <p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-receipt-dark.webp" /><img src="./assets/screens/screen-install-receipt-light.webp" width="728" alt="A terminal window with the end of litcodex install. Six steps, 01 / 06 MARKETPLACE to 06 / 06 HEALTH CHECK, each with a result line, the last being &quot;Running doctor: doctor passed&quot;. Then &quot;[litcodex] Office runtime ready for presentations and documents.&quot; and &quot;[litcodex] Motion runtime ready for film rendering.&quot; An INSTALL RECEIPT box shows &quot;Status Ready for Codex&quot;, &quot;Codex host codex-cli 0.162.1&quot;, &quot;Model gpt-6-astra · xhigh&quot; and ends with &quot;Installation complete&quot;." /></picture><br /><sub>Captured from the same install. The description and path lines under each step, the host checks before step 01 and several receipt rows are cut.</sub></p>
 
 `litcodex doctor` is the quickest way to check the result. Most rows answer yes or no, and a clean run ends with
-All checks passed. The Jev row reads off unless you switched the hint on.
+All checks passed.
 
-<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-doctor-dark.webp" /><img src="./assets/screens/screen-doctor-light.webp" width="317" alt="A terminal window running litcodex doctor. Rows read &quot;binary: yes&quot;, &quot;marketplace: yes&quot;, &quot;plugin: yes&quot;, &quot;hook: yes&quot;, &quot;managed config: yes&quot;, &quot;agents: yes&quot;, &quot;skills complete: yes&quot;, &quot;lit-handoff: yes&quot;, &quot;science payload: yes&quot;, &quot;Jev skill hint: off&quot; and &quot;automatic handoff: off&quot;, followed by &quot;All checks passed.&quot; and &quot;office runtime: ready&quot;." /></picture><br /><sub>Captured from litcodex doctor in the same home after the install. The start banner, the rows about model routes, concurrency and updates, the warnings that a home without a Codex sign-in produces, the status-line suggestion and the film-tool lines are cut.</sub></p>
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-doctor-dark.webp" /><img src="./assets/screens/screen-doctor-light.webp" width="317" alt="A terminal window running litcodex doctor. Rows read &quot;binary: yes&quot;, &quot;marketplace: yes&quot;, &quot;plugin: yes&quot;, &quot;hook: yes&quot;, &quot;managed config: yes&quot;, &quot;agents: yes&quot;, &quot;skills complete: yes&quot;, &quot;lit-handoff: yes&quot;, &quot;science payload: yes&quot; and &quot;automatic handoff: off&quot;, followed by &quot;All checks passed.&quot; and &quot;office runtime: ready&quot;." /></picture><br /><sub>Captured from litcodex doctor in the same home after the install. The start banner, the rows about model routes, concurrency and updates, the warnings that a home without a Codex sign-in produces, the status-line suggestion and the film-tool lines are cut.</sub></p>
 
 Type a request that starts with `lit` and the hook answers before the model does. It prints the five-row LIT
 mark and a line that names the route it picked. The same mark appears for `handoff` and `lit recap`, each with its

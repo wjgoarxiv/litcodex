@@ -44,14 +44,12 @@ const DOC_PAGES = Object.freeze({
 	install: ["docs/install.md", "docs/install-Ko-KR.md"],
 	skills: ["docs/skills.md", "docs/skills-Ko-KR.md"],
 	autoHandoff: ["docs/auto-handoff.md", "docs/auto-handoff-Ko-KR.md"],
-	jev: ["docs/jev-skill-hint.md", "docs/jev-skill-hint-Ko-KR.md"],
 	media: ["docs/media.md", "docs/media-Ko-KR.md"],
 });
 const readDocPair = (key) => DOC_PAGES[key].map((rel) => readFileSync(join(REPO_ROOT, rel), "utf8"));
 const [MEDIA, MEDIA_KO] = readDocPair("media");
 const [SKILLS_DOC, SKILLS_DOC_KO] = readDocPair("skills");
 const [INSTALL_DOC, INSTALL_DOC_KO] = readDocPair("install");
-const [JEV_DOC, JEV_DOC_KO] = readDocPair("jev");
 const [AUTO_HANDOFF_DOC, AUTO_HANDOFF_DOC_KO] = readDocPair("autoHandoff");
 
 // Test receipts stay isolated from the live LitCodex evidence ledger.
@@ -982,34 +980,6 @@ describe("GitHub and npm README split", () => {
 				assert.ok(existsSync(resolve(dirname(path), target.split("#")[0])), `${path}: ${target} exists`);
 			}
 		}
-	});
-
-	test("Jev snapshots appear on both Jev pages and stay out of the npm package", () => {
-		const names = ["jev-off", "jev-on-notice", "jev-hint-shown", "jev-key-missing", "jev-doctor"];
-		const dir = join(REPO_ROOT, "docs/assets/jev");
-		const files = names.flatMap((name) => [`${name}-dark.webp`, `${name}-light.webp`]);
-		assert.deepEqual(
-			readdirSync(dir).sort(),
-			[...files, "MesloLGS-NF-LICENSE.txt", "README.md"].sort(),
-			"docs/assets/jev holds the snapshots, their font notice and the media notes",
-		);
-		for (const file of files) {
-			const bytes = readFileSync(join(dir, file));
-			assert.equal(bytes.subarray(0, 4).toString("latin1"), "RIFF", `${file} is a WebP`);
-			assert.equal(bytes.subarray(8, 12).toString("latin1"), "WEBP", `${file} is a WebP`);
-			assert.ok(bytes.length <= 65_536, `${file} stays under 64 KiB`);
-			for (const source of [JEV_DOC, JEV_DOC_KO]) {
-				assert.ok(source.includes(`./assets/jev/${file}`), `Jev page shows ${file}`);
-			}
-		}
-		for (const [path, source] of GITHUB_READMES) {
-			assert.ok(/\(\.\/docs\/jev-skill-hint(?:-Ko-KR)?\.md\)/.test(source), `${path} links the Jev page`);
-			assert.ok(!source.includes("docs/assets/jev"), `${path} keeps the Jev pictures on the Jev page`);
-		}
-		const packed = join(REPO_ROOT, "packages", "litcodex-ai", "readme-assets");
-		for (const file of files) assert.ok(!existsSync(join(packed, file)), `${file} is not in the npm payload`);
-		for (const [, source] of NPM_READMES)
-			assert.ok(!source.includes("docs/assets/jev"), "npm cards carry no snapshots");
 	});
 
 	test("automatic handoff snapshots appear on the handoff pages and READMEs and stay out of the npm package", () => {

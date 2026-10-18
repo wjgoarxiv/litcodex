@@ -82,9 +82,8 @@ lit 회원가입 폼에 입력 검증을 추가해줘
   대화형 관리 명령 뒤에는 업데이트 실행기가 새 전역 패키지를 설치할 수 있습니다. `LITCODEX_NO_UPDATE_CHECK=1`을
   설정하면 둘 다 꺼집니다. 실패했거나 `--json`·`--dry-run`으로 돌렸거나, 비TTY·CI 환경이거나 이 설정으로 끈
   doctor 실행은 부수 효과가 없습니다.
-- 선택 기능 두 가지는 기본값이 꺼짐입니다.
-  [자동 핸드오프](https://github.com/wjgoarxiv/litcodex/blob/main/docs/auto-handoff-Ko-KR.md)와, 켜면 프롬프트가
-  외부 서비스로 가는 [Jev 스킬 힌트](https://github.com/wjgoarxiv/litcodex/blob/main/docs/jev-skill-hint-Ko-KR.md)입니다.
+- [자동 핸드오프](https://github.com/wjgoarxiv/litcodex/blob/main/docs/auto-handoff-Ko-KR.md)는 선택 기능이며
+  기본값은 꺼짐입니다.
 - 테스트, 픽스처, 테스트 헬퍼, Vitest 설정은 저장소에만 있습니다. npm 패키지와 설치된 마켓플레이스 플러그인에는
   들어가지 않습니다.
 

@@ -92,6 +92,13 @@ export interface AutoUpdateRunOptions extends AutoUpdatePlanOptions {
     readonly spawn?: AutoUpdateSpawn;
     readonly verifyInstalled?: AutoUpdateVerify;
     readonly writeReceipt?: boolean;
+    /** Read at the start (unless `now` is given) and again at the end, so the receipt shows the real finish. */
+    readonly clock?: () => number;
+    /**
+     * The versioned plugin folder the running Codex session started from. Codex removes it when the new plugin
+     * is installed, yet the session keeps using its hooks and skill files, so the updater puts it back.
+     */
+    readonly keepPluginRoot?: string;
 }
 export interface AutoUpdateReceipt {
     readonly schemaVersion: typeof AUTO_UPDATE_SCHEMA_VERSION;

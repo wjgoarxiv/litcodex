@@ -142,7 +142,7 @@ function stop(
 
 const ON_60: NodeJS.ProcessEnv = { LITCODEX_AUTO_HANDOFF: "1", LITCODEX_AUTO_HANDOFF_PERCENT: "60" };
 
-/** UserPromptSubmit takes the Jev options before the auto options; drive it directly. */
+/** Drive UserPromptSubmit directly with the auto-handoff options. */
 async function submit(root: string, text: string, env: NodeJS.ProcessEnv, sessionId = "sess-a"): Promise<Result> {
 	const stdin = new PassThrough();
 	const stdout = new PassThrough();
@@ -163,7 +163,7 @@ async function submit(root: string, text: string, env: NodeJS.ProcessEnv, sessio
 			prompt: text,
 		}),
 	);
-	const code = await runUserPromptSubmitHookCli(stdin, stdout, stderr, root, { env }, { env });
+	const code = await runUserPromptSubmitHookCli(stdin, stdout, stderr, root, { env });
 	return { code, stdout: out };
 }
 
@@ -685,16 +685,15 @@ describe("reload after compaction", () => {
 		expect(text.length).toBeLessThan(4000);
 	});
 
-	it("does not lose the excerpt when the turn's own output has no context slot", async () => {
+	it("delivers the excerpt once on a turn that has no output of its own", async () => {
 		const root = workspace();
 		await fire(root);
 		writeHandoff(root, good(), 2_000_000);
 		await postCompact(root);
-		const env = { ...ON_60, LITCODEX_JEV: "1", TYPESAFE_API_KEY: "test-key" };
-		const first = await submit(root, "/status", env);
-		expect((JSON.parse(first.stdout) as { systemMessage?: string }).systemMessage).toBeDefined();
+		const first = await submit(root, "/status", ON_60);
+		expect((JSON.parse(first.stdout) as { systemMessage?: string }).systemMessage).toBeUndefined();
 		expect(context(first)).toContain("halfway through the parser");
-		expect((await submit(root, "/status", env)).stdout).toBe("");
+		expect((await submit(root, "/status", ON_60)).stdout).toBe("");
 	});
 
 	it("adds the excerpt to a directive the router injects for the same prompt", async () => {

@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -574,6 +575,101 @@ describe("negative pledge sentences", () => {
 			);
 			expect(blocked, `${item.rule}: ${JSON.stringify(item.text)}`).toBe(item.expect === "block");
 		}
+	});
+});
+
+/** The block tier as reviewed; a rule leaves it only through an edit to this list, never silently. */
+const BLOCK_TIER = [
+	"ko-bold-deliverable-label",
+	"en-bold-deliverable-label",
+	"ko-plain-meta-label",
+	"en-plain-meta-label",
+	"ko-stacked-limitation-chain",
+	"en-stacked-limitation-chain",
+	"en-knowledge-cutoff",
+	"en-ai-self-disclaimer",
+	"en-hope-helps",
+	"ko-chatbot-signoff",
+	"workflow-jargon",
+	"ko-workflow-jargon",
+	"code-ai-attribution",
+	"en-lets-dive",
+	"en-demo-self-disclaimer",
+	"ko-bracket-status-tag",
+	"en-bracket-status-tag",
+	"ko-standalone-scope-disclaimer",
+	"en-standalone-scope-disclaimer",
+	"ko-chatbot-opener",
+	"en-chatbot-opener",
+	"en-testament",
+	"en-left-in-narration",
+	"en-chatbot-closer",
+	"ko-negative-pledge",
+	"ko-negative-pledge-repeat",
+	"en-negative-pledge",
+];
+const RULES_CLI = fileURLToPath(new URL("../dist/cli.js", import.meta.url));
+
+describe("block tier at the write guard", () => {
+	it("keeps every reviewed block rule at block severity in the bundled rules", () => {
+		const bundled = JSON.parse(
+			readFileSync(new URL("../../../skills/lit-humanizer/rules.json", import.meta.url), "utf8"),
+		) as { rules?: { id: string; severity: string }[] } | { id: string; severity: string }[];
+		const rules = Array.isArray(bundled) ? bundled : (bundled.rules ?? []);
+		expect(rules.filter((rule) => rule.severity === "block").map((rule) => rule.id)).toEqual(BLOCK_TIER);
+	});
+
+	it("refuses each block rule's own positive fixture and names that rule", () => {
+		const root = workspace();
+		for (const id of BLOCK_TIER) {
+			const output = runHumanizerPreToolUse(
+				input(root, {
+					tool_name: "write",
+					tool_input: { file_path: "report.md", content: requiredCase(ruleCases.positive, id) },
+				}),
+			);
+			const refused = hookOutput(output).hookSpecificOutput;
+			expect(refused.permissionDecision, id).toBe("deny");
+			expect(refused.permissionDecisionReason, id).toContain(`${id} (line`);
+		}
+	});
+
+	it("reads each entry of a multi_edit edits list", () => {
+		const root = workspace();
+		const output = runHumanizerPreToolUse(
+			input(root, {
+				tool_name: "multi_edit",
+				tool_input: {
+					file_path: "report.md",
+					edits: [
+						{ old_string: "a", new_string: "처리량은 두 배가 되었다." },
+						{ old_string: "b", new_string: USER_PLEDGE },
+					],
+				},
+			}),
+		);
+		expect(hookOutput(output).hookSpecificOutput.permissionDecision).toBe("deny");
+		expect(hookOutput(output).hookSpecificOutput.permissionDecisionReason).toContain("ko-negative-pledge");
+	});
+
+	it("never reads or judges a target outside the workspace; it shows the fail-open note instead", () => {
+		const root = workspace();
+		const output = runHumanizerPreToolUse(
+			input(root, { tool_name: "write", tool_input: { file_path: "../outside-report.md", content: USER_PLEDGE } }),
+		);
+		expect(output).toBe(humanizerFailOpenOutput("PreToolUse"));
+	});
+
+	it("answers an oversized hook payload with the visible fail-open note, not silence", () => {
+		const root = workspace();
+		const event = JSON.stringify(writeEvent(root, "report.md", `${USER_PLEDGE}\n${"x".repeat(6 * 1024 * 1024)}`));
+		const run = spawnSync(process.execPath, [RULES_CLI, "hook", "pre-tool-use-humanizer"], {
+			input: event,
+			encoding: "utf8",
+			maxBuffer: 1024 * 1024,
+		});
+		expect(run.status).toBe(0);
+		expect(run.stdout).toBe(humanizerFailOpenOutput("PreToolUse"));
 	});
 });
 

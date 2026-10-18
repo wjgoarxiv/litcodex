@@ -325,6 +325,10 @@ npm exec --yes --package @litfamily/litcodex@1.0.25 -- litcodex doctor
 `LITCODEX_NO_UPDATE_CHECK=1`을 설정하세요. 자세한 내용은 [개인정보 안내](./docs/privacy.md#registry-traffic-and-updates)에
 있습니다.
 
+Codex 안에서는 세션을 시작할 때도 하루에 한 번 정도 확인합니다. 이 확인은 Codex 훅 검토에서 LitCodex 훅을 승인한
+뒤에만 돌고, `codex exec`는 그 검토 화면을 띄우지 않습니다. 새 버전은 다음 Codex 세션부터 적용됩니다. 지금 어떤
+상태인지, 무엇을 하면 되는지는 `litcodex doctor`가 알려 줍니다.
+
 ## 문제 해결
 
 - **터미널 창이 바로 닫힌다면.** 계속 열려 있는 터미널을 열고 도움말, 설치, doctor를 하나씩 실행해 각 종료
@@ -350,8 +354,6 @@ npm exec --yes --package @litfamily/litcodex@1.0.25 -- litcodex uninstall
 - [스킬 안내](./docs/skills-Ko-KR.md): 번들 스킬 전체를 그림과 함께 소개하고, 이름을 알아 두면 편한 스킬을 설명합니다.
 - [자동 핸드오프](./docs/auto-handoff-Ko-KR.md): 컨텍스트가 정해 둔 퍼센트에 이르면 핸드오프를 대신 써 줍니다.
   기본값은 꺼짐입니다.
-- [Jev 스킬 힌트](./docs/jev-skill-hint-Ko-KR.md): 외부 호스팅 모델이 스킬을 제안해 주는 선택 기능입니다. 켜면
-  프롬프트가 외부 서비스로 가므로 이 문서를 먼저 읽어 주세요. 기본값은 꺼짐입니다.
 - [사용 참고서](./docs/usage-Ko-KR.md): 모든 경로, 모델 설정, 플랫폼 제약, 복구 방법.
 - [개인정보와 네트워크 동작](./docs/privacy.md), [기존 설치 이전 안내](./docs/npm-migration.md).
 - [영상과 브랜드](./docs/media-Ko-KR.md): 영상, 로고, 이름에 담은 이야기.

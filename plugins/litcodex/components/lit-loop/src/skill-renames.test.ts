@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { runUserPromptSubmitHook } from "./codex-hook.js";
 
@@ -29,10 +30,10 @@ describe("one-release skill rename aliases", () => {
 		const context: string = output.hookSpecificOutput.additionalContext;
 		const note = `Note: \`${oldId}\` was renamed to \`${newId}\`; the old name is removed in the next minor.`;
 		expect(context.split("\n").filter((line) => line === note)).toHaveLength(1);
-		expect(context).toContain(`<litcodex-skill-body name="${newId}">`);
 		expect(context).toContain(
-			readFileSync(new URL(`../../../skills/${newId}/SKILL.md`, import.meta.url), "utf8").trim(),
+			`skill ${newId}: ${fileURLToPath(new URL(`../../../skills/${newId}/SKILL.md`, import.meta.url))}`,
 		);
+		expect(context).not.toContain("<litcodex-skill-body");
 		expect(existsSync(new URL(`../../../skills/${oldId}/`, import.meta.url))).toBe(false);
 	});
 

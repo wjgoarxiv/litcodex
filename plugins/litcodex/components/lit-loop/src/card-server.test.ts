@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
 	mkdirSync,
 	mkdtempSync,
@@ -141,6 +142,17 @@ describe("card status", () => {
 		recordTurnStart(busy.root, "t1", 100_000);
 		endLiveStep(busy.root, "t1", 130_000);
 		expect(readCardStatus("t1", busy.env, 131_000)).toMatchObject({ state: "ignited", working: false });
+	});
+
+	it("does not take the end of an earlier turn for the end of a newer LIT turn", () => {
+		const home = dir("litcodex-card-home-");
+		const root = dir("litcodex-card-ws-");
+		const env = { CODEX_HOME: home };
+		recordTurnStart(root, "t3", 80_000);
+		endLiveStep(root, "t3", 90_000);
+		recordWorkflowTurn(root, "t3", "turn-2", "lit-loop", 100_000);
+		writeThreadPointer(env, "t3", root, 100_000);
+		expect(readCardStatus("t3", env, 101_000)).toMatchObject({ state: "ignited", turnEndedAt: null });
 	});
 
 	it("does not call a plan or interview turn done when it stops", () => {
@@ -397,6 +409,8 @@ describe("card MCP server", () => {
 		expect(reply.result.contents).toHaveLength(1);
 		expect(reply.result.contents[0]).toMatchObject({ uri: cardResourceUri(), mimeType: CARD_MIME, text: CARD_HTML });
 		expect(cardResourceUri()).toMatch(/^ui:\/\/litcodex\/lit-card-[0-9a-f]{12}\.html$/u);
+		const digest = createHash("sha256").update(CARD_HTML).digest("hex").slice(0, 12);
+		expect(cardResourceUri()).toBe(`ui://litcodex/lit-card-${digest}.html`);
 		expect(CARD_HTML).not.toMatch(/<(?:script|link|img|iframe)[^>]+(?:src|href)=/iu);
 		expect(CARD_HTML).toContain("🔥 LIT");
 		// The host draws inline cards in a frame sized by the card and reports the side pane as fullscreen;

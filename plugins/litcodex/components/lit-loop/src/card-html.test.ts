@@ -114,8 +114,10 @@ interface HostOptions {
 	readonly theme?: "dark" | "light";
 	/** What the card's instantiating tool call returned; delivered as `toolOutput` or `tool-result`. */
 	readonly toolResult?: Record<string, unknown>;
-	/** The status every poll answers with; tests swap it between polls. */
-	poll: Record<string, unknown>;
+	/** The status every poll answers with; tests swap it between polls. `null` makes the MCP poll fail. */
+	poll: Record<string, unknown> | null;
+	/** Hide the page while the next MCP poll is still in flight, as a tab switch mid-request does. */
+	hideOnPoll?: boolean;
 	readonly now: number;
 }
 
@@ -158,7 +160,19 @@ function bootCard(options: HostOptions) {
 				}
 			} else if (message["method"] === "tools/call") {
 				calls.push(String((message["params"] as { name: string }).name));
-				reply({ structuredContent: { ...options.poll } });
+				if (options.hideOnPoll) {
+					options.hideOnPoll = false;
+					document.hidden = true;
+					for (const listener of docListeners.get("visibilitychange") ?? []) listener({});
+				}
+				if (options.poll === null)
+					queueMicrotask(() =>
+						dispatch("message", {
+							source: parent,
+							data: { jsonrpc: "2.0", id: message["id"], error: { code: -32000, message: "down" } },
+						}),
+					);
+				else reply({ structuredContent: { ...options.poll } });
 			}
 		},
 	};
@@ -228,8 +242,11 @@ function bootCard(options: HostOptions) {
 		settle,
 		text: () => card.textContent,
 		/** What every later poll answers with. */
-		setPoll(status: Record<string, unknown>): void {
+		setPoll(status: Record<string, unknown> | null): void {
 			options.poll = status;
+		},
+		hideDuringNextPoll(): void {
+			options.hideOnPoll = true;
 		},
 		right: () => card.querySelector(".right"),
 		/** Move the clock forward, firing every due timer in order and letting each reply land. */
@@ -416,5 +433,36 @@ describe("LIT card script", () => {
 		const polls = host.calls.length;
 		await host.advance(1_500);
 		expect(host.calls.length).toBeGreaterThan(polls);
+	});
+
+	it("stops polling while hidden, even when the page hides during a poll", async () => {
+		const host = bootCard({ bridge: "mcp", poll: working(), now: T0 });
+		await host.advance(0);
+		host.hideDuringNextPoll();
+		await host.advance(1_500);
+		const polls = host.calls.length;
+		await host.advance(120_000);
+		expect(host.calls).toHaveLength(polls);
+	});
+
+	it("backs off after failed polls instead of polling at the working pace", async () => {
+		const host = bootCard({ bridge: "mcp", poll: working(), now: T0 });
+		await host.advance(0);
+		host.setPoll(null);
+		const polls = host.calls.length;
+		await host.advance(60_000);
+		// 3 s, 6 s, 12 s, 24 s, then the 30 s ceiling: five tries in a minute, not forty.
+		expect(host.calls.length - polls).toBeLessThanOrEqual(5);
+		expect(host.text()).toContain("lit-loop");
+	});
+
+	it("ignores a status of a schema version it does not know", async () => {
+		const host = bootCard({ bridge: "mcp", poll: working(), now: T0 });
+		await host.advance(0);
+		expect(host.right()?.textContent).toBe("0:42");
+		host.setPoll({ ...complete(), version: 2 });
+		await host.advance(1_500);
+		expect(host.right()?.textContent).not.toBe("DONE ✓");
+		expect(host.card.classList.contains("is-done")).toBe(false);
 	});
 });

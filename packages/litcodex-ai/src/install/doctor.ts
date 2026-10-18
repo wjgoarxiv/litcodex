@@ -13,6 +13,7 @@ import { isNewer } from "../update-check.js";
 import { inspectAgentRouting, routingReport } from "./agent-routing.js";
 import { detectAuthMode } from "./auth-mode.js";
 import { inspectAutoHandoff } from "./auto-handoff-doctor.js";
+import { explainAutoUpdateReceipt, inspectAutoUpdateHookReview } from "./auto-update-doctor.js";
 import { probeBundledSkills } from "./bundled-skills.js";
 import {
 	findCodexBinary,
@@ -27,7 +28,7 @@ import { inspectTuiSuggestion } from "./doctor-tui.js";
 import { modelContextsForWrites, probeHostCapabilities } from "./host-capabilities.js";
 import { canonicalMarketplacePath, LITCODEX_MARKETPLACE, managedMarketplaceRoot } from "./marketplace.js";
 import { probeSkillCatalogPayload } from "./skill-catalog.js";
-import type { AutoHandoffDoctorReport, AutoUpdateDoctorReport, DoctorReport, JevSkillHintState } from "./types.js";
+import type { AutoHandoffDoctorReport, AutoUpdateDoctorReport, DoctorReport } from "./types.js";
 
 export { renderDoctorText } from "./doctor-render.js";
 
@@ -68,9 +69,29 @@ export interface DoctorDeps {
 	readonly repoRoot: string;
 	/** Hook verification (defaults to the M14 resolvers over repoRoot). */
 	readonly verifyHook?: (repoRoot: string) => void;
+	readonly scope?: DoctorScope;
 }
 
+/**
+ * "post-install" is the check an automatic update runs on the version it just installed, inside a 10 s
+ * limit. It keeps every check of what the install wrote and drops the Codex host probes: the update's own
+ * `litcodex install` ran those as its preflight a moment earlier, and they cost seconds under load.
+ */
+export type DoctorScope = "full" | "post-install";
+
+/** Every updater, released ones included, marks the children it starts; its doctor child is one of them. */
+export function doctorScopeFor(env: NodeJS.ProcessEnv): DoctorScope {
+	return Object.hasOwn(env, "LITCODEX_AUTO_UPDATE_IN_PROGRESS") ? "post-install" : "full";
+}
+
+const POST_INSTALL_CAPABILITY = {
+	status: "unavailable",
+	reason: "not-probed-after-update",
+	observedSource: "the update's litcodex install preflight",
+} as const;
+
 export function runDoctor(deps: DoctorDeps): DoctorReport {
+	const postInstall = deps.scope === "post-install";
 	const codexBin = findCodexBinary(deps.env, deps.fs);
 	const codexBinaryFound = codexBin !== null;
 	const issues: string[] = [];
@@ -93,6 +114,7 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 		issues.push("Codex CLI not found on PATH or in CODEX_HOME.");
 		return {
 			ok: false,
+			...(postInstall ? { scope: "post-install" as const } : {}),
 			marketplaceRegistered: false,
 			pluginInstalled: false,
 			hooksWired: false,
@@ -108,7 +130,6 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 			scientificVisualizationInstalled: false,
 			capabilities: unavailableCapabilities,
 			autoUpdate: readAutoUpdateReport(deps.env),
-			jevSkillHint: jevSkillHintState(deps.env),
 			autoHandoff: autoHandoffWithWarnings(deps, null, warnings),
 			issues,
 			warnings,
@@ -122,7 +143,13 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 		registration?.source !== null &&
 		registration?.source !== undefined &&
 		canonicalMarketplacePath(registration.source) === canonicalMarketplacePath(managedRoot);
-	const capabilities = probeHostCapabilities(codexBin, deps.spawn, { env: deps.env });
+	const capabilities = postInstall
+		? {
+				concurrency: POST_INSTALL_CAPABILITY,
+				autoCompaction: POST_INSTALL_CAPABILITY,
+				modelContexts: modelContextsForWrites(),
+			}
+		: probeHostCapabilities(codexBin, deps.spawn, { env: deps.env });
 	if (!marketplaceRegistered) {
 		issues.push("LitCodex managed local marketplace is not registered. Run `litcodex install`.");
 	}
@@ -137,7 +164,15 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 	} catch {
 		hooksWired = false;
 	}
-	if (!hooksWired) issues.push("Bundled UserPromptSubmit hook payload is missing or malformed.");
+	const payloadVersion = managedPluginVersion(deps.fs, managedRoot);
+	if (payloadVersion !== null && payloadVersion !== PACKAGE_VERSION) {
+		// The updater installs with the first npm on Codex's PATH, so two global copies can drift apart.
+		issues.push(
+			`The managed plugin payload is LitCodex ${payloadVersion}, but this litcodex command is ${PACKAGE_VERSION}; another npm global folder probably holds the other copy. Run \`litcodex install\` with the copy Codex should use, or remove the other one.`,
+		);
+	} else if (!hooksWired) {
+		issues.push("Bundled UserPromptSubmit hook payload is missing or malformed.");
+	}
 
 	const effectiveConfig = inspectEffectiveConfig(deps.fs, join(codexHome, "config.toml"));
 	const configManaged = effectiveConfig.state !== "unavailable";
@@ -164,9 +199,10 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 	if (!bundledSkills.scientificVisualizationInstalled) {
 		issues.push("Bundled lit-scientific-visualization payload is incomplete. Run `litcodex install`.");
 	}
-	if (capabilities.concurrency.status === "unavailable") {
+	// After an update the install preflight has judged concurrency already; it refuses to install when unavailable.
+	if (!postInstall && capabilities.concurrency.status === "unavailable") {
 		issues.push(`Concurrency 20 is ${capabilities.concurrency.status}: ${capabilities.concurrency.reason}.`);
-	} else if (capabilities.concurrency.status === "advisory") {
+	} else if (!postInstall && capabilities.concurrency.status === "advisory") {
 		warnings.push(`Concurrency 20 is advisory: ${capabilities.concurrency.reason}.`);
 	}
 
@@ -189,7 +225,8 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 	if (pluginInstalled && !statusCard.serverInstalled) {
 		warnings.push("LIT card server is missing from the installed plugin. Run `litcodex install`.");
 	}
-	const autoUpdate = readAutoUpdateReport(deps.env);
+	const hookReview = inspectAutoUpdateHookReview(deps.fs, codexHome, managedRoot);
+	const autoUpdate = { ...readAutoUpdateReport(deps.env), ...(hookReview === undefined ? {} : { hookReview }) };
 	if (autoUpdate.status === "unknown-state") {
 		issues.push(
 			`Foreground auto-update rollback failed; installation state is unknown. Inspect ${autoUpdate.receiptPath} and reinstall the exact stable package.`,
@@ -198,6 +235,7 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 
 	return {
 		ok: issues.length === 0,
+		...(postInstall ? { scope: "post-install" as const } : {}),
 		marketplaceRegistered,
 		pluginInstalled,
 		hooksWired,
@@ -212,7 +250,6 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 		...bundledSkills,
 		capabilities,
 		autoUpdate,
-		jevSkillHint: jevSkillHintState(deps.env),
 		autoHandoff: autoHandoffWithWarnings(deps, codexHome, warnings),
 		tuiSuggestion: inspectTuiSuggestion(deps.fs, join(codexHome, "config.toml")),
 		statusCard,
@@ -230,12 +267,6 @@ function autoHandoffWithWarnings(
 	const report = inspectAutoHandoff(deps.fs, deps.env, deps.repoRoot, codexHome);
 	for (const warning of report.warnings) warnings.push(warning);
 	return report;
-}
-
-/** Mirrors the lit-loop hook switch: `LITCODEX_JEV=1` plus a non-empty `TYPESAFE_API_KEY`. */
-function jevSkillHintState(env: NodeJS.ProcessEnv): JevSkillHintState {
-	if (env["LITCODEX_JEV"] !== "1") return "off";
-	return (env["TYPESAFE_API_KEY"]?.trim() ?? "") !== "" ? "on" : "flag on but TYPESAFE_API_KEY missing";
 }
 
 /** Read the updater receipt without touching the updater lock, journal, or npm. */
@@ -269,18 +300,26 @@ function readAutoUpdateReport(env: NodeJS.ProcessEnv): AutoUpdateDoctorReport {
 						detail: `an earlier update to ${target} did not finish, and ${PACKAGE_VERSION} is installed now`,
 					};
 				}
-				return {
-					enabled,
-					status,
-					receiptPath,
-					detail: "receipt present",
-				};
+				return { enabled, status, receiptPath, ...explainAutoUpdateReceipt(fields) };
 			}
 		}
 	} catch {
 		// A missing or malformed receipt is a healthy read-only no-receipt state, not a doctor issue.
 	}
 	return { enabled, status: null, receiptPath, detail: "no receipt yet" };
+}
+
+function managedPluginVersion(fs: DoctorDeps["fs"], root: string): string | null {
+	try {
+		const version = (
+			JSON.parse(fs.readFileSync(join(root, "plugins", "litcodex", ".codex-plugin", "plugin.json"), "utf8")) as {
+				version?: unknown;
+			}
+		).version;
+		return typeof version === "string" && /^\d+\.\d+\.\d+$/u.test(version) ? version : null;
+	} catch {
+		return null;
+	}
 }
 
 function payloadHealthy(fs: DoctorDeps["fs"], root: string): boolean {

@@ -28,7 +28,7 @@ describe("start-work explicit execution route", () => {
 			const context = parsed.hookSpecificOutput.additionalContext;
 			expect(context).toContain("<start-work-mode>");
 			expect(context).toContain("🔥 **LIT IGNITED · start-work** 🔥");
-			expect(context).toContain('<litcodex-skill-body name="start-work">');
+			expect(context).toMatch(/^skill start-work: .+\/skills\/start-work\/SKILL\.md$/mu);
 			expect(context).toContain("same-named skill from another harness");
 			expect(context).not.toContain("🔥 START-WORK BLOCKED 🔥");
 		}
