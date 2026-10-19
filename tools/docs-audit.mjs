@@ -6,7 +6,7 @@
 // EVERY user-facing doc — including README — it additionally runs a pure command-surface audit:
 //
 //   - every documented `litcodex …` / `npx --yes litcodex-ai …` invocation must map to a real route
-//     (install / doctor / uninstall / `config migrate` / `hook user-prompt-submit` from the
+//     (install / doctor / uninstall / hud / `config migrate` / `hook user-prompt-submit` from the
 //     litcodex-ai dispatcher, plus the canonical M09 LOOP_SUBCOMMANDS), OR be an explicitly-marked
 //     negative/example (a line carrying a negation cue such as "never"/"instead of"), and
 //   - NO doc may use the wrong loop verb `litcodex lit-loop <sub>` (A3 D2 — the verb is `loop`).
@@ -253,7 +253,12 @@ function classifyInvocation(first, tail) {
 		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "motion-runtime" };
 		return { ok: MOTION_RUNTIME_SUBCOMMANDS.includes(sub), shown: `motion-runtime ${sub}` };
 	}
-	const TOP = ["install", "doctor", "uninstall"];
+	if (first === "screen-status") {
+		const sub = tail.find((t) => !t.startsWith("-"));
+		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "screen-status" };
+		return { ok: ["on", "off", "status", "on|off|status"].includes(sub), shown: `screen-status ${sub}` };
+	}
+	const TOP = ["install", "doctor", "uninstall", "hud", "statusline", "run"];
 	return { ok: TOP.includes(first), shown: first };
 }
 

@@ -339,6 +339,28 @@ describe("live step hooks", () => {
 		expect(readLiveStep(root, "s1")).toMatchObject({ lastTool: null, turnStartedAt: 4_000 });
 	});
 
+	it("keeps the parent's turn open when a subagent's Stop carries the parent's session id", async () => {
+		const home = dir("litcodex-codex-home-");
+		const root = dir("litcodex-ws-");
+		recordTurnStart(root, "s1", 2_000);
+		await runHook(runPreToolUseLiveHookCli, event(root), { CODEX_HOME: home });
+		const stop = new PassThrough();
+		stop.end(
+			JSON.stringify({
+				hook_event_name: "Stop",
+				session_id: "s1",
+				turn_id: "t1",
+				agent_id: "sub-1",
+				cwd: root,
+				stop_hook_active: false,
+			}),
+		);
+		expect(
+			await runStopPlanPersistenceHookCli(stop, new PassThrough(), new PassThrough(), root, { env: {}, now: 3_000 }),
+		).toBe(0);
+		expect(readLiveStep(root, "s1")).toMatchObject({ turnStartedAt: 2_000, turnEndedAt: null });
+	});
+
 	it("keeps the turn open when LIT's own Stop guard sends the model back to work", async () => {
 		const home = dir("litcodex-codex-home-");
 		const root = dir("litcodex-ws-");

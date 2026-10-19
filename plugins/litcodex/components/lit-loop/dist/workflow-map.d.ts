@@ -34,6 +34,13 @@ export declare function progressBar(done: number, total: number): string;
  * with fewer than three words left before the cut is dropped.
  */
 export declare function safeTitle(label: string): string | null;
+/** One row of the card's checklist: a plan task or a lit-loop goal. */
+export interface ChecklistRow {
+    readonly state: "done" | "current" | "pending";
+    readonly label: string;
+}
+/** The checklist under the map: the start-work plan rows, else this session's lit-loop goals; [] when neither. */
+export declare function readChecklist(repoRoot: string, sessionId: string | null): ChecklistRow[];
 export declare function readWorkflowSignals(repoRoot: string, sessionId: string | null, now?: number): WorkflowSignals;
 /** One stage of the map, as the text line and the LIT card both draw it. */
 export interface MapCell {

@@ -6,6 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `litcodex screen-status on|off|status`, off by default, stored under the Codex home and overridden by
+  `LITCODEX_SCREEN_STATUS=1|0`, colours the LIT card. Only the terminal `codex` draws it; the desktop app and IDE
+  show the codes as raw text.
+- `litcodex statusline` prints the LIT status as one line (route, stage map, running tool and its clock) for
+  a status line command. It reads an optional Claude-compatible JSON payload on stdin, cuts the line to
+  `COLUMNS`, honours `NO_COLOR` and always exits 0.
+- `litcodex run [-- <codex args>]` starts Codex in a pseudo-terminal four rows shorter and keeps a live LIT panel
+  in the rows below (route and turn clock, stage map, running step, checklist row). Scroll regions stay above the
+  panel, and an unfinished escape sequence or UTF-8 character is held for at most 50 ms so the panel never lands
+  inside one. `node-pty` 1.1.0 is a new optional dependency; without it, outside a terminal or below 40×12, Codex
+  starts as usual after one note. The exit code is Codex's.
+
+### Changed
+
+- The activation map line and the Stop line became one LIT card: a route row (`🔥 LIT · <mode>` and a
+  short note), the stage map with a ✓ on finished stages, and up to three rows of the plan or
+  goals around the open one. Text taken from saved records is stripped of control characters and every row
+  is cut to a fixed width.
+
 ## [1.0.27] - 2026-10-18
 
 ### Changed

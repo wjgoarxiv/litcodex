@@ -158,13 +158,14 @@ function findRollout(home: string, id: string): { path: string; cwd: string } | 
 	return null;
 }
 
-/** The workspace a thread runs in: the hook pointer, else the rollout header; null when unknown. */
-export function resolveThreadCwd(threadId: string | null, env: NodeJS.ProcessEnv): string | null {
+/** The workspace a thread runs in: the hook pointer, else (when `rollout` allows) the rollout header; null when unknown. */
+export function resolveThreadCwd(threadId: string | null, env: NodeJS.ProcessEnv, rollout = true): string | null {
 	const id = normalizeSessionId(threadId);
 	// A thread id that needed cleaning is not one Codex issued; it gets no workspace.
 	if (id === null || id !== threadId) return null;
 	const pointer = readThreadPointer(env, id);
 	if (pointer !== null) return pointer.cwd;
+	if (!rollout) return null;
 	const home = codexHomeFrom(env);
 	return home === null ? null : (findRollout(home, id)?.cwd ?? null);
 }
@@ -325,8 +326,15 @@ function turnWorking(live: LiveStep | null, lastStepAt: number | null, now: numb
 	return lastStepAt !== null && now - lastStepAt < RECENT_STEP_MS;
 }
 
-export function readCardStatus(threadId: string | null, env: NodeJS.ProcessEnv, now = Date.now()): CardStatus {
-	const cwd = resolveThreadCwd(threadId, env);
+/** The card for one thread. `rollout: false` keeps every Codex rollout file unread; the usage row then stays empty. */
+export function readCardStatus(
+	threadId: string | null,
+	env: NodeJS.ProcessEnv,
+	now = Date.now(),
+	options: { readonly rollout?: boolean } = {},
+): CardStatus {
+	const rollout = options.rollout !== false;
+	const cwd = resolveThreadCwd(threadId, env, rollout);
 	const thread = cwd === null ? null : threadId;
 	if (cwd === null || thread === null) return ready(null, null, null, now);
 	const workspace = basename(cwd);
@@ -372,7 +380,7 @@ export function readCardStatus(threadId: string | null, env: NodeJS.ProcessEnv, 
 		turnStartedAt: live?.turnStartedAt ?? null,
 		turnEndedAt: turnOver ? live.turnEndedAt : null,
 		working: step !== null || turnWorking(live, lastStepAt, now),
-		usage: readUsage(thread, env),
+		usage: rollout ? readUsage(thread, env) : null,
 		branch: readBranch(cwd),
 		workspace,
 		cardOpenedAt,
@@ -380,7 +388,8 @@ export function readCardStatus(threadId: string | null, env: NodeJS.ProcessEnv, 
 	};
 }
 
-function clock(ms: number): string {
+/** Minutes and seconds, `m:ss`. */
+export function clock(ms: number): string {
 	const seconds = Math.max(0, Math.floor(ms / 1000));
 	return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }

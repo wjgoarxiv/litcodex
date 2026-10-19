@@ -129,21 +129,28 @@ as plain text, and the reply opens with `🔥 **LIT IGNITED · <discipline>** �
 runs in the work loop (`<lit-loop-mode>` internally): a goal, its checks, and evidence recorded as each
 check passes.
 
-Under the mark sits a small map of the LIT workflow, so you can see at a glance how far the work has come:
+Under the mark sits a small LIT card, so you can see at a glance how far the work has come:
 
 ```text
-🧭 ✓ › 📝 ✓ › 🔨 WORK ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·
+┃ 🔥 LIT · lit-loop  turn started
+┃ ✓ INTERVIEW  ›  ✓ PLAN  ›  🔨 WORK ▰▰▰▱▱▱▱ 3/7  ›  🔍 REVIEW  ›  🏁 DONE
+┃ ✓ Render the map
+┃ ▸ Show the map in the terminal
+┃ · Write the docs
 ```
 
-Read left to right, that is the interview, the plan, the work with a bar of finished plan tasks, review and
-done. The map is drawn from what the project has actually saved, so a stage with nothing behind it is left
-out. Research has a map of its own (decomposition, waves, verification, synthesis) that resumes from the
-research journal in progress, or starts at decomposition when there is none.
+The second row is the map. Read left to right, that is the interview, the plan, the work with a bar of
+finished plan tasks, review and done. Finished stages carry a ✓; with card colour on, the current stage is
+bold orange and later stages are dimmed. Below it are up
+to three rows of the plan or the lit-loop goals: the last one finished, the open one and the next. The card
+is drawn from what the project has actually saved, so a stage with nothing behind it is left out. Research
+has a map of its own (decomposition, waves, verification, synthesis) that resumes from the research journal
+in progress, or starts at decomposition when there is none.
 
-When a LIT turn ends, the Stop hook leaves one line such as `✨ turn done · 2 tasks ✓ · next ▸ Write the docs`.
-If `lit start work` reaches a checkpoint and keeps going in the same turn, the line reads
-`⏳ 3/7 tasks ✓ · continuing ▸ Write the docs` instead. Codex prints hook text without colour, which is why
-these lines lean on emoji.
+When a LIT turn ends, the Stop hook draws the same card with a summary in its first row, such as
+`✨ turn done · 2 tasks ✓ · next ▸ Write the docs`. If `lit start work` reaches a checkpoint and keeps going in
+the same turn, the summary reads `⏳ 3/7 tasks ✓ · continuing ▸ Write the docs` instead. The card is plain text
+by default, because the Codex desktop app and IDE show colour codes in hook text as raw characters.
 
 LitCodex listens for `lit` as a word of its own. Words that merely contain the letters, such as `split`,
 `literal` or `litmus`, pass through untouched, and so does `lit` inside a code span or a code block.
@@ -283,6 +290,67 @@ The card needs the app's MCP Apps feature, which OpenAI still lists as under dev
 on for you. The terminal `codex` cannot draw cards, so there the same request prints the map as text, and
 `litcodex doctor` shows a `card:` line.
 
+## Watch LIT in a second window
+
+The terminal `codex` has no room for a card, so LitCodex can draw it next door instead. Open a second terminal
+window or tab, in any folder, and run:
+
+```bash
+litcodex hud
+```
+
+It finds the Codex session where LIT was active most recently and keeps its card live: which LIT skill is running, the workflow
+map with the stage it is on, the next open task, and the tool working right now with a clock beside it. The top
+line names the session, its project folder and when LIT last heard from it. Work in another LIT session and the HUD
+moves to it; `--session <id>` keeps it on one session, and `--once` prints a single frame and exits.
+
+The HUD only reads the small records LIT already keeps for that card. It never writes a file, never reads Codex's
+own session logs and never talks to Codex, so closing it or killing it changes nothing in the session. A record
+it cannot read shows up as one `cannot read …` line. Press Ctrl-C to quit; the terminal
+comes back as it was. Colour follows `NO_COLOR`. Tested on macOS; Linux and Windows terminals are not tested yet.
+
+## Colour the LIT card
+
+The LIT card the hooks print is plain text by default. The terminal `codex` (0.162 or newer) can draw it in colour:
+finished stages in green, the current stage in bold orange, later stages dimmed.
+
+```bash
+litcodex screen-status on
+```
+
+Only the terminal `codex` draws the colour. The Codex desktop app and IDE extensions show the colour codes as raw
+text in the hook rows, and the hook cannot tell which client is showing it, so turn colour on only if you use the
+terminal `codex`. Without colour the card has the same rows as plain text. `litcodex screen-status off` turns it
+off and `status` reports it. The setting is kept in `$CODEX_HOME/litcodex/screen-status.json`;
+`LITCODEX_SCREEN_STATUS=1` or `0` overrides it, and `NO_COLOR` keeps the card plain.
+
+`litcodex statusline` prints the same status as a single line, such as
+`🔥 LIT · lit-loop  🔨 WORK › 🔍 REVIEW › 🏁 DONE  ⠹ Bash 0:12`, for a terminal or tool that runs a command to fill its
+status line. Codex itself cannot run one yet.
+
+## Keep LIT under Codex in one terminal
+
+```bash
+litcodex run
+```
+
+This starts Codex in the same terminal and keeps the bottom four rows for a live LIT panel: the LIT skill and
+how long the turn has run, the workflow map, the tool running now with its clock, and the open checklist row.
+Codex runs in a pseudo-terminal four rows shorter, so it lays out its whole screen in the space above and the
+panel stays put while you type, scroll and resize. Arguments for Codex go after `--`, as in
+`litcodex run -- resume --last`, and reach it unchanged.
+
+The panel follows the newest LIT session that started working in this folder after `litcodex run` began; until
+then it says, dimmed, that it is waiting for a LIT turn. It reads the same small records as `litcodex hud` and
+writes no file. When Codex exits, the panel rows are cleared, the terminal is back to normal and the exit code
+is Codex's own. Ctrl-Z does not suspend Codex here (tested on macOS with Codex 0.163.0): quit with Ctrl-C, or run
+plain `codex` when you need job control.
+
+The pseudo-terminal comes from `node-pty`, an optional package npm installs with LitCodex wherever a prebuilt
+binary exists. Without it, outside a terminal, or in a terminal smaller than 40 columns by 12 rows,
+`litcodex run` prints one note and starts Codex the usual way. Tested on macOS; Linux and Windows terminals are
+not tested yet.
+
 ## How it works
 
 Codex hosts the plugin and runs its hooks. The hooks work out which mode a request belongs to and add
@@ -339,6 +407,10 @@ Typing the same mode again in one session has no extra effect.
 | `litcodex config migrate` | Previews or applies the managed Codex config keys |
 | `litcodex office-runtime install` or `status` | Prepares or checks the pinned tools for Word and PowerPoint files |
 | `litcodex motion-runtime install` or `status` | Prepares or checks the film renderer tools |
+| `litcodex hud` | Shows the LIT card of the newest session live in a second terminal window |
+| `litcodex screen-status on`, `off` or `status` | Colours the LIT card in the terminal `codex` |
+| `litcodex statusline` | Prints the LIT status as one line, for a terminal status line command |
+| `litcodex run` | Runs Codex with a live LIT panel in the bottom rows of the same terminal |
 | `litcodex loop create` | Derives goals and criteria from a brief |
 | `litcodex loop status --json` | Shows the loop state as JSON |
 | `litcodex loop run` | Picks the next goal that can run |

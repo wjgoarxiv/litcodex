@@ -57,6 +57,9 @@
 	"bundledDependencies": [
 		"@litcodex/lit-loop"
 	],
+	"optionalDependencies": {
+		"node-pty": "1.1.0"
+	},
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"postbuild": "node ../../scripts/mark-cli-executable.mjs --workspace .",

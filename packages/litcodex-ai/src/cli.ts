@@ -1,6 +1,6 @@
 // Self-contained LitCodex CLI dispatcher. Side-effecting child processes remain
 // behind dedicated modules; unknown routes return a plain usage error.
-// `dispatch` is pure; `runCli` owns install/config/loop/hook process routes.
+// `dispatch` is pure; `runCli` owns install/config/loop/hud/hook process routes.
 
 import { createRequire } from "node:module";
 import { runForegroundAutoUpdate } from "./auto-update.js";
@@ -103,6 +103,13 @@ const ROUTES: Readonly<Record<string, RouteHandler>> = {
 				},
 	config: configRouteHandler,
 	loop: () => ok("litcodex loop\n"),
+	hud: () => ok("litcodex hud\n"),
+	statusline: () => ok(""),
+	run: () => ok("litcodex run\n"),
+	"screen-status": (rest) =>
+		rest.length === 1 && (rest[0] === "on" || rest[0] === "off" || rest[0] === "status")
+			? ok(`litcodex screen-status ${rest[0]}\n`)
+			: { stdout: "", stderr: "Usage: litcodex screen-status on|off|status\n", exitCode: 64 },
 	hook: () => ok("litcodex hook\n"),
 };
 
@@ -139,6 +146,10 @@ function renderHelp(): string {
 		"  litcodex uninstall                       Remove LitCodex from Codex",
 		"  litcodex config migrate                  Migrate Codex config for LitCodex",
 		"  litcodex loop <sub>                      Run a Lit-Loop subcommand",
+		"  litcodex hud [--session <id>] [--once]   Watch the LIT card live from a second terminal window",
+		"  litcodex screen-status on|off|status     Colour the LIT card; terminal `codex` only (off by default)",
+		"  litcodex statusline                      Print the newest LIT status as one line for a status line command",
+		"  litcodex run [-- <codex args>]           Run Codex with a live LIT panel in the bottom rows of this terminal",
 		"  litcodex hook user-prompt-submit         Run the UserPromptSubmit hook",
 		"  litcodex --dry-run <command>             Resolve a command without applying it",
 		"  litcodex --help                          Show this help",
@@ -218,10 +229,17 @@ export function dispatch(argv: readonly string[]): DispatchResult {
 /**
  * Async process entry used by `bin/litcodex.js`. It owns the side-effecting routes: install/doctor/
  * uninstall (install/* modules, which are the ONLY code that ever spawns `codex`), `config migrate`
- * (M13, in-process), and the bundled `@litcodex/lit-loop` runtime routes `loop`/`hook`. Returns the
- * integer exit code; the bin owns `process.exit`. No forwarding, no exec-wrapper, no harness.
+ * (M13, in-process), and the bundled `@litcodex/lit-loop` runtime routes `loop`/`hook`. `run` starts
+ * Codex itself from its own module (run.ts), only when the user asks for it. Returns the integer exit
+ * code; the bin owns `process.exit`. No forwarding, no harness.
  */
 export async function runCli(rawArgv: readonly string[]): Promise<number> {
+	// `run` passes everything after `--` to Codex untouched, so it is routed before any flag is read.
+	const split = rawArgv.indexOf("--");
+	const own = split < 0 ? rawArgv : rawArgv.slice(0, split);
+	if (own.find((token) => !token.startsWith("--dry-run")) === "run") {
+		return runRoute(own, split < 0 ? [] : rawArgv.slice(split + 1));
+	}
 	const normalized = normalizeDryRunValue(rawArgv);
 	if (typeof normalized === "string") {
 		process.stderr.write(
@@ -235,6 +253,29 @@ export async function runCli(rawArgv: readonly string[]): Promise<number> {
 	const head = rest[0];
 	const isHelp = rest.includes("--help") || rest.includes("-h");
 	const isVersion = rest.includes("--version") || rest.includes("-v");
+
+	if (head === "hud") {
+		// Read-only, so a dry run is the real run; `hud --help` prints the command's own usage.
+		const { hudCommand } = await import("@litcodex/lit-loop/dist/hud-cli.js");
+		return hudCommand(rest.slice(1), { stdout: process.stdout, stderr: process.stderr, env: process.env });
+	}
+
+	if (head === "statusline" && !isHelp) {
+		// Read-only and always exit 0, so a dry run is the real run.
+		const { statuslineCommand } = await import("@litcodex/lit-loop/dist/statusline.js");
+		return statuslineCommand(rest.slice(1), { stdin: process.stdin, stdout: process.stdout, env: process.env });
+	}
+
+	if (head === "screen-status") {
+		const { screenStatusCommand } = await import("@litcodex/lit-loop/dist/screen-status.js");
+		const verb = rest[1];
+		if (dryRun && (verb === "on" || verb === "off") && rest.length === 2) {
+			return writeDryRun(`litcodex screen-status ${verb}`, [
+				`Write ${resolveCodexHome(process.env)}/litcodex/screen-status.json with the card colour ${verb}`,
+			]);
+		}
+		return screenStatusCommand(rest.slice(1), { stdout: process.stdout, stderr: process.stderr, env: process.env });
+	}
 
 	if (!isHelp && !isVersion) {
 		if (head === "config" && rest[1] === "migrate") {
@@ -346,6 +387,43 @@ export async function runCli(rawArgv: readonly string[]): Promise<number> {
 		writeCliBanner(argv);
 	}
 	return exitCode;
+}
+
+/** `litcodex run [--dry-run] [--help] [-- <codex args>]`; Codex's own arguments go only after `--`. */
+async function runRoute(own: readonly string[], codexArgs: readonly string[]): Promise<number> {
+	const { findCodex, RUN_HELP_TEXT, runCommand } = await import("./run.js");
+	const normalized = normalizeDryRunValue(own);
+	if (typeof normalized === "string") {
+		process.stderr.write(
+			`litcodex: ${normalized} is not a valid --dry-run; use --dry-run, --dry-run=true or --dry-run=false. Nothing was changed.\n`,
+		);
+		return USAGE_EXIT_CODE;
+	}
+	const dryRun = normalized.includes("--dry-run");
+	const flags = normalized.filter((token) => token !== "--dry-run").slice(1);
+	if (flags.includes("--help") || flags.includes("-h")) {
+		process.stdout.write(RUN_HELP_TEXT);
+		return 0;
+	}
+	if (flags.length > 0) {
+		process.stderr.write(
+			`litcodex run: unknown option "${flags[0]}". Put Codex's own arguments after \`--\`.\n\n${RUN_HELP_TEXT}`,
+		);
+		return USAGE_EXIT_CODE;
+	}
+	if (dryRun) {
+		const command = [findCodex(process.env) ?? "codex", ...codexArgs].join(" ");
+		return writeDryRun("litcodex run", [
+			`Start ${command} in a pseudo-terminal four rows shorter and draw the LIT panel below it (writes no file)`,
+		]);
+	}
+	return runCommand(codexArgs, {
+		stdin: process.stdin,
+		stdout: process.stdout,
+		stderr: process.stderr,
+		env: process.env,
+		cwd: process.cwd(),
+	});
 }
 
 /** Loop subcommands that write project state; a `--dry-run` of these prints the step instead. */

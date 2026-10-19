@@ -348,7 +348,7 @@ export const FRONTEND_UIUX_PAYLOAD_HASHES = {
 
 export const HUMANIZER_PAYLOAD_HASHES = {
 	NOTICE: "f1587efda830c594a727d651da82265c565e178a4665eb7327c0c07f516673f0",
-	"SKILL.md": "d9aca49209e78c0986a9043e15fe77477fa8d5c17523abe87bb4b57da43e7020",
+	"SKILL.md": "f0d4f43efc9c9600586c16fc958f918e3f14e3ec34cd00cbe187cad1a3fcccc1",
 	"always-on-rule.md": "1c0e1d9724f012f05142c69d06e8a8cc89596556cba2c8ff1438e99c7848a5cf",
 	"assets/always-on-rule.md": "1c0e1d9724f012f05142c69d06e8a8cc89596556cba2c8ff1438e99c7848a5cf",
 	"assets/report-skeleton.md": "c5a45b1b096babe24328ec18362e6909de911299a62ed1e1e4efe11c37293cb1",
@@ -409,7 +409,7 @@ export const HUMANIZER_PAYLOAD_HASHES = {
 	"references/rewrite-playbook.md": "3b0bae2e24e9aada73ea527402e80c25a9bf471b65871248858496f1a2fe8ffb",
 	"references/taxonomy.md": "f29d9543f32178764eb07c49461785c6d1bd346b9c3419ec271b6062a74f92f9",
 	"rules.json": "ea2cc0aabafbdd9a94a60a29614cce8fba3ed9b813de0e4b5229f49b7356aaec",
-	"scripts/core.mjs": "8a5987a605f42787e7b0a48887c1c5042765c59839afe29afce3cee33f47e8b2",
+	"scripts/core.mjs": "cd700c49bf00799bedc3563da0ee555018ea8c6eec92e3ef15b277041bf4f867",
 	"scripts/detect.mjs": "183446709f861299d088af4587fafb808adf2094e08b82c2279c0b50cc39e872",
 	"scripts/extract_office_text.py": "2badb7a32335d28c0dd029617ffe866c27053ef54b8951a40a14475b56633265",
 	"scripts/ko-metrics.mjs": "5e53d6dfb212241fbcbddaa5d89cacfda61fa739616b4d1a3dd4d76268b0d871",

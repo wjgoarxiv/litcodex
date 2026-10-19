@@ -154,8 +154,10 @@ describe("lit-plan persistence guard (hook CLI)", () => {
 
 		writePlan(root, "readme-badge.md", CHECKBOX_PLAN, Date.now() + 5_000);
 		const passed = await run(runStopPlanPersistenceHookCli, root, stopInput(root));
-		// A pass carries only the LIT turn summary line, never a block decision.
-		expect(passed).toEqual({ code: 0, stdout: `${JSON.stringify({ systemMessage: "✨ turn done" })}\n`, stderr: "" });
+		// A pass carries only the LIT turn summary card, never a block decision.
+		const card =
+			"\n┃ 🔥 LIT · lit-plan  ✨ turn done\n┃ ✓ INTERVIEW  ›  📝 PLAN  ›  🔨 WORK  ›  🔍 REVIEW  ›  🏁 DONE";
+		expect(passed).toEqual({ code: 0, stdout: `${JSON.stringify({ systemMessage: card })}\n`, stderr: "" });
 	});
 
 	it("does not block a Stop for a session that never activated lit-plan", async () => {
@@ -172,6 +174,7 @@ describe("lit-plan persistence guard (hook CLI)", () => {
 			}),
 		);
 		const result = await run(runStopPlanPersistenceHookCli, root, stopInput(root, "sess_loop"));
-		expect(result).toEqual({ code: 0, stdout: `${JSON.stringify({ systemMessage: "✨ turn done" })}\n`, stderr: "" });
+		const card = "\n┃ 🔥 LIT · litwork  ✨ turn done\n┃ 🔨 WORK  ›  🔍 REVIEW  ›  🏁 DONE";
+		expect(result).toEqual({ code: 0, stdout: `${JSON.stringify({ systemMessage: card })}\n`, stderr: "" });
 	});
 });

@@ -200,11 +200,15 @@ export function scanText(text, rules, file = '<stdin>') {
       rule.regex.lastIndex = 0;
       const match = rule.regex.exec(segment.text);
       if (!match) continue;
+      const line = lineAtOffset(segment, match.index);
+      // A match that spans lines (a repeat rule's first and last occurrence) also names its last line.
+      const endLine = lineAtOffset(segment, match.index + Math.max(0, match[0].length - 1));
       findings.push({
         file,
         rule: rule.id,
         severity: rule.severity,
-        line: lineAtOffset(segment, match.index),
+        line,
+        ...(endLine > line ? { endLine } : {}),
         excerpt: segment.text.trim().replace(/\s+/g, ' ').slice(0, 180),
       });
     }

@@ -119,8 +119,8 @@ function findRollout(home, id) {
     }
     return null;
 }
-/** The workspace a thread runs in: the hook pointer, else the rollout header; null when unknown. */
-export function resolveThreadCwd(threadId, env) {
+/** The workspace a thread runs in: the hook pointer, else (when `rollout` allows) the rollout header; null when unknown. */
+export function resolveThreadCwd(threadId, env, rollout = true) {
     const id = normalizeSessionId(threadId);
     // A thread id that needed cleaning is not one Codex issued; it gets no workspace.
     if (id === null || id !== threadId)
@@ -128,6 +128,8 @@ export function resolveThreadCwd(threadId, env) {
     const pointer = readThreadPointer(env, id);
     if (pointer !== null)
         return pointer.cwd;
+    if (!rollout)
+        return null;
     const home = codexHomeFrom(env);
     return home === null ? null : (findRollout(home, id)?.cwd ?? null);
 }
@@ -295,8 +297,10 @@ function turnWorking(live, lastStepAt, now) {
     }
     return lastStepAt !== null && now - lastStepAt < RECENT_STEP_MS;
 }
-export function readCardStatus(threadId, env, now = Date.now()) {
-    const cwd = resolveThreadCwd(threadId, env);
+/** The card for one thread. `rollout: false` keeps every Codex rollout file unread; the usage row then stays empty. */
+export function readCardStatus(threadId, env, now = Date.now(), options = {}) {
+    const rollout = options.rollout !== false;
+    const cwd = resolveThreadCwd(threadId, env, rollout);
     const thread = cwd === null ? null : threadId;
     if (cwd === null || thread === null)
         return ready(null, null, null, now);
@@ -340,14 +344,15 @@ export function readCardStatus(threadId, env, now = Date.now()) {
         turnStartedAt: live?.turnStartedAt ?? null,
         turnEndedAt: turnOver ? live.turnEndedAt : null,
         working: step !== null || turnWorking(live, lastStepAt, now),
-        usage: readUsage(thread, env),
+        usage: rollout ? readUsage(thread, env) : null,
         branch: readBranch(cwd),
         workspace,
         cardOpenedAt,
         now,
     };
 }
-function clock(ms) {
+/** Minutes and seconds, `m:ss`. */
+export function clock(ms) {
     const seconds = Math.max(0, Math.floor(ms / 1000));
     return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }

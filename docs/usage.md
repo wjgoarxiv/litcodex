@@ -224,6 +224,10 @@ For report or proposal output, bare `lit` loads `lit-docx`; for slide or present
 | `litcodex loop record-evidence` | Record a criterion pass, fail, or blocked result |
 | `litcodex loop checkpoint` | Complete a goal only when every criterion passes |
 | `litcodex loop doctor` | Diagnose or recover loop state |
+| `litcodex hud` | Watch the most recently active LIT session's card live from a second terminal window |
+| `litcodex statusline` | Print the LIT status as one line for a status line command; always exits 0 |
+| `litcodex run [-- <codex args>]` | Run Codex in this terminal with a live LIT panel in the bottom four rows |
+| `litcodex screen-status on\|off\|status` | Colour the hook card; terminal `codex` only (off by default) |
 
 ## Automatic handoff
 
@@ -242,6 +246,82 @@ words; this section lists the pieces for anyone reading the hook setup.
 The handoff file follows the [lit-handoff](../plugins/litcodex/skills/lit-handoff/SKILL.md) destination rules and
 carries the line `Auto-handoff session: <session id>`, which is how the reload recognizes it. See
 [privacy](./privacy.md#automatic-handoff) for the files involved.
+
+## Watch LIT in a second window
+
+`litcodex hud` draws, in any second terminal window or tab, the LIT card of the Codex session where LIT was active
+most recently: the running LIT skill, the workflow map, the next open task and the tool running now with its
+clock. Activity is the latest prompt, tool start or tool end the LIT hooks recorded, so the HUD follows the session
+you are working in, an older resumed one included. The header names the short session id, the project folder and
+when LIT last heard from the session. A `--session` prefix that matches several sessions says how many it matched.
+
+| Flag | Effect |
+| --- | --- |
+| `--session <id>` | Follow one session, by exact id or a unique prefix, instead of the most recently active |
+| `--once` | Print one plain frame and exit |
+| `--help` | Show the command's usage |
+
+The HUD reads only the thread pointers under `$CODEX_HOME/litcodex/lit-loop/threads/` and the session's small
+records under `.litcodex/` in its project. It writes no file, starts no process and never opens Codex session
+logs. A record that exists but cannot be read (corrupt, oversized, symlinked or unreadable) shows as one
+`cannot read …` line. On a terminal it uses the alternate screen; Ctrl-C, SIGTERM and SIGHUP restore the screen
+and cursor and exit 0. Output is plain text when `NO_COLOR` is set or stdout is not a terminal. Tested on macOS.
+
+## Card colour
+
+`litcodex screen-status on|off|status` is a user-level switch for the colour of the LIT card that the
+UserPromptSubmit and Stop hooks print. It is off by default and stored in `$CODEX_HOME/litcodex/screen-status.json`
+(atomic write, never through a symlink); `LITCODEX_SCREEN_STATUS=1|0` overrides it. When on, the `┃` card rows get
+truecolor, bold and dim; `NO_COLOR` keeps them plain, and without colour the rows are the same. The hook input does
+not name the client, and the Codex desktop app and IDE show colour codes as raw text, so colour is for terminal
+`codex` users only.
+
+`litcodex statusline` prints one line for a status line command. It reads optional JSON on stdin (at most
+64 KiB, for at most 200 ms) in the Claude-compatible shape: `session_id`, `cwd` or `workspace.current_dir`. It
+shows that session when LIT knows it, else the newest LIT session in that folder, else the newest LIT session,
+with the same records as `litcodex hud`. The line holds the route, the stage map and the running tool with its
+clock, cut to `COLUMNS` cells. The route is coloured unless `NO_COLOR` is set. With nothing to show, or on any
+error, it prints an empty line; the exit code is always 0. Codex 0.163.0 has no command-backed status line, so
+nothing runs it yet.
+
+## Codex with a LIT panel
+
+`litcodex run [-- <codex args>]` starts the `codex` found on PATH in a pseudo-terminal four rows shorter than the
+real terminal, in the same folder and environment. Everything after `--` reaches Codex unchanged; before it the
+command takes only `--help` and `--dry-run`. Keys pass to Codex byte for byte. Codex's output goes through a filter
+that rewrites every scroll region (`ESC[r`, `ESC[;r`, `ESC[t;br`) to end at Codex's last row, and that holds back
+an unfinished escape sequence (CSI, an OSC or DCS string until BEL or ST, a lone ESC) or UTF-8 character at the
+end of a read until the rest arrives. A held tail is written after 50 ms even when it is still unfinished.
+
+The panel is four `┃` rows: the route with the turn's clock, the stage map, the running step and one checklist
+row. It is drawn inside a cursor save and restore after each read that ends between whole sequences, never while
+Codex holds a saved cursor of its own (`ESC7` or `ESC[s` not yet restored), and once a second when its text
+changed. After a held tail was forced out, or after Codex reset the terminal (`ESC c`, `ESC[!p`), the scroll region
+is set again before the next draw. It shows the newest session whose thread pointer names the run's folder and whose
+LIT activity is newer than the start of the run; before that it waits, dimmed. It reads the records
+`litcodex hud` reads, never a Codex rollout, and writes no file. A resize waits until nothing is held, ending a
+forced-out, still-open sequence with CAN, then sets the new scroll region, clears the screen, redraws the panel and
+resizes Codex; below 40×12 the panel is dropped and Codex gets the whole screen.
+
+Every way out restores the terminal: raw mode ends, the scroll region is reset, the panel rows are cleared and the
+cursor goes below Codex. When Codex exits by itself, that is all, and the exit code is Codex's (128 + n when signal
+n ended it). SIGINT, SIGTERM or SIGHUP to `litcodex run` is passed on to Codex, and an uncaught error stops Codex;
+its last output still reaches the terminal, and the wrapper waits up to 1.5 s for it to exit. Because Codex may not
+have undone its own terminal modes then, the restore first leaves the alternate screen and turns off bracketed
+paste, focus reporting, alternate scroll, mouse reporting and the pushed keyboard flags. The exit code is then
+128 + n for the signal, or 1 after an error.
+
+Ctrl-Z does not suspend Codex inside `litcodex run` (tested on macOS with Codex 0.163.0). The key reaches Codex like
+any other, and Codex keeps running: its own stop goes to a process group inside the pseudo-terminal that has no
+job-control shell. Quit with Ctrl-C, or run plain `codex` when you need job control.
+
+`node-pty` 1.1.0 is an optional dependency that only this command loads. When it cannot load, stdin or stdout is
+not a terminal, the terminal is smaller than 40×12, or the pseudo-terminal does not start, one note goes to stderr
+(dimmed on a terminal unless `NO_COLOR` is set) and Codex runs with the terminal's own stdio. Without `codex` on
+PATH the command exits 127. On macOS the npm build of node-pty 1.1.0 ships its `spawn-helper` without the execute
+bit. The LitCodex postinstall step and `litcodex run` set it, but only on the copy under the package's own
+`node_modules`; a node-pty found anywhere else is left as it is. When the helper is still not executable, the note
+names it and says to run `chmod +x` on it.
 
 ## Loop state
 

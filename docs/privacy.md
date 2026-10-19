@@ -66,6 +66,11 @@ After a compaction, the hook reads the project's `.handoff/HANDOFF.md` or `HANDO
 was written after the trigger and names this session. It passes the first 3,000 characters to the model in the
 same session. Project `.litcodex/` state is gitignored and excluded from npm and marketplace payloads.
 
+## Card colour
+
+`litcodex screen-status` is off by default and sends nothing anywhere. It keeps one local file,
+`$CODEX_HOME/litcodex/screen-status.json`, with a format version and whether the card is coloured.
+
 ## Model and tool work
 
 Running model work uses your configured Codex host and provider. Prompts, selected

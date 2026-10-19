@@ -13,7 +13,9 @@ import { applyAutoHandoffRoute, clearManagedCompactionWhenOff, parseAutoHandoffR
 import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
 import { endLiveStep, recordLiveStepEnd, recordLiveStepStart, recordTurnStart, writeThreadPointer, } from "./live-step.js";
 import { evaluatePlanPersistence, formatStopBlockOutput, recordLitPlanActivation } from "./plan-persistence.js";
-import { recordWorkflowTurn, workflowMapLine, workflowStopLine, workflowTurn } from "./workflow-map.js";
+import { workflowCard } from "./screen-card.js";
+import { screenColor } from "./screen-status.js";
+import { recordWorkflowTurn, workflowStopLine, workflowTurn } from "./workflow-map.js";
 /** Hard cap on stdin to bound memory / ReDoS exposure inside the 5 s Codex hook budget. 8 MB. */
 export const MAX_STDIN_BYTES = 8_000_000;
 const INVALID_JSON_MESSAGE = "lit hook: stdin was not valid JSON";
@@ -111,8 +113,9 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
         if (scope !== null)
             recordLitPlanActivation(scope.cwd, scope.sessionId);
     }
+    const env = auto.env ?? process.env;
     const own = decision.kind === "inject"
-        ? withCardOffer(withWorkflowMap(decision.stdout, parsed, decision.mode), pointer, auto)
+        ? withCardOffer(withWorkflowMap(decision.stdout, parsed, decision.mode, env), pointer, auto)
         : "";
     const output = withAutoHandoffReload(own, parsed, repoRoot, auto);
     if (output !== "")
@@ -172,10 +175,11 @@ function withReloadContext(stdout, reload) {
     }
 }
 /**
- * Add the workflow map under the activation banner and remember the turn for the Stop line. Only an
- * event that names its own absolute `cwd` is mapped, so the map always describes the session's repo.
+ * Add the LIT card (map and checklist) under the activation banner and remember the turn for the Stop
+ * card. Only an event that names its own absolute `cwd` is mapped, so the card always describes the
+ * session's repo.
  */
-function withWorkflowMap(stdout, parsed, mode) {
+function withWorkflowMap(stdout, parsed, mode, env) {
     if (!isRecord(parsed) || typeof parsed["cwd"] !== "string" || !isAbsolute(parsed["cwd"]))
         return stdout;
     const cwd = parsed["cwd"];
@@ -184,13 +188,16 @@ function withWorkflowMap(stdout, parsed, mode) {
         if (sessionId !== null && typeof parsed["turn_id"] === "string") {
             recordWorkflowTurn(cwd, sessionId, parsed["turn_id"], mode);
         }
-        const map = workflowMapLine(cwd, sessionId, mode);
-        if (map === null)
+        const card = workflowCard(cwd, sessionId, mode, "turn started", {
+            color: screenColor(env),
+            quietWhenEmpty: true,
+        });
+        if (card === null)
             return stdout;
         const output = JSON.parse(stdout);
         if (!isRecord(output) || typeof output["systemMessage"] !== "string")
             return stdout;
-        output["systemMessage"] = `${output["systemMessage"]}\n${map}`;
+        output["systemMessage"] = `${output["systemMessage"]}\n${card}`;
         return `${JSON.stringify(output)}\n`;
     }
     catch {
@@ -236,6 +243,10 @@ function withContextAfterBanner(stdout, text) {
 }
 function isRecord(value) {
     return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+/** A subagent's hooks carry the root session id, so its Stop must not end the parent's turn card. */
+function isSubagent(parsed) {
+    return isRecord(parsed) && typeof parsed["agent_id"] === "string" && parsed["agent_id"] !== "";
 }
 /** Absolute `cwd` from a hook event, else the fallback root. */
 function hookCwd(parsed, repoRoot) {
@@ -299,15 +310,22 @@ export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoR
             stdout.write(formatStopBlockOutput(handoff.reason));
             return 0;
         }
+        // A subagent's Stop carries the parent's session id; the parent's turn is still running.
+        if (isSubagent(parsed))
+            return 0;
         endLiveStep(scope.cwd, scope.sessionId, auto.now);
+        const env = auto.env ?? process.env;
         const line = typeof record["turn_id"] === "string"
             ? workflowStopLine(scope.cwd, scope.sessionId, record["turn_id"], {
                 stopHookActive: record["stop_hook_active"] === true,
                 transcriptPath: typeof record["transcript_path"] === "string" ? record["transcript_path"] : null,
             })
             : null;
-        if (line !== null)
-            stdout.write(`${JSON.stringify({ systemMessage: line })}\n`);
+        const turn = line === null ? null : workflowTurn(scope.cwd, scope.sessionId);
+        const card = turn === null ? null : workflowCard(scope.cwd, scope.sessionId, turn.mode, line, { color: screenColor(env) });
+        // Codex puts a hook label before the first row, so the card starts on the next one.
+        if (card !== null)
+            stdout.write(`${JSON.stringify({ systemMessage: `\n${card}` })}\n`);
     }
     return 0;
 }

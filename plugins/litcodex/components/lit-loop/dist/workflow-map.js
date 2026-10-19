@@ -1,9 +1,11 @@
-// src/workflow-map.ts — the plain-text LIT workflow map.
+// src/workflow-map.ts — the LIT workflow map and the checklist under it.
 //
-// Codex shows a hook `systemMessage` as plain text (escape codes appear literally), so the map uses
-// emoji and block cells instead of colour. It is built from saved state only: the start-work record
-// and its plan checkboxes, lit-loop goals, the lit-plan activation record and the litresearch
-// journal. A stage with no saved signal is left out rather than guessed. Every read fails open.
+// The map is plain text: emoji and block cells. Codex 0.162.0 and later draw ANSI colour inside a hook
+// `systemMessage` in the terminal UI, but other clients may show escape codes literally, so colour is
+// added only by the card (screen-card.ts) and only when the user turns it on. Everything here is built
+// from saved state only: the start-work record and its plan checkboxes, lit-loop goals, the lit-plan
+// activation record and the litresearch journal. A stage with no saved signal is left out rather than
+// guessed. Every read fails open.
 import { createHash } from "node:crypto";
 import { lstatSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, sep } from "node:path";
@@ -172,7 +174,8 @@ export function safeTitle(label) {
         return `${title.slice(0, MAX_TITLE - 1)}…`;
     return cut < 0 ? title : `${title} …`;
 }
-function readWork(repoRoot, sessionId) {
+/** The start-work plan this session shows, with its status and text; null when there is none. */
+function activeWorkPlan(repoRoot, sessionId) {
     const state = readJson(repoRoot, join(repoRoot, ".litcodex/start-work/state.json"));
     if (!isRecord(state) || !isRecord(state["works"]))
         return null;
@@ -198,17 +201,28 @@ function readWork(repoRoot, sessionId) {
     const text = readText(repoRoot, join(repoRoot, ".litcodex/plans", file));
     if (text === null)
         return null;
-    const rows = countPlanRows(text);
+    return { status: work["status"], text };
+}
+function readWork(repoRoot, sessionId) {
+    const plan = activeWorkPlan(repoRoot, sessionId);
+    if (plan === null)
+        return null;
+    const rows = countPlanRows(plan.text);
     if (rows.total === 0)
         return null;
-    return { ...rows, status: work["status"] };
+    return { ...rows, status: plan.status };
 }
-function goalProgress(repoRoot, path) {
+/** The goal records of one lit-loop goals file; null when it has none. */
+function goalList(repoRoot, path) {
     const plan = readJson(repoRoot, path);
     if (!isRecord(plan) || !Array.isArray(plan["goals"]))
         return null;
     const goals = plan["goals"].filter(isRecord);
-    if (goals.length === 0)
+    return goals.length === 0 ? null : goals;
+}
+function goalProgress(repoRoot, path) {
+    const goals = goalList(repoRoot, path);
+    if (goals === null)
         return null;
     const open = goals.find((goal) => goal["status"] === "in_progress") ?? goals.find((goal) => goal["status"] === "pending");
     return {
@@ -225,6 +239,40 @@ function readGoals(repoRoot, sessionId) {
     }
     const shared = goalProgress(repoRoot, join(repoRoot, LIT_LOOP_DIR, LIT_LOOP_GOALS));
     return shared !== null && shared.done < shared.total ? shared : null;
+}
+const MAX_CHECKLIST = 3;
+/**
+ * At most three rows around the open one: the last finished row, the open row and the next one. With
+ * nothing open, the last three finished rows. A label cut down to nothing by `safeTitle` reads `#<n>`.
+ */
+function checklistWindow(items, current) {
+    const start = current < 0
+        ? Math.max(0, items.length - MAX_CHECKLIST)
+        : Math.max(0, Math.min(current - 1, items.length - MAX_CHECKLIST));
+    return items.slice(start, start + MAX_CHECKLIST).map((item, offset) => ({
+        state: start + offset === current ? "current" : item.done ? "done" : "pending",
+        label: safeTitle(item.label) ?? `#${start + offset + 1}`,
+    }));
+}
+/** The checklist under the map: the start-work plan rows, else this session's lit-loop goals; [] when neither. */
+export function readChecklist(repoRoot, sessionId) {
+    if (typeof repoRoot !== "string" || !isAbsolute(repoRoot))
+        return [];
+    const id = normalizeSessionId(sessionId);
+    const plan = activeWorkPlan(repoRoot, id);
+    const rows = plan === null ? [] : planRows(plan.text);
+    if (rows.length > 0)
+        return checklistWindow(rows, rows.findIndex((row) => !row.done));
+    const scoped = id === null ? null : goalList(repoRoot, join(repoRoot, LIT_LOOP_DIR, id, LIT_LOOP_GOALS));
+    const goals = scoped ?? goalList(repoRoot, join(repoRoot, LIT_LOOP_DIR, LIT_LOOP_GOALS));
+    if (goals === null)
+        return [];
+    const items = goals.map((goal) => ({
+        done: goal["status"] === "complete",
+        label: typeof goal["title"] === "string" ? goal["title"] : "",
+    }));
+    const running = goals.findIndex((goal) => goal["status"] === "in_progress");
+    return checklistWindow(items, running >= 0 ? running : items.findIndex((item) => !item.done));
 }
 function readPlanRecord(repoRoot, sessionId) {
     if (sessionId === null)

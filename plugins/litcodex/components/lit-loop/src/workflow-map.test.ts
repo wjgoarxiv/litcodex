@@ -10,6 +10,7 @@ import { activationMessage } from "./lit-mark.js";
 import {
 	countPlanRows,
 	progressBar,
+	readChecklist,
 	readWorkflowSignals,
 	recordWorkflowTurn,
 	renderWorkflowMap,
@@ -500,6 +501,18 @@ async function submit(root: string, prompt: string, extra: Record<string, unknow
 	return { code, stdout: out };
 }
 
+/** The Stop card after the plan above: a leading newline for the host's hook label, then the rows. */
+function stopCard(note: string): string {
+	return [
+		"",
+		`┃ 🔥 LIT · start-work  ${note}`,
+		"┃ ✓ INTERVIEW  ›  ✓ PLAN  ›  🔨 WORK ▰▰▰▱▱▱▱ 3/7  ›  🔍 REVIEW  ›  🏁 DONE",
+		"┃ ✓ Render the map",
+		"┃ ▸ Show the map in …",
+		"┃ · Write the docs",
+	].join("\n");
+}
+
 function stopEvent(root: string, turnId = "t1"): Record<string, unknown> {
 	return {
 		hook_event_name: "Stop",
@@ -514,8 +527,40 @@ function stopEvent(root: string, turnId = "t1"): Record<string, unknown> {
 	};
 }
 
+describe("readChecklist", () => {
+	it("shows the last done row, the open row and the next one from the start-work plan", () => {
+		const root = repo();
+		writePlan(root);
+		writeWork(root, "active");
+		expect(readChecklist(root, "s1")).toEqual([
+			{ state: "done", label: "Render the map" },
+			{ state: "current", label: "Show the map in …" },
+			{ state: "pending", label: "Write the docs" },
+		]);
+	});
+
+	it("shows the last three rows when every task is done", () => {
+		const root = repo();
+		writePlan(root, PLAN.replaceAll("- [ ]", "- [x]"));
+		writeWork(root, "active");
+		expect(readChecklist(root, "s1").map((row) => row.state)).toEqual(["done", "done", "done"]);
+	});
+
+	it("falls back to the session goals, marking the goal in progress as current", () => {
+		const root = repo();
+		writeGoals(root, ["complete", "complete", "in_progress", "pending", "pending"]);
+		expect(readChecklist(root, "s1")).toEqual([
+			{ state: "done", label: "Goal 2" },
+			{ state: "current", label: "Goal 3" },
+			{ state: "pending", label: "Goal 4" },
+		]);
+		expect(readChecklist(repo(), "s1")).toEqual([]);
+		expect(readChecklist("relative", "s1")).toEqual([]);
+	});
+});
+
 describe("hook surfaces", () => {
-	it("puts the map under the activation banner as plain text", async () => {
+	it("puts the card (map and checklist) under the activation banner as plain text", async () => {
 		const root = repo();
 		writePlan(root);
 		writeWork(root, "active");
@@ -523,7 +568,14 @@ describe("hook surfaces", () => {
 		expect(result.code).toBe(0);
 		const output = JSON.parse(result.stdout) as { systemMessage: string };
 		expect(output.systemMessage).toBe(
-			`${activationMessage("start-work")}\n🧭 ✓ › 📝 ✓ › 🔨 WORK ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·`,
+			[
+				activationMessage("start-work"),
+				"┃ 🔥 LIT · start-work  turn started",
+				"┃ ✓ INTERVIEW  ›  ✓ PLAN  ›  🔨 WORK ▰▰▰▱▱▱▱ 3/7  ›  🔍 REVIEW  ›  🏁 DONE",
+				"┃ ✓ Render the map",
+				"┃ ▸ Show the map in …",
+				"┃ · Write the docs",
+			].join("\n"),
 		);
 		expect(output.systemMessage).not.toContain("\u001b");
 	});
@@ -538,7 +590,7 @@ describe("hook surfaces", () => {
 		);
 	});
 
-	it("ends a LIT turn with a summary line and stays quiet after an ordinary turn", async () => {
+	it("ends a LIT turn with a summary card and stays quiet after an ordinary turn", async () => {
 		const root = repo();
 		writePlan(root, PLAN.replace("- [x] 3.", "- [ ] 3."));
 		writeWork(root, "active");
@@ -547,7 +599,7 @@ describe("hook surfaces", () => {
 		const stop = await drive(runStopPlanPersistenceHookCli, stopEvent(root), root);
 		expect(stop.code).toBe(0);
 		expect(JSON.parse(stop.stdout)).toEqual({
-			systemMessage: "✨ turn done · 1 task ✓ · next ▸ Show the map in …",
+			systemMessage: stopCard("✨ turn done · 1 task ✓ · next ▸ Show the map in …"),
 		});
 		const later = await drive(runStopPlanPersistenceHookCli, stopEvent(root, "t9"), root);
 		expect(later.stdout).toBe("");
@@ -560,9 +612,13 @@ describe("hook surfaces", () => {
 		await submit(root, "$start-work boost");
 		writePlan(root);
 		const stop = await drive(runStopPlanPersistenceHookCli, stopEvent(root), root);
-		expect(JSON.parse(stop.stdout)).toEqual({ systemMessage: "⏳ 3/7 tasks ✓ · continuing ▸ Show the map in …" });
+		expect(JSON.parse(stop.stdout)).toEqual({
+			systemMessage: stopCard("⏳ 3/7 tasks ✓ · continuing ▸ Show the map in …"),
+		});
 		const last = await drive(runStopPlanPersistenceHookCli, { ...stopEvent(root), stop_hook_active: true }, root);
-		expect(JSON.parse(last.stdout)).toEqual({ systemMessage: "✨ turn done · 1 task ✓ · next ▸ Show the map in …" });
+		expect(JSON.parse(last.stdout)).toEqual({
+			systemMessage: stopCard("✨ turn done · 1 task ✓ · next ▸ Show the map in …"),
+		});
 	});
 
 	it("lets a blocking lit-plan guard win over the summary line", async () => {

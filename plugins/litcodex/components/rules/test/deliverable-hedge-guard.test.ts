@@ -652,12 +652,12 @@ describe("block tier at the write guard", () => {
 		expect(hookOutput(output).hookSpecificOutput.permissionDecisionReason).toContain("ko-negative-pledge");
 	});
 
-	it("never reads or judges a target outside the workspace; it shows the fail-open note instead", () => {
+	it("skips a target outside the session project, which is the reported cwd when no git work tree is above it", () => {
 		const root = workspace();
 		const output = runHumanizerPreToolUse(
 			input(root, { tool_name: "write", tool_input: { file_path: "../outside-report.md", content: USER_PLEDGE } }),
 		);
-		expect(output).toBe(humanizerFailOpenOutput("PreToolUse"));
+		expect(output).toBe("");
 	});
 
 	it("answers an oversized hook payload with the visible fail-open note, not silence", () => {

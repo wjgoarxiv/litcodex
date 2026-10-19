@@ -137,6 +137,10 @@ Load only what the task needs:
 
 `rules.json` is the source for the dependency-free Node detector and its rule IDs, tiers, exemptions, and caption context. Run `node scripts/test-fixtures.mjs` for rule cases and `node scripts/test-ko-metrics.mjs` for Korean metric goldens. The metric is an optional review aid, not a quality score. Local negative-corpus material is excluded from packages and commits.
 
+Write positive-first. Name what a figure or thing is, then attach a needed caveat once. `18,420회는 주민 수가 아님. 고유 방문자 수도 아님.` leaves the reader guessing; "18,420회는 같은 사람의 반복 방문을 포함한 방문 횟수 합계입니다" tells them. A real gap still gets one plain line, such as "고유 이용자 지표는 자료에 없습니다".
+
+The Codex write guard runs a `negation-cluster` check beside the detector. It counts definitional negations in each paragraph, list block, or Markdown table column: the plain forms (`아닙니다`, `아님`, `아니다`, `아니며`, `아니라`, `아닌`; `is not`, `are not`, `not a`, `rather than`) and the reworded forms that say the same thing (`~로 읽을 수 없음`, `~로 볼 수 없음`, `~로 보지 않음`, `~을 뜻하지 않음`, `~와는 다르다`, `~로 읽으면 안 된다`; `should not be read as`, `does not mean`). Two Korean hits in one block, or three in any mix of languages, refuse the write, and the refusal carries the rewrite advice. Exactly two hits that are mixed or English warn and let the write through. Trading `아님` for `~로 읽을 수 없음`, `~와는 다르다` or `~로 읽으면 안 된다` still counts, so rewrite the block to state the thing itself. Table cells of 12 characters or fewer, code, inline code, quote lines, and internal records stay exempt; that is why a bad example in this skill sits in inline code or a blockquote.
+
 ## Korean deep review
 
 Use the existing Korean review agents when the host exposes them: `style-analyzer` notes register and cadence; `prose-editor` revises without changing claims; `meaning-preservation-auditor` checks facts, modality, numbers, names, and quotes; `native-flow-reviewer` checks idiom and rhythm; `polish-orchestrator` resolves evidenced findings and runs the final detector. Limit this to two review rounds. If agent surfaces are unavailable, follow the same sequence directly; never invent unsupported agent APIs.

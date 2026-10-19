@@ -11,6 +11,8 @@ export interface HumanizerFinding {
     readonly severity: "block" | "warn";
     readonly rule: string;
     readonly excerpt?: string;
+    /** Last line of a multi-line finding, such as a negation-cluster paragraph. */
+    readonly endLine?: number;
 }
 type GuardOptions = {
     readonly scan?: (text: string) => readonly HumanizerFinding[];
@@ -28,4 +30,10 @@ export declare function inspectHumanizerText(text: string, detectorPath?: string
 export declare function runHumanizerPreToolUse(input: HumanizerHookInput, options?: GuardOptions): string;
 /** Inspect Office/PDF output after creation; block findings ask the model to fix and rebuild. */
 export declare function runHumanizerPostToolUse(input: HumanizerHookInput, options?: GuardOptions): string;
+/**
+ * Check beside the detector: definitional negations, plain or reworded, counted per paragraph or list block,
+ * and per column in a Markdown table (short status cells ignored). Code, inline code and quote lines are
+ * removed first. A block finding goes through the guard's normal refusal; a warning stays advisory.
+ */
+export declare function negationClusterFindings(text: string): HumanizerFinding[];
 export {};

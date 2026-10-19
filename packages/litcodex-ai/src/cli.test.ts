@@ -1,5 +1,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { dispatch, UNKNOWN_COMMAND_CODE } from "./cli.js";
@@ -228,5 +230,110 @@ describe("published bin end-to-end (process exit owner)", () => {
 		expect(r.code).toBe(0);
 		expect(r.stdout).toContain("litcodex install plan (Codex)");
 		expect(r.stdout).not.toContain(NPX_TOKEN);
+	});
+});
+
+describe("hud route (second-window LIT card)", () => {
+	it("is a known route with a line in the main help", () => {
+		expect(dispatch(["hud"]).exitCode).toBe(0);
+		expect(dispatch(["--help"]).stdout).toMatch(/^ {2}litcodex hud \[--session <id>\] \[--once\] +\S/mu);
+		expect(dispatch(["frobnicate"]).stderr).toContain("hud");
+	});
+
+	it("answers `hud --help` with its own usage", () => {
+		const r = runBin(["hud", "--help"]);
+		expect(r.code).toBe(0);
+		expect(r.stdout).toMatch(/^litcodex hud/u);
+		expect(r.stdout).toContain("--session <id>");
+		expect(r.stdout).toContain("--once");
+		expect(r.stdout).toContain("Ctrl-C");
+	});
+
+	it("prints one plain frame with --once and refuses unknown options", () => {
+		const home = mkdtempSync(join(tmpdir(), "litcodex-cli-hud-"));
+		try {
+			const env = { PATH: process.env["PATH"] ?? "", HOME: home, CODEX_HOME: join(home, ".codex") };
+			const once = spawnSync(process.execPath, [binPath, "hud", "--once"], { encoding: "utf8", env });
+			expect(once.status).toBe(0);
+			expect(once.stdout).toContain("waiting for a LIT session");
+			expect(once.stdout).not.toContain("\u001b");
+			const bad = spawnSync(process.execPath, [binPath, "hud", "--frobnicate"], { encoding: "utf8", env });
+			expect(bad.status).toBe(64);
+			expect(bad.stderr).toContain("--frobnicate");
+		} finally {
+			rmSync(home, { recursive: true, force: true });
+		}
+	});
+});
+
+describe("screen-status route (LIT card colour)", () => {
+	it("is a known route with a line in the main help", () => {
+		expect(dispatch(["screen-status", "status"]).exitCode).toBe(0);
+		expect(dispatch(["screen-status", "maybe"]).exitCode).toBe(64);
+		expect(dispatch(["screen-status", "color", "on"]).exitCode).toBe(64);
+		expect(dispatch(["--help"]).stdout).toMatch(/^ {2}litcodex screen-status on\|off\|status +\S/mu);
+		expect(dispatch(["frobnicate"]).stderr).toContain("screen-status");
+	});
+
+	it("stores the switch under the Codex home and reports it", () => {
+		const home = mkdtempSync(join(tmpdir(), "litcodex-cli-screen-"));
+		try {
+			const env = { PATH: process.env["PATH"] ?? "", HOME: home, CODEX_HOME: join(home, ".codex") };
+			const status = spawnSync(process.execPath, [binPath, "screen-status", "status"], { encoding: "utf8", env });
+			expect(status.status).toBe(0);
+			expect(status.stdout).toContain("OFF");
+			const on = spawnSync(process.execPath, [binPath, "screen-status", "on"], { encoding: "utf8", env });
+			expect(on.status).toBe(0);
+			expect(existsSync(join(home, ".codex/litcodex/screen-status.json"))).toBe(true);
+			const dry = spawnSync(process.execPath, [binPath, "--dry-run", "screen-status", "off"], {
+				encoding: "utf8",
+				env,
+			});
+			expect(dry.status).toBe(0);
+			const after = spawnSync(process.execPath, [binPath, "screen-status", "status"], { encoding: "utf8", env });
+			expect(after.stdout).toContain("ON");
+			const bad = spawnSync(process.execPath, [binPath, "screen-status", "maybe"], { encoding: "utf8", env });
+			expect(bad.status).toBe(64);
+		} finally {
+			rmSync(home, { recursive: true, force: true });
+		}
+	});
+});
+
+describe("statusline route (one-line LIT status for a host status line)", () => {
+	it("is a known route with a line in the main help", () => {
+		expect(dispatch(["statusline"]).exitCode).toBe(0);
+		expect(dispatch(["--help"]).stdout).toMatch(/^ {2}litcodex statusline +\S/mu);
+	});
+
+	it("prints one empty line and exits 0 with no LIT session, whatever stdin holds", () => {
+		const home = mkdtempSync(join(tmpdir(), "litcodex-cli-statusline-"));
+		try {
+			const env = { PATH: process.env["PATH"] ?? "", HOME: home, CODEX_HOME: join(home, ".codex") };
+			const run = spawnSync(process.execPath, [binPath, "statusline"], { encoding: "utf8", env, input: "{bad" });
+			expect(run.status).toBe(0);
+			expect(run.stdout).toBe("\n");
+		} finally {
+			rmSync(home, { recursive: true, force: true });
+		}
+	});
+});
+
+describe("run route (Codex with a live LIT panel)", () => {
+	it("is a known route with a line in the main help", () => {
+		expect(dispatch(["run"]).exitCode).toBe(0);
+		expect(dispatch(["--help"]).stdout).toMatch(/^ {2}litcodex run \[-- <codex args>\] +\S/mu);
+	});
+
+	it("prints its own help, refuses its unknown options and passes everything after -- to Codex", () => {
+		const help = runBin(["run", "--help"]);
+		expect(help.code).toBe(0);
+		expect(help.stdout).toContain("litcodex run [-- <codex args>...]");
+		const refused = runBin(["run", "--model", "x"]);
+		expect(refused.code).toBe(64);
+		expect(refused.stderr).toContain('unknown option "--model"');
+		const dry = runBin(["--dry-run", "run", "--", "--help", "--version"]);
+		expect(dry.code).toBe(0);
+		expect(dry.stdout).toMatch(/codex --help --version in a pseudo-terminal/u);
 	});
 });

@@ -265,7 +265,8 @@ After the scope gate selects the durable path:
 The bare `lit` trigger (also `lit-loop` / `litcodex` in a prompt) fires the Codex
 `UserPromptSubmit` hook, which injects the `<lit-loop-mode>` directive into the turn. This skill is
 the operational expansion of that directive: once you see `<lit-loop-mode>`, apply the scope gate
-above, then follow the selected path.
+above, then follow the selected path. A user who wants to watch the run from a terminal can keep the LIT card
+live in a second window with `litcodex hud`, which only reads the records these hooks already write.
 
 ## Codex tool mapping
 

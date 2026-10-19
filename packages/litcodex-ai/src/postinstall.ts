@@ -2,12 +2,15 @@
 //
 // Prints a fire/ember-branded welcome + next-steps box ONLY on a real `npm install -g` (not CI,
 // not workspace installs, not dev). A motion pre-warm is attempted from the installed marketplace;
-// failure leaves the base package installed and names the explicit retry command.
+// failure leaves the base package installed and names the explicit retry command. On every install,
+// the macOS helper of the optional node-pty package gets its execute bit back (see below).
 
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { ensurePtyHelperExecutable } from "./pty-helper.js";
 
 import { renderBanner, shouldDecorate } from "./ui.js";
 
@@ -51,6 +54,14 @@ function main(): void {
 			`${result.status === 0 && receipt ? receipt : "[litcodex] Motion runtime pre-warm unavailable; run `litcodex motion-runtime install` outside the sandbox."}\n`,
 		);
 	}
+}
+
+try {
+	// Only the node-pty under this package's own node_modules: one found further up belongs to someone else.
+	const installedAt = fileURLToPath(new URL("..", import.meta.url));
+	ensurePtyHelperExecutable(join(installedAt, "node_modules", "node-pty"), process.platform, installedAt);
+} catch {
+	// Never fail npm install; without the helper `litcodex run` names it in its note.
 }
 
 try {

@@ -34,12 +34,17 @@ export interface Usage {
     readonly fiveHour: number | null;
     readonly week: number | null;
 }
-/** The workspace a thread runs in: the hook pointer, else the rollout header; null when unknown. */
-export declare function resolveThreadCwd(threadId: string | null, env: NodeJS.ProcessEnv): string | null;
+/** The workspace a thread runs in: the hook pointer, else (when `rollout` allows) the rollout header; null when unknown. */
+export declare function resolveThreadCwd(threadId: string | null, env: NodeJS.ProcessEnv, rollout?: boolean): string | null;
 /** Context and quota use from the newest token count in a rollout tail; null when there is none. */
 export declare function usageFromRollout(text: string): Usage | null;
 /** A tool name as the card shows it: an MCP tool reads `server · tool` rather than its joined id. */
 export declare function toolDisplayName(tool: string): string;
-export declare function readCardStatus(threadId: string | null, env: NodeJS.ProcessEnv, now?: number): CardStatus;
+/** The card for one thread. `rollout: false` keeps every Codex rollout file unread; the usage row then stays empty. */
+export declare function readCardStatus(threadId: string | null, env: NodeJS.ProcessEnv, now?: number, options?: {
+    readonly rollout?: boolean;
+}): CardStatus;
+/** Minutes and seconds, `m:ss`. */
+export declare function clock(ms: number): string;
 /** The card as plain text, for hosts that cannot draw it (the terminal `codex`). */
 export declare function cardStatusText(status: CardStatus): string;
