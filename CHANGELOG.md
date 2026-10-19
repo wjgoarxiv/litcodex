@@ -6,8 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.28] - 2026-10-19
+
 ### Added
 
+- `litcodex hud` keeps the LIT card live in a second terminal window. It follows the session where LIT was
+  most recently active, names its project folder and when LIT last heard from it, and only reads the small records
+  the hooks already write. It never opens a Codex rollout and writes no file.
 - `litcodex screen-status on|off|status`, off by default, stored under the Codex home and overridden by
   `LITCODEX_SCREEN_STATUS=1|0`, colours the LIT card. Only the terminal `codex` draws it; the desktop app and IDE
   show the codes as raw text.
@@ -19,13 +24,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   panel, and an unfinished escape sequence or UTF-8 character is held for at most 50 ms so the panel never lands
   inside one. `node-pty` 1.1.0 is a new optional dependency; without it, outside a terminal or below 40×12, Codex
   starts as usual after one note. The exit code is Codex's.
+  A signal sent to `litcodex run` goes to Codex, and the terminal is restored when Codex exits. Ctrl-Z does not
+  suspend Codex inside `litcodex run`; quit with Ctrl-C, or run plain `codex` when you need job control.
+- The write guard refuses a paragraph, list or table column that stacks definitional negations: two Korean ones,
+  or three in any language. Reworded forms such as `~로 읽을 수 없음`, `~와는 다르다` and `~로 읽으면 안 된다`
+  count too, and exactly two English or mixed ones only warn. The refusal says to state what the thing is
+  first and add a needed caveat once. Code, inline code, quotes, short table cells and internal records are exempt.
 
 ### Changed
 
 - The activation map line and the Stop line became one LIT card: a route row (`🔥 LIT · <mode>` and a
   short note), the stage map with a ✓ on finished stages, and up to three rows of the plan or
   goals around the open one. Text taken from saved records is stripped of control characters and every row
-  is cut to a fixed width.
+  is cut to a fixed width. Every stage word is written in capitals on the card, the run panel and the status line,
+  and a subagent's Stop prints no card and no longer ends the parent's turn.
+- The write guard judges an edit against the whole file after the edit, so code fences and the blank lines
+  between paragraphs are kept. It checks only files inside the session's project (the git work tree above the
+  folder Codex reports, or that folder outside git), including a deliverable above a subfolder after a `cd`;
+  host files under the Codex home, temp notes and other outside files are skipped.
+- The prose detector names the last line of a finding that spans several lines, so a repeat is judged by
+  where it starts and ends.
 
 ## [1.0.27] - 2026-10-18
 
