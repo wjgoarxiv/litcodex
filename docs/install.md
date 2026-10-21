@@ -9,7 +9,7 @@ This page has the whole install story: the variants, what a global install downl
 You need Node.js 22 or later and Codex CLI. Then run:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.28 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.29 -- litcodex install
 ```
 
 The installer sets LitCodex up inside Codex. It registers the plugin, its hooks and its agents, and
@@ -23,8 +23,8 @@ Codex sign-in and model access once real model work starts.
 
 Two variants are worth knowing:
 
-- If you want to see what would change before anything does, run `npm exec --yes --package @litfamily/litcodex@1.0.28 -- litcodex --dry-run install`.
-- If you are setting up a machine without anyone at the keyboard, run `npm exec --yes --package @litfamily/litcodex@1.0.28 -- litcodex install --yes`. A `--style <id>` you pass is still used.
+- If you want to see what would change before anything does, run `npm exec --yes --package @litfamily/litcodex@1.0.29 -- litcodex --dry-run install`.
+- If you are setting up a machine without anyone at the keyboard, run `npm exec --yes --package @litfamily/litcodex@1.0.29 -- litcodex install --yes`. A `--style <id>` you pass is still used.
 
 Want to see what the installer prints before you run it? [What you will see on screen](#what-you-will-see-on-screen) shows the questions, the receipt and the doctor check.
 
@@ -58,7 +58,7 @@ You can keep the script out of the global install in either of two ways:
 Leaving it out here only postpones the downloads. `litcodex install` gets the video tools ready the same
 way after a successful install, and there is no switch to turn that off.
 
-> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.28 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.28 -- litcodex doctor`.
+> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.29 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.29 -- litcodex doctor`.
 
 ### Trying it apart from your setup
 
