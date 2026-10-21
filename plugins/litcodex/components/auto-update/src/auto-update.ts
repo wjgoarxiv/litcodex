@@ -14,7 +14,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, win32 } from "node:path";
 
 export const AUTO_UPDATE_PACKAGE = "@litfamily/litcodex" as const;
 export const DEFAULT_AUTO_UPDATE_TIMEOUT_MS = 10_000;
@@ -38,6 +38,7 @@ export interface NpmInvocationOptions {
 	readonly platform?: NodeJS.Platform;
 	readonly npmExecPath?: string | undefined;
 	readonly nodePath?: string;
+	readonly exists?: (path: string) => boolean;
 }
 
 export interface NpmInvocation {
@@ -55,7 +56,36 @@ export function resolveNpmInvocation(args: readonly string[], options: NpmInvoca
 	const nodePath = options.nodePath ?? process.execPath;
 	const exactNpm = npmExecPath?.trim();
 	if (exactNpm) return { command: nodePath, args: [exactNpm, ...args] };
+	if (platform === "win32") {
+		// A session hook has no npm_execpath; the npm that ships beside node.exe avoids the npm.cmd shim.
+		const bundled = win32.join(win32.dirname(nodePath), "node_modules", "npm", "bin", "npm-cli.js");
+		if ((options.exists ?? existsSync)(bundled)) return { command: nodePath, args: [bundled, ...args] };
+	}
 	return { command: resolveNpmCommand(platform), args: [...args] };
+}
+
+export interface ShellSafeInvocation {
+	readonly command: string;
+	readonly args: readonly string[];
+	readonly shell: boolean;
+}
+
+/**
+ * Node refuses to spawn a .cmd/.bat file without a shell (CVE-2024-27980: spawnSync npm.cmd EINVAL).
+ * On Windows such a command becomes one cmd.exe line of quoted arguments; anything cmd.exe would
+ * interpret is refused rather than escaped.
+ */
+export function shellSafeInvocation(
+	command: string,
+	args: readonly string[],
+	platform: NodeJS.Platform = process.platform,
+): ShellSafeInvocation {
+	if (platform !== "win32" || !/\.(?:cmd|bat)$/iu.test(command)) return { command, args: [...args], shell: false };
+	const quoted = [command, ...args].map((value) => {
+		if (/["%^&|<>!\r\n]/u.test(value)) throw new Error(`refusing to pass ${JSON.stringify(value)} through cmd.exe`);
+		return /[\s()]/u.test(value) ? `"${value}"` : value;
+	});
+	return { command: quoted.join(" "), args: [], shell: true };
 }
 
 export type AutoUpdateSource = "session-start" | "management-command";
@@ -402,7 +432,14 @@ function defaultSpawn(
 	args: readonly string[],
 	options: AutoUpdateSpawnOptions,
 ): AutoUpdateSpawnResult {
-	const result = spawnSync(command, [...args], {
+	let invocation: ShellSafeInvocation;
+	try {
+		invocation = shellSafeInvocation(command, args);
+	} catch (error) {
+		return { status: null, error: error as Error };
+	}
+	const result = spawnSync(invocation.command, [...invocation.args], {
+		shell: invocation.shell,
 		cwd: options.cwd,
 		env: options.env,
 		timeout: options.timeout,

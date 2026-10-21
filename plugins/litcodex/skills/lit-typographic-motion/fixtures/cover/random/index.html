@@ -1,0 +1,10 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #000; }</style>
+<body><div id="box" style="position:absolute;width:40px;height:40px;background:#fff"></div>
+<script>
+// Reads unseeded entropy on every frame, which a cover page may not.
+window.renderFrame = () => { document.getElementById("box").style.left = `${Math.random() * 1100}px`; };
+window.ready = true;
+</script>
+</body>

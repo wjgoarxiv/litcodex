@@ -26,15 +26,18 @@ function routeFiles(skillName: string, skillPath: string, directive?: { mode: st
 
 /**
  * Fill `{skill:<name>}` with the installed SKILL.md path, or the skill's catalog name when this package
- * layout does not ship that skill, and `{root}` with the folder that holds `skills/`.
+ * layout does not ship that skill, `{skills}` with the folder that holds every skill, and `{root}` with
+ * the folder that holds `skills/`.
  */
 function resolveHeadPaths(head: string): string {
-	const root = dirname(dirname(dirname(resolveSkillPath("lit-loop"))));
+	const skills = dirname(dirname(resolveSkillPath("lit-loop")));
+	const root = dirname(skills);
 	return head
 		.replace(/\{skill:([a-z-]+)\}/gu, (_match, name: string) => {
 			const path = resolveSkillPath(name);
 			return existsSync(path) ? `\`${path}\`` : `the \`${name}\` skill from the Codex skill catalog`;
 		})
+		.replaceAll("{skills}", skills)
 		.replaceAll("{root}", root);
 }
 

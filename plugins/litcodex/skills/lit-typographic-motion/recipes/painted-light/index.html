@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Cover recipe: painted base + travelling light (the default). A finished painting is the whole
+     picture and this page only relights it. Everything that belongs to one painting sits in the
+     PAINTING block; measure those numbers on your own base art (cover/assets/base.png, listed in
+     assets.json) and keep the rest. The painting is scaled into the cover, never cropped: a 3:2
+     painting on a 2:1 cover is pillarboxed and the wings stay quiet. Any panel can be the lead:
+     set PAINTING.lead, give that machine its own glow anchors, and point the base art's checkBox in
+     assets.json at the same panel. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/loop-kit.js"></script>
+<style>
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #05080d; }
+  #painting { position: absolute; left: 150px; top: 0; width: 1536px; height: 1024px; transform: scale(0.5859375); transform-origin: 0 0; }
+  #painting > canvas, #painting > svg { position: absolute; left: 0; top: 0; width: 1536px; height: 1024px; }
+  #wings, #motes { position: absolute; inset: 0; width: 1200px; height: 600px; }
+  #motes { mix-blend-mode: screen; }
+  #title-mask { display: none; }
+  body.mask, body.mask * { background: #000 !important; }
+  body.mask canvas, body.mask svg { visibility: hidden; }
+  body.mask #title-mask { display: block; visibility: visible; }
+</style>
+</head>
+<body>
+<canvas id="wings" width="2400" height="1200"></canvas>
+<div id="painting">
+  <canvas id="base" width="1536" height="1024"></canvas>
+  <canvas id="title-mask" width="1536" height="1024"></canvas>
+  <svg id="dim" viewBox="0 0 1536 1024"><defs><linearGradient id="pool" gradientUnits="userSpaceOnUse" y1="0" y2="0"></linearGradient><clipPath id="pool-clip"></clipPath></defs><rect id="pool-rect" fill="url(#pool)" clip-path="url(#pool-clip)"/></svg>
+  <svg id="light" viewBox="0 0 1536 1024" style="mix-blend-mode: screen">
+    <defs id="light-defs">
+      <filter id="soften" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5"/></filter>
+      <radialGradient id="ember"><stop offset="0" stop-color="#fff0d8" stop-opacity="0.85"/><stop offset="0.3" stop-color="#ff6337" stop-opacity="0.5"/><stop offset="1" stop-color="#ff6337" stop-opacity="0"/></radialGradient>
+      <radialGradient id="head"><stop offset="0" stop-color="#fff1e0" stop-opacity="1"/><stop offset="0.4" stop-color="#ffb27a" stop-opacity="0.5"/><stop offset="1" stop-color="#ff7a46" stop-opacity="0"/></radialGradient>
+    </defs>
+    <g id="bands"></g>
+    <g id="glows"></g>
+    <g id="orbit" fill="none" stroke-linecap="round"></g>
+    <ellipse id="accent" fill="url(#ember)" opacity="0"/>
+  </svg>
+  <svg viewBox="0 0 1536 1024" style="mix-blend-mode: overlay"><defs><filter id="glint-blur"><feGaussianBlur stdDeviation="6"/></filter></defs><polygon id="glint" fill="#ffffff" opacity="0" filter="url(#glint-blur)"/></svg>
+</div>
+<canvas id="motes" width="2400" height="1200"></canvas>
+<script>
+// ---- PAINTING: one painting's numbers, in its own pixel coordinates ----
+const PAINTING = {
+  src: "assets/base.png", width: 1536, height: 1024,
+  panels: [[13, 303], [320, 607], [623, 906], [921, 1208], [1224, 1526]], // x ranges of the panels, left to right
+  panelTop: 148, panelBottom: 945,
+  lead: 0, // index into panels: the machine that stays lit, carries the beat glows and the comet
+  title: { box: [455, 32, 635, 88], gain: 1, maskLevel: 60 }, // the painted title; gain > 1 lifts dark letters
+  // Glow anchors per panel index, measured on that machine: two eyes and a core. Only the lead's entry
+  // glows. A lead with no entry stops the page; [] runs it with no beat glows.
+  glows: { 0: [{ cx: 88, cy: 378, rx: 20, ry: 6, kind: "eye" }, { cx: 122, cy: 374, rx: 16, ry: 7, kind: "eye" }, { cx: 85, cy: 686, rx: 32, ry: 32, kind: "core" }] },
+  accent: { cx: 902, cy: 987, rx: 60, ry: 22 }, // the accent word of the painted motto
+};
+
+// Three speed layers over one rule. Slow: the comet laps the lead frame and motes rise, linear and
+// perpetual. Mid: a window of work light walks the dim panels once per loop, and a scan band runs down
+// each panel twice per loop, offset by the panel's position. Beat: the eyes breathe twice, the core once,
+// one blink, one glint over the title, the accent flares at t = 0 and t = 0.5.
+// Light is drawn as moving EDGES, never as an in-place fade: lossy animated WebP skips a pixel that
+// changes by less than a few levels per frame, so a slow fade goes stale and pops back at the seam.
+const { TAU, clamp, fract, mix, ease, swell, cubicPulse, cdist, rng, makeNoise, loopNoise } = LitLoop;
+const SVG = "http://www.w3.org/2000/svg";
+const byId = (id) => document.getElementById(id);
+const add = (parent, tag, attrs) => {
+  const node = document.createElementNS(SVG, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, String(v));
+  parent.appendChild(node);
+  return node;
+};
+const SCALE = 600 / PAINTING.height;
+const OFFSET_X = (1200 - PAINTING.width * SCALE) / 2;
+const NIGHT = "#02050a";
+
+if (!PAINTING.panels[PAINTING.lead]) throw new Error(`PAINTING.lead ${PAINTING.lead} is not a panel index (0 to ${PAINTING.panels.length - 1})`);
+const leadGlows = PAINTING.glows[PAINTING.lead];
+if (!Array.isArray(leadGlows)) throw new Error(`PAINTING.glows has no entry for the lead panel ${PAINTING.lead}: measure that machine's eyes and core, or set glows[${PAINTING.lead}] = [] to run with no beat glows`);
+const [lx0, lx1] = PAINTING.panels[PAINTING.lead];
+
+// The dim pool spans the first to the last sleeping panel and is clipped around the lead, so a lead in
+// the middle stays lit and the window still walks every panel as one light. The lit window is a flat
+// span with a 24 px feather on each side: dim 0.68 outside, 0.04 inside.
+const sleeping = PAINTING.panels.filter((_, i) => i !== PAINTING.lead);
+const POOL = { from: sleeping[0][0], to: sleeping[sleeping.length - 1][1], half: 230, feather: 24, dim: 0.68, lit: 0.04 };
+const poolWidth = POOL.to - POOL.from;
+for (const [k, v] of Object.entries({ x: POOL.from, y: PAINTING.panelTop, width: poolWidth, height: PAINTING.panelBottom - PAINTING.panelTop })) byId("pool-rect").setAttribute(k, v);
+byId("pool").setAttribute("x1", POOL.from);
+byId("pool").setAttribute("x2", POOL.to);
+const poolHeight = PAINTING.panelBottom - PAINTING.panelTop;
+if (lx0 > POOL.from) add(byId("pool-clip"), "rect", { x: POOL.from, y: PAINTING.panelTop, width: lx0 - POOL.from, height: poolHeight });
+if (lx1 < POOL.to) add(byId("pool-clip"), "rect", { x: lx1, y: PAINTING.panelTop, width: POOL.to - lx1, height: poolHeight });
+const poolStops = Array.from({ length: 6 }, () => add(byId("pool"), "stop", { "stop-color": NIGHT }));
+const windowCentre = (t) => mix(POOL.from - 330, POOL.to + 330, fract(t + 0.18));
+const litness = (t, x) => 1 - ease.smooth(clamp((Math.abs(x - windowCentre(t)) - POOL.half) / POOL.feather));
+
+// Scan bands: a 3 px leading line over a two-step flat afterglow (0.10, 0.05), clipped to the panel.
+// Flat steps change pixels only at their edges, and by more than the encoder's threshold.
+const BAND = 64;
+const AFTERGLOW = [0.1, 0.05];
+const bands = PAINTING.panels.map(([x0, x1], i) => {
+  const clip = add(byId("light-defs"), "clipPath", { id: `panel-${i}` });
+  add(clip, "rect", { x: x0 + 2, y: PAINTING.panelTop, width: x1 - x0 - 4, height: PAINTING.panelBottom - PAINTING.panelTop });
+  const group = add(byId("bands"), "g", { "clip-path": `url(#panel-${i})`, opacity: 0 });
+  const steps = AFTERGLOW.map((a) => add(group, "rect", { x: x0 + 2, y: 0, width: x1 - x0 - 4, height: BAND / AFTERGLOW.length, fill: "#ffb27a", opacity: a }));
+  const edge = add(group, "rect", { x: x0 + 2, y: 0, width: x1 - x0 - 4, height: 3, fill: "#ffc9a0", opacity: 0.32 });
+  return { group, steps, edge };
+});
+const glows = leadGlows.map((g) => add(byId("glows"), "ellipse", { cx: g.cx, cy: g.cy, rx: g.rx + 30, ry: g.ry + 30, fill: "url(#ember)", opacity: 0 }));
+for (const [k, v] of Object.entries(PAINTING.accent)) byId("accent").setAttribute(k, v);
+
+// The lead frame as one chamfered path. The comet is a bright dash with a tail of wider, fainter dashes.
+const L = lx0 + 0.5, R = lx1 + 0.5, T = PAINTING.panelTop + 0.5, B = PAINTING.panelBottom + 0.5, C = 10;
+const frame = `M${L} ${T + C}L${L + C} ${T}H${R - C}L${R} ${T + C}V${B - C}L${R - C} ${B}H${L + C}L${L} ${B - C}Z`;
+const tail = Array.from({ length: 6 }, (_, s) => add(byId("orbit"), "path", { d: frame, stroke: "#ff7a46", "stroke-width": 9 - s, opacity: 0.55 * (1 - s / 6), filter: s < 2 ? "url(#soften)" : "" }));
+const streak = add(byId("orbit"), "path", { d: frame, stroke: "#ffd2b0", "stroke-width": 3 });
+const comet = add(byId("orbit"), "circle", { r: 22, fill: "url(#head)" });
+const PERIMETER = streak.getTotalLength();
+const [gx, gy, gw, gh] = PAINTING.title.box;
+byId("glint").setAttribute("points", `0,${gy - 8} 60,${gy - 8} 25,${gy + gh + 8} -35,${gy + gh + 8}`);
+
+// Motes: few, mostly over the plain wings; each one over the painting makes the encoder re-send the
+// textured blocks around it.
+const pick = rng(11);
+const noise = makeNoise(5);
+const motes = Array.from({ length: 50 }, (_, i) => ({ x: pick() * 1200, y0: pick() * 600, laps: pick() < 0.3 ? 2 : 1, r: 0.6 + pick() * 1.4, alpha: 0.25 + pick() * 0.45, i }));
+const moteCtx = byId("motes").getContext("2d");
+moteCtx.scale(2, 2);
+const wingCtx = byId("wings").getContext("2d");
+wingCtx.scale(2, 2);
+
+function drawWings() {
+  wingCtx.clearRect(0, 0, 1200, 600);
+  const spill = (x, w, a) => {
+    const g = wingCtx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, `rgba(255,120,70,${a})`);
+    g.addColorStop(1, "rgba(255,120,70,0)");
+    wingCtx.fillStyle = g;
+    wingCtx.fillRect(Math.min(x, x + w), 0, Math.abs(w), 600);
+  };
+  spill(OFFSET_X, -OFFSET_X, 0.08);
+  spill(1200 - OFFSET_X, OFFSET_X, 0.03);
+}
+
+window.renderFrame = (t, opts = {}) => {
+  document.body.className = opts.mask ? "mask" : "";
+  if (opts.mask) return;
+  const centre = windowCentre(t);
+  const at = (x) => clamp((x - POOL.from) / poolWidth);
+  const stops = [[POOL.from, POOL.dim], [centre - POOL.half - POOL.feather, POOL.dim], [centre - POOL.half, POOL.lit], [centre + POOL.half, POOL.lit], [centre + POOL.half + POOL.feather, POOL.dim], [POOL.to, POOL.dim]];
+  stops.forEach(([x, a], j) => {
+    poolStops[j].setAttribute("offset", String(j === 0 ? 0 : at(x)));
+    poolStops[j].setAttribute("stop-opacity", String(a));
+  });
+  PAINTING.panels.forEach(([x0, x1], i) => {
+    const y = mix(PAINTING.panelTop - BAND, PAINTING.panelBottom, fract(t * 2 - i * 0.11));
+    bands[i].steps.forEach((step, j) => step.setAttribute("y", String(y + BAND - ((j + 1) * BAND) / AFTERGLOW.length)));
+    bands[i].edge.setAttribute("y", String(y + BAND - 3));
+    bands[i].group.setAttribute("opacity", String(i === PAINTING.lead ? 0.8 : 0.35 + 0.65 * litness(t, (x0 + x1) / 2)));
+  });
+  const blink = 1 - cubicPulse(0.62, 0.018, t);
+  leadGlows.forEach((g, j) => {
+    const breath = g.kind === "eye" ? swell(fract(2 * t - 0.06 * j)) : swell(fract(t - 0.35));
+    glows[j].setAttribute("opacity", String(g.kind === "eye" ? (0.55 + 0.45 * breath) * blink : 0.45 + 0.4 * breath));
+  });
+  const head = fract(t) * PERIMETER;
+  const tailLength = 0.16 * PERIMETER;
+  tail.forEach((dash, s) => {
+    const len = tailLength * (1 - s / 7);
+    dash.setAttribute("stroke-dasharray", `${len} ${PERIMETER - len}`);
+    dash.setAttribute("stroke-dashoffset", String(-(head - len)));
+  });
+  streak.setAttribute("stroke-dasharray", `${tailLength * 0.35} ${PERIMETER - tailLength * 0.35}`);
+  streak.setAttribute("stroke-dashoffset", String(-(head - tailLength * 0.35)));
+  const point = streak.getPointAtLength(head);
+  comet.setAttribute("cx", point.x);
+  comet.setAttribute("cy", point.y);
+  // The glint is one fast skewed sweep in OVERLAY blend: the dark plate stays dark and only the
+  // letters brighten. Screen brightens a visible box; colour-dodge turns a coloured letter into a block.
+  const sweep = LitLoop.window(t, 0.08, 0.11);
+  byId("glint").setAttribute("transform", `translate(${mix(gx - 40, gx + gw + 40, sweep < 0 ? 0 : ease.smooth(sweep))} 0)`);
+  byId("glint").setAttribute("opacity", String(sweep < 0 ? 0 : 0.9 * Math.sin(Math.PI * sweep)));
+  // Symmetric pulses at t = 0 and t = 0.5, so the reset at frame 0 lands under motion.
+  byId("accent").setAttribute("opacity", String(0.18 + 0.5 * Math.max(cubicPulse(0, 0.03, cdist(t, 0)), cubicPulse(0.5, 0.03, t))));
+  drawWings();
+  moteCtx.clearRect(0, 0, 1200, 600);
+  for (const m of motes) {
+    const y = 620 - fract(m.y0 / 600 + m.laps * t) * 640;
+    const x = m.x + 14 * loopNoise(noise, t, m.i * 1.7, 1.1);
+    const over = x >= OFFSET_X && x <= 1200 - OFFSET_X;
+    moteCtx.fillStyle = `rgba(255,214,170,${m.alpha * (over ? 0.3 + 0.7 * litness(t, (x - OFFSET_X) / SCALE) : 0.35)})`;
+    moteCtx.beginPath();
+    moteCtx.arc(x, y, m.r, 0, TAU);
+    moteCtx.fill();
+  }
+};
+
+// The painting is drawn once. Dark painted title letters are lifted in place by a luminance-keyed gain
+// (the plate under them stays put), and the mask canvas shows the same letters white on black for the
+// contrast and cap-height gates.
+const art = new Image();
+art.src = PAINTING.src;
+art.decode().then(() => {
+  const base = byId("base").getContext("2d", { willReadFrequently: true });
+  base.drawImage(art, 0, 0, PAINTING.width, PAINTING.height);
+  const letters = base.getImageData(gx, gy, gw, gh);
+  const mask = new ImageData(gw, gh);
+  const ramp = (a, b, x) => ease.smooth(clamp((x - a) / (b - a)));
+  for (let p = 0; p < gw * gh; p++) {
+    const o = p * 4;
+    const y = 0.2126 * letters.data[o] + 0.7152 * letters.data[o + 1] + 0.0722 * letters.data[o + 2];
+    const gain = 1 + (PAINTING.title.gain - 1) * ramp(8, 30, y);
+    for (let c = 0; c < 3; c++) letters.data[o + c] = Math.min(255, Math.round(letters.data[o + c] * gain));
+    const on = y > PAINTING.title.maskLevel ? 255 : 0;
+    mask.data[o] = mask.data[o + 1] = mask.data[o + 2] = on;
+    mask.data[o + 3] = 255;
+  }
+  base.putImageData(letters, gx, gy);
+  const maskCtx = byId("title-mask").getContext("2d");
+  maskCtx.fillStyle = "#000";
+  maskCtx.fillRect(0, 0, PAINTING.width, PAINTING.height);
+  maskCtx.putImageData(mask, gx, gy);
+  window.renderFrame(0);
+  window.ready = true;
+});
+</script>
+</body>
+</html>

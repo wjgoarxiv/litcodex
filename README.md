@@ -1,4 +1,4 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: five armored robots power on one by one, the LitCodex robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: seven armored machines power on bay by bay, the LitCodex machine in the third bay wakes with a glowing orange visor and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
 
 # LitCodex
 
@@ -235,7 +235,7 @@ Every skill can be picked in the Codex skill picker or mentioned by name, such a
 | For | Skills |
 | --- | --- |
 | Code | `debugging`, `refactor`, `lit-code`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`, `structural-search`, `lsp-setup`, `lit-init` |
-| Planning and teams | `deep-interview`, `lit-crucible`, `litgoal`, `litwork`, `lit-team` |
+| Planning and teams | `deep-interview`, `lit-brainstorm`, `lit-crucible`, `litgoal`, `litwork`, `lit-team` |
 | Research and knowledge | `autoresearch`, `autoconference`, `wikify`, `lit-fetch`, `coding-session-audit`, `lit-comprehend` |
 | Screens, figures and film | `frontend-ui-ux`, `visual-qa`, `browser-drive`, `readme-studio`, `lit-diagram-drawer`, `lit-scientific-visualization`, `lit-typographic-motion` |
 | Keeping LitCodex healthy | `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix` |
@@ -386,16 +386,22 @@ your machine, so judge a piece of work by what it produced and which checks ran.
 | `litwork` | **litwork** | Outcome-first work, backed by manual QA evidence |
 | `lit-plan` or `lit plan` | **lit-plan** | Planning only: a bounded plan with evidence and a final done claim |
 | `deep-interview` or `lit deep interview` | **deep-interview** | Planning only: asks questions until a vague brief is clear |
-| `litgoal` or `lit goal` | **litgoal** | Binds an objective and its criteria into the loop state |
+| `lit brainstorm`, `lit ideation` or `lit idea` | **lit-brainstorm** | Many different options, narrowed to a short list you pick from; nothing is built |
+| `litgoal` or `lit goal` | **litgoal** | Sets and keeps the finish line: binds an objective and its criteria into the loop state that lit-loop and Start Work run toward |
 | `lit-recap` or `lit recap` | **lit-recap** | A read-only recap from the `.litcodex` ledgers |
 | `lit-comprehend` or `comprehend` | **lit-comprehend** | Builds a self-contained explainer outside the worktree |
-| `review-work` or `lit review` | **review-work** | A read-only review of a plan or of finished work |
+| `review-work` or `lit review` | **review-work** | A read-only review: plan review before Start Work, work review after it; it picks the mode from what exists, or you force one with `lit review plan` or `lit review work` |
 | `litresearch`, `/litresearch`, or `lit research` | **litresearch** | A research journal that keeps facts, hypotheses, sources and uncertainty apart |
 | `lit start work <plan-name>` | **Start Work** | Runs an approved plan and keeps its evidence |
 | exact bare `handoff` | **lit-handoff** | Creates or refreshes a continuation packet that leaves secrets out |
 | exact bare `lit-scientific-visualization` | **lit-scientific-visualization** | Loads the publication plotting adapter through the hook |
 
-Typing the same mode again in one session has no extra effect.
+The first `lit …` of a session sends the full activation. A later `lit …` that names the same mode gets a short
+note that the mode is already active: nothing is read, created or reset again. `lit plan` after `lit` switches,
+and sends the plan activation once. A bare `lit` or `lit continue` never switches: it carries on whichever mode is active, and over an active Start Work plan, a published
+plan or open goals says it is resuming that work and makes no new plan. `lit new …`, `lit restart …`, a new
+session and the first `lit` after a compaction start over in full. A bare `lit` with no task and no work in
+flight asks what to start. Start Work always sends its full activation, because its prompt carries the grant.
 
 ### CLI commands
 

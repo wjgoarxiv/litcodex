@@ -6,6 +6,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `lit-typographic-motion` has a cover mode for README, hero and banner loops. A cover treatment (`"mode": "cover"`)
+  names one recipe, one rule with its copies, three speed layers and the brand word set once; there are no beats, no
+  copy lines and no sound. `render.mjs cover` seeks every frame of `cover/index.html` at 2x in headless Chrome,
+  repeats the capture in fresh browsers (once in order, once in a seeded shuffle that catches a page keeping state
+  between frames), encodes `cover.webp` with img2webp (gifski as the fallback, never an MP4) and gates the decoded
+  file: determinism, size and loop, motion energy, holds, the seam, title contrast, a 24 px cap-height floor at README
+  width, frame 0's base art and the flash audit. It exits 13 until every gate reaches its cover target, 2 MiB
+  included. Rasters come from a checked `assets.json`: a listed file that is missing stops the run as
+  `BLOCKED_ASSET_MISSING` (exit 22), and no cover encoder is `BLOCKED_NO_COVER_ENCODER` (exit 21). Look rounds view a
+  sheet of decoded frames with a frame-difference plot, the poster and the seam pair, answer eight cover questions,
+  and log up to three timed defects; `--window t0,t1` re-renders only the frames around one. The painted-light
+  (default), weight-tide and orbit-loop recipes ship as pages with their gate rows, and four slide-like negatives
+  ship as pages that must keep failing; `npm run qa:cover-recipes` re-renders them. The skill bundles JetBrains Mono
+  (variable weight, OFL) and `litcodex doctor` prints a sixth motion probe for the cover encoder.
+
+- `lit-brainstorm`, an ideation skill. `lit brainstorm …`, `lit brainstorming …`, `lit ideation …`, `lit ideate …`,
+  `lit idea …` and `lit ideas …` (and `$litcodex:lit-brainstorm`) used to run lit-loop; they now route to it. It writes
+  many genuinely different options from several lenses before any judging, clusters and scores them against the
+  criteria you give, narrows to a short list with trade-offs, asks you to pick or combine, and then points at
+  `deep-interview` when the pick is still vague or `lit-plan` when it is concrete. It never implements; its only
+  notes live under `.litcodex/lit-brainstorm/`. The same words without a leading `lit` stay ordinary prose, and a
+  repeated `lit brainstorm` follows the same continue rules as every other mode.
+
+### Changed
+
+- `litgoal` now says plainly what it is for: it sets and keeps the finish line, and lit-loop and Start Work run
+  toward it. Its mechanics are unchanged.
+- `review-work` names its two modes, plan review (after lit-plan, before Start Work) and work review (after lit-loop or
+  Start Work). It picks one from what exists, a named diff or ticked plan rows for work and a plan with neither for plan,
+  asks when neither is there, takes `lit review plan` or `lit review work` to force one, and names the mode on the
+  first line of its report.
+- `deep-interview` sends open brainstorming to `lit-brainstorm`.
+
+### Fixed
+
+- A second `lit …` in a session no longer sends the whole activation again. The per-prompt repeat guard read a
+  transcript line that Codex never writes, so one real session received the same 4.6 KB directive eleven times.
+  The hook now keeps a small record per session under `.litcodex/lit-reentry/`: the same mode continues with a
+  note of at most 600 bytes that asks for no skill re-read, a different mode switches with its full activation (a bare `lit` never switches),
+  a bare `lit` or `lit continue` over an active Start Work plan, a published plan or open goals resumes it
+  without a new plan, and `lit new …` or `lit restart …` starts over in full. A compaction clears the record.
+  Start Work is always sent in full. A continued lit-plan leaves its persistence gate alone.
+- The `lit` activation names the six hand-off skills once under a single skills folder instead of repeating six
+  absolute `SKILL.md` paths, and a bare `lit` with no task and no work in flight asks what to start.
+
 ## [1.0.28] - 2026-10-19
 
 ### Added

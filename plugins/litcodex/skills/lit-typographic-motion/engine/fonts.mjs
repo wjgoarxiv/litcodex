@@ -63,6 +63,17 @@ export const FONTS = Object.freeze([
 		licence: ["fonts/vt323/OFL.txt"],
 	},
 	{
+		// A variable face with a real wght axis (100-800) and a fixed advance: cover-mode weight motion
+		// never reflows a line. Unmodified latin subset; no Reserved Font Name.
+		key: "jetbrains-mono",
+		family: "JetBrains Mono",
+		weight: "100 800",
+		source: "bundled",
+		path: "fonts/jetbrains-mono/JetBrainsMono-wght-latin.woff2",
+		sha256: "18be452724bfdc236c074ca94a249a7f41a86752c7d04ab258ce9ed5651f6a7e",
+		licence: ["fonts/jetbrains-mono/OFL.txt"],
+	},
+	{
 		key: "galmuri9",
 		family: "Galmuri9",
 		weight: 400,

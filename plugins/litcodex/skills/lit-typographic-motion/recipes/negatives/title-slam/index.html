@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- A shipped NEGATIVE, never a recipe: the film habit of a title slam, three lines revealed one by one
+     with holds, and a crossfade to a settled end card. The decoded-file gate must keep failing it on G2
+     and G3 (held cards: little motion, long stills). -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/loop-kit.js"></script>
+<style>
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #080d14; color: #f2efdf; font-family: "JetBrains Mono"; }
+  .line { position: absolute; left: 0; right: 0; text-align: center; white-space: nowrap; }
+  body.mask, body.mask * { background: #000 !important; color: #000 !important; border-color: #000 !important; }
+  body.mask .name { color: #fff !important; }
+</style>
+</head>
+<body>
+<div class="line name" id="name" style="top:150px;font-size:110px;font-weight:800;letter-spacing:6px">LITCODEX</div>
+<div class="line" id="l1" style="top:330px;font-size:34px;font-weight:500">Plans before code.</div>
+<div class="line" id="l2" style="top:380px;font-size:34px;font-weight:500">Loops until green.</div>
+<div class="line" id="l3" style="top:430px;font-size:34px;font-weight:500;color:#ff6337">Evidence, not claims.</div>
+<div class="line" id="end" style="top:250px;font-size:64px;font-weight:700;opacity:0">KEEP THE WORK <span style="color:#ff6337">LIT.</span></div>
+<script>
+const { clamp, ease } = LitLoop;
+const SECONDS = 10;
+const rise = (s, at, dur) => ease.outCubic(clamp((s - at) / dur));
+window.renderFrame = (t, opts = {}) => {
+  document.body.className = opts.mask ? "mask" : "";
+  const s = t * SECONDS;
+  const out = 1 - rise(s, 5.6, 0.4);
+  const name = document.getElementById("name");
+  name.style.opacity = rise(s, 0.2, 0.5) * out;
+  name.style.transform = `scale(${1.25 - 0.25 * rise(s, 0.2, 0.5)})`;
+  [2, 3, 4].forEach((at, i) => {
+    const line = document.getElementById(`l${i + 1}`);
+    line.style.opacity = rise(s, at, 0.3) * out;
+    line.style.transform = `translateY(${12 * (1 - rise(s, at, 0.3))}px)`;
+  });
+  document.getElementById("end").style.opacity = rise(s, 6.1, 0.5) * (1 - rise(s, 9.6, 0.4));
+};
+document.fonts.ready.then(() => { window.ready = true; });
+</script>
+</body>
+</html>

@@ -127,7 +127,8 @@ def template_variables(frontmatter: dict, publisher_name: str, publisher: dict, 
         "publisher-name": publisher_name,
         "detected-locale": detected_locale,
         "mode": mode,
-        "has-cjk": "true" if detected_locale in {"ko", "mixed"} else "false",
+        # Pandoc treats any non-empty value as true, so an English document leaves the variable unset.
+        "has-cjk": "true" if detected_locale in {"ko", "mixed"} else "",
     }
 
 
@@ -183,6 +184,29 @@ def kpsewhich_has(target: str) -> bool:
     return result.returncode == 0 and bool(result.stdout.strip())
 
 
+FONT_INSTALL_HINTS = {
+    "Pretendard": "install Pretendard from https://github.com/orioncactus/pretendard/releases",
+    "Pretendard SemiBold": "install Pretendard from https://github.com/orioncactus/pretendard/releases",
+    "Times New Roman": "install the Microsoft core fonts (Debian/Ubuntu: ttf-mscorefonts-installer)",
+    "Arial": "install the Microsoft core fonts (Debian/Ubuntu: ttf-mscorefonts-installer)",
+}
+
+
+def required_fonts(publisher: dict, detected_locale: str) -> list[str]:
+    body_font = ((publisher.get("docx") or {}).get("font") or {}).get("body") or {}
+    fonts = [str(body_font.get("family") or "Times New Roman")]
+    if detected_locale in {"ko", "mixed"}:
+        fonts.append(str((publisher["latex"].get("cjk") or {}).get("main_font") or "Pretendard"))
+    return list(dict.fromkeys(fonts))
+
+
+def missing_fonts(fonts: list[str], fc_list: str | None) -> list[str]:
+    """Fonts fontconfig cannot find; XeLaTeX resolves fontspec names through the same lookup."""
+    if not fc_list:
+        return []
+    return [font for font in fonts if not run_checked([fc_list, f":family={font}", "family"]).stdout.strip()]
+
+
 def preflight_pdf_compile(publisher_name: str, publisher: dict, detected_locale: str) -> None:
     ensure_pandoc()
     if not command_path("xelatex"):
@@ -203,6 +227,12 @@ def preflight_pdf_compile(publisher_name: str, publisher: dict, detected_locale:
     if detected_locale in {"ko", "mixed"} and not kpsewhich_has("xeCJK.sty"):
         raise SystemExit(
             "Error: xeCJK.sty not found. Korean/CJK PDF output requires xeCJK from TeX Live."
+        )
+    for font in missing_fonts(required_fonts(publisher, detected_locale), command_path("fc-list")):
+        hint = FONT_INSTALL_HINTS.get(font, f"install the font family '{font}'")
+        raise SystemExit(
+            f"BLOCKED: publisher '{publisher_name}' needs the font '{font}', which is not installed; "
+            f"{hint}, then rerun. XeLaTeX would stop on it."
         )
 
 

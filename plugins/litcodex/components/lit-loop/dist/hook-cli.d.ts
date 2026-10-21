@@ -25,6 +25,8 @@ export interface AutoHandoffHookOptions {
  * instead of scrolling away with the first one. In the terminal `codex` the same tool returns the map as text.
  */
 export declare const CARD_OFFER_CONTEXT = "LIT card: if the `lit_card` tool (litcodex MCP server) is available, call the `lit_card` tool once now, with no arguments, so the user sees the live LIT card for this turn. It replaces the previous turn's card, which folds itself into one line. Do not call it again in this turn; it updates by itself.";
+/** The card request for a continued discipline: the model already read the full one when it was activated. */
+export declare const CARD_OFFER_CONTINUE_CONTEXT = "LIT card: if the `lit_card` tool is available, call it once now with no arguments; it updates by itself.";
 /** Enforce lit-plan persistence when a Stop hook event arrives. */
 export declare function runStopPlanPersistenceHookCli(stdin: NodeJS.ReadableStream, stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream, repoRoot?: string, auto?: AutoHandoffHookOptions): Promise<number>;
 /** SessionStart: after a compaction inside a turn, bring this session's fresh handoff back once. */

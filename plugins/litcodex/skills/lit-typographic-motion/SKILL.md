@@ -1,6 +1,6 @@
 ---
 name: lit-typographic-motion
-description: Direct a film (MP4, stills, sound): treatment first, then an authored stage page or the typography engine, gated and viewed. Use for 영상, 모션그래픽, video, lyric video.
+description: Direct a film (MP4) or a seamless README cover loop: treatment first, stage page or typography engine, gated and viewed. Use for 영상, 모션그래픽, video, lyric video.
 ---
 
 ## #contract.activation
@@ -31,16 +31,18 @@ The request, optional audio and optional explicit style. Under `lit`, ask no que
 | Treatment | Always first | Load only `references/treatment.md`; write `treatment.json` in the output dir |
 | Stage | `path: stage` | `references/stage.md`: author the page (`index.html` in the output's `stage` folder), then `stage` |
 | Type | `path: type` | `references/style-bibles.md`, `references/type-and-timing.md`, `references/scene-author.md`, then `film` |
+| Cover | README, hero, banner or cover loop | `references/cover.md`; a `recipes/` page, then `cover` |
 | Look | Every stills set | View the PNGs, then `look` (`references/quality-gate.md`) |
-| Blocked | Exit 10-12, 14-20 | Name the state and its fix |
+| Blocked | Exit 10-12, 14-22 | Name the state and its fix |
 
 ## #contract.procedure
 
 1. `R` = absolute path of `scripts/render.mjs` beside this SKILL.md; `O` = the output dir.
 2. Write `treatment.json` in `O`; the path reference loads only after `path` is set.
-3. Round 1: `node "$R" stage --out O --stills-only --round 1` (type path: `film`). Open every PNG listed in the stills `manifest.json` with `view_image`; write answers; `node "$R" look --out O --round 1 --answers <file>` names the weakest beat and the change you made.
-4. Full render: `node "$R" stage --out O --round 2`. Give the call a timeout of at least 600 s; never shorten the film to save time. View the new stills, record `look --round 2`; revise until the look is clean, at most round 3.
+3. Round 1: `node "$R" stage --out O --stills-only --round 1` (type path: `film`). Open every PNG in the stills `manifest.json` with `view_image`; write answers; `node "$R" look --out O --round 1 --answers <file>` names the weakest beat and the change you made.
+4. Full render: `node "$R" stage --out O --round 2`. Give the call a timeout of at least 600 s; never shorten the film to save time. View the new stills, record `look --round 2`; at most round 3.
 5. Sound: the generated bed is the default; `sound --out O` previews it.
+6. Cover: `node "$R" cover --out O --round N`; view sheet, poster and seam, then `look`.
 
 Hand-encoded films are not the deliverable; every frame and track goes through `$R`.
 
@@ -51,8 +53,8 @@ Hand-encoded films are not the deliverable; every frame and track goes through `
   "contract_schema_version": 1,
   "output_schema": {
     "film": "film.mp4, or withheld after a flash FAIL",
-    "stills": "stills/ with manifest.json, beat midpoints, transition strips, contact sheet",
-    "poster": "poster.png",
+    "cover": "cover.webp, gated on the decoded file",
+    "stills": "stills/ with manifest.json",
     "treatment": "treatment.json with every invention listed",
     "report": "gate-report.txt and look.json",
     "limitations": ["blocked state, failed rule, open look item or downgrade"]
@@ -62,12 +64,12 @@ Hand-encoded films are not the deliverable; every frame and track goes through `
 
 ## #contract.evidence
 
-`node "$R" completion --out O` must print `complete` (or `DONE_UNVIEWED`, said plainly) before you call the film finished. Reply in plain words, below the activation line: one line on the defaults chosen; label every invention and generated sound; one line on what was checked (flash safety, legibility, frames looked at); where the copy lives and the one command that re-renders; any downgrade or open look item.
+`node "$R" completion --out O` must print `complete` (or `DONE_UNVIEWED`, said plainly) before you call the work finished. Reply in plain words: the defaults chosen; every invention, generated sound and `label:` asset, labelled; what was checked; where the copy lives and the command that re-renders; any downgrade or open look item.
 
 ## #contract.hard_stops
 
-Exit 10 no Chrome, 11 no WebGL2, 12 no ffmpeg (stills still written), 13 gate FAIL, 14 runtime not pre-warmed, 15 font pin fault, 16 treatment invalid (field named), 17 stage contract, 18 nondeterministic stage, 19 network request, 20 sound invalid. For 14 or 15 run `litcodex motion-runtime install` outside the sandbox. A flash FAIL withholds the film. Details: `references/runtime.md`.
+Exit 10 no Chrome, 11 no WebGL2, 12 no ffmpeg, 13 gate FAIL, 14 not pre-warmed, 15 font pin, 16 treatment, 17 stage contract, 18 nondeterministic, 19 network, 20 sound, 21 no cover encoder, 22 asset missing. For 14 or 15 run `litcodex motion-runtime install` outside the sandbox. A flash FAIL withholds the output. Details: `references/runtime.md`.
 
 ## #contract.anti_patterns
 
-Never answer a failure by shortening the film, dropping a beat or the subject device, muting the sound or switching to the type path; fix the cause or state the failure. No network, installs or third-party libraries in a render.
+Never answer a failure by shortening, dropping a beat, layer or subject, muting, switching path, raising a gate number or drawing a stand-in asset; fix the cause or state the failure. No network, installs or third-party libraries in a render.

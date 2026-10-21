@@ -243,6 +243,8 @@ export const EXIT = Object.freeze({
 	STAGE_NONDETERMINISTIC: 18,
 	STAGE_NETWORK_REQUEST: 19,
 	SOUND_INVALID: 20,
+	BLOCKED_NO_COVER_ENCODER: 21,
+	BLOCKED_ASSET_MISSING: 22,
 	USAGE: 2,
 });
 
@@ -262,3 +264,39 @@ export const STAGE_FORMATS = Object.freeze({ "16:9": Object.freeze({ width: 1920
 // Generated sound bed: the documented timbre palettes a treatment's sound.palette selects.
 export const SOUND_PALETTES = Object.freeze(["air", "felt", "glass", "pulse"]);
 export const MAX_ROUNDS = 3;
+
+// Cover mode (references/cover.md): a silent, seamless README loop gated on the DECODED file.
+// Calibrated on eight earlier painted covers (all pass FLOOR, all miss TARGET: a 1.9 s hold and a
+// flash at the seam), four slide-like negatives (all fail FLOOR) and three pilot loops (all reach
+// TARGET). A threshold moves only with a new calibration table, never to let a cover pass.
+export const COVER = Object.freeze({
+	maxBytes: 3 * 1024 * 1024,
+	targetBytes: 2 * 1024 * 1024,
+	minSec: 6,
+	maxSec: 12,
+	gridMs: 50, // metrics sample a fixed grid of max(gridMs, shortest decoded frame)
+	stillEps: 0.0005, // a grid step whose mean |dY| (0..1, luma about 300 px wide) is below this is still
+	lumaWidth: 300,
+	floor: Object.freeze({ medianD: 0.0004, movingFrac: 0.45, stillSec: 2.0, seamLocal: 8 }),
+	target: Object.freeze({ medianD: 0.0015, movingFrac: 0.95, stillSec: 0.5, spike: 6, seamLow: 0.25, seamHigh: 2.0 }),
+	minContrast: 4.5,
+	// G6: the title's cap height at the width a README column shows a full-width image (about 830 px).
+	minCapPx: 24,
+	displayWidth: 830,
+	// ART: frame 0 shows the base art (SSIM of its check box against the source scaled into the box).
+	artSsim: 0.9,
+	artMinShare: 0.1,
+	seekFrames: 16, // re-rendered in a fresh page in a seeded shuffled order
+	seekLevels: 1, // the software rasterizer's own rounding when opacity and transform change together
+	windowPadSec: 0.5,
+	maxDefects: 3,
+	captureScale: 2,
+	sheetTiles: 12,
+	fps: Object.freeze([16, 20, 25]),
+	// The page is laid out at `page` CSS px, captured at captureScale and Lanczos-downsampled to `size`.
+	aspects: Object.freeze({
+		"2:1": Object.freeze({ page: Object.freeze([1200, 600]), size: Object.freeze([1000, 500]) }),
+		"3:2": Object.freeze({ page: Object.freeze([1200, 800]), size: Object.freeze([960, 640]) }),
+	}),
+	encode: Object.freeze({ q: 86, edgeQ: 97, edgeFrames: 15, method: 4 }),
+});

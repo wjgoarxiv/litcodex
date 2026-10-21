@@ -2,7 +2,8 @@
 // lit-typographic-motion render CLI for LitCodex. One end-to-end command (`film`) runs a craft
 // round: timeline -> pre-flight gate -> stills -> cut sheet -> (stop with --stills-only) -> master,
 // preview, poster and reduced-motion still under .run/ -> full gate -> promote or withhold.
-// Single modes: stills, sheet, video, perf, gate. Exit codes follow MO-A-45.
+// Single modes: stills, sheet, video, perf, gate. `cover` renders a seamless README cover loop and
+// `cover-gate` gates any decoded cover file (references/cover.md). Exit codes follow MO-A-45.
 import { spawn, spawnSync } from "node:child_process";
 import { closeSync, createWriteStream, existsSync, mkdirSync, openSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -11,6 +12,8 @@ import { evaluateCompletion } from "../engine/completion.mjs";
 import { Composer } from "../engine/compose.mjs";
 import { CREDIT_LINE, ENGINE_CREDIT, EXIT, Exit, FRAME, INSTALL_COMMAND, MAX_ROUNDS, NEAR_BLACK, PERF, PREVIEW, SAMPLING } from "../engine/constants.mjs";
 import { buildPreview, encoderArgs, exportPaths, ffprobeSafe, locate, promote, requireFfmpeg } from "../engine/encode.mjs";
+import { renderCover, renderCoverWindow } from "../engine/cover.mjs";
+import { coverGate, formatCoverReport } from "../engine/cover-gate.mjs";
 
 export { promote };
 import { Blocked, close, launch, openEgress, perfFrame, renderFrame } from "../engine/driver.mjs";
@@ -31,13 +34,18 @@ import { loadStrokeFont, strokeText } from "../engine/stroke.mjs";
 import { FontBook, missingGlyphs } from "../engine/type.mjs";
 
 const SELF = fileURLToPath(import.meta.url);
-const MODES = ["stage", "sound", "look", "film", "stills", "sheet", "video", "perf", "gate", "completion", "determinism"];
+const MODES = ["stage", "cover", "cover-gate", "sound", "look", "film", "stills", "sheet", "video", "perf", "gate", "completion", "determinism"];
 
 export const USAGE = `lit-typographic-motion render CLI (LitCodex)
 Every render reads <dir>/treatment.json first (or --treatment <file>); references/treatment.md.
 Usage:
   node render.mjs stage  --out <dir> [--round N] [--stills-only] [--detach]
                          (renders <dir>/stage/index.html; references/stage.md)
+  node render.mjs cover  --out <dir> [--round N] [--window t0,t1] [--detach]
+                         (a seamless README cover loop from <dir>/cover/index.html; references/cover.md;
+                          --window re-renders only t0-0.5 s .. t1+0.5 s and sheets it, never done)
+  node render.mjs cover-gate --file <cover.webp|cover.gif|frames dir> [--frames d --frames2 d --masks d
+                         --title x,y,w,h] [--strict] [--json]   (the cover gate on a decoded file)
   node render.mjs sound  --out <dir>   (builds <dir>/sound/bed.wav and sound-cues.json from the treatment)
   node render.mjs film   --out <dir> [--round N] [--stills-only] [--viewed N] [--brief <staging.json>]
                          [--preset swiss-signal|terminalcore|tidal] [--audio <file>] [--word-timing]
@@ -49,10 +57,12 @@ Usage:
   node render.mjs completion --out <dir>   (prints whether the film turn is complete)
 Options (type path): --samples N (master 4), --shutter S (0.5), --scale 1..4, --seed N
 Outputs in <dir>: film.mp4, preview.webp|preview.gif, poster.png, reduced-motion.png, manifest.json,
-  render.jsonl, gate-report.txt, stills/ (with manifest.json), .run/ (staging), withheld/ (after a flash FAIL)
+  render.jsonl, gate-report.txt, stills/ (with manifest.json), .run/ (staging), withheld/ (after a flash FAIL);
+  a cover writes cover.webp (or cover.gif), poster.png, stills/ (sheet, poster, seam pair), manifest.json, gate-report.txt
 Exit: 0 OK, 10 BLOCKED_NO_CHROME, 11 BLOCKED_NO_WEBGL2, 12 BLOCKED_NO_FFMPEG_FOR_VIDEO,
   13 GATE_FAIL_QA, 14 BLOCKED_DEPS_NOT_PREWARMED, 15 BLOCKED_FONT_FETCH, 16 BLOCKED_TREATMENT_INVALID,
-  17 STAGE_CONTRACT_ERROR, 18 STAGE_NONDETERMINISTIC, 19 STAGE_NETWORK_REQUEST, 20 SOUND_INVALID
+  17 STAGE_CONTRACT_ERROR, 18 STAGE_NONDETERMINISTIC, 19 STAGE_NETWORK_REQUEST, 20 SOUND_INVALID,
+  21 BLOCKED_NO_COVER_ENCODER, 22 BLOCKED_ASSET_MISSING
 Pre-warm outside any sandboxed session: ${INSTALL_COMMAND} [--audio] [--word-timing]
 ${CREDIT_LINE}`;
 
@@ -63,7 +73,7 @@ export function parseArgs(argv) {
 		const token = rest[i];
 		if (!token.startsWith("--")) throw new Error(`unexpected argument: ${token}`);
 		const key = token.slice(2);
-		if (["stills-only", "cuts", "word-timing", "help", "detach"].includes(key)) args.flags.add(key);
+		if (["stills-only", "cuts", "word-timing", "help", "detach", "strict", "json"].includes(key)) args.flags.add(key);
 		else {
 			const value = rest[i + 1];
 			if (value === undefined || value.startsWith("--")) throw new Error(`--${key} needs a value`);
@@ -741,6 +751,7 @@ export async function main(argv = process.argv.slice(2)) {
 			if (!args.out) throw new Exit(EXIT.USAGE, "--out <dir> is required");
 			const verdict = evaluateCompletion(resolve(args.out));
 			out(`completion: ${verdict.status} - ${verdict.reason}`);
+			for (const label of verdict.labels ?? []) out(`label: ${label}`);
 			if (verdict.downgraded.length) out(`downgraded: ${verdict.downgraded.join("; ")} (say so in the reply)`);
 			if (verdict.openItems.length) out(`open look items: ${verdict.openItems.join(" | ")}`);
 			return verdict.complete ? EXIT.OK : 1;
@@ -751,6 +762,27 @@ export async function main(argv = process.argv.slice(2)) {
 			if (entry.blocked) out(`look round ${entry.round}: blocked (${entry.blocked}); the film will be reported as not viewed`);
 			else out(`look round ${entry.round} recorded against stills ${entry.manifestSha256.slice(0, 12)}: ${Object.keys(entry.frames).length} frames stamped${entry.needsAnotherRound ? `; another round needed: ${entry.openItems.map((item) => item.split(":")[0]).join(", ")}` : "; nothing asks for another round"}`);
 			return EXIT.OK;
+		}
+		if (args.mode === "cover") {
+			if (!args.out) throw new Exit(EXIT.USAGE, "--out <dir> is required");
+			const outDir = resolve(args.out);
+			const round = Number(args.round ?? 1);
+			if (args.window !== undefined) {
+				const span = String(args.window).split(",").map(Number);
+				if (span.length !== 2) throw new Exit(EXIT.USAGE, "--window takes t0,t1 in seconds");
+				return await renderCoverWindow({ outDir, round, window: span, log: out });
+			}
+			if (args.flags.has("detach")) return detach(argv, outDir);
+			return await renderCover({ outDir, round, log: out });
+		}
+		if (args.mode === "cover-gate") {
+			if (!args.file) throw new Exit(EXIT.USAGE, "cover-gate needs --file <cover.webp | cover.gif | PNG frame folder>");
+			const title = args.title ? String(args.title).split(",").map(Number) : null;
+			const result = coverGate(resolve(args.file), { frames: args.frames ? resolve(args.frames) : null, frames2: args.frames2 ? resolve(args.frames2) : null, masks: args.masks ? resolve(args.masks) : null, title, glyph: title && args.masks ? {} : null, fps: Number(args.fps ?? 16) });
+			const strict = args.flags.has("strict");
+			const { diffs, kept, durations, ...summary } = result;
+			out(args.flags.has("json") ? JSON.stringify(summary, null, 1) : formatCoverReport(result, { strict }).trimEnd());
+			return result.pass && (!strict || result.target) ? EXIT.OK : EXIT.GATE_FAIL_QA;
 		}
 		if (args.mode === "sound") {
 			const { treatment } = resolveTreatment(args, null);

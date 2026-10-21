@@ -21,6 +21,7 @@ const STAGES = [
 /** Where each LIT skill sits in the main chain; `research` is its own short family. */
 const MODE_STAGE = {
     "deep-interview": "interview",
+    "lit-brainstorm": "interview",
     "lit-crucible": "interview",
     "lit-plan": "plan",
     litgoal: "plan",

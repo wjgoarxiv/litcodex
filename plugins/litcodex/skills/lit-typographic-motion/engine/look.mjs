@@ -2,11 +2,15 @@
 // round is stamped with the SHA-256 of the stills manifest it looked at and of every frame it
 // lists, and it refuses frames that are not in the latest stills set and bare yes/no answers. The
 // done-check then needs gate PASS, a valid treatment, at least two rounds (the round-1 stills round
-// with a change, then a last round on the final render's stills) and full viewing coverage.
+// with a change, then a last round on the final render's stills) and full viewing coverage. A cover
+// (treatment mode: cover) has its own eight questions, up to three timed defects per round, and its own
+// done: the decoded cover at every TARGET gate and a last round that viewed the sheet, poster and seam.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { EXIT, Exit, MAX_ROUNDS } from "./constants.mjs";
+import { COVER, EXIT, Exit, MAX_ROUNDS } from "./constants.mjs";
+import { generatedLabels } from "./cover-assets.mjs";
+import { validateCoverTreatment } from "./cover-treatment.mjs";
 import { loadTreatment, TreatmentError } from "./treatment.mjs";
 
 export const QUESTIONS = Object.freeze([
@@ -23,6 +27,19 @@ export const QUESTIONS = Object.freeze([
 // The answer that asks for another round, per question: "no" on 1, 2, 3, 5, 6; "yes" on 4, 7, 8, 9.
 const REVISE_ON = Object.freeze({ 1: "no", 2: "no", 3: "no", 4: "yes", 5: "no", 6: "no", 7: "yes", 8: "yes", 9: "yes" });
 const COVERAGE_KINDS = new Set(["poster", "sheet", "beat", "strip"]);
+// Cover mode asks about motion, the seam and damage instead of purpose and beats (references/cover.md).
+export const COVER_QUESTIONS = Object.freeze([
+	"Is something moving in every half-second window (the sheet's plot never lies flat on the red still line)?",
+	"Does the seam disappear in the decoded file (seam.png, the right end of the plot)?",
+	"Does it still move after encoding, with no region that freezes and then pops?",
+	"Is the brand word present, legible and in place in every frame, never faded or swapped?",
+	"Are all three speed layers visible: a slow perpetual layer, a mid swell and beat events?",
+	"Does anything read as a slide, a card swap, a title fade or an end card?",
+	"Is any glyph, glint or glow damaged: a colour block, a dark disc, a visible box?",
+	"Name one thing a skilled motion designer would add or remove. Can you name one?",
+]);
+const COVER_REVISE_ON = Object.freeze({ 1: "no", 2: "no", 3: "no", 4: "no", 5: "no", 6: "yes", 7: "yes", 8: "yes" });
+const COVER_VIEWS = new Set(["sheet", "poster", "seam"]);
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const refuse = (message) => {
 	throw new Exit(EXIT.USAGE, `look refused: ${message}`);
@@ -67,6 +84,8 @@ export function recordLook(outDir, round, answersPath) {
 		return entry;
 	}
 	if (stills.manifest.round !== round) refuse(`the latest stills set is from round ${stills.manifest.round}; look at the stills of round ${round} (render it first)`);
+	if (stills.manifest.mode === "cover") return recordCoverLook({ outDir, round, body, stills, look });
+	if (body.defects !== undefined) refuse("defects are a cover-mode record; a film round names its weakest beat instead");
 	if (round === 1 && stills.manifest.kind !== "stills-only") refuse("round 1 is a stills round: run the render with --stills-only --round 1 first");
 	const name = (file) => String(file ?? "").replace(/^stills\//u, "");
 	const viewed = Array.isArray(body.viewed) ? body.viewed.map(name) : [];
@@ -107,6 +126,70 @@ export function recordLook(outDir, round, answersPath) {
 	return entry;
 }
 
+/** Check every stills file a round names and stamp it with its SHA-256; refuses files outside the set. */
+function stampFrames(outDir, stills, files) {
+	const unknown = [...new Set(files)].filter((file) => !stills.files.has(file));
+	if (unknown.length) refuse(`not in the latest stills set: ${unknown.join(", ")}`);
+	const frames = {};
+	for (const file of new Set(files)) {
+		const bytes = readFileSync(join(outDir, "stills", file));
+		if (sha256(bytes) !== stills.files.get(file).sha256) refuse(`${file} changed after the stills manifest was written; render again`);
+		frames[file] = sha256(bytes);
+	}
+	return frames;
+}
+
+/**
+ * Cover defects: at most COVER.maxDefects per round, worst first, each { t, region, frame, observed,
+ * cause, fix }: the loop time in seconds where it shows, the [x, y, w, h] it covers in cover pixels,
+ * and a file of the current stills set that shows it. `render.mjs cover --window` checks the fix.
+ */
+function coverDefects(list, stills) {
+	if (list === undefined) return [];
+	if (!Array.isArray(list)) refuse("defects must be an array");
+	if (list.length > COVER.maxDefects) refuse(`at most ${COVER.maxDefects} defects per round; fix the worst first`);
+	const { width, height, durationSec } = stills.manifest;
+	const name = (file) => String(file ?? "").replace(/^stills\//u, "");
+	return list.map((d, i) => {
+		const at = `defect ${i + 1}`;
+		if (!d || typeof d !== "object") refuse(`${at} must be an object`);
+		if (typeof d.t !== "number" || !(d.t >= 0 && d.t < durationSec)) refuse(`${at}: t must be the loop time in seconds (0 to ${durationSec}) where the defect shows`);
+		const r = d.region;
+		if (!Array.isArray(r) || r.length !== 4 || !r.every(Number.isInteger) || r[0] < 0 || r[1] < 0 || r[2] <= 0 || r[3] <= 0 || r[0] + r[2] > width || r[1] + r[3] > height) refuse(`${at}: region must be [x, y, w, h] in whole pixels inside the ${width}x${height} cover`);
+		if (!stills.files.has(name(d.frame))) refuse(`${at}: frame ${JSON.stringify(d.frame)} is not in the latest stills set`);
+		if (!sentence(d.observed)) refuse(`${at}: observed must be a sentence naming what is visible there`);
+		if (![d.cause, d.fix].every((x) => typeof x === "string" && x.trim().split(/\s+/u).length >= 3)) refuse(`${at}: cause and fix must each say something concrete`);
+		return { t: d.t, region: r, frame: name(d.frame), observed: d.observed.trim(), cause: d.cause.trim(), fix: d.fix.trim() };
+	});
+}
+
+/** One cover look round: the eight cover questions, the defects, and round 1's change (no stills-only round). */
+function recordCoverLook({ outDir, round, body, stills, look }) {
+	const name = (file) => String(file ?? "").replace(/^stills\//u, "");
+	const viewed = Array.isArray(body.viewed) ? body.viewed.map(name) : [];
+	if (!viewed.length) refuse("viewed must list every stills file you opened with view_image this round");
+	if (!Array.isArray(body.answers)) refuse("answers must be an array of { q, verdict, frame, observed }");
+	const byQ = new Map();
+	for (const answer of body.answers) {
+		const q = Number(answer?.q);
+		if (!Number.isInteger(q) || q < 1 || q > COVER_QUESTIONS.length) refuse(`unknown question ${answer?.q} (a cover round answers ${COVER_QUESTIONS.length})`);
+		if (byQ.has(q)) refuse(`question ${q} answered twice`);
+		if (answer.verdict !== "yes" && answer.verdict !== "no") refuse(`question ${q}: verdict must be "yes" or "no"`);
+		if (!sentence(answer.observed)) refuse(`question ${q}: observed must be a sentence naming a concrete visible detail, not a bare yes/no`);
+		byQ.set(q, { q, verdict: answer.verdict, frame: name(answer.frame), observed: answer.observed.trim() });
+	}
+	for (let q = 1; q <= COVER_QUESTIONS.length; q++) if (!byQ.has(q)) refuse(`question ${q} is not answered (${COVER_QUESTIONS[q - 1]})`);
+	const answers = [...byQ.values()].sort((a, b) => a.q - b.q);
+	const defects = coverDefects(body.defects, stills);
+	const frames = stampFrames(outDir, stills, [...viewed, ...answers.map((a) => a.frame), ...defects.map((d) => d.frame)]);
+	if (round === 1 && (typeof body.change !== "string" || body.change.trim().split(/\s+/u).length < 3)) refuse("round 1 must state the change you made (change)");
+	const openItems = answers.filter((a) => a.verdict === COVER_REVISE_ON[a.q]).map((a) => `Q${a.q}: ${a.observed}`);
+	const entry = { round, at: new Date().toISOString(), kind: "cover", mode: "cover", manifestSha256: stills.sha, frames, viewed: [...new Set(viewed)], answers, defects, ...(typeof body.change === "string" ? { change: body.change.trim() } : {}), needsAnotherRound: openItems.length > 0, openItems };
+	look.rounds.push(entry);
+	writeFileSync(join(outDir, "look.json"), `${JSON.stringify(look, null, 2)}\n`);
+	return entry;
+}
+
 /** Frames viewed for the render whose stills manifest hash is `manifestSha`, from look.json only. */
 export function viewedFor(outDir, manifestSha) {
 	if (!manifestSha) return null;
@@ -138,6 +221,12 @@ const PREVIEWS = ["preview.webp", "preview.gif"];
  */
 export function evaluateDone(outDir) {
 	const notDone = (reason) => ({ status: "not complete", reason, downgraded: [], openItems: [] });
+	try {
+		const raw = JSON.parse(readFileSync(join(outDir, "treatment.json"), "utf8"));
+		if (raw?.mode === "cover") return evaluateCoverDone(outDir, raw);
+	} catch {
+		// A missing or unreadable treatment is reported by the film checks below.
+	}
 	const manifestPath = join(outDir, "manifest.json");
 	const reportPath = join(outDir, "gate-report.txt");
 	if (!existsSync(manifestPath) || !existsSync(reportPath)) return notDone("no manifest and gate report: nothing verified was rendered (a started, stills-only or BLOCKED run)");
@@ -179,4 +268,41 @@ export function evaluateDone(outDir) {
 	if (unseen.length) return { ...notDone(`the last look round did not view ${unseen.join(", ")} (the poster, the contact sheet, every beat midpoint and every transition strip)`), downgraded };
 	if (last.needsAnotherRound && last.round < MAX_ROUNDS) return { ...notDone(`look round ${last.round} found items that need another round: ${last.openItems.map((item) => item.split(":")[0]).join(", ")}`), downgraded };
 	return { status: "complete", reason: `${gateNote}; ${rounds.length} look rounds, the last on the final render with every still viewed${last.openItems.length ? "; deliver with the open items stated" : ""}`, downgraded, openItems: last.openItems ?? [] };
+}
+
+/**
+ * The cover done-check (references/cover.md, Rounds and done): a valid cover treatment unchanged since
+ * the last cover render, that render's report at PASS+TARGET, at least two look rounds (the first naming
+ * its change), and the last round stamped with that render's stills and viewing the sheet, the poster
+ * and the seam pair. Generated assets come back as labels the reply has to carry.
+ */
+export function evaluateCoverDone(outDir, raw) {
+	const labels = generatedLabels(outDir);
+	const notDone = (reason) => ({ status: "not complete", reason, downgraded: [], openItems: [], labels, mode: "cover" });
+	try {
+		validateCoverTreatment(raw);
+	} catch (error) {
+		if (error instanceof TreatmentError) return notDone(`the cover treatment is not valid (${error.message})`);
+		throw error;
+	}
+	const manifestPath = join(outDir, "manifest.json");
+	const reportPath = join(outDir, "gate-report.txt");
+	if (!existsSync(manifestPath) || !existsSync(reportPath)) return notDone("no finished cover render: manifest.json or gate-report.txt is missing");
+	const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+	if (manifest.mode !== "cover") return notDone("the last render was not a cover render; run `render.mjs cover`");
+	if (manifest.treatmentSha256 !== sha256(readFileSync(join(outDir, "treatment.json")))) return notDone("treatment.json changed after the last cover render; render again");
+	if (!/^COVER gate --strict: PASS\+TARGET$/mu.test(readFileSync(reportPath, "utf8"))) return notDone("the decoded cover did not reach every TARGET gate on the last render (gate-report.txt)");
+	const rounds = readLook(outDir).rounds;
+	const last = rounds.at(-1);
+	if (last?.blocked) return { status: "DONE_UNVIEWED", reason: "every TARGET gate passed, but no image tool was reachable: nobody viewed the sheet. Say so plainly in the reply.", downgraded: [], openItems: [], labels, mode: "cover" };
+	if (rounds.length < 2) return notDone("needs at least 2 look rounds: view the sheet, poster and seam pair with view_image, record the round, make its change, render, look again");
+	if (!rounds[0].change) return notDone("the first look round must name the change made after it");
+	if (last.manifestSha256 !== manifest.stillsManifestSha256) return notDone("the last look round viewed an older stills set than the final cover render; view the final stills and record another round");
+	const stills = latestStills(outDir);
+	const required = stills ? [...stills.files.values()].filter((f) => COVER_VIEWS.has(f.kind)).map((f) => f.file) : [];
+	const seen = new Set([...(last.viewed ?? []), ...Object.keys(last.frames ?? {})]);
+	const unseen = required.filter((file) => !seen.has(file));
+	if (unseen.length) return notDone(`the last look round did not view ${unseen.join(", ")} (the sheet, the poster and the seam pair)`);
+	if (last.needsAnotherRound && last.round < MAX_ROUNDS) return notDone(`look round ${last.round} found items that need another round: ${last.openItems.map((item) => item.split(":")[0]).join(", ")}`);
+	return { status: "complete", reason: `every TARGET gate passed on the decoded cover; ${rounds.length} look rounds, the last on the final render with the sheet, poster and seam pair viewed${last.openItems.length ? "; deliver with the open items stated" : ""}`, downgraded: [], openItems: last.openItems ?? [], labels, mode: "cover" };
 }

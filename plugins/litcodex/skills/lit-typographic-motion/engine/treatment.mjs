@@ -48,7 +48,7 @@ export function typeLedCue(request) {
 }
 
 /** True when `candidate` shares a normalized substring of `limit` characters with `against`. */
-function sharesRun(candidate, against, limit) {
+export function sharesRun(candidate, against, limit) {
 	if (limit < 1) return false;
 	const a = Array.from(normalizeText(candidate));
 	const b = normalizeText(against);
@@ -66,7 +66,7 @@ function requireText(t, field, value = t[field]) {
 }
 
 /** Every string leaf that still holds an example placeholder such as "<one sentence>". */
-function findPlaceholder(value, path) {
+export function findPlaceholder(value, path) {
 	if (typeof value === "string") return PLACEHOLDER.test(value) ? path : null;
 	if (Array.isArray(value)) {
 		for (let i = 0; i < value.length; i++) {
@@ -148,6 +148,7 @@ function beatCoverage(beats, indices) {
  */
 export function validateTreatment(t, { examples = shippedExamples() } = {}) {
 	if (!t || typeof t !== "object" || Array.isArray(t)) throw new TreatmentError("treatment", "must be a JSON object");
+	if (t.mode === "cover") throw new TreatmentError("mode", "this is a cover treatment: render it with `render.mjs cover --out <dir>` (references/cover.md)");
 	const placeholder = findPlaceholder(t, "");
 	if (placeholder) throw new TreatmentError(placeholder, "still holds an example placeholder (<...>); write the real value");
 	if (examples.length && copiedFrom(t, examples)) throw new TreatmentError("copiedExample", "half or more of the free-text fields equal a shipped example; write this film's own treatment");

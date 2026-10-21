@@ -77,9 +77,9 @@ A 23-second film follows one small task through LitCodex. You add `lit` to a req
 
 ## LITFAMILY
 
-![LITFAMILY editorial illustration with five armored machines against a dark background](./assets/litfamily-machines.png)
+![LITFAMILY editorial illustration with seven armored machines against a dark background](./assets/litfamily-machines.png)
 
-Five armored machines, one for each product in the LIT family.
+Seven armored machines, one for each product in the LIT family.
 
 ## Ignition motion
 

@@ -6,7 +6,9 @@
 // Explicit leading `start-work ...` routes execute with the installed skill body, while ordinary
 // discussion stays inert and scoped mentions such as `$litcodex:start-work ...` stay native.
 // Recap aliases (`litrecap` / `recap` / `리캡`) normalize to the single `lit-recap` token.
-// The bare `comprehend` alias normalizes to the `lit-comprehend` token. Rejects
+// The bare `comprehend` alias normalizes to the `lit-comprehend` token. `lit` followed by an ideation
+// word (brainstorm, brainstorming, ideation, ideate, idea, ideas) routes to `lit-brainstorm`; those words
+// never route without the `lit` in front. Rejects
 // every substring collision (`split`, `literal`, `litmus`, `lithium`, `glitter`, `flit`, `slit`,
 // `litter`, `recapture`, …) while respecting Korean (Hangul) and English boundaries.
 //
@@ -22,6 +24,7 @@ import { renamedSkillId } from "./skill-renames.js";
  */
 export const LIT_TRIGGER_TOKENS = Object.freeze([
     "lit-comprehend",
+    "lit-brainstorm",
     "deep-interview",
     "lit-crucible",
     "lit-init",
@@ -46,7 +49,7 @@ export const LIT_TRIGGER_TOKENS = Object.freeze([
  *
  * MUST NOT carry the /g or /y flag: a global regex retains `lastIndex` between calls and would
  * make `.test()` return alternating results for the same input. Longest-first alternation
- * (`lit-comprehend|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit`)
+ * (`lit-comprehend|lit-brainstorm|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit`)
  * guarantees a longer family token wins over a bare `lit` at the same start; the trailing-`-`
  * lookahead means `lit work` (space) is a bare `lit` while `litwork` (glued) is the work mode.
  * The `litrecap` / `recap` / `리캡` alternatives are ROUTING ALIASES normalized to the canonical
@@ -54,7 +57,7 @@ export const LIT_TRIGGER_TOKENS = Object.freeze([
  * (they are not members of the token union).
  * No nested quantifiers / no backreferences ⇒ ReDoS-free.
  */
-export const LIT_TRIGGER_PATTERN = /(?:^|[^\p{L}\p{N}_])(lit-comprehend|deep-interview|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit)(?![\p{L}\p{N}_-])/iu;
+export const LIT_TRIGGER_PATTERN = /(?:^|[^\p{L}\p{N}_])(lit-comprehend|lit-brainstorm|deep-interview|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit)(?![\p{L}\p{N}_-])/iu;
 const NOT_A_STRING = "lit trigger: prompt must be a string";
 /**
  * Returns true iff `prompt` contains at least one bounded lit trigger.
@@ -87,7 +90,7 @@ export function matchLitTrigger(prompt) {
         return { token: "start-work", raw: explicitStartWork, index: 0 };
     }
     const searchable = maskMarkdownCode(prompt);
-    const scan = /(?:^|[^\p{L}\p{N}_])(lit-comprehend|deep-interview|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit)(?![\p{L}\p{N}_-])/giu;
+    const scan = /(?:^|[^\p{L}\p{N}_])(lit-comprehend|lit-brainstorm|deep-interview|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit)(?![\p{L}\p{N}_-])/giu;
     for (const m of searchable.matchAll(scan)) {
         const raw = m[1];
         if (raw === undefined) {
@@ -172,7 +175,7 @@ function explicitStartWorkPrefix(prompt) {
 function naturalPhraseAfterLit(prompt, searchable, index, rawLength) {
     const start = index + rawLength;
     const rest = searchable.slice(start);
-    const m = /^(\s+)(start\s+work|deep\s+interview|lit-crucible|lit-init|hyperplan|init-deep|comprehend|plan|review|research|goal|recap)(?![\p{L}\p{N}_-])/iu.exec(rest);
+    const m = /^(\s+)(start\s+work|deep\s+interview|lit-brainstorm|lit-crucible|lit-init|hyperplan|init-deep|comprehend|brainstorming|brainstorm|ideation|ideate|ideas?|plan|review|research|goal|recap)(?![\p{L}\p{N}_-])/iu.exec(rest);
     if (m === null || m[1] === undefined || m[2] === undefined) {
         return null;
     }
@@ -180,11 +183,18 @@ function naturalPhraseAfterLit(prompt, searchable, index, rawLength) {
     const tokenByPhrase = {
         "start work": "start-work",
         "deep interview": "deep-interview",
+        "lit-brainstorm": "lit-brainstorm",
         "lit-crucible": "lit-crucible",
         hyperplan: "lit-crucible",
         "lit-init": "lit-init",
         "init-deep": "lit-init",
         comprehend: "lit-comprehend",
+        brainstorming: "lit-brainstorm",
+        brainstorm: "lit-brainstorm",
+        ideation: "lit-brainstorm",
+        ideate: "lit-brainstorm",
+        idea: "lit-brainstorm",
+        ideas: "lit-brainstorm",
         plan: "lit-plan",
         review: "review-work",
         research: "litresearch",

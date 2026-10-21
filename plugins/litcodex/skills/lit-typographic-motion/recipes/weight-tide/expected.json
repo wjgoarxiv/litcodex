@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "note": "The decoded gate row this recipe reached when it was pinned (npm run qa:cover-recipes re-renders it and fails when median d or the moving share leave +-15 %, seamLocal leaves TARGET or the file passes 2 MiB). Measured 2026-10-20 on headless Chrome's software rung and libwebp 1.6.0.",
+  "row": {
+    "medianD": 0.008467,
+    "movingFrac": 1,
+    "longestStillSec": 0.063,
+    "spike": 1.16,
+    "seamLocal": 1.181,
+    "bytes": 1468386
+  },
+  "settings": {
+    "size": [
+      1000,
+      500
+    ],
+    "fps": 16,
+    "frames": 128,
+    "encode": {
+      "q": 58,
+      "edgeQ": 58,
+      "edgeFrames": 0,
+      "method": 4
+    }
+  },
+  "treatment": {
+    "mode": "cover",
+    "request": "A README motion cover for LitCodex where the name itself moves.",
+    "idea": "A wave of weight rolls through the name and through faint rows of it that drift one word per loop.",
+    "recipe": "weight-tide",
+    "recipeReason": "The name is the material, so the motion happens inside the letters.",
+    "brandWord": "LITCODEX",
+    "motto": {
+      "text": "KEEP THE WORK LIT.",
+      "source": "project",
+      "from": "README.md"
+    },
+    "aspect": "2:1",
+    "loopSec": 8,
+    "fps": 16,
+    "layers": {
+      "slow": "Background rows drift one word length per loop, alternate rows opposite ways.",
+      "mid": "A weight swell offset by x and y crosses every letter once per loop.",
+      "beat": "A caret steps under each letter of the name with an overshoot and returns home."
+    },
+    "system": {
+      "rule": "Letter weight is a gain-shaped swell of the loop phase.",
+      "copies": "About 500 background letters and the eight letters of the name.",
+      "offset": "0.85 x / W + 0.35 y / H plus a little loop noise per row."
+    },
+    "title": {
+      "box": [
+        0.13,
+        0.32,
+        0.74,
+        0.3
+      ],
+      "kind": "live"
+    },
+    "encode": {
+      "q": 58,
+      "edgeQ": 58,
+      "edgeFrames": 0
+    },
+    "ambition": "The tide reads as one wave through many copies and the name never thins below a readable weight."
+  }
+}

@@ -10,6 +10,7 @@ import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { childTail } from "./install/motion-runtime.js";
 import { ensurePtyHelperExecutable } from "./pty-helper.js";
 
 import { renderBanner, shouldDecorate } from "./ui.js";
@@ -47,11 +48,12 @@ function main(): void {
 	if (existsSync(runtime)) {
 		const result = spawnSync(process.execPath, [runtime, "install"], { encoding: "utf8", timeout: 900000 });
 		const receipt = (result.stdout ?? "")
-			.split("\n")
+			.split(/\r?\n/u)
 			.filter((line) => line.startsWith("[litcodex] "))
 			.pop();
+		// The runtime's own receipt carries the cause (npm ci exit and stderr); keep it on failure too.
 		process.stdout.write(
-			`${result.status === 0 && receipt ? receipt : "[litcodex] Motion runtime pre-warm unavailable; run `litcodex motion-runtime install` outside the sandbox."}\n`,
+			`${receipt ?? `[litcodex] Motion runtime pre-warm unavailable (${result.error?.message ?? `exit ${result.status ?? result.signal}: ${childTail(result.stderr)}`}); run \`litcodex motion-runtime install\` outside the sandbox.`}\n`,
 		);
 	}
 }

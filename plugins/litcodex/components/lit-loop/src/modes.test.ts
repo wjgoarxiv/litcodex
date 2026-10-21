@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import {
 	DEEP_INTERVIEW_DIRECTIVE_CLOSE,
 	DEEP_INTERVIEW_DIRECTIVE_MARKER,
+	LIT_BRAINSTORM_DIRECTIVE_CLOSE,
+	LIT_BRAINSTORM_DIRECTIVE_MARKER,
 	LIT_CRUCIBLE_DIRECTIVE_CLOSE,
 	LIT_CRUCIBLE_DIRECTIVE_MARKER,
 	LIT_INIT_DIRECTIVE_CLOSE,
@@ -78,6 +80,23 @@ describe("MODE_BY_TOKEN routing table", () => {
 		expect(spec.skillPath.endsWith("/skills/lit-crucible/SKILL.md")).toBe(true);
 	});
 
+	it("maps lit-brainstorm → lit-brainstorm mode + directives/lit-brainstorm.md", () => {
+		const spec = modeForToken("lit-brainstorm");
+		expect(spec.mode).toBe("lit-brainstorm");
+		expect(spec.openMarker).toBe(LIT_BRAINSTORM_DIRECTIVE_MARKER);
+		expect(spec.closeMarker).toBe(LIT_BRAINSTORM_DIRECTIVE_CLOSE);
+		expect(spec.directivePath.endsWith("/directives/lit-brainstorm.md")).toBe(true);
+		expect(spec.skillPath.endsWith("/skills/lit-brainstorm/SKILL.md")).toBe(true);
+	});
+
+	it("names every routed skill by its route: litgoal and review-work route to a skill of the same name", () => {
+		for (const token of LIT_TRIGGER_TOKENS) {
+			if (token === "lit" || token === "litcodex" || token === "lit-loop") continue;
+			expect(MODE_BY_TOKEN[token].mode, token).toBe(token);
+			expect(MODE_BY_TOKEN[token].skillName, token).toBe(token);
+		}
+	});
+
 	it("maps lit-init → lit-init mode + directives/lit-init.md", () => {
 		const spec = modeForToken("lit-init");
 		expect(spec.mode).toBe("lit-init");
@@ -125,7 +144,7 @@ describe("MODE_BY_TOKEN routing table", () => {
 			expect(closeMarker).toBe(openMarker.replace("<", "</"));
 			seen.add(openMarker);
 		}
-		// 12 modes → 12 distinct markers (lit/litcodex/lit-loop share one).
-		expect(seen.size).toBe(12);
+		// 13 modes → 13 distinct markers (lit/litcodex/lit-loop share one).
+		expect(seen.size).toBe(13);
 	});
 });

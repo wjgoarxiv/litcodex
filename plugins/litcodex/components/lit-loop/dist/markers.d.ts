@@ -28,4 +28,6 @@ export declare const BROWSER_DRIVE_DIRECTIVE_MARKER: "<browser-drive-mode>";
 export declare const BROWSER_DRIVE_DIRECTIVE_CLOSE: "</browser-drive-mode>";
 export declare const LIT_COMPREHEND_DIRECTIVE_MARKER: "<lit-comprehend-mode>";
 export declare const LIT_COMPREHEND_DIRECTIVE_CLOSE: "</lit-comprehend-mode>";
+export declare const LIT_BRAINSTORM_DIRECTIVE_MARKER: "<lit-brainstorm-mode>";
+export declare const LIT_BRAINSTORM_DIRECTIVE_CLOSE: "</lit-brainstorm-mode>";
 export type LitLoopDirectiveMarker = typeof LIT_LOOP_DIRECTIVE_MARKER;

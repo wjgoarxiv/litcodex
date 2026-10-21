@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- A shipped NEGATIVE, never a recipe: a progress sweep driven like elapsed time, so it resets at the
+     loop point and the seam is a cut. The decoded-file gate must keep failing it on G4. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/loop-kit.js"></script>
+<style>
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #080d14; color: #f2efdf; font-family: "JetBrains Mono"; }
+  .line { position: absolute; left: 0; right: 0; text-align: center; white-space: nowrap; }
+  body.mask, body.mask * { background: #000 !important; color: #000 !important; border-color: #000 !important; }
+  body.mask .name { color: #fff !important; }
+</style>
+</head>
+<body>
+<div id="sweep" style="position:absolute;left:0;top:0;height:600px;background:#1d2633"></div>
+<div class="line name" style="top:230px;font-size:110px;font-weight:800;letter-spacing:6px">LITCODEX</div>
+<script>
+window.renderFrame = (t, opts = {}) => {
+  document.body.className = opts.mask ? "mask" : "";
+  document.getElementById("sweep").style.width = `${1200 * t}px`;
+};
+document.fonts.ready.then(() => { window.ready = true; });
+</script>
+</body>
+</html>

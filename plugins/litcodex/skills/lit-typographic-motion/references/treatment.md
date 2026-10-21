@@ -2,6 +2,8 @@
 
 Every film starts here. Before any render, write `treatment.json` in the run's output directory (the directory you pass as `--out`). It is the director's plan: what the film is about, who it is for, what each beat shows, how it sounds and which render path draws it. The renderer validates it before every render, `--stills-only` included, and exits 16 `BLOCKED_TREATMENT_INVALID` naming the first field to fix. Validation checks structure and honesty, not taste; taste is what the look rounds are for.
 
+A README, hero, banner or cover loop is not a film. Its treatment sets `"mode": "cover"` and follows `references/cover.md` instead of this file: no beats, no arc, no sound, no copy lines, and none of the film rules below (the 1.2 s beat, the 10 s floor, the 16:9 and 9:16 formats, the genre arcs). A film render refuses a cover treatment and names `render.mjs cover`.
+
 Load this file first. Load the path reference only after `path` is set: `references/stage.md` for the stage path, `references/style-bibles.md` and `references/type-and-timing.md` for the type path.
 
 ## Path rule

@@ -1,5 +1,5 @@
 /** The accepted bounded lit-family tokens, longest-first (ordering is load-bearing — see below). */
-export type LitTriggerToken = "lit-comprehend" | "deep-interview" | "lit-crucible" | "lit-init" | "start-work" | "review-work" | "litresearch" | "lit-recap" | "lit-loop" | "lit-plan" | "litcodex" | "litgoal" | "litwork" | "lit";
+export type LitTriggerToken = "lit-comprehend" | "lit-brainstorm" | "deep-interview" | "lit-crucible" | "lit-init" | "start-work" | "review-work" | "litresearch" | "lit-recap" | "lit-loop" | "lit-plan" | "litcodex" | "litgoal" | "litwork" | "lit";
 /**
  * Frozen tuple of the accepted tokens in match-priority (longest-first) order.
  * Exported so tests and the mode router (modes.ts) can enumerate without re-deriving.
@@ -15,7 +15,7 @@ export declare const LIT_TRIGGER_TOKENS: readonly LitTriggerToken[];
  *
  * MUST NOT carry the /g or /y flag: a global regex retains `lastIndex` between calls and would
  * make `.test()` return alternating results for the same input. Longest-first alternation
- * (`lit-comprehend|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit`)
+ * (`lit-comprehend|lit-brainstorm|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit`)
  * guarantees a longer family token wins over a bare `lit` at the same start; the trailing-`-`
  * lookahead means `lit work` (space) is a bare `lit` while `litwork` (glued) is the work mode.
  * The `litrecap` / `recap` / `리캡` alternatives are ROUTING ALIASES normalized to the canonical

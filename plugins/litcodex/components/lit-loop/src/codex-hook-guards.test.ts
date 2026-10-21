@@ -85,7 +85,7 @@ describe("runUserPromptSubmitHook no-op branches #given/#when/#then", () => {
 		expect(runUserPromptSubmitHook(upsSnake("context compacted, please lit")).kind).toBe("noop");
 	});
 
-	it("is a no-op when the transcript already carries a prior hook envelope (idempotency guard)", () => {
+	it("does not decide a repeat from the transcript: the session's saved state does", () => {
 		const transcript = join(tmpDir, "dup-transcript.jsonl");
 		writeFileSync(
 			transcript,
@@ -96,7 +96,10 @@ describe("runUserPromptSubmitHook no-op branches #given/#when/#then", () => {
 				},
 			})}\n`,
 		);
-		expect(runUserPromptSubmitHook(upsSnake("lit", transcript)).kind).toBe("noop");
+		const first = runUserPromptSubmitHook(upsSnake("lit", transcript));
+		expect(first.kind).toBe("inject");
+		const repeat = runUserPromptSubmitHook(upsSnake("lit", transcript), () => ({ active: "lit-loop", resume: null }));
+		expect(repeat.kind === "inject" && repeat.entry).toBe("continue");
 	});
 });
 

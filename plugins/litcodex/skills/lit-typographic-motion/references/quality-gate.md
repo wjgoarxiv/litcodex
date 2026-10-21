@@ -59,6 +59,8 @@ If no image tool is reachable at all, record `{ "blocked": "no-vision-tool" }` f
 | 18 | A stage frame differs in a fresh replay; the frame and region are named | Replace the leaking source with `t` or `LitStage.rand` |
 | 19 | The page asked for the network | Make the asset local |
 | 20 | Sound missing, mistimed, clipping, or a silent start on a generated bed | Fix the sound plan or the track |
+| 21 | Cover mode: no img2webp with dwebp, and no gifski | Install libwebp outside the session; a cover is never an MP4 |
+| 22 | Cover mode: a file listed in `assets.json` is missing | Supply or generate it; never draw a stand-in |
 
 ## Promote or withhold
 
@@ -80,6 +82,8 @@ Do not answer a failure by shortening the film, removing a beat, removing the su
 - the last round's stills manifest hash equals the final full render's (`stillsManifestSha256` in `manifest.json`);
 - the last round viewed the poster, the contact sheet, every beat midpoint and every transition strip;
 - nothing in the last round asks for another round, unless it was round 3 (then the open items are printed and go in the reply).
+
+A cover (treatment `mode: cover`) has its own done, its own eight look questions and its own stills (the decoded sheet with its difference plot, the poster and the seam pair); see `references/cover.md`. The answers file has the same shape without `weakestBeat`, plus up to three timed `defects`, and a generated asset in `assets.json` comes back from `completion` as a `label:` line for the reply.
 
 The verdict is `complete`, `not complete` with the reason, or `DONE_UNVIEWED`. It also prints any `downgraded` item and any open look item. This host exposes no tool-event hook, so the check that each frame went through `view_image` is advisory: only list files you really opened.
 

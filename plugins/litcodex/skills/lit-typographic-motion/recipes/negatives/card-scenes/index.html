@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- A shipped NEGATIVE, never a recipe: card scenes that fade in, hold and fade out, ending on a static
+     card, as a film's stage path would cut them. The decoded-file gate must keep failing it on G2. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/loop-kit.js"></script>
+<style>
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #080d14; color: #f2efdf; font-family: "JetBrains Mono"; }
+  .line { position: absolute; left: 0; right: 0; text-align: center; white-space: nowrap; }
+  body.mask, body.mask * { background: #000 !important; color: #000 !important; border-color: #000 !important; }
+  body.mask .name { color: #fff !important; }
+</style>
+<style>
+  .card { position: absolute; inset: 0; opacity: 0; }
+  .frame { position: absolute; left: 160px; top: 180px; width: 260px; height: 240px; border: 3px solid #ff6337; border-radius: 10px; }
+  .step { position: absolute; left: 480px; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="card" id="c0"><div class="line name" style="top:200px;font-size:96px;font-weight:800">LITCODEX</div><div class="line" style="top:340px;font-size:30px">A workflow family for Codex CLI</div></div>
+<div class="card" id="c1"><div class="frame"></div><div class="step" style="top:240px;font-size:44px">1. Plan</div><div class="step" style="top:310px;font-size:26px;font-weight:400">Decision-complete steps.</div></div>
+<div class="card" id="c2"><div class="frame" style="border-color:#d7f75b"></div><div class="step" style="top:240px;font-size:44px">2. Loop</div><div class="step" style="top:310px;font-size:26px;font-weight:400">Test first, then green.</div></div>
+<div class="card" id="c3"><div class="line" style="top:250px;font-size:64px;font-weight:700">KEEP THE WORK <span style="color:#ff6337">LIT.</span></div></div>
+<script>
+const { clamp, ease } = LitLoop;
+const SECONDS = 10;
+const SCENES = [[0, 2.6], [2.6, 5.0], [5.0, 7.4], [7.4, 10]];
+window.renderFrame = (t, opts = {}) => {
+  document.body.className = opts.mask ? "mask" : "";
+  const s = t * SECONDS;
+  SCENES.forEach(([from, to], i) => {
+    const card = document.getElementById(`c${i}`);
+    card.style.opacity = ease.smooth(clamp((s - from) / 0.4)) * (1 - ease.smooth(clamp((s - (to - 0.4)) / 0.4)));
+    card.style.transform = `translateX(${20 * (1 - ease.outCubic(clamp((s - from) / 0.5)))}px)`;
+  });
+};
+document.fonts.ready.then(() => { window.ready = true; });
+</script>
+</body>
+</html>

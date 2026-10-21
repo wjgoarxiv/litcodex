@@ -10,6 +10,8 @@ export type PlanPersistenceDecision = {
 };
 /** Record (or re-record) a lit-plan activation for `sessionId`. Fail-open: never throws. */
 export declare function recordLitPlanActivation(repoRoot: string, sessionId: string, now?: number): void;
+/** A new plan after a saved one needs its own persistence check: re-arm the gate when the last one was satisfied. */
+export declare function rearmLitPlanIfSatisfied(repoRoot: string, sessionId: string, now?: number): void;
 /**
  * Decide whether the Stop for `sessionId` may end. Pass when no activation exists, when the guard is
  * already satisfied, or when the block cap is spent; otherwise block until a checkbox plan newer than

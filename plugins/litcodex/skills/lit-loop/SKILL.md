@@ -199,7 +199,8 @@ inserting a video into slides, a deck or a report; a script, transcript, summary
 thumbnail about a video; and UI motion such as button or hover motion, motion tokens or reduced
 motion. Bare motion or intro alone, including a motion put to a vote, never selects it. On a film
 request the hook names the installed `../lit-typographic-motion/scripts/render.mjs` by absolute
-path and lists its subcommands. Hand-encoded films are not the deliverable.
+path and lists its subcommands. Hand-encoded films are not the deliverable. A README, hero or
+banner loop is the same skill's cover mode: a silent, seamless loop gated on the decoded file.
 
 When this task creates or changes a user-facing web interface, put its UI behavior and probe in the
 plan or bounded acceptance checks. Load the installed sibling `../frontend-ui-ux/SKILL.md` as a
@@ -267,6 +268,12 @@ The bare `lit` trigger (also `lit-loop` / `litcodex` in a prompt) fires the Code
 the operational expansion of that directive: once you see `<lit-loop-mode>`, apply the scope gate
 above, then follow the selected path. A user who wants to watch the run from a terminal can keep the LIT card
 live in a second window with `litcodex hud`, which only reads the records these hooks already write.
+
+A later prompt in the same session that names the same mode arrives as a short `<lit-loop-continue>` note
+instead of this directive. Keep working under the contract you already hold: do not re-read this file or
+restart the workflow. A different mode, `lit new …`, `lit restart …` and the first `lit` after a compaction
+send the full activation again. A bare `lit` or `lit continue` carries on whichever mode is active, and over an active start-work plan, a published
+plan or open goals arrives as a resume note: pick that work up and create no new plan.
 
 ## Codex tool mapping
 

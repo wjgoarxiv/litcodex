@@ -12,6 +12,7 @@ const AGENTS_DIR = join(PLUGIN_DIR, "components", "lit-loop", "agents");
 const ORDINARY_MODE_DIRECTIVES = [
 	join(PLUGIN_DIR, "components", "lit-loop", "directive.md"),
 	...[
+		"lit-brainstorm.md",
 		"lit-comprehend.md",
 		"lit-crucible.md",
 		"lit-init.md",

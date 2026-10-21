@@ -414,7 +414,7 @@ describe("negative pledge sentences", () => {
 			"en-negative-pledge",
 		]);
 		expect(pledgeCases.pledges).toHaveLength(15);
-		expect(pledgeCases.pledges_observed).toHaveLength(26);
+		expect(pledgeCases.pledges_observed).toHaveLength(33);
 		expect(pledgeCases.near_misses.length).toBeGreaterThanOrEqual(27);
 		expect(pledgeCases.near_misses_review.length).toBeGreaterThanOrEqual(215);
 		expect(pledgeCases.document_cases).toHaveLength(13);

@@ -1,12 +1,12 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
-import { prepareMotionRuntime } from "../../../../packages/litcodex-ai/src/install/motion-runtime.js";
-import { audioState, cacheDir } from "./engine/runtime.mjs";
+import { motionRuntimeScript, prepareMotionRuntime } from "../../../../packages/litcodex-ai/src/install/motion-runtime.js";
+import { audioState, cacheDir, pickPython } from "./engine/runtime.mjs";
 import { typeTreatment, writeTreatment } from "./fixtures/treatments.mjs";
 
 const skillRoot = fileURLToPath(new URL("./", import.meta.url));
@@ -103,6 +103,17 @@ describe("runtime states without a browser (Test 10)", () => {
 		expect(bridge.exitCode).toBe(3);
 		expect(bridge.receipt).toContain("run `litcodex motion-runtime install` outside the sandbox");
 	});
+	it("a Windows child's CRLF receipt keeps its cause; a child with no receipt shows its exit code and stderr", () => {
+		const home = temp("motion-crlf-");
+		mkdirSync(dirname(motionRuntimeScript(home)), { recursive: true });
+		writeFileSync(motionRuntimeScript(home), "");
+		const reply = (install: { status: number; stdout: string; stderr: string }) => (_command: string, args: readonly string[]) => (args.includes("install") ? install : { status: 1, stdout: "", stderr: "" });
+		const crlf = prepareMotionRuntime(home, [], reply({ status: 3, stdout: "installing\r\n[litcodex] Motion runtime pre-warm unavailable (npm ci failed (exit 1): spawnSync npm.cmd EINVAL); run `litcodex motion-runtime install` outside the sandbox.\r\n", stderr: "" }));
+		expect(crlf.receipt).toContain("npm ci failed (exit 1): spawnSync npm.cmd EINVAL");
+		expect(crlf.receipt).not.toContain("\r");
+		const silent = prepareMotionRuntime(home, [], reply({ status: 9, stdout: "", stderr: "first\r\nsecond\r\nreal cause\r\n" }));
+		expect(silent.receipt).toContain("pre-warm failed (exit 9): second real cause");
+	});
 	it("a pre-warm launched from a global npm install runs its npm ci without the inherited global mode", () => {
 		const dir = temp("motion-global-");
 		const dump = join(dir, "npm-env.json");
@@ -126,6 +137,38 @@ describe("runtime states without a browser (Test 10)", () => {
 		writeFileSync(join(cache, "audio-venv", "bin", "python"), "");
 		writeFileSync(join(cache, "audio-venv", "litcodex-audio.json"), JSON.stringify({ requirementsSha256: "0".repeat(64) }));
 		expect(audioState(cache)).toMatchObject({ state: "stale", ready: false });
+	});
+});
+
+describe("the host Python the audio venv is built from", () => {
+	const host: Record<string, string> = { "python3.14": "3.14.7", "python3.13": "3.13.12", python3: "3.15.0" };
+	const fake = (command: string) =>
+		host[command] ? { ok: !host[command].startsWith("3.15"), command, version: host[command], detail: host[command] } : { ok: false, command, detail: "not found" };
+	it("skips a python3 that is newer than the pinned wheels and takes the newest supported python3.X", () => {
+		expect(pickPython({} as NodeJS.ProcessEnv, fake)).toMatchObject({ ok: true, command: "python3.14", version: "3.14.7" });
+	});
+	it("LITCODEX_MOTION_PYTHON is the only interpreter tried when it is set", () => {
+		const seen: string[] = [];
+		const picked = pickPython({ LITCODEX_MOTION_PYTHON: "/opt/py/bin/python3" } as NodeJS.ProcessEnv, (command: string) => {
+			seen.push(command);
+			return { ok: false, command, detail: "not found" };
+		});
+		expect(picked.ok).toBe(false);
+		expect(seen).toEqual(["/opt/py/bin/python3"]);
+	});
+	it("names every refused interpreter when none is supported", () => {
+		const picked = pickPython({} as NodeJS.ProcessEnv, (command: string) => (command === "python3" ? { ok: false, command, version: "3.15.0", detail: "3.15.0 is newer than 3.14" } : { ok: false, command, detail: "not found" }));
+		expect(picked).toMatchObject({ ok: false });
+		expect(picked.detail).toBe("no supported Python (3.10 to 3.14) on PATH; tried python3: 3.15.0 is newer than 3.14");
+	});
+	it("with a python3 that is 3.15 first on PATH the real probe still lands on a supported interpreter", (context) => {
+		const py315 = ["/opt/homebrew/bin/python3.15", "/usr/local/bin/python3.15"].find((p) => existsSync(p));
+		if (!py315) return context.skip("no python3.15 on this host");
+		const bin = temp("motion-py315-");
+		symlinkSync(py315, join(bin, "python3"));
+		const picked = pickPython({ PATH: `${bin}${delimiter}${process.env.PATH}` } as NodeJS.ProcessEnv);
+		if (!picked.ok) return context.skip(`no supported Python besides 3.15 here: ${picked.detail}`);
+		expect(picked.version).toMatch(/^3\.1[0-4]\./u);
 	});
 });
 

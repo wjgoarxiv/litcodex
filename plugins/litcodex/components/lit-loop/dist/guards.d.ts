@@ -68,6 +68,8 @@ export declare function transcriptHasContextPressureMarker(transcriptPath: Guard
  * GuardTranscriptInput path (the only throw is the non-string prompt defensive guard).
  * @throws TypeError only if `prompt` is not a string (M06 type-guards this upstream).
  */
-export declare function shouldSuppressInjection(prompt: string, transcriptPath: GuardTranscriptInput, openMarker: string): LitLoopGuardDecision;
+export declare function shouldSuppressInjection(prompt: string, transcriptPath: GuardTranscriptInput, openMarker: string, options?: {
+    readonly transcriptDedupe?: boolean;
+}): LitLoopGuardDecision;
 /** Lit-loop entry point (backward-compatible) — the generic decision bound to the lit-loop marker. */
 export declare function shouldSuppressLitLoopInjection(prompt: string, transcriptPath: GuardTranscriptInput): LitLoopGuardDecision;

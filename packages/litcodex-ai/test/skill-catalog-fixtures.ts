@@ -28,6 +28,7 @@ export const SKILL_IDS = [
 	"debugging",
 	"deep-interview",
 	"frontend-ui-ux",
+	"lit-brainstorm",
 	"lit-burnoff",
 	"lit-burnoff-file",
 	"lit-code",

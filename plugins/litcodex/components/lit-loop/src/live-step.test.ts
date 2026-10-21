@@ -456,10 +456,13 @@ describe("live step hooks", () => {
 		const first = await contextOf("lit add a flag");
 		expect(first).toContain("call the `lit_card` tool once now");
 		expect(await contextOf("thanks, looks good")).not.toContain("lit_card");
-		const second = await contextOf("lit add another flag");
+		const second = await contextOf("lit plan another flag");
 		expect(second).toContain("call the `lit_card` tool once now");
 		expect(second).toContain("folds");
 		expect(second).not.toContain("in this thread");
+		const continued = await contextOf("lit plan one more flag");
+		expect(continued).toContain("`lit_card`");
+		expect(continued).not.toContain("folds");
 		expect(readThreadPointer({ CODEX_HOME: home }, "s5")?.cardOfferedAt).toEqual(expect.any(Number));
 	});
 });

@@ -245,32 +245,41 @@ const cases = [
 		},
 	},
 	{
-		name: "idempotent-transcript",
+		name: "repeat-continues-in-short",
 		run() {
 			const f = [];
-			const dir = mkdtempSync(join(tmpdir(), "lit-qa-transcript-"));
+			const dir = mkdtempSync(join(tmpdir(), "lit-qa-reentry-"));
 			try {
-				const transcript = join(dir, "transcript.jsonl");
-				// A prior HOOK envelope already carrying the directive marker -> suppress re-injection.
-				writeFileSync(
-					transcript,
-					`${JSON.stringify({
-						hookSpecificOutput: {
-							hookEventName: "UserPromptSubmit",
-							additionalContext: `${DIRECTIVE_MARKER}\n${DIRECTIVE_FIRST_LINE}`,
-						},
-					})}\n`,
+				// A real session id and cwd, with a disposable Codex home: the hook keeps its per-session record in the cwd.
+				const fire = (prompt, turn) =>
+					spawnSync(nodeBin, [pluginCli, "hook", "user-prompt-submit"], {
+						input: JSON.stringify({
+							hook_event_name: "UserPromptSubmit",
+							prompt,
+							session_id: "qa-reentry",
+							turn_id: `t${turn}`,
+							cwd: dir,
+						}),
+						encoding: "utf8",
+						env: { ...scrubbedEnv(), CODEX_HOME: join(dir, ".codex") },
+					});
+				const contextOf = (run) => tryParse(run.stdout)?.hookSpecificOutput?.additionalContext ?? "";
+				const first = fire("lit fix the bug", 1);
+				const second = fire("lit add a test", 2);
+				const repeat = contextOf(second);
+				writeEvidence(
+					"task-23-idempotent.txt",
+					`exit=${first.status},${second.status}\nfirst=${Buffer.byteLength(contextOf(first))}\nsecond=${Buffer.byteLength(repeat)}\n`,
 				);
-				const { stdout, exitCode } = runHook(
-					JSON.stringify({
-						hook_event_name: "UserPromptSubmit",
-						prompt: "lit",
-						transcript_path: transcript,
-					}),
+				check(f, first.status === 0 && second.status === 0, `exit ${first.status}/${second.status} != 0`);
+				check(f, contextOf(first).includes(DIRECTIVE_MARKER), "the first lit prompt did not activate");
+				check(f, repeat.includes("already active"), "the repeat did not continue the active mode");
+				check(
+					f,
+					Buffer.byteLength(repeat) <= 600,
+					`the repeat sent ${Buffer.byteLength(repeat)} bytes, expected at most 600`,
 				);
-				writeEvidence("task-23-idempotent.txt", `exit=${exitCode}\nstdout.length=${stdout.length}\n`);
-				check(f, exitCode === 0, `exit ${exitCode} != 0`);
-				check(f, stdout.length === 0, `re-injected (stdout ${stdout.length} bytes, expected 0)`);
+				check(f, !repeat.includes("SKILL.md"), "the repeat sent the model back to a skill file");
 			} finally {
 				rmSync(dir, { recursive: true, force: true });
 			}

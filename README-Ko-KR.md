@@ -1,4 +1,4 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitCodex 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 일곱 머신의 칸이 차례로 켜지고, 셋째 칸의 LitCodex 머신이 주황 바이저와 테두리를 밝힌 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
 
 # LitCodex
 
@@ -224,7 +224,7 @@ lit notes.md로 월요일 회의용 열 장짜리 발표자료를 만들어줘
 | 분야 | 스킬 |
 | --- | --- |
 | 코드 | `debugging`, `refactor`, `lit-code`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`, `structural-search`, `lsp-setup`, `lit-init` |
-| 계획과 팀 작업 | `deep-interview`, `lit-crucible`, `litgoal`, `litwork`, `lit-team` |
+| 계획과 팀 작업 | `deep-interview`, `lit-brainstorm`, `lit-crucible`, `litgoal`, `litwork`, `lit-team` |
 | 조사와 지식 | `autoresearch`, `autoconference`, `wikify`, `lit-fetch`, `coding-session-audit`, `lit-comprehend` |
 | 화면, 그림, 영상 | `frontend-ui-ux`, `visual-qa`, `browser-drive`, `readme-studio`, `lit-diagram-drawer`, `lit-scientific-visualization`, `lit-typographic-motion` |
 | LitCodex 관리 | `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix` |
@@ -369,16 +369,22 @@ Codex 목표 도구로 이어지는 점선은 도구가 있을 때 에이전트�
 | `litwork` | **litwork** | 결과 중심 작업, 수동 QA 증거 포함 |
 | `lit-plan` 또는 `lit plan` | **lit-plan** | 계획만 작성: 증거와 마지막 완료 주장이 담긴 범위 있는 계획 |
 | `deep-interview` 또는 `lit deep interview` | **deep-interview** | 계획만 작성: 모호한 요구를 질문으로 좁힘 |
-| `litgoal` 또는 `lit goal` | **litgoal** | 목표와 기준을 루프 상태에 연결 |
+| `lit brainstorm`, `lit ideation` 또는 `lit idea` | **lit-brainstorm** | 서로 다른 선택지를 많이 낸 뒤 고를 수 있는 짧은 목록으로 좁힘, 만들지는 않음 |
+| `litgoal` 또는 `lit goal` | **litgoal** | 완료 기준을 정하고 유지: 목표와 기준을 lit-loop와 Start Work가 향해 가는 루프 상태에 연결 |
 | `lit-recap` 또는 `lit recap` | **lit-recap** | `.litcodex` 원장을 읽기 전용으로 요약 |
 | `lit-comprehend` 또는 `comprehend` | **lit-comprehend** | 작업 트리 밖에 자체 완결형 설명 자료 생성 |
-| `review-work` 또는 `lit review` | **review-work** | 계획이나 끝난 작업을 읽기 전용으로 검토 |
+| `review-work` 또는 `lit review` | **review-work** | 읽기 전용 검토: Start Work 전에는 계획 검토, 뒤에는 작업 검토. 있는 것을 보고 모드를 고르며, `lit review plan` 또는 `lit review work`로 직접 지정 |
 | `litresearch`, `/litresearch` 또는 `lit research` | **litresearch** | 사실·가설·출처·불확실성을 나눠 적는 연구 저널 |
 | `lit start work <plan-name>` | **Start Work** | 승인된 계획을 실행하고 증거를 남김 |
 | 정확히 단독으로 입력한 `handoff` | **lit-handoff** | 비밀값을 빼고 인수인계 문서를 만들거나 갱신 |
 | 정확히 단독으로 입력한 `lit-scientific-visualization` | **lit-scientific-visualization** | 훅을 통해 출판용 시각화 어댑터를 불러옴 |
 
-같은 모드를 한 세션에서 다시 입력해도 달라지는 것은 없습니다.
+세션의 첫 `lit …`은 전체 활성화를 보냅니다. 같은 모드를 다시 입력하면 그 모드가 이미 켜져 있다는 짧은 안내만 가고,
+스킬 파일을 다시 읽거나 새 계획·목표를 만들거나 단계를 초기화하지 않습니다. `lit` 다음에 `lit plan`을 입력하면
+모드가 바뀌므로 계획 활성화를 한 번 전체로 보냅니다. 단독 `lit`이나 `lit continue`는 모드를 바꾸지 않고 켜져 있는 모드를 이어 갑니다. 진행 중인 Start Work 계획, 발행된 계획, 열린 목표가 있을 때
+단독 `lit` 또는 `lit continue`를 입력하면 그 작업을 이어 간다고 알리고 새 계획을 만들지 않습니다. `lit new …`,
+`lit restart …`, 새 세션, 압축 직후의 첫 `lit`은 처음부터 전체로 보냅니다. 작업도 진행 중인 일도 없이 단독으로
+입력한 `lit`은 무엇을 시작할지 되묻습니다. Start Work는 프롬프트에 권한 부여가 들어 있으므로 항상 전체 활성화를 보냅니다.
 
 ### CLI 명령어
 

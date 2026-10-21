@@ -18,6 +18,7 @@ export interface NpmInvocationOptions {
     readonly platform?: NodeJS.Platform;
     readonly npmExecPath?: string | undefined;
     readonly nodePath?: string;
+    readonly exists?: (path: string) => boolean;
 }
 export interface NpmInvocation {
     readonly command: string;
@@ -25,6 +26,17 @@ export interface NpmInvocation {
 }
 export declare function resolveNpmCommand(platform?: NodeJS.Platform): NpmCommand;
 export declare function resolveNpmInvocation(args: readonly string[], options?: NpmInvocationOptions): NpmInvocation;
+export interface ShellSafeInvocation {
+    readonly command: string;
+    readonly args: readonly string[];
+    readonly shell: boolean;
+}
+/**
+ * Node refuses to spawn a .cmd/.bat file without a shell (CVE-2024-27980: spawnSync npm.cmd EINVAL).
+ * On Windows such a command becomes one cmd.exe line of quoted arguments; anything cmd.exe would
+ * interpret is refused rather than escaped.
+ */
+export declare function shellSafeInvocation(command: string, args: readonly string[], platform?: NodeJS.Platform): ShellSafeInvocation;
 export type AutoUpdateSource = "session-start" | "management-command";
 export type AutoUpdateStatus = "updated" | "up-to-date" | "skipped" | "failed" | "unknown-state" | "locked" | "throttled";
 export type AutoUpdateVerificationStatus = "verified" | "mismatch" | "unavailable" | "not-run";

@@ -4,14 +4,15 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { supportsAgentBrowserVersion } from './runtime-probes.mjs';
+import { agentBrowser, supportsAgentBrowserVersion } from './runtime-probes.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const report=[];
 function check(name,ok,detail){report.push({name,status:ok?'pass':'fail',detail});}
-const version=spawnSync('agent-browser',['--version'],{encoding:'utf8'});
+const browserRun=(args)=>{try{const run=agentBrowser(args);return spawnSync(run.command,run.args,{encoding:'utf8'});}catch(e){return {status:null,stdout:'',stderr:e.message};}};
+const version=browserRun(['--version']);
 check('agent-browser >= 0.38.1',version.status===0&&supportsAgentBrowserVersion(version.stdout),(version.stdout||version.stderr||'not found').trim());
-const browser=spawnSync('agent-browser',['doctor','--json'],{encoding:'utf8'});
+const browser=browserRun(['doctor','--json']);
 let doctor=null;try{doctor=JSON.parse(browser.stdout);}catch{}
 const chrome=doctor?.checks?.find((x)=>x.id==='chrome.installed')?.message||'';
 check('Chrome for Testing 154',!!doctor?.success&&chrome.includes('154.'),chrome||'not found');

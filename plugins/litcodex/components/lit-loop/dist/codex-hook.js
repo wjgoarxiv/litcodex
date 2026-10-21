@@ -25,6 +25,7 @@ import { isExactBareHandoffPrompt, shouldSuppressHandoffInjection } from "./hand
 import { activationMessage } from "./lit-mark.js";
 import { BROWSER_DRIVE_MODE_SPEC, HANDOFF_MODE_SPEC, modeForToken, resolveSkillPath, SCIENTIFIC_VISUALIZATION_MODE_SPEC, } from "./modes.js";
 import { motionRouteContext } from "./motion-route.js";
+import { continueContext, enterRoute, entryNotes, NO_REENTRY } from "./reentry.js";
 import { loadRouteContext, loadSkillInvocationContext } from "./route-context.js";
 import { isExactBareScientificVisualizationPrompt, isScientificVisualizationWhitespaceNearMiss, shouldSuppressScientificVisualizationInjection, } from "./scientific-visualization-route.js";
 import { matchRenamedSkillInvocation, skillRenameNote } from "./skill-renames.js";
@@ -153,8 +154,11 @@ function loadDirectiveForModeFailSilent(mode) {
  * (guard 0) → resolve the mode → run guards 1-3 against the MATCHED mode's marker (RC1) → load that
  * mode's directive fail-silent. Returns { kind:"noop" } for a wrong-shape value, no trigger, a guard
  * veto, or a fail-silent empty directive; { kind:"inject", stdout } only on a real activation.
+ *
+ * `reentry` is read only once a lit-family route has matched. A route whose contract this session
+ * already holds gets the short continue context (`entry: "continue"`) instead of the full activation.
  */
-export function runUserPromptSubmitHook(input) {
+export function runUserPromptSubmitHook(input, reentry = () => NO_REENTRY) {
     if (!isLitUserPromptSubmitInput(input)) {
         return { kind: "noop" };
     }
@@ -217,22 +221,29 @@ export function runUserPromptSubmitHook(input) {
         return { kind: "noop" };
     }
     const mode = modeForToken(match.token);
-    const decision = shouldSuppressInjection(input.prompt, transcriptPath, mode.openMarker);
+    // Whether this session already holds the contract comes from the session's saved state (reentry.ts), not the transcript.
+    const decision = shouldSuppressInjection(input.prompt, transcriptPath, mode.openMarker, { transcriptDedupe: false });
     if (decision.suppress) {
         return { kind: "noop" };
     }
-    const context = loadDirectiveForModeFailSilent(mode);
+    const entry = enterRoute(input.prompt, mode.mode, reentry());
+    const keeps = entry.kind === "continue" || (entry.kind === "resume" && entry.active);
+    const route = entry.kind === "first" ? mode.mode : entry.route;
+    const context = keeps ? continueContext(route, entry) : loadDirectiveForModeFailSilent(mode);
     const stdout = context === ""
         ? ""
         : formatAdditionalContextOutput([
             context,
+            ...(keeps ? [] : entryNotes(entry)),
             mode.skillName === "lit-loop" ? motionRouteContext(mode.skillPath, input.prompt) : "",
             skillRenameNote(match.raw),
         ]
             .filter(Boolean)
-            .join("\n"), mode.mode);
+            .join("\n"), route);
     if (stdout === "") {
         return { kind: "noop" };
     }
-    return { kind: "inject", stdout, mode: mode.mode };
+    return keeps
+        ? { kind: "inject", stdout, mode: route, entry: "continue" }
+        : { kind: "inject", stdout, mode: mode.mode };
 }

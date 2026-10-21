@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
-import { accessSync, constants, statSync } from "node:fs";
-import { delimiter, join } from "node:path";
+import { accessSync, constants, readFileSync, statSync } from "node:fs";
+import { delimiter, join, win32 } from "node:path";
 import process from "node:process";
 
 export const DRIVER_COMMAND = "agent-browser";
@@ -246,11 +246,27 @@ function decodeSupervisorOutput(value) {
 	}
 }
 
+/**
+ * The shell-free way to run a resolved driver path. Node refuses to spawn a .cmd/.bat shim without a
+ * shell (CVE-2024-27980), so on Windows the npm shim is unwrapped to the script or binary it launches;
+ * a .cmd that is not an npm shim is refused, so no argument ever passes through cmd.exe.
+ */
+export function shellFreeInvocation(command, args, platform = process.platform, read = (file) => readFileSync(file, "utf8")) {
+	if (platform !== "win32" || !/\.(?:cmd|bat)$/iu.test(command)) return { command, args };
+	const target = [...read(command).matchAll(/"%~?dp0%?\\([^"\r\n]+)"\s+%\*/gu)].at(-1)?.[1];
+	if (!target) return null;
+	const resolved = win32.join(win32.dirname(command), target);
+	if (hasRawPathControl(resolved) || containsCredentialShape(resolved)) return null;
+	return /\.[cm]?js$/iu.test(resolved) ? { command: process.execPath, args: [resolved, ...args] } : { command: resolved, args };
+}
+
 function runVersionCommand(command, args, environment, timeoutMs) {
 	try {
+		const invocation = shellFreeInvocation(command, args);
+		if (invocation === null) return null;
 		const result = spawnSync(
 			process.execPath,
-			["--input-type=module", "-e", POSIX_SUPERVISOR, command, JSON.stringify(args), String(timeoutMs), String(VERSION_OUTPUT_LIMIT_BYTES)],
+			["--input-type=module", "-e", POSIX_SUPERVISOR, invocation.command, JSON.stringify(invocation.args), String(timeoutMs), String(VERSION_OUTPUT_LIMIT_BYTES)],
 			{
 				encoding: "utf8",
 				env: environment,
@@ -340,7 +356,11 @@ function probeUnsafe(options) {
 		);
 	}
 
-	const environment = { PATH: searchPath };
+	// Windows processes need SystemRoot to start reliably; it names a system folder, never a secret.
+	const environment =
+		process.platform === "win32" && typeof process.env.SystemRoot === "string"
+			? { PATH: searchPath, SystemRoot: process.env.SystemRoot }
+			: { PATH: searchPath };
 	const injectedRunner = typeof input.runCommand === "function" ? input.runCommand : null;
 	const resolved = injectedRunner
 		? runSafely(injectedRunner, "command", ["-v", DRIVER_COMMAND], {

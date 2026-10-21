@@ -311,7 +311,7 @@ export async function runCli(rawArgv: readonly string[]): Promise<number> {
 				]);
 			}
 			const result = mode === "install" ? prepareOfficeRuntime(codexHome) : officeRuntimeStatus(codexHome);
-			process.stdout.write(`${officeRuntimeNotice(result.ready)}\n`);
+			process.stdout.write(`${officeRuntimeNotice(result.ready, result.detail)}\n`);
 			return result.ready ? 0 : mode === "install" ? 3 : 4;
 		}
 		if (head === "motion-runtime") {

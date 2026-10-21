@@ -1,7 +1,8 @@
 // Motion runtime: a product-owned cache under ${XDG_CACHE_HOME:-~/.cache}/litcodex/motion-runtime,
 // filled only by `litcodex motion-runtime install` (or the installer/postinstall pre-warm) from the
 // pinned lockfile, pinned font URLs and a hash-pinned audio requirements file. Renders only read it
-// (MO-A-42/43). This module also carries the five doctor/status probes (MO-A-44/55).
+// (MO-A-42/43). This module also carries the six doctor/status probes (MO-A-44/55): the five film
+// probes and the cover encoder that cover mode needs.
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { closeSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
@@ -119,9 +120,22 @@ function withLock(root, action) {
 const INHERITED_NPM_MODE = /^npm_config_(global|location|prefix|dry[-_]run)$/iu;
 const npmChildEnv = (env) => Object.fromEntries(Object.entries(env).filter(([key]) => !INHERITED_NPM_MODE.test(key)));
 
-function npmCommand(env) {
-	if (env.npm_execpath && existsSync(env.npm_execpath)) return [process.execPath, [env.npm_execpath]];
-	return [process.platform === "win32" ? "npm.cmd" : "npm", []];
+/**
+ * How to run npm: node + npm's own entry script when one exists. Node refuses to spawn a .cmd/.bat
+ * shim without a shell (CVE-2024-27980), so on Windows the last resort is a quoted cmd.exe line.
+ */
+export function npmCommand(args, env = process.env, platform = process.platform, exists = existsSync) {
+	if (env.npm_execpath && exists(env.npm_execpath)) return { command: process.execPath, args: [env.npm_execpath, ...args] };
+	if (platform !== "win32") return { command: "npm", args };
+	const bundled = join(dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js");
+	if (exists(bundled)) return { command: process.execPath, args: [bundled, ...args] };
+	return { command: ["npm.cmd", ...args].map(cmdArgument).join(" "), args: [], shell: true };
+}
+
+/** One argument for a cmd.exe line: quoted when it holds spaces; refused when cmd would interpret it. */
+export function cmdArgument(value) {
+	if (/["%^&|<>!\r\n]/u.test(value)) throw new Error(`refusing to pass ${JSON.stringify(value)} through cmd.exe`);
+	return /[\s()]/u.test(value) ? `"${value}"` : value;
 }
 
 /**
@@ -139,12 +153,12 @@ export async function install({ env = process.env, audio = false, wordTiming = f
 		mkdirSync(dir, { recursive: true });
 		if (!depsState(dir).missing.every((m) => m === "pre-warm receipt missing")) {
 			for (const name of ["package.json", "package-lock.json"]) copyFileSync(join(RUNTIME_SOURCES, name), join(dir, name));
-			const [command, prefix] = npmCommand(env);
-			const args = [...prefix, "ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"];
-			if (env.LITCODEX_MOTION_NPM_CACHE) args.push("--offline", "--cache", env.LITCODEX_MOTION_NPM_CACHE);
+			const ci = ["ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"];
+			if (env.LITCODEX_MOTION_NPM_CACHE) ci.push("--offline", "--cache", env.LITCODEX_MOTION_NPM_CACHE);
+			const npm = npmCommand(ci, env);
 			log(`installing pinned engine dependencies into ${dir}`);
-			const result = spawnSync(command, args, { cwd: dir, encoding: "utf8", env: { ...npmChildEnv(env), PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1" }, timeout: 300000 });
-			if (result.status !== 0) throw new Error(`npm ci failed: ${(result.error?.message || result.stderr || "").trim().split("\n").slice(-2).join(" ")}`);
+			const result = spawnSync(npm.command, npm.args, { cwd: dir, encoding: "utf8", env: { ...npmChildEnv(env), PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1" }, timeout: 300000, ...(npm.shell ? { shell: true } : {}) });
+			if (result.status !== 0) throw new Error(`npm ci failed (exit ${result.status ?? result.signal}): ${(result.error?.message || result.stderr || "").trim().split(/\r?\n/u).slice(-2).join(" ")}`);
 		}
 		for (const item of FETCHED) {
 			const target = join(dir, item.path);
@@ -163,15 +177,48 @@ export async function install({ env = process.env, audio = false, wordTiming = f
 	return { ready: deps.ready && fonts.ready, dir, missing: [...deps.missing, ...fonts.missing] };
 }
 
+// The audio requirements are compiled for CPython 3.10 and up, but --only-binary needs a wheel for
+// every pin, and those stop at MAX_PYTHON: a newer host python3 (3.15 on some Macs) fails pip on the
+// first package without one. So the venv is built from the newest python3.X inside the range.
+const MIN_PYTHON = [3, 10];
+const MAX_PYTHON = [3, 14];
+const PYTHON_RANGE = `${MIN_PYTHON.join(".")} to ${MAX_PYTHON.join(".")}`;
+
+export function probePython(command, env = process.env) {
+	const probe = spawnSync(command, ["-c", "import sys; print('%d.%d.%d' % sys.version_info[:3])"], { encoding: "utf8", env, timeout: 30000 });
+	if (probe.error || probe.status !== 0) return { ok: false, command, detail: probe.error?.code === "ENOENT" || !probe.stderr ? "not found" : probe.stderr.trim().split(/\r?\n/u).pop() };
+	const version = probe.stdout.trim();
+	const [major, minor] = version.split(".").map(Number);
+	if (major < MIN_PYTHON[0] || (major === MIN_PYTHON[0] && minor < MIN_PYTHON[1])) return { ok: false, command, version, detail: `${version} is older than ${MIN_PYTHON.join(".")}` };
+	if (major > MAX_PYTHON[0] || (major === MAX_PYTHON[0] && minor > MAX_PYTHON[1])) return { ok: false, command, version, detail: `${version} is newer than ${MAX_PYTHON.join(".")}` };
+	return { ok: true, command, version, detail: version };
+}
+
+/** $LITCODEX_MOTION_PYTHON alone when set; otherwise python3.14 down to python3.10, then python3 and python. */
+export function pickPython(env = process.env, probe = (command) => probePython(command, env)) {
+	if (env.LITCODEX_MOTION_PYTHON) return probe(env.LITCODEX_MOTION_PYTHON);
+	const candidates = [];
+	for (let minor = MAX_PYTHON[1]; minor >= MIN_PYTHON[1]; minor -= 1) candidates.push(`python3.${minor}`);
+	const tried = [];
+	for (const command of [...candidates, "python3", "python"]) {
+		const found = probe(command);
+		if (found.ok) return found;
+		if (found.detail !== "not found") tried.push(`${command}: ${found.detail}`);
+	}
+	return { ok: false, command: "python3", detail: `no supported Python (${PYTHON_RANGE}) on PATH${tried.length ? `; tried ${tried.join(", ")}` : ""}` };
+}
+
 function installAudio(dir, env, log) {
 	const venv = join(dir, "audio-venv");
-	const python = env.LITCODEX_MOTION_PYTHON || "python3";
-	log(`creating the librosa venv with ${python}`);
+	const picked = pickPython(env);
+	if (!picked.ok) throw new Error(`audio venv needs Python ${PYTHON_RANGE}: ${picked.detail}; set LITCODEX_MOTION_PYTHON to one`);
+	const python = picked.command;
+	log(`creating the librosa venv with ${python} ${picked.version}`);
 	rmSync(venv, { recursive: true, force: true });
 	const made = spawnSync(python, ["-m", "venv", venv], { encoding: "utf8", env, timeout: 120000 });
 	if (made.status !== 0) throw new Error(`python venv failed: ${(made.error?.message || made.stderr || "").trim()}`);
 	const pip = spawnSync(venvPython(dir), ["-m", "pip", "install", "--disable-pip-version-check", "--no-input", "--require-hashes", "--only-binary=:all:", "-r", AUDIO_REQUIREMENTS], { encoding: "utf8", env, timeout: 900000 });
-	if (pip.status !== 0) throw new Error(`pip install --require-hashes failed: ${(pip.stderr || "").trim().split("\n").slice(-2).join(" ")}`);
+	if (pip.status !== 0) throw new Error(`pip install --require-hashes failed (exit ${pip.status ?? pip.signal}): ${(pip.error?.message || pip.stderr || "").trim().split(/\r?\n/u).slice(-2).join(" ")}`);
 	writeFileSync(join(venv, "litcodex-audio.json"), `${JSON.stringify({ requirementsSha256: requirementsDigest() })}\n`);
 }
 
@@ -206,12 +253,26 @@ export function stageFlags(width, height, platform = process.platform) {
 	return [...chromeLadder(platform)[1], ...CHROME_STAGE_FLAGS, `--window-size=${width},${height}`];
 }
 
+/**
+ * Cover mode's launch: the stage rung at the cover's device scale, with raster kept off the GPU path
+ * and never partial: at 2x, glyph edges rastered in GPU tiles came out one level apart between fresh
+ * browsers.
+ */
+export function coverFlags(width, height, scale, platform = process.platform) {
+	return [...stageFlags(width, height, platform).map((flag) => (flag === "--force-device-scale-factor=1" ? `--force-device-scale-factor=${scale}` : flag)), "--disable-gpu-rasterization", "--disable-partial-raster"];
+}
+
 export const isSoftware = (renderer) => SOFTWARE_GL.some((needle) => String(renderer).toLowerCase().includes(needle));
 
-function which(command, env) {
-	for (const dir of (env.PATH || "").split(delimiter)) {
-		const path = join(dir, command);
-		if (dir && existsSync(path)) return path;
+/** A PATH lookup; on Windows it tries each PATHEXT extension, so ffmpeg.exe answers for ffmpeg. */
+export function which(command, env = process.env, platform = process.platform, exists = existsSync) {
+	const extensions = platform === "win32" ? (env.PATHEXT || ".COM;.EXE;.BAT;.CMD").split(";").filter(Boolean) : [""];
+	for (const dir of (env.PATH ?? env.Path ?? "").split(platform === "win32" ? ";" : delimiter)) {
+		if (!dir) continue;
+		for (const extension of extensions) {
+			const path = join(dir, `${command}${extension}`);
+			if (exists(path)) return path;
+		}
 	}
 	return null;
 }
@@ -220,7 +281,7 @@ export function ffmpegProbe(env = process.env) {
 	const path = which("ffmpeg", env);
 	if (!path) return { ok: false, line: "not found on PATH", previewEncoder: null };
 	const version = spawnSync(path, ["-hide_banner", "-version"], { encoding: "utf8", env });
-	const first = (version.stdout || "").split("\n")[0].trim();
+	const first = (version.stdout || "").split(/\r?\n/u)[0].trim();
 	const encoders = spawnSync(path, ["-hide_banner", "-encoders"], { encoding: "utf8", env }).stdout || "";
 	const img2webp = which("img2webp", env);
 	const previewEncoder = /\blibwebp_anim\b/u.test(encoders) ? "libwebp_anim" : img2webp ? "img2webp" : "gif";
@@ -250,7 +311,18 @@ export function webglProbe(chrome, env = process.env) {
 
 export const firstLine = (text) => String(text).trim().split("\n").find((line) => line.trim())?.trim() ?? String(text);
 
-/** The five MO-A-44 probes, plus audio and word-timing state, every time. */
+/** Cover mode's encoder: img2webp with dwebp (encode, then decode for the gate), else the gifski fallback. */
+export function coverEncoderProbe(env = process.env) {
+	const img2webp = which("img2webp", env);
+	const dwebp = which("dwebp", env);
+	const version = (tool) => /\d+\.\d+(?:\.\d+)?/u.exec(`${spawnSync(tool, ["-version"], { encoding: "utf8", env }).stdout ?? ""}`)?.[0] ?? "version unknown";
+	if (img2webp && dwebp) return { ok: true, line: `img2webp ${version(img2webp)} and dwebp ${version(dwebp)}: README covers encode as animated WebP and the gate reads the decoded file` };
+	const gifski = which("gifski", env);
+	if (gifski) return { ok: true, line: `gifski at ${gifski}: covers fall back to GIF (${[img2webp ? null : "img2webp", dwebp ? null : "dwebp"].filter(Boolean).join(" and ")} missing)` };
+	return { ok: false, line: "BLOCKED_NO_COVER_ENCODER: install libwebp (img2webp, dwebp) or gifski; cover renders stop with exit 21" };
+}
+
+/** The six MO-A-44 probes, plus audio and word-timing state, every time. */
 export function status({ env = process.env, browser = true } = {}) {
 	const chrome = findChrome(env);
 	const version = chrome ? spawnSync(chrome, ["--version"], { encoding: "utf8", env, timeout: 15000 }) : null;
@@ -267,6 +339,7 @@ export function status({ env = process.env, browser = true } = {}) {
 		webgl2: gl.ok ? gl.renderer : gl.detail,
 		rendererWarning: warning,
 		prewarm: missing.length ? `missing: ${missing.join("; ")}; fix: ${INSTALL_COMMAND}` : `ready (${dir})`,
+		coverEncoder: coverEncoderProbe(env).line,
 		ready: missing.length === 0,
 		missing,
 		cache: dir,
@@ -285,6 +358,7 @@ export function renderStatus(report) {
 		`WebGL2 renderer: ${report.webgl2}`,
 		`Renderer warning: ${report.rendererWarning}`,
 		`Pre-warm: ${report.prewarm}`,
+		`Cover encoder: ${report.coverEncoder}`,
 		`Audio tier: ${report.audio}`,
 		`Word timing: ${report.wordTiming}`,
 	].join("\n");

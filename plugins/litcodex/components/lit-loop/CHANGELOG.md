@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- A repeated `lit …` continues the mode a session already holds with a short note (at most 600 bytes, no skill
+  re-read) instead of the full activation, using a per-session record under `.litcodex/lit-reentry/` that
+  PostCompact clears. A different mode, `lit new …` and `lit restart …` send the full activation (a bare `lit` or `lit continue` carries on the active mode instead); a bare `lit`
+  over resumable work resumes it and makes no new plan; Start Work is always full.
+- The activation lists its hand-off skills by name under one skills folder, not six absolute paths.
+
 ## [0.3.44] - 2026-07-23
 
 ### Fixed

@@ -79,9 +79,9 @@ LIT · codex
 
 ## LITFAMILY
 
-![어두운 배경에 다섯 아머드 머신을 배치한 LITFAMILY 일러스트](./assets/litfamily-machines.png)
+![어두운 배경에 일곱 아머드 머신을 배치한 LITFAMILY 일러스트](./assets/litfamily-machines.png)
 
-다섯 제품을 다섯 아머드 머신으로 그린 LIT 패밀리 일러스트입니다.
+일곱 제품을 일곱 아머드 머신으로 그린 LIT 패밀리 일러스트입니다.
 
 ## Ignition 모션
 

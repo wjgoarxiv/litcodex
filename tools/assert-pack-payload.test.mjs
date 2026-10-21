@@ -974,7 +974,7 @@ test("seed manifest pins load-bearing forbidden segments and excludes hooks/CHAN
 		["marketplace/plugins/litcodex/skills/lit-docx/", 63],
 		["marketplace/plugins/litcodex/skills/lit-humanizer/", 68],
 		["marketplace/plugins/litcodex/skills/lit-pptx/", 109],
-		["marketplace/plugins/litcodex/skills/lit-typographic-motion/", 68],
+		["marketplace/plugins/litcodex/skills/lit-typographic-motion/", 96],
 		["marketplace/plugins/litcodex/skills/readme-studio/", 23],
 		["marketplace/plugins/litcodex/skills/structural-search/", 4],
 		["marketplace/plugins/litcodex/skills/visual-qa/", 23],

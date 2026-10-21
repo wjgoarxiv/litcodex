@@ -134,9 +134,16 @@ This directive is an LLM-facing contract injected by the LitCodex Codex plugin, 
 Print that line verbatim, then bind the goal. You are now in litgoal: the
 goal-BINDING surface. Your one job is to turn the user's request into a crisp
 objective with checkable success criteria and persist it into the durable loop
-state so lit-loop can EXECUTE it. You SET the goal here; lit-loop RUNS it. Do
+state so lit-loop can EXECUTE it. litgoal sets and keeps the finish line; lit-loop
+and start-work run toward it. You SET the goal here; lit-loop RUNS it. Do
 NOT start implementing, do NOT run tests, do NOT capture evidence — that is the
 loop's job, not yours.
+
+"Keeps" is literal: the binding lives in `.litcodex/lit-loop/goals.json`, so
+later turns and sessions aim at the same objective and criteria. lit-loop reads
+it, records evidence against it and never edits the objective or the criteria;
+start-work runs an approved plan toward the same finish line. To move the finish
+line, run litgoal again with the new objective.
 
 # What you produce
 One binding: the user's objective restated as a single crisp goal, plus 1-3

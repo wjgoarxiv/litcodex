@@ -60,6 +60,8 @@ function tokenForSkillName(skillName: string): LitTriggerToken | null {
 			return "lit-recap";
 		case "lit-comprehend":
 			return "lit-comprehend";
+		case "lit-brainstorm":
+			return "lit-brainstorm";
 		case "lit-crucible":
 			return "lit-crucible";
 		case "lit-init":

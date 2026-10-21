@@ -67,6 +67,14 @@ export function recordLitPlanActivation(repoRoot, sessionId, now = Date.now()) {
         // A state write failure only disables the guard for this session.
     }
 }
+/** A new plan after a saved one needs its own persistence check: re-arm the gate when the last one was satisfied. */
+export function rearmLitPlanIfSatisfied(repoRoot, sessionId, now = Date.now()) {
+    const path = statePath(repoRoot, sessionId);
+    if (path === null)
+        return;
+    if (readState(path)?.satisfied === true)
+        recordLitPlanActivation(repoRoot, sessionId, now);
+}
 /** Newest `.litcodex/plans/*.md` modified at or after `since`, or null when none exists. */
 function newestPlanSince(repoRoot, since) {
     const dir = join(repoRoot, PLAN_PERSISTENCE_PLANS_DIR);

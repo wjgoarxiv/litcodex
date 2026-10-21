@@ -1,4 +1,4 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.28/readme-assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.28/readme-assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: five armored robots power on one by one, the LitCodex robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.28/readme-assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.28/readme-assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: seven armored machines power on bay by bay, the LitCodex machine in the third bay wakes with a glowing orange visor and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
 
 <p align="center">
 <a href="#install"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.28/readme-assets/badge-version.svg" alt="1.0.28" /></a>
@@ -65,7 +65,7 @@ Pick any skill in the Codex skill picker or mention it by scoped name, such as `
 [skills page](https://github.com/wjgoarxiv/litcodex/blob/main/docs/skills.md) has a picture of each one.
 
 - Loop and planning: `lit-loop` (`lit`), `litwork`, `lit-plan`, Start Work (`lit start work <approved-plan>`),
-  `litgoal`, `deep-interview`, `lit-crucible`, `lit-team`, `lit-recap` and `lit-handoff`.
+  `litgoal`, `deep-interview`, `lit-brainstorm`, `lit-crucible`, `lit-team`, `lit-recap` and `lit-handoff`.
 - Review and research: `review-work`, `litresearch`, `autoresearch`, `autoconference`, `lit-fetch`,
   `wikify`, `coding-session-audit` and `lit-comprehend`.
 - Documents, figures and screens: `lit-docx`, `lit-pptx`, `lit-diagram-drawer`,

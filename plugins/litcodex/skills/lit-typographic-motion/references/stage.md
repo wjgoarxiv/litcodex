@@ -27,7 +27,7 @@ The page loads two product routes:
 <script src="/lit/stage-kit.js"></script>
 ```
 
-`/lit/fonts.css` declares this product's verified faces with `font-display: block`: `"Archivo"` (weights 400, 700, 900; `font-stretch` 75 %, 100 %, 125 %), `"Pretendard"` (400, 700) for Hangul, `"VT323"`, `"Galmuri9"` and `"MesloLGS NF"`. Name only these families; any other face is a system fallback the text check reports.
+`/lit/fonts.css` declares this product's verified faces with `font-display: block`: `"Archivo"` (weights 400, 700, 900; `font-stretch` 75 %, 100 %, 125 %), `"Pretendard"` (400, 700) for Hangul, `"VT323"`, `"Galmuri9"`, `"MesloLGS NF"` and `"JetBrains Mono"` (variable `wght` 100 to 800, a fixed advance, so weight motion never reflows). Name only these families; any other face is a system fallback the text check reports.
 
 ## The contract
 
@@ -173,3 +173,5 @@ The gate checks the flash audit on the master and the looping preview (the audit
 | 18 | Nondeterministic frame (frame and region named) | Replace the leaking source with `t` or `LitStage.rand` |
 | 19 | Network request or connection | Make the asset local |
 | 20 | Sound invalid | See the sound plan in the treatment |
+
+A README cover loop uses the same page rules and kit but its own contract (`window.renderFrame(t)` over a loop, a 2x seek capture, the decoded-file gate): `references/cover.md`.

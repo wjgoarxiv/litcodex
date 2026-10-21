@@ -43,6 +43,7 @@ const ROUTES = [
 	["lit-recap", "lit recap", "lit-recap"],
 	["deep-interview", "deep-interview a mobile app idea", "deep-interview"],
 	["lit-comprehend", "comprehend this repo", "lit-comprehend"],
+	["lit-brainstorm", "lit brainstorm a name for my app", "lit-brainstorm"],
 	["litresearch", "litresearch heat pumps", "litresearch"],
 	["review-work", "review-work this diff", "review-work"],
 	["start-work", "start-work approved-plan", "start-work"],
@@ -141,8 +142,10 @@ describe("route gates that used to sit in the cut-out middle", () => {
 		expect(context).toContain("## Final verification wave\n- [ ] F1. <verification title>");
 	});
 
-	it("names an installed skill file for every bounded deliverable hand-off", async () => {
+	it("names every bounded deliverable hand-off once, under one installed skills folder", async () => {
 		const context = await contextFor("lit fix the typo in README.md");
+		const folder = /Each skill above is a folder under `([^`]+)`/u.exec(context)?.[1];
+		expect(folder).toBeDefined();
 		for (const skill of [
 			"lit-code",
 			"lit-docx",
@@ -151,9 +154,9 @@ describe("route gates that used to sit in the cut-out middle", () => {
 			"lit-diagram-drawer",
 			"lit-typographic-motion",
 		]) {
-			const path = new RegExp(`(\\S+/skills/${skill}/SKILL\\.md)`, "u").exec(context)?.[1]?.replace(/^`|`$/gu, "");
-			expect(path, skill).toBeDefined();
-			expect(existsSync(path ?? ""), skill).toBe(true);
+			expect(context, skill).toContain(`| ${skill} |`);
+			expect(existsSync(join(folder ?? "", skill, "SKILL.md")), skill).toBe(true);
+			expect(context, skill).not.toContain(`/skills/${skill}/SKILL.md`);
 		}
 		expect(context).toContain("### Bounded task");
 		expect(context).toContain("### Durable task");

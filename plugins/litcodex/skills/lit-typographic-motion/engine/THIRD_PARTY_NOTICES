@@ -12,6 +12,10 @@ Fonts bundled in this skill (paths relative to the skill directory)
   variable font; recipe and hashes in fonts/archivo/SHA256SUMS.
 - VT323 Regular: fonts/vt323/VT323-Regular.ttf; licence fonts/vt323/OFL.txt (SIL Open Font
   License 1.1, The VT323 Project Authors).
+- JetBrains Mono, variable wght 100-800, latin subset: fonts/jetbrains-mono/JetBrainsMono-wght-latin.woff2;
+  licence fonts/jetbrains-mono/OFL.txt (SIL Open Font License 1.1, Copyright 2020 The JetBrains Mono
+  Project Authors; no Reserved Font Name). The unmodified file
+  files/jetbrains-mono-latin-wght-normal.woff2 of @fontsource-variable/jetbrains-mono 5.3.0.
 - EMS Allure, EMS Felix, EMS Osmotron, EMS Readability, EMS Tech single-stroke SVG fonts:
   fonts/stroke/*.svg; licence fonts/stroke/OFL.txt (SIL Open Font License 1.1) and
   fonts/stroke/CREDITS (per-font creator, converter and base font).

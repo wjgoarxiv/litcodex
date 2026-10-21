@@ -386,7 +386,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 	}
 
 	const officeRuntime = result.ok ? prepareOfficeRuntime(opts.codexHome, spawnSync, io.env) : undefined;
-	if (officeRuntime) io.stderr.write(`[litcodex] ${officeRuntimeNotice(officeRuntime.ready)}\n`);
+	if (officeRuntime) io.stderr.write(`[litcodex] ${officeRuntimeNotice(officeRuntime.ready, officeRuntime.detail)}\n`);
 	const motionRuntime = result.ok ? prepareMotionRuntime(opts.codexHome, [], spawnSync, io.env) : undefined;
 	if (motionRuntime) io.stderr.write(`[litcodex] ${motionRuntime.receipt}\n`);
 	if (opts.json) {

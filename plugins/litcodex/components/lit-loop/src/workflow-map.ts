@@ -26,6 +26,7 @@ const STAGES: readonly (readonly [Stage, string, string])[] = [
 /** Where each LIT skill sits in the main chain; `research` is its own short family. */
 const MODE_STAGE: Readonly<Record<string, Stage | "research">> = {
 	"deep-interview": "interview",
+	"lit-brainstorm": "interview",
 	"lit-crucible": "interview",
 	"lit-plan": "plan",
 	litgoal: "plan",

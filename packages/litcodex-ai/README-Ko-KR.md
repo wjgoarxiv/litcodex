@@ -1,4 +1,4 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.28/readme-assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.28/readme-assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitCodex 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.28/readme-assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.28/readme-assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 일곱 머신의 칸이 차례로 켜지고, 셋째 칸의 LitCodex 머신이 주황 바이저와 테두리를 밝힌 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
 
 <p align="center">
 <a href="#설치"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.28/readme-assets/badge-version.svg" alt="1.0.28" /></a>
@@ -61,7 +61,7 @@ lit 회원가입 폼에 입력 검증을 추가해줘
 [스킬 안내](https://github.com/wjgoarxiv/litcodex/blob/main/docs/skills-Ko-KR.md)에 있습니다.
 
 - 루프와 계획: `lit-loop`(`lit`), `litwork`, `lit-plan`, Start Work(`lit start work <승인된 계획>`), `litgoal`,
-  `deep-interview`, `lit-crucible`, `lit-team`, `lit-recap`, `lit-handoff`.
+  `deep-interview`, `lit-brainstorm`, `lit-crucible`, `lit-team`, `lit-recap`, `lit-handoff`.
 - 검토와 조사: `review-work`, `litresearch`, `autoresearch`, `autoconference`, `lit-fetch`, `wikify`,
   `coding-session-audit`, `lit-comprehend`.
 - 문서, 그림, 화면: `lit-docx`, `lit-pptx`, `lit-diagram-drawer`, `lit-scientific-visualization`,

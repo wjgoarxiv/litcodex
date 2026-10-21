@@ -48,6 +48,7 @@
 		"qa:uiux-installed:doctor": "npm run build && node scripts/run-uiux-installed-probe.mjs --scope doctor",
 		"qa:uiux-installed": "npm run build && node scripts/run-uiux-installed-probe.mjs --scope full",
 		"qa:lit-fetch-ab": "node tools/run-lit-fetch-ab.mjs --json",
+		"qa:cover-recipes": "node scripts/qa-cover-recipes.mjs",
 		"scan:legacy-tokens": "node tools/scan-legacy-tokens.mjs",
 		"check:version": "npm run build:release-tools --silent && node .litcodex/runtime/release-tools/check-version-lockstep.js",
 		"check:marketplace-dist": "node tools/assert-marketplace-dist.mjs --candidate",

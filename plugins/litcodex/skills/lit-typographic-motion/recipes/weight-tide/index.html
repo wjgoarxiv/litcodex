@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Cover recipe: weight tide (type as material). The brand word (NAME) never moves; a wave of weight
+     passes through it and through faint rows of it that drift exactly one word length per loop.
+     JetBrains Mono has a real wght axis (100-800) and a fixed advance, so nothing reflows while the
+     weight moves. Replace NAME and the motto with the project's own. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/loop-kit.js"></script>
+<style>
+  :root { --ground: #080d14; --ink: #1b2531; --ivory: #f2efdf; --signal: #ff6337; }
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: var(--ground); font-family: "JetBrains Mono"; }
+  #rows { position: absolute; inset: 0; }
+  .row { position: absolute; left: 0; white-space: pre; font-size: 56px; line-height: 1; color: var(--ink); }
+  .row span, #name span { display: inline-block; }
+  #band { position: absolute; left: 0; right: 0; top: 180px; height: 252px; background: var(--ground); border-top: 2px solid #1f2a37; border-bottom: 2px solid #1f2a37; }
+  #name { position: absolute; left: 0; right: 0; top: 196px; text-align: center; font-size: 168px; line-height: 1; color: var(--ivory); white-space: pre; }
+  #caret { position: absolute; top: 364px; height: 9px; background: var(--signal); }
+  #motto { position: absolute; left: 0; right: 0; top: 400px; text-align: center; font-size: 19px; letter-spacing: 9px; color: #8b8f8f; font-weight: 500; }
+  #motto b { color: var(--signal); font-weight: 700; }
+  body.mask, body.mask * { color: #000 !important; background: #000 !important; border-color: #000 !important; }
+  body.mask #name, body.mask #name span { color: #fff !important; background: transparent !important; }
+</style>
+</head>
+<body>
+<div id="rows"></div>
+<div id="band"></div>
+<div id="name"></div>
+<div id="caret"></div>
+<div id="motto">KEEP THE WORK <b>LIT.</b></div>
+<script>
+// One rule: a letter's weight is a swell of the loop phase, offset by where the letter sits on screen.
+// Slow layer: the rows drift one word per loop, alternate rows opposite ways, so letters travel through
+// the tide (something must translate, or the encoder drops the weight change). Mid layer: the tide.
+// Beat layer: a caret that dwells under each letter of the name, steps on with an overshoot and
+// carriage-returns home on the last stop.
+const { clamp, fract, mix, ease, swell, makeNoise, loopNoise, cubicPulse } = LitLoop;
+const NAME = "LITCODEX";
+const SEP = "·";
+const ROW = { height: 64, size: 56, count: 10 };
+const ADVANCE = ROW.size * 0.6;
+const noise = makeNoise(7);
+// The tide's front: a diagonal sweep (0.85 x/W + 0.35 y/H) plus a little loop noise per row.
+const front = (x, y, row) => 0.85 * (x / 1200) + 0.35 * (y / 600) + 0.06 * row;
+const tide = (t, offset) => ease.gain(swell(fract(t - offset)), 2.4);
+
+const rows = Array.from({ length: ROW.count }, (_, r) => {
+  const el = document.createElement("div");
+  el.className = "row";
+  el.style.top = `${r * ROW.height - 18}px`;
+  const spans = [...(NAME + SEP).repeat(6)].map((ch) => {
+    const span = document.createElement("span");
+    span.textContent = ch;
+    el.appendChild(span);
+    return span;
+  });
+  document.getElementById("rows").appendChild(el);
+  return { el, spans, y: r * ROW.height + 10, dir: r % 2 ? 1 : -1, r };
+});
+const nameSpans = [...NAME].map((ch) => {
+  const span = document.createElement("span");
+  span.textContent = ch;
+  document.getElementById("name").appendChild(span);
+  return span;
+});
+const NAME_ADVANCE = 168 * 0.6;
+const NAME_LEFT = (1200 - NAME_ADVANCE * NAME.length) / 2;
+const caret = document.getElementById("caret");
+
+window.renderFrame = (t, opts = {}) => {
+  document.body.className = opts.mask ? "mask" : "";
+  const word = (NAME.length + 1) * ADVANCE;
+  for (const row of rows) {
+    // Exactly one word of travel per loop keeps the drift seamless; loop noise breathes the row.
+    const shift = row.dir * word * t - word * 1.5 + 6 * loopNoise(noise, t, row.r * 3.1, 0.9);
+    row.el.style.transform = `translateX(${shift}px)`;
+    const wobble = 0.05 * loopNoise(noise, t, 40 + row.r, 1.1);
+    row.spans.forEach((span, i) => {
+      const k = tide(t, front(shift + (i + 0.5) * ADVANCE, row.y, row.r) + wobble);
+      span.style.fontVariationSettings = `"wght" ${Math.round(mix(100, 800, k))}`;
+      span.style.color = `rgb(${Math.round(mix(22, 46, k))},${Math.round(mix(31, 58, k))},${Math.round(mix(42, 74, k))})`;
+    });
+  }
+  // The name rides the same tide over a narrower range, so it never thins below a readable weight.
+  nameSpans.forEach((span, i) => {
+    span.style.fontVariationSettings = `"wght" ${Math.round(mix(330, 800, tide(t, front(NAME_LEFT + (i + 0.5) * NAME_ADVANCE, 300, 4.5))))}`;
+  });
+  const stops = NAME.length + 1;
+  const slot = Math.floor(t * stops);
+  const within = t * stops - slot;
+  const pos = slot < stops - 1 ? slot + ease.outBack(clamp((within - 0.62) / 0.38), 1.4) : NAME.length * (1 - ease.inCubic(clamp(within / 0.45)));
+  caret.style.left = `${NAME_LEFT + Math.min(pos, NAME.length) * NAME_ADVANCE + 6}px`;
+  caret.style.width = `${NAME_ADVANCE - 12}px`;
+  caret.style.opacity = String(1 - 0.75 * (slot === stops - 1 ? 0 : cubicPulse(0.3, 0.12, within)));
+};
+document.fonts.load('400 56px "JetBrains Mono"').then(() => document.fonts.ready).then(() => {
+  window.renderFrame(0);
+  window.ready = true;
+});
+</script>
+</body>
+</html>

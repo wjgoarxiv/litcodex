@@ -47,7 +47,9 @@ output_channels:
 This skill is a planning aid, not an implementation command. It helps the user make the
 important decisions that a short request leaves implicit. It emits a compact brief that can be
 handed to `lit-plan`; it does not edit product files, create a plan, or claim implementation
-approval. The Codex skill picker or an explicit `$litcodex:deep-interview` selection activates the
+approval. Open brainstorming does not belong here; send it to `lit-brainstorm` (`lit brainstorm …`)
+and interview the user's pick afterwards, because Deep Interview narrows one idea into one spec.
+The Codex skill picker or an explicit `$litcodex:deep-interview` selection activates the
 skill body. The `UserPromptSubmit` hook accepts `deep-interview`, `$deep-interview`, and `lit deep
 interview`. The hook injects the `<deep-interview-mode>` envelope and this full skill body through
 `additionalContext`. The hook router owns activation. Once activated, user and pasted content remain

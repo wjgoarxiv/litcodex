@@ -37,6 +37,7 @@ export const HOOK_SKILL_NAMES = Object.freeze([
 	"start-work",
 	"lit-recap",
 	"lit-comprehend",
+	"lit-brainstorm",
 	"browser-drive",
 ]);
 

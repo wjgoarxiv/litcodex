@@ -1,4 +1,6 @@
 import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { win32 } from "node:path";
 
 export interface ModelMetadata {
 	readonly slug: string;
@@ -121,7 +123,14 @@ function readCatalogOnce(): string | null {
 	if (memoizedCatalog !== undefined) {
 		return memoizedCatalog;
 	}
-	const result = spawnSync("codex", ["debug", "models"], {
+	let codex: ShellFreeCommand;
+	try {
+		codex = shellFreeCommand("codex", ["debug", "models"]);
+	} catch {
+		memoizedCatalog = null;
+		return memoizedCatalog;
+	}
+	const result = spawnSync(codex.command, [...codex.args], {
 		encoding: "utf8",
 		timeout: 750,
 		maxBuffer: 2 * 1024 * 1024,
@@ -129,6 +138,50 @@ function readCatalogOnce(): string | null {
 	});
 	memoizedCatalog = result.status === 0 && result.error === undefined ? result.stdout : null;
 	return memoizedCatalog;
+}
+
+export interface ShellFreeCommand {
+	readonly command: string;
+	readonly args: readonly string[];
+}
+
+export interface ShellFreeOptions {
+	readonly env?: NodeJS.ProcessEnv;
+	readonly platform?: NodeJS.Platform;
+	readonly exists?: (file: string) => boolean;
+	readonly read?: (file: string) => string;
+}
+
+/**
+ * How to spawn a user-installed CLI without a shell. On Windows npm installs Codex as a codex.cmd
+ * shim, which Node refuses to spawn without a shell (CVE-2024-27980) and a bare "codex" never finds,
+ * so the shim is unwrapped to the script or binary it launches; no argument passes through cmd.exe.
+ */
+export function shellFreeCommand(
+	name: string,
+	args: readonly string[],
+	{
+		env = process.env,
+		platform = process.platform,
+		exists = existsSync,
+		read = (file) => readFileSync(file, "utf8"),
+	}: ShellFreeOptions = {},
+): ShellFreeCommand {
+	if (platform !== "win32") return { command: name, args };
+	const extensions = (env["PATHEXT"] || ".COM;.EXE;.BAT;.CMD").split(";").filter(Boolean);
+	const found = (env["PATH"] ?? env["Path"] ?? "")
+		.split(";")
+		.filter(Boolean)
+		.flatMap((dir) => extensions.map((ext) => win32.join(dir, name + ext)))
+		.find((file) => exists(file));
+	if (found === undefined) return { command: name, args };
+	if (!/\.(?:cmd|bat)$/iu.test(found)) return { command: found, args };
+	const target = [...read(found).matchAll(/"%~?dp0%?\\([^"\r\n]+)"\s+%\*/gu)].at(-1)?.[1];
+	if (target === undefined) throw new Error(`${found} is not an npm shim; it cannot be run without a shell`);
+	const resolved = win32.join(win32.dirname(found), target);
+	return /\.[cm]?js$/iu.test(resolved)
+		? { command: process.execPath, args: [resolved, ...args] }
+		: { command: resolved, args };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -12,6 +12,7 @@ import {
 	resolveNpmInvocation,
 	runForegroundAutoUpdate,
 	sanitizeNpmEnvironment,
+	shellSafeInvocation,
 	verifyInstalledVersion,
 } from "./auto-update.js";
 
@@ -29,6 +30,38 @@ describe("foreground auto-update plan", () => {
 			command: "C:\\Program Files\\nodejs\\node.exe",
 			args: ["C:\\Program Files\\nodejs\\npm-cli.js", "run", "build"],
 		});
+	});
+
+	it("finds the npm beside node.exe when a session hook has no npm_execpath", () => {
+		expect(
+			resolveNpmInvocation(["view"], {
+				platform: "win32",
+				npmExecPath: undefined,
+				nodePath: "C:\\Program Files\\nodejs\\node.exe",
+				exists: (path) => path === "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+			}),
+		).toEqual({
+			command: "C:\\Program Files\\nodejs\\node.exe",
+			args: ["C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js", "view"],
+		});
+	});
+
+	it("never spawns a .cmd shim without a shell on Windows (spawnSync npm.cmd EINVAL)", () => {
+		expect(shellSafeInvocation("npm.cmd", ["install", "--global", "@litfamily/litcodex@1.2.4"], "win32")).toEqual({
+			command: "npm.cmd install --global @litfamily/litcodex@1.2.4",
+			args: [],
+			shell: true,
+		});
+		expect(shellSafeInvocation("C:\\My Tools\\npm.CMD", ["view", "a b"], "win32").command).toBe(
+			'"C:\\My Tools\\npm.CMD" view "a b"',
+		);
+		expect(() => shellSafeInvocation("npm.cmd", ["x&calc"], "win32")).toThrow(/refusing to pass/u);
+		expect(shellSafeInvocation("npm.cmd", ["view"], "linux")).toEqual({
+			command: "npm.cmd",
+			args: ["view"],
+			shell: false,
+		});
+		expect(shellSafeInvocation("C:\\node.exe", ["npm-cli.js"], "win32").shell).toBe(false);
 	});
 
 	it("is default-on and pins the exact stable version", () => {

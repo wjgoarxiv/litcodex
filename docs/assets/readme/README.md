@@ -22,18 +22,18 @@ Their strokes use the Ignition lime color. The complete upstream
 Only these three icons are used and distributed here.
 
 The landing pages lead with the motion cover at `../cover-motion.webp`
-(SHA-256 `0a03475d3e9c508c64acdaad01f152b14986ab6b2e04e1e3a32c952ab1f299d1`,
-1,873,086 bytes). It is a looping 960x640 animated WebP of about 11 seconds,
-made with the LitFamily motion skill: from a dark standby, five armored robots
-power on one by one, the LitCodex robot wakes with glowing eyes and a lit frame,
-and then LITFAMILY and KEEP THE WORK LIT. light up. When reduced motion is
+(SHA-256 `f3d8a87f8172af36bcc7ac6f20cad5fc9712a512f32681534055ca912aecca98`,
+1,887,056 bytes). It is a looping 960x640 animated WebP of about 11 seconds,
+made with the LitFamily motion skill: from a dark standby, seven armored machines
+power on bay by bay, the LitCodex machine in the third bay wakes with a glowing
+orange visor and a lit frame, and then LITFAMILY and KEEP THE WORK LIT. light up. When reduced motion is
 preferred, the READMEs show `../cover-motion-still.webp`
-(SHA-256 `2fe5e23ccded339ed044d0fb8dcc7ed5a74ab126e68744013c606eb770f9e598`,
-119,594 bytes), the fully lit hold frame. The package README loads identical
+(SHA-256 `be73d7967dc24a8e9adb9742c25346a7501cc0e115c125e9904b44d3468cc6fa`,
+132,566 bytes), the fully lit hold frame. The package README loads identical
 copies from the published package's `readme-assets/` directory. The cover is
 documentation artwork, not a registry-availability claim.
 
-The earlier static armory WebP at `../cover.webp`
-(SHA-256 `ca303edfd346c6c4756d14f269ec56799be1ae43b1c74593295026610b174e45`)
+The static seven-machine armory WebP at `../cover.webp`
+(SHA-256 `90099f77838a47c26ebd52fdec8c25a67071345a6c3b2bcbe7324d35d7ebb086`)
 and the editable `../cover.svg` remain in the repository but are no longer
 shown on the landing pages.

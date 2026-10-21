@@ -34,3 +34,5 @@ export const BROWSER_DRIVE_DIRECTIVE_MARKER = "<browser-drive-mode>";
 export const BROWSER_DRIVE_DIRECTIVE_CLOSE = "</browser-drive-mode>";
 export const LIT_COMPREHEND_DIRECTIVE_MARKER = "<lit-comprehend-mode>";
 export const LIT_COMPREHEND_DIRECTIVE_CLOSE = "</lit-comprehend-mode>";
+export const LIT_BRAINSTORM_DIRECTIVE_MARKER = "<lit-brainstorm-mode>";
+export const LIT_BRAINSTORM_DIRECTIVE_CLOSE = "</lit-brainstorm-mode>";

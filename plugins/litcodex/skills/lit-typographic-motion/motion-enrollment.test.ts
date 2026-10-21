@@ -53,9 +53,9 @@ describe("lit-typographic-motion enrollment", () => {
 		expect(JSON.stringify(lock)).not.toMatch(/remotion|three"/u);
 	});
 
-	it("prints the five motion probes on the doctor surface", () => {
-		const text = renderMotionRuntime({ ready: false, chrome: "c", ffmpeg: "f", webgl2: "w", rendererWarning: "r", prewarm: "p", audio: "a", wordTiming: "t", missing: [] });
-		for (const label of ["motion Chrome:", "motion ffmpeg:", "motion WebGL2 renderer:", "motion renderer warning:", "motion pre-warm:"]) expect(text).toContain(label);
+	it("prints the six motion probes on the doctor surface", () => {
+		const text = renderMotionRuntime({ ready: false, chrome: "c", ffmpeg: "f", webgl2: "w", rendererWarning: "r", prewarm: "p", coverEncoder: "e", audio: "a", wordTiming: "t", missing: [] });
+		for (const label of ["motion Chrome:", "motion ffmpeg:", "motion WebGL2 renderer:", "motion renderer warning:", "motion pre-warm:", "motion cover encoder: e"]) expect(text).toContain(label);
 		const cli = readFileSync(join(repoRoot, "packages/litcodex-ai/src/cli.ts"), "utf8");
 		expect(cli).toContain("litcodex motion-runtime install|status");
 		expect(readFileSync(join(repoRoot, "packages/litcodex-ai/src/install/index.ts"), "utf8")).toContain("renderMotionRuntime(motionRuntime");
@@ -66,7 +66,7 @@ describe("lit-typographic-motion corpus and caps", () => {
 	const skill = readFileSync(join(skillRoot, "SKILL.md"), "utf8");
 	it("keeps SKILL.md within the 4,096-byte entrypoint cap and pointing at every reference", () => {
 		expect(Buffer.byteLength(skill, "utf8")).toBeLessThanOrEqual(4096);
-		for (const ref of ["treatment", "stage", "style-bibles", "type-and-timing", "quality-gate", "runtime"]) expect(skill).toContain(`references/${ref}.md`);
+		for (const ref of ["treatment", "stage", "style-bibles", "type-and-timing", "quality-gate", "runtime", "cover"]) expect(skill).toContain(`references/${ref}.md`);
 		for (const phrase of ["ask no questions", "--stills-only", "completion --out O", "Hand-encoded films are not the deliverable", "litcodex motion-runtime install", "at least 600 s", "invent a labelled example subject"]) expect(skill).toContain(phrase);
 		for (const gone of ["kinetic-typography film", "not this deliverable", "sample copy", "3-6 short lines"]) expect(skill).not.toContain(gone);
 	});
@@ -76,7 +76,8 @@ describe("lit-typographic-motion corpus and caps", () => {
 			"type-and-timing.md": [1000, ["## The one reading floor", "## Tier 2", "## Tier 3", "## Script runs", "## Korean type rules", "## Fonts"]],
 			"scene-author.md": [1000, ["## How the engine renders a frame", "## The six starter scenes", "## GLSL passes", "## Outputs of a render"]],
 			"quality-gate.md": [900, ["## One round", "## Exit codes", "## Promote or withhold", "## When the work counts as done", "## What the gate measures"]],
-			"runtime.md": [900, ["## Commands", "## The five probes", "## Chrome launch ladder", "## Frame egress", "## Blocked states"]],
+			"runtime.md": [900, ["## Commands", "## The six probes", "## Chrome launch ladder", "## Frame egress", "## Blocked states"]],
+			"cover.md": [3000, ["## What changes from a film", "## The page contract", "## The cover treatment", "## Assets (`assets.json`)", "## Craft rules, ranked", "## Recipes", "## The loop kit", "## Encode", "## The gate (decoded file)", "## Review", "## Defects and window re-renders", "## Rounds and done", "## Recipe rows and negatives", "## Commands and exit codes"]],
 			"stage.md": [1500, ["## What you write", "## The contract", "## How a frame is made", "## The kit", "## Craft on the stage", "## Commands and outputs", "## Exit codes on this path"]],
 			"treatment.md": [1300, ["## Path rule", "## Field reference", "## Placeholder example", "## Genre arcs", "## Craft rules"]],
 		};

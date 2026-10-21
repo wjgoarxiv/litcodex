@@ -113,8 +113,9 @@ describe("neutral film context", () => {
 		const prose = lines.filter((line: string) => !line.includes("render.mjs")).join("\n");
 		expect(Buffer.byteLength(prose, "utf8")).toBeLessThanOrEqual(700);
 		expect(context.split(renderer).length - 1).toBe(1);
-		for (const sub of ["stage", "film", "sound", "look", "gate", "completion"])
+		for (const sub of ["stage", "cover", "film", "sound", "look", "gate", "completion"])
 			expect(commandLines.join(" ")).toMatch(new RegExp(`\\b${sub}\\b`, "u"));
+		expect(context).toContain("A README, hero or banner loop takes cover mode: references/cover.md.");
 		for (const pattern of FORBIDDEN_CONTEXT) expect(context).not.toMatch(pattern);
 		expect(context).not.toMatch(/type-led cue found/u);
 	});

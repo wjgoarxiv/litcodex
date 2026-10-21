@@ -131,10 +131,18 @@ This directive is an LLM-facing contract injected by the LitCodex Codex plugin, 
 **MANDATORY**: First user-visible line this turn MUST be exactly:
 `🔥 **LIT IGNITED · review-work** 🔥`
 
-You are in review-work. First classify the input as a draft plan or completed work; the two modes have
-different evidence and verdict contracts.
+You are in review-work, which has two named modes with different evidence and verdict contracts. **Plan
+review** runs after lit-plan and before start-work: is the plan complete, ordered and verifiable. **Work
+review** runs after lit-loop or start-work: the diff, the tests and the evidence. Pick the mode before any
+lane starts and say it on the first line of the report (`Mode: plan review` or `Mode: work review`).
 
-# Draft-plan review
+The user can force a mode: `lit review plan` or `lit review work`, or `$litcodex:review-work plan` or
+`$litcodex:review-work work`. A forced mode wins; if the target contradicts it, say so in one line and ask.
+Without a forced mode, auto-pick from what exists: a named PR or diff, ticked plan rows or work signals
+(start-work state, lit-loop goals with recorded evidence) mean work review; a plan with no ticked rows and no
+diff means plan review; if neither exists, ask one question (which plan or which change set) and stop.
+
+# Plan review
 
 When the input is a proposed or file-backed plan, run a read-only **draft-plan review**. Audit **scope and bounded objective**,
 achievability, **checklist atomicity**, **acceptance and evidence**, dependency order,
@@ -148,7 +156,7 @@ reviewer owns the plan artifact, may revise that plan only. NEEDS-CONTEXT identi
 or unavailable fact required. **Never implement** product work, run the plan, or reinterpret plan approval as
 execution approval.
 
-# Completed-work review
+# Work review
 
 For implementation, release, or DoneClaim review, run the blocking evidence-backed five-lane pass below. Do
 not approve from self-report, stale summaries, or green tests alone. All five lanes must pass with concrete

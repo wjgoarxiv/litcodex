@@ -174,6 +174,7 @@ export function stageFontFaults(faults) {
  */
 export function stageRouter({ root, fonts, record }) {
 	const kit = readFileSync(join(SKILL_ROOT, "engine", "stage-kit.js"));
+	const loopKit = readFileSync(join(SKILL_ROOT, "engine", "loop-kit.js"));
 	return async (route) => {
 		const url = route.request().url();
 		if (!url.startsWith(`${STAGE_ORIGIN}/`)) {
@@ -189,6 +190,7 @@ export function stageRouter({ root, fonts, record }) {
 			return route.fulfill({ status: 400, body: "" });
 		}
 		if (path === "/lit/stage-kit.js") return route.fulfill({ status: 200, contentType: CONTENT_TYPES[".js"], body: kit });
+		if (path === "/lit/loop-kit.js") return route.fulfill({ status: 200, contentType: CONTENT_TYPES[".js"], body: loopKit });
 		if (path === "/lit/fonts.css") return route.fulfill({ status: 200, contentType: CONTENT_TYPES[".css"], body: fonts.css });
 		const font = fonts.routes.get(path);
 		if (font) return route.fulfill({ status: 200, contentType: font.type, body: readFileSync(font.file) });

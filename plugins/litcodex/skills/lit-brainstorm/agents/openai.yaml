@@ -1,0 +1,6 @@
+interface:
+  display_name: "Lit Brainstorm"
+  short_description: "Diverge on options, then converge on a short list"
+  default_prompt: "Use $litcodex:lit-brainstorm to brainstorm options before planning."
+policy:
+  allow_implicit_invocation: false

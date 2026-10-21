@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "note": "A slide-like page that must keep failing exactly these FLOOR gates (mustFail) on the decoded file. Never tune a threshold so it passes.",
+  "mustFail": [
+    "G2.floor",
+    "G3.floor"
+  ],
+  "treatment": {
+    "loopSec": 10,
+    "fps": 20,
+    "encode": {
+      "q": 78,
+      "edgeQ": 78,
+      "edgeFrames": 0
+    }
+  }
+}

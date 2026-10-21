@@ -14,6 +14,12 @@ autonomous work loop that maintains durable state, verifies progress, checkpoint
 continues until the work is genuinely done or blocked. The same hook also routes bounded phrases such
 as `lit plan`, `lit review`, `lit research`, `lit goal`, and `lit start work`; code spans/fences and
 slash-command-style mentions are ignored except the explicit `/litresearch` research route.
+
+The first `lit …` of a session gets the full activation. A repeat of the same mode arrives as a short
+`<lit-loop-continue>` note (at most 600 bytes, no skill re-read), a different mode switches with its full
+activation, a bare `lit` over an active Start Work plan, a published plan or open goals resumes that work, and
+`lit new …` or `lit restart …` starts again in full. The hook keeps one small record per session under
+`.litcodex/lit-reentry/` and PostCompact deletes it; a missing or unreadable record means a full activation.
 Exact bare `handoff` and `lit-scientific-visualization` prompts are dedicated standalone routes. The
 scientific route injects its `<lit-scientific-visualization-mode>` envelope plus the complete bundled
 adapter, while quoted, fenced, mixed, slash-style, scoped, and near-miss forms remain inert.

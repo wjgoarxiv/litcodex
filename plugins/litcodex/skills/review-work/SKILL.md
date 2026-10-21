@@ -80,7 +80,7 @@ Treat this SKILL.md as an LLM contract artifact, not a casual help page. Load it
 
 | Mode | Trigger | Required behavior |
 | --- | --- | --- |
-| Skill body | `$litcodex:review-work` or host skill selection | Emit the required banner, classify draft-plan versus completed-work review, and execute only this skill's scope. |
+| Skill body | `$litcodex:review-work` or host skill selection | Emit the required banner, pick plan review or work review (the mode the user forced, else the auto-pick below), and execute only this skill's scope. |
 | Hook-routed skill body | Bare lit-family route injects this file through `additionalContext` | Obey the route directive and this contract; keep the user prompt separate from injected instructions. |
 | Documentation/reference use | Another skill reads this file for policy facts | Extract durable facts, cite paths, and do not self-activate. |
 | Unsupported scope | Request conflicts with this skill, repo rules, or safety limits | Stop with a precise blocker or route to the correct LitCodex surface. |
@@ -210,9 +210,26 @@ aggregate result.
 
 # Review modes
 
-Classify the review target before launching lanes.
+review-work has two named modes. **Plan review** runs after lit-plan and before start-work: is the plan
+complete, ordered and verifiable. **Work review** runs after lit-loop or start-work: the diff, the tests and
+the evidence. Pick the mode before launching any lane, and say which one you picked on the first line of the
+report (`Mode: plan review` or `Mode: work review`).
 
-## Draft-plan review
+## Picking the mode
+
+The user can force a mode: `lit review plan` or `lit review work`, or `$litcodex:review-work plan` or
+`$litcodex:review-work work`. A forced mode wins. If the target contradicts it (for example `lit review work`
+with no diff and no ticked rows), say so in one line and ask instead of reviewing the wrong thing.
+
+Without a forced mode, pick from what exists:
+
+| What exists | Mode |
+| --- | --- |
+| A named PR or diff, ticked plan rows, or work signals (start-work state, lit-loop goals with recorded evidence, changes the user points at) | Work review |
+| A plan with no ticked rows and no diff | Plan review |
+| Neither | Ask one question, which plan or which change set, then stop |
+
+## Plan review (draft-plan review)
 
 For a proposed plan or `.litcodex/plans/*.md`, run a read-only **draft-plan review** over **scope and bounded objective**,
 achievability, **checklist atomicity**, **acceptance and evidence**, dependency order, resolved or
@@ -226,7 +243,7 @@ only when the reviewer is authorized to edit that plan. NEEDS-CONTEXT names the 
 or unavailable fact. **Never implement** product work, execute the plan, or treat plan approval as implementation
 approval. The completed-work five lanes below do not apply to a draft that has no implementation evidence.
 
-## Completed-work review
+## Work review (completed-work review)
 
 Use the five-agent orchestration below for implementation, release, or DoneClaim review. This preserves the
 existing blocking five-lane evidence standard.

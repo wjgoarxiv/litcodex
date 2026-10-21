@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { EXIT } from "./constants.mjs";
 import { SKILL_ROOT } from "./fonts.mjs";
-import { chromeLadder, findChrome, firstLine, stageFlags } from "./runtime.mjs";
+import { chromeLadder, coverFlags, findChrome, firstLine, stageFlags } from "./runtime.mjs";
 
 export class Blocked extends Error {
 	constructor(exit, name, message) {
@@ -98,6 +98,24 @@ export async function launchStage({ runtime, outDir, width, height, env = proces
 	}
 	const page = context.pages()[0] ?? (await context.newPage());
 	return { context, page, chrome, flags, profileRoot };
+}
+
+/**
+ * Launch a cover pass's Chrome (or the review sheet's): the stage rung at device scale `scale`, the
+ * viewport the cover page's CSS size, a profile at `profileDir`, service workers blocked. The caller
+ * installs routes before the first navigation and removes the profile after closing.
+ */
+export async function launchCover({ runtime, width, height, scale, profileDir, env = process.env }) {
+	const chrome = findChrome(env);
+	if (!chrome) throw new Blocked(EXIT.BLOCKED_NO_CHROME, "BLOCKED_NO_CHROME", "Chrome/Chromium not found: install Google Chrome or set CHROME_PATH");
+	const { chromium } = await import(pathToFileURL(runtime.playwright).href);
+	try {
+		const context = await chromium.launchPersistentContext(profileDir, { executablePath: chrome, headless: true, args: coverFlags(width, height, scale), viewport: { width, height }, deviceScaleFactor: scale, serviceWorkers: "block", timeout: 45000 });
+		return { context, page: context.pages()[0] ?? (await context.newPage()) };
+	} catch (error) {
+		rmSync(profileDir, { recursive: true, force: true });
+		throw new Blocked(EXIT.BLOCKED_NO_CHROME, "BLOCKED_NO_CHROME", `Chrome failed to launch headless: ${firstLine(error.message.replace(/^browserType\.launchPersistentContext:\s*/u, ""))}`);
+	}
 }
 
 /** Open the frame socket; on a refused listen, return the CDP-pull fallback with the real error. */

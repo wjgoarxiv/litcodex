@@ -301,6 +301,7 @@ describe("token set hygiene", () => {
 	it("exposes LIT_TRIGGER_TOKENS longest-first and frozen", () => {
 		expect(LIT_TRIGGER_TOKENS).toEqual([
 			"lit-comprehend",
+			"lit-brainstorm",
 			"deep-interview",
 			"lit-crucible",
 			"lit-init",

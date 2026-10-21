@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- A shipped NEGATIVE, never a recipe: a still picture with a faint breathing glow, which is what
+     "relight a still" turns into without a strong base. The lossy encoder drops the glow; the
+     decoded-file gate must keep failing it on G2 and G3. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/loop-kit.js"></script>
+<style>
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #080d14; color: #f2efdf; font-family: "JetBrains Mono"; }
+  .line { position: absolute; left: 0; right: 0; text-align: center; white-space: nowrap; }
+  body.mask, body.mask * { background: #000 !important; color: #000 !important; border-color: #000 !important; }
+  body.mask .name { color: #fff !important; }
+</style>
+</head>
+<body>
+<div class="line" id="glow" style="top:0;height:600px;background:radial-gradient(ellipse at 50% 45%, #ff633722, transparent 60%)"></div>
+<div class="line name" style="top:210px;font-size:110px;font-weight:800;letter-spacing:6px">LITCODEX</div>
+<div class="line" style="top:360px;font-size:28px;font-weight:500">KEEP THE WORK <span style="color:#ff6337">LIT.</span></div>
+<script>
+window.renderFrame = (t, opts = {}) => {
+  document.body.className = opts.mask ? "mask" : "";
+  document.getElementById("glow").style.opacity = 0.75 + 0.25 * Math.sin(LitLoop.TAU * t);
+};
+document.fonts.ready.then(() => { window.ready = true; });
+</script>
+</body>
+</html>

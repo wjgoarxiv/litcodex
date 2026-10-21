@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // `litcodex motion-runtime install|status` backend. install is the only network step this skill
-// has; status prints the five doctor probes (MO-A-44) plus the audio and word-timing tiers.
+// has; status prints the six doctor probes (MO-A-44) plus the audio and word-timing tiers.
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { INSTALL_COMMAND } from "../engine/constants.mjs";

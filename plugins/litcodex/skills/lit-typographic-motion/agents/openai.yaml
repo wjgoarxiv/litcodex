@@ -10,6 +10,9 @@ interface:
     - "title sequence"
     - "모션그래픽"
     - "타이포그래피 영상"
+    - "README cover loop"
+    - "motion cover"
+    - "모션 커버"
   default_prompt: "Use $litcodex:lit-typographic-motion to direct, render and verify a film."
 policy:
   allow_implicit_invocation: true

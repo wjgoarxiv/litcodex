@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildBlockRegistry } from './block-registry.mjs';
 import { decodeXmlCharacterReferences, officeCssUrlsAreSafe, officeHrefRefsAreSafe } from './office-safety.mjs';
-import { supportsAgentBrowserVersion } from './runtime-probes.mjs';
+import { agentBrowser, supportsAgentBrowserVersion } from './runtime-probes.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const args=process.argv.slice(2);
@@ -22,9 +22,10 @@ const output=path.resolve(outputValue);
 if(path.basename(input)==='index.html'){console.error('EXPORT_SOURCE_REJECTED gallery pages are not diagram sources');process.exit(2);}
 const resolved=path.resolve(input);
 if(!fs.existsSync(resolved)){console.error('INPUT_MISSING '+resolved);process.exit(2);}
-const browserVersion=spawnSync('agent-browser',['--version'],{encoding:'utf8'});
+const browserSpawn=(args,options)=>{try{const run=agentBrowser(args);return spawnSync(run.command,run.args,options);}catch(e){return {status:null,stdout:'',stderr:e.message};}};
+const browserVersion=browserSpawn(['--version'],{encoding:'utf8'});
 if(browserVersion.status!==0||!supportsAgentBrowserVersion(browserVersion.stdout)){console.error('RENDERER_REQUIRED agent-browser >= 0.38.1 is required; install or update it yourself with: npm install -g agent-browser');process.exit(2);}
-const doctor=spawnSync('agent-browser',['doctor','--json'],{encoding:'utf8'});
+const doctor=browserSpawn(['doctor','--json'],{encoding:'utf8'});
 let doctorJson;
 try{doctorJson=JSON.parse(doctor.stdout);}catch{doctorJson=null;}
 const chrome=doctorJson?.checks?.find((x)=>x.id==='chrome.installed')?.message||'';
@@ -72,7 +73,7 @@ if(office){
   officeSvg=officeSvg.replace(/(<svg\b[^>]*>)/i,'$1'+style);
 }
 function run(commandArgs, env={}) {
-  const r=spawnSync('agent-browser',commandArgs,{encoding:'utf8',env:{...process.env,AGENT_BROWSER_ALLOW_FILE_ACCESS:'true',...env},maxBuffer:2*1024*1024});
+  const r=browserSpawn(commandArgs,{encoding:'utf8',env:{...process.env,AGENT_BROWSER_ALLOW_FILE_ACCESS:'true',...env},maxBuffer:2*1024*1024});
   if(r.status!==0) throw new Error((r.stderr||r.stdout||'agent-browser failed').trim());
   return (r.stdout||'').trim();
 }
@@ -107,7 +108,7 @@ try{
   process.exitCode=1;
 } finally {
   if(opened) {
-    const close=spawnSync('agent-browser',['--session',session,'close'],{encoding:'utf8'});
+    const close=browserSpawn(['--session',session,'close'],{encoding:'utf8'});
     if(close.status!==0) console.error('BROWSER_CLOSE_WARNING '+(close.stderr||''));
   }
 }

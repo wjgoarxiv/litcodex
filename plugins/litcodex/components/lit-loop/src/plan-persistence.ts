@@ -86,6 +86,13 @@ export function recordLitPlanActivation(repoRoot: string, sessionId: string, now
 	}
 }
 
+/** A new plan after a saved one needs its own persistence check: re-arm the gate when the last one was satisfied. */
+export function rearmLitPlanIfSatisfied(repoRoot: string, sessionId: string, now = Date.now()): void {
+	const path = statePath(repoRoot, sessionId);
+	if (path === null) return;
+	if (readState(path)?.satisfied === true) recordLitPlanActivation(repoRoot, sessionId, now);
+}
+
 interface NewestPlan {
 	readonly file: string;
 	readonly taskRows: number;

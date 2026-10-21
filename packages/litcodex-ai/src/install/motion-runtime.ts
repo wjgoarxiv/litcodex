@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { managedMarketplaceRoot } from "./marketplace.js";
 
 // Bridge from the `litcodex` binary to the installed lit-typographic-motion runtime script. The
-// script owns the pinned cache, the five doctor probes and the pre-warm; this module only locates
+// script owns the pinned cache, the six doctor probes and the pre-warm; this module only locates
 // it in the managed marketplace, forwards flags and renders its report.
 
 export const MOTION_RUNTIME_COMMAND = "litcodex motion-runtime install";
@@ -16,6 +16,7 @@ export interface MotionRuntimeReport {
 	readonly webgl2: string;
 	readonly rendererWarning: string;
 	readonly prewarm: string;
+	readonly coverEncoder: string;
 	readonly audio: string;
 	readonly wordTiming: string;
 	readonly missing: readonly string[];
@@ -51,13 +52,14 @@ function unavailable(reason: string): MotionRuntimeReport {
 		webgl2: "not probed",
 		rendererWarning: "not probed",
 		prewarm: `missing: ${reason}; fix: ${MOTION_RUNTIME_COMMAND}`,
+		coverEncoder: "not probed",
 		audio: "not probed",
 		wordTiming: "not probed",
 		missing: [reason],
 	};
 }
 
-/** The five MO-A-44 probes from the installed runtime script (plus audio and word-timing tiers). */
+/** The six MO-A-44 probes from the installed runtime script (plus audio and word-timing tiers). */
 export function motionRuntimeStatus(
 	codexHome: string,
 	spawn: Spawn = spawnSync,
@@ -76,6 +78,7 @@ export function motionRuntimeStatus(
 			webgl2: body.webgl2 ?? "unknown",
 			rendererWarning: body.rendererWarning ?? "unknown",
 			prewarm: body.prewarm ?? "unknown",
+			coverEncoder: body.coverEncoder ?? "unknown",
 			audio: body.audio ?? "unknown",
 			wordTiming: body.wordTiming ?? "unknown",
 			missing: body.missing ?? [],
@@ -101,12 +104,22 @@ export function prepareMotionRuntime(
 	const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
 	const exitCode = result.status ?? 3;
 	const receiptLine = output
-		.split("\n")
+		.split(/\r?\n/u)
 		.filter((line) => line.startsWith("[litcodex] "))
 		.pop();
-	const reason = result.error?.message ?? receiptLine ?? "pre-warm failed";
+	const reason =
+		result.error?.message ?? receiptLine ?? `pre-warm failed (exit ${exitCode}): ${childTail(result.stderr)}`;
 	const status = motionRuntimeStatus(codexHome, spawn, env);
 	return { exitCode, receipt: motionRuntimeReceipt(exitCode === 0, reason), output, status };
+}
+
+/** The last two non-empty lines a child wrote to stderr, so a failure names its real cause. */
+export function childTail(stderr: string | null | undefined): string {
+	const lines = (stderr ?? "")
+		.split(/\r?\n/u)
+		.map((line) => line.trim())
+		.filter(Boolean);
+	return lines.length ? lines.slice(-2).join(" ") : "no stderr";
 }
 
 export function motionRuntimeReceipt(ready: boolean, reason = ""): string {
@@ -122,6 +135,7 @@ export function renderMotionRuntime(report: MotionRuntimeReport, indent = ""): s
 		`${indent}motion WebGL2 renderer: ${report.webgl2}`,
 		`${indent}motion renderer warning: ${report.rendererWarning}`,
 		`${indent}motion pre-warm: ${report.prewarm}`,
+		`${indent}motion cover encoder: ${report.coverEncoder}`,
 		`${indent}motion audio tier: ${report.audio}`,
 		`${indent}motion word timing: ${report.wordTiming}`,
 	].join("\n");

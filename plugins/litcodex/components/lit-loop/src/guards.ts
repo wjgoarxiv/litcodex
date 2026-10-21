@@ -225,6 +225,7 @@ export function shouldSuppressInjection(
 	prompt: string,
 	transcriptPath: GuardTranscriptInput,
 	openMarker: string,
+	options: { readonly transcriptDedupe?: boolean } = {},
 ): LitLoopGuardDecision {
 	if (typeof prompt !== "string") {
 		throw new TypeError(PROMPT_NOT_A_STRING);
@@ -237,7 +238,10 @@ export function shouldSuppressInjection(
 	}
 	// RC1: guard 2 checks the MATCHED mode's marker only — re-injecting the SAME mode is suppressed,
 	// switching modes (e.g. `lit` after `litwork`) is allowed.
-	if (transcriptHasDirectiveMarker(transcriptPath, openMarker)) {
+	// Guard 2 matches a top-level hook envelope line. Codex records a hook's context as a developer message
+	// instead, so on a real host it never matched; the multi-mode hook turns it off and keeps its own
+	// per-session state (reentry.ts), which also survives a compaction that leaves the transcript intact.
+	if (options.transcriptDedupe !== false && transcriptHasDirectiveMarker(transcriptPath, openMarker)) {
 		return { suppress: true, reason: "already-injected" };
 	}
 	if (transcriptHasContextPressureMarker(transcriptPath)) {

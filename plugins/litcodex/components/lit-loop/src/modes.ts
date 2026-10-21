@@ -23,6 +23,8 @@ import {
 	DEEP_INTERVIEW_DIRECTIVE_MARKER,
 	HANDOFF_DIRECTIVE_CLOSE,
 	HANDOFF_DIRECTIVE_MARKER,
+	LIT_BRAINSTORM_DIRECTIVE_CLOSE,
+	LIT_BRAINSTORM_DIRECTIVE_MARKER,
 	LIT_COMPREHEND_DIRECTIVE_CLOSE,
 	LIT_COMPREHEND_DIRECTIVE_MARKER,
 	LIT_CRUCIBLE_DIRECTIVE_CLOSE,
@@ -68,7 +70,8 @@ export type LitMode =
 	| "litresearch"
 	| "start-work"
 	| "lit-recap"
-	| "lit-comprehend";
+	| "lit-comprehend"
+	| "lit-brainstorm";
 
 /** Per-mode routing spec: its marker pair (guard) + resolved directive path (loader). */
 export interface LitModeSpec {
@@ -232,6 +235,14 @@ export const MODE_BY_TOKEN: Readonly<Record<LitTriggerToken, LitModeSpec>> = Obj
 		directivePath: resolveFromHere("../directives/lit-comprehend.md"),
 		skillName: "lit-comprehend",
 		skillPath: resolveSkillPath("lit-comprehend"),
+	}),
+	"lit-brainstorm": Object.freeze({
+		mode: "lit-brainstorm",
+		openMarker: LIT_BRAINSTORM_DIRECTIVE_MARKER,
+		closeMarker: LIT_BRAINSTORM_DIRECTIVE_CLOSE,
+		directivePath: resolveFromHere("../directives/lit-brainstorm.md"),
+		skillName: "lit-brainstorm",
+		skillPath: resolveSkillPath("lit-brainstorm"),
 	}),
 });
 

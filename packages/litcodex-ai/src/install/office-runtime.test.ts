@@ -49,6 +49,15 @@ describe("Office runtime boundary", () => {
 		const offline = prepareOfficeRuntime(home, () => ({ status: 1, stdout: "" }));
 		expect(offline.ready).toBe(false);
 		expect(officeRuntimeNotice(offline.ready)).toContain("office-runtime install");
+		const failed = prepareOfficeRuntime(home, () => ({
+			status: 1,
+			stdout: "",
+			stderr: "npm ERR! code EINVAL\r\n[lit-office] npm.cmd ci could not start: spawnSync npm.cmd EINVAL\r\n",
+		}));
+		expect(failed.detail).toBe(
+			"exit 1: npm ERR! code EINVAL [lit-office] npm.cmd ci could not start: spawnSync npm.cmd EINVAL",
+		);
+		expect(officeRuntimeNotice(failed.ready, failed.detail)).toContain("(exit 1: npm ERR! code EINVAL");
 	});
 
 	it("a runtime install launched under global npm config runs its npm ci without the global mode", () => {

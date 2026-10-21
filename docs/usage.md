@@ -37,7 +37,7 @@ LitCodex installs a `UserPromptSubmit` hook. A bare `lit` injects `<lit-loop-mod
 the runtime stores goals, criteria, and evidence under `.litcodex/lit-loop`. A goal completes only when every
 criterion has passing evidence. Blocked work remains incomplete.
 
-Codex contributes the hook and marketplace entry points; LitCodex's compiled components apply routing and model policy before recording durable loop state. The installed catalog exposes 42 skills.
+Codex contributes the hook and marketplace entry points; LitCodex's compiled components apply routing and model policy before recording durable loop state. The installed catalog exposes 44 skills.
 
 ```mermaid
 flowchart LR
@@ -52,12 +52,12 @@ flowchart LR
     HK --> COMP --> LEDGER
     MP --> LX
     COMP --> MODEL
-    LX --> S["42 skills"]
+    LX --> S["44 skills"]
 ```
 
 The same plugin provides planning, review, research, recap, comprehension, handoff, and local-knowledge
 surfaces. The Codex skill picker exposes the bundled library, including `autoconference`, `autoresearch`,
-`browser-drive`, `coding-session-audit`, `comment-checker`, `debugging`, `frontend-ui-ux`, `lit-commit`, `lit-crucible`, `lit-init`, `lit-korean`, `lit-fetch`,
+`browser-drive`, `coding-session-audit`, `comment-checker`, `debugging`, `frontend-ui-ux`, `lit-brainstorm`, `lit-commit`, `lit-crucible`, `lit-init`, `lit-korean`, `lit-fetch`,
 `litcodex-contribute-bug-fix`, `litcodex-doctor`, `litcodex-report-bug`, `lsp`, `lsp-setup`, `lit-code`,
 `refactor`, `lit-burnoff`, `readme-studio`, `structural-search`, `lit-team`, `visual-qa`, and `wikify`.
 
@@ -195,16 +195,24 @@ blocked native goal needs the documented recovery step below; a handoff does not
 | `litwork` | **litwork** | Outcome-first work with manual-QA evidence |
 | `lit-plan` or `lit plan` | **lit-plan** | Planning-only, bounded plan with evidence and a Final DoneClaim |
 | `deep-interview` or `lit deep interview` | **deep-interview** | Planning-only discovery for ambiguous briefs |
-| `litgoal` or `lit goal` | **litgoal** | Bind an objective and criteria into loop state |
+| `lit brainstorm`, `lit ideation` or `lit idea` | **lit-brainstorm** | Many different options, then a short list to pick from; nothing is built |
+| `litgoal` or `lit goal` | **litgoal** | Set and keep the finish line: bind an objective and criteria into the loop state that lit-loop and Start Work run toward |
 | `lit-recap` or `lit recap` | **lit-recap** | Read-only recap from `.litcodex` ledgers |
 | `lit-comprehend` or `comprehend` | **lit-comprehend** | Build a self-contained explainer outside the worktree |
-| `review-work` or `lit review` | **review-work** | Read-only plan or completed-work review |
+| `review-work` or `lit review` | **review-work** | Read-only plan review before Start Work and work review after it; auto-picked from what exists, or forced with `lit review plan` or `lit review work` |
 | `litresearch`, `/litresearch`, or `lit research` | **litresearch** | Research journal separating facts, hypotheses, sources, and uncertainty |
 | `lit start work <plan-name>` | **Start Work** | Execute an approved plan with durable evidence |
 | exact bare `handoff` | **lit-handoff** | Create or refresh a secret-safe continuation packet |
 | exact bare `lit-scientific-visualization` | **lit-scientific-visualization** | Load the publication plotting adapter through the hook |
 
-Typing the same mode again in one session is idempotent. Standalone skills can also be selected by exact ID
+The first `lit …` of a session sends the full activation. A later `lit …` that names the same mode gets a short
+note that the mode is already active: nothing is read, created or reset again. `lit plan` after `lit` switches,
+and sends the plan activation once. A bare `lit` or `lit continue` never switches: it carries on whichever mode is active, and over an active Start Work plan, a published
+plan or open goals says it is resuming that work and makes no new plan. `lit new …`, `lit restart …`, a new
+session and the first `lit` after a compaction start over in full. A bare `lit` with no task and no work in
+flight asks what to start. Start Work always sends its full activation, because its prompt carries the grant.
+The hook keeps this per session under `.litcodex/lit-reentry/`; a missing or unreadable file means a full
+activation. Standalone skills can also be selected by exact ID
 from the Codex picker or with a scoped mention, including `$litcodex:lit-handoff` and
 `$litcodex:lit-scientific-visualization`.
 For report or proposal output, bare `lit` loads `lit-docx`; for slide or presentation output it loads `lit-pptx`. Both are loaded when both formats are requested. Explicit picker or `$litcodex:lit-docx` and `$litcodex:lit-pptx` selection also works. `litcodex install` prepares the pinned runtime outside the session; `litcodex office-runtime status` and `litcodex doctor` report readiness. If offline, run `litcodex office-runtime install` later outside the sandbox.

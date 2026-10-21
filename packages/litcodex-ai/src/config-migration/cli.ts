@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
-import type { SpawnLike } from "../install/codex.js";
+import { existsSync, readFileSync } from "node:fs";
+import { codexSpawnInvocation, findCodexBinary, type SpawnLike } from "../install/codex.js";
 import { type HostCapabilities, modelContextsForWrites, probeHostCapabilities } from "../install/host-capabilities.js";
 import { acceptedModelIds, canonicalModelId, FALLBACK_CATALOG, modelDefinition } from "./catalog.js";
 import { CodexConfigMigrationError, exitCodeForMigrationError } from "./errors.js";
@@ -131,12 +131,20 @@ export async function runConfigMigrateCli(
 
 function directPreflight(profile: Gpt56Profile, effort: ReasoningEffort, model?: string): HostCapabilities {
 	const override = process.env["CODEX_BIN"]?.trim();
-	const codexBin = override !== undefined && override !== "" ? override : "codex";
 	if (override !== undefined && override !== "" && !existsSync(override)) {
 		return unavailableCapabilities("codex-binary-unavailable", override);
 	}
+	// On Windows Codex is usually a codex.cmd shim: find it by PATHEXT and route it through ComSpec.
+	const codexBin =
+		override !== undefined && override !== ""
+			? override
+			: process.platform === "win32"
+				? (findCodexBinary(process.env, { existsSync, readFileSync }) ?? "codex")
+				: "codex";
 	const spawn: SpawnLike = (command, argv, options) => {
-		const result = spawnSync(command, [...argv], {
+		const invocation = codexSpawnInvocation(command, argv, process.env);
+		const result = spawnSync(invocation.command, [...invocation.args], {
+			windowsVerbatimArguments: invocation.windowsVerbatimArguments,
 			encoding: "utf8",
 			stdio: options.stdio,
 			timeout: options.timeout,

@@ -23,7 +23,13 @@ import {
 	recordTurnStart,
 	writeThreadPointer,
 } from "./live-step.js";
-import { evaluatePlanPersistence, formatStopBlockOutput, recordLitPlanActivation } from "./plan-persistence.js";
+import {
+	evaluatePlanPersistence,
+	formatStopBlockOutput,
+	rearmLitPlanIfSatisfied,
+	recordLitPlanActivation,
+} from "./plan-persistence.js";
+import { clearActiveRoute, isBareLit, readActiveRoute, readResumeWork, recordActiveRoute } from "./reentry.js";
 import { workflowCard } from "./screen-card.js";
 import { screenColor } from "./screen-status.js";
 import { recordWorkflowTurn, workflowStopLine, workflowTurn } from "./workflow-map.js";
@@ -136,20 +142,35 @@ export async function runUserPromptSubmitHookCli(
 	}
 	clearManagedCompactionWhenOff(hookCwd(parsed, repoRoot), auto.env ?? process.env);
 	const pointer = hookSessionScope(parsed, repoRoot);
-	const decision = runUserPromptSubmitHook(parsed);
+	const decision = runUserPromptSubmitHook(parsed, () => ({
+		active: pointer === null ? null : readActiveRoute(pointer.cwd, pointer.sessionId),
+		resume: pointer === null ? null : readResumeWork(pointer.cwd, pointer.sessionId),
+	}));
+	if (pointer !== null && decision.kind === "inject") recordActiveRoute(pointer.cwd, pointer.sessionId, decision.mode);
 	// Only a LIT thread gets a pointer: this prompt ignites LIT, or an earlier one already did.
 	if (pointer !== null && (decision.kind === "inject" || workflowTurn(pointer.cwd, pointer.sessionId) !== null)) {
 		writeThreadPointer(auto.env ?? process.env, pointer.sessionId, pointer.cwd, auto.now);
 		recordTurnStart(pointer.cwd, pointer.sessionId, auto.now);
 	}
+	// A continued lit-plan keeps its persistence gate as it is. A fresh activation arms it again, and so does an
+	// explicit `lit plan …` once the previous plan was saved (a bare `lit` carries on and never re-arms).
 	if (decision.kind === "inject" && decision.mode === "lit-plan") {
 		const scope = hookSessionScope(parsed, repoRoot);
-		if (scope !== null) recordLitPlanActivation(scope.cwd, scope.sessionId);
+		if (scope !== null) {
+			if (decision.entry !== "continue") recordLitPlanActivation(scope.cwd, scope.sessionId);
+			else if (isLitUserPromptSubmitInput(parsed) && !isBareLit(parsed.prompt))
+				rearmLitPlanIfSatisfied(scope.cwd, scope.sessionId);
+		}
 	}
 	const env = auto.env ?? process.env;
 	const own =
 		decision.kind === "inject"
-			? withCardOffer(withWorkflowMap(decision.stdout, parsed, decision.mode, env), pointer, auto)
+			? withCardOffer(
+					withWorkflowMap(decision.stdout, parsed, decision.mode, env),
+					pointer,
+					auto,
+					decision.entry === "continue",
+				)
 			: "";
 	const output = withAutoHandoffReload(own, parsed, repoRoot, auto);
 	if (output !== "") stdout.write(output);
@@ -253,6 +274,10 @@ function withWorkflowMap(stdout: string, parsed: unknown, mode: string, env: Nod
 export const CARD_OFFER_CONTEXT =
 	"LIT card: if the `lit_card` tool (litcodex MCP server) is available, call the `lit_card` tool once now, with no arguments, so the user sees the live LIT card for this turn. It replaces the previous turn's card, which folds itself into one line. Do not call it again in this turn; it updates by itself.";
 
+/** The card request for a continued discipline: the model already read the full one when it was activated. */
+export const CARD_OFFER_CONTINUE_CONTEXT =
+	"LIT card: if the `lit_card` tool is available, call it once now with no arguments; it updates by itself.";
+
 /**
  * Add the card request to every LIT activation, right under the banner line so it stays inside the part
  * of the context Codex always shows, and remember when it was last made.
@@ -261,9 +286,11 @@ function withCardOffer(
 	stdout: string,
 	scope: { sessionId: string; cwd: string } | null,
 	auto: AutoHandoffHookOptions,
+	continued = false,
 ): string {
 	if (scope === null || stdout === "") return stdout;
-	const merged = withContextAfterBanner(stdout, CARD_OFFER_CONTEXT) ?? withReloadContext(stdout, CARD_OFFER_CONTEXT);
+	const offer = continued ? CARD_OFFER_CONTINUE_CONTEXT : CARD_OFFER_CONTEXT;
+	const merged = withContextAfterBanner(stdout, offer) ?? withReloadContext(stdout, offer);
 	if (merged === null) return stdout;
 	writeThreadPointer(auto.env ?? process.env, scope.sessionId, scope.cwd, auto.now, { cardOffered: true });
 	return merged;
@@ -436,7 +463,11 @@ export async function runPostCompactHookCli(
 	if (event.exit !== null) return event.exit;
 	clearManagedCompactionWhenOff(hookCwd(event.parsed, repoRoot), auto.env ?? process.env);
 	const scope = hookSessionScope(event.parsed, repoRoot);
-	if (scope !== null) recordCompaction(scope.cwd, scope.sessionId);
+	if (scope !== null) {
+		recordCompaction(scope.cwd, scope.sessionId);
+		// The activation text may be gone from the model's context, so the next lit prompt sends it in full.
+		clearActiveRoute(scope.cwd, scope.sessionId);
+	}
 	return 0;
 }
 

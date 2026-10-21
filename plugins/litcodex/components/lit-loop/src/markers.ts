@@ -35,5 +35,7 @@ export const BROWSER_DRIVE_DIRECTIVE_MARKER = "<browser-drive-mode>" as const;
 export const BROWSER_DRIVE_DIRECTIVE_CLOSE = "</browser-drive-mode>" as const;
 export const LIT_COMPREHEND_DIRECTIVE_MARKER = "<lit-comprehend-mode>" as const;
 export const LIT_COMPREHEND_DIRECTIVE_CLOSE = "</lit-comprehend-mode>" as const;
+export const LIT_BRAINSTORM_DIRECTIVE_MARKER = "<lit-brainstorm-mode>" as const;
+export const LIT_BRAINSTORM_DIRECTIVE_CLOSE = "</lit-brainstorm-mode>" as const;
 
 export type LitLoopDirectiveMarker = typeof LIT_LOOP_DIRECTIVE_MARKER;

@@ -30,14 +30,14 @@ the checks that run on their own.
 <td>Runs an approved plan through five gates and finishes only when all five reviews pass.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/review-work.webp" width="240" alt="Five separate reviews, and any one of them can hold back approval." /></td>
+<td><img src="./assets/skills/review-work.webp" width="240" alt="Plan review before Start Work, work review after it: five separate checks, and any one of them can hold back approval. It picks the mode from what exists." /></td>
 <td><code>review-work</code><br /><sub><code>lit review</code> · <code>$litcodex:review-work</code></sub></td>
-<td>Five separate reviews, and any one of them can hold back approval.</td>
+<td>Plan review before Start Work, work review after it: five separate checks, and any one of them can hold back approval. It picks the mode from what exists.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/litgoal.webp" width="240" alt="Ties one goal, with criteria you can observe, to the lit-loop so it carries across sessions." /></td>
+<td><img src="./assets/skills/litgoal.webp" width="240" alt="Sets one goal, with criteria you can observe, and keeps it in the lit-loop state that the loop and Start Work run toward, across sessions." /></td>
 <td><code>litgoal</code><br /><sub><code>lit goal</code> · <code>$litcodex:litgoal</code></sub></td>
-<td>Ties one goal, with criteria you can observe, to the lit-loop so it carries across sessions.</td>
+<td>Sets one goal, with criteria you can observe, and keeps it in the lit-loop state that the loop and Start Work run toward, across sessions.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-recap.webp" width="240" alt="A read-only summary: done, in progress, blocked, where the evidence is, what comes next." /></td>
@@ -53,6 +53,11 @@ the checks that run on their own.
 <td><img src="./assets/skills/deep-interview.webp" width="240" alt="One question at a time until the idea is clear enough to build. Quick, Standard and Deep set the target." /></td>
 <td><code>deep-interview</code><br /><sub><code>deep-interview</code> · <code>$litcodex:deep-interview</code></sub></td>
 <td>One question at a time until the idea is clear enough to build. Quick, Standard and Deep set the target.</td>
+</tr>
+<tr>
+<td><img src="./assets/skills/lit-brainstorm.webp" width="240" alt="Many different options first, then a short list with trade-offs for you to pick from. Ideas only; nothing is built." /></td>
+<td><code>lit-brainstorm</code><br /><sub><code>lit brainstorm</code> · <code>$litcodex:lit-brainstorm</code></sub></td>
+<td>Many different options first, then a short list with trade-offs for you to pick from. Ideas only; nothing is built.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/litresearch.webp" width="240" alt="Parallel evidence gathering and a cited synthesis, only when you ask for research." /></td>
@@ -160,9 +165,9 @@ the checks that run on their own.
 <td>A factual README with a moving cover, checked at phone and desktop widths in light and dark.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/lit-typographic-motion.webp" width="240" alt="Ask for a video with lit. A treatment comes first, then an authored stage page or the type engine, a sound bed, and look rounds on the rendered stills." /></td>
+<td><img src="./assets/skills/lit-typographic-motion.webp" width="240" alt="Ask for a video with lit. A treatment comes first, then an authored stage page or the type engine, a sound bed, and look rounds on the rendered stills. A README cover becomes a silent, seamless loop checked on the encoded file." /></td>
 <td><code>lit-typographic-motion</code><br /><sub><code>$litcodex:lit-typographic-motion</code></sub></td>
-<td>Ask for a video with <code>lit</code>. A treatment comes first, then an authored stage page or the type engine, a sound bed, and look rounds on the rendered stills.</td>
+<td>Ask for a video with <code>lit</code>. A treatment comes first, then an authored stage page or the type engine, a sound bed, and look rounds on the rendered stills. A README cover becomes a silent, seamless loop checked on the encoded file.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/structural-search.webp" width="240" alt="Finds code by its syntax shape, not its text, and previews rewrites before applying them." /></td>

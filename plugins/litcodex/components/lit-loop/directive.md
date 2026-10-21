@@ -177,7 +177,8 @@ inserting a video into slides, a deck or a report; a script, transcript, summary
 thumbnail about a video; and UI motion such as button or hover motion, motion tokens or reduced
 motion. Bare motion or intro alone, including a motion put to a vote, never selects it. On a film
 request the hook names the installed `../lit-typographic-motion/scripts/render.mjs` by absolute
-path and lists its subcommands. Hand-encoded films are not the deliverable.
+path and lists its subcommands. Hand-encoded films are not the deliverable. A README, hero or
+banner loop is the same skill's cover mode: a silent, seamless loop gated on the decoded file.
 
 When this task creates or changes a user-facing web interface, put its UI behavior and probe in the
 plan or bounded acceptance checks. Resolve the installed sibling `frontend-ui-ux/SKILL.md` through

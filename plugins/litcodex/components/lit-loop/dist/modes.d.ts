@@ -1,7 +1,7 @@
 import type { RenamedSkillId } from "./skill-renames.js";
 import type { LitTriggerToken } from "./trigger.js";
 /** Lit-family modes. Multiple tokens may map to one mode (lit/litcodex/lit-loop → lit-loop). */
-export type LitMode = RenamedSkillId | "browser-drive" | "lit-handoff" | "lit-scientific-visualization" | "deep-interview" | "lit-crucible" | "lit-init" | "lit-loop" | "litwork" | "lit-plan" | "litgoal" | "review-work" | "litresearch" | "start-work" | "lit-recap" | "lit-comprehend";
+export type LitMode = RenamedSkillId | "browser-drive" | "lit-handoff" | "lit-scientific-visualization" | "deep-interview" | "lit-crucible" | "lit-init" | "lit-loop" | "litwork" | "lit-plan" | "litgoal" | "review-work" | "litresearch" | "start-work" | "lit-recap" | "lit-comprehend" | "lit-brainstorm";
 /** Per-mode routing spec: its marker pair (guard) + resolved directive path (loader). */
 export interface LitModeSpec {
     readonly mode: LitMode;

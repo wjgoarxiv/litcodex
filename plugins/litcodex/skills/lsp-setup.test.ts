@@ -122,3 +122,22 @@ describe("verify-lsp diagnostics roundtrip #given/#when/#then", () => {
 		expect(result.stdout).toMatch(/timed out after 250ms/);
 	});
 });
+
+describe("verify-lsp spawns a Windows language server without a shell", () => {
+	const npmDir = "C:\\Users\\A B\\AppData\\Roaming\\npm";
+	const shim = `${npmDir}\\typescript-language-server.CMD`;
+	const npmShim = '@ECHO off\r\nendLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & "%_prog%"  "%dp0%\\node_modules\\typescript-language-server\\lib\\cli.mjs" %*\r\n';
+	const env = { Path: `C:\\Windows;${npmDir}`, PATHEXT: ".COM;.EXE;.BAT;.CMD" };
+
+	it("unwraps an npm .cmd shim to node and its script, keeps .exe and POSIX direct, refuses other .cmd files", async () => {
+		const { shellFreeCommand } = await import("./lsp-setup/scripts/verify-lsp.ts");
+		expect(shellFreeCommand("typescript-language-server", ["--stdio"], { env, platform: "win32", exists: (file) => file === shim, read: () => npmShim })).toEqual({
+			command: process.execPath,
+			args: [`${npmDir}\\node_modules\\typescript-language-server\\lib\\cli.mjs`, "--stdio"],
+		});
+		const exe = `${npmDir}\\clangd.EXE`;
+		expect(shellFreeCommand("clangd", [], { env, platform: "win32", exists: (file) => file === exe })).toEqual({ command: exe, args: [] });
+		expect(() => shellFreeCommand("typescript-language-server", ["--stdio"], { env, platform: "win32", exists: (file) => file === shim, read: () => "@echo off\r\n" })).toThrow(/not an npm shim/u);
+		expect(shellFreeCommand("gopls", [], { platform: "darwin" })).toEqual({ command: "gopls", args: [] });
+	});
+});

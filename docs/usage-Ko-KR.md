@@ -37,7 +37,7 @@ LitCodex는 `UserPromptSubmit` 훅을 설치합니다. Codex 작성창에 단독
 `<lit-loop-mode>`가 주입되고 **lit-loop**가 시작됩니다. 목표, 성공 기준, 증거는 프로젝트의
 `.litcodex/lit-loop`에 기록되며, 모든 기준에 증거가 있어야 완료됩니다.
 
-Codex의 훅과 마켓플레이스가 컴파일된 LitCodex 구성요소와 모델 정책을 거쳐 내구성 원장으로 이어지는 실제 연결입니다. 설치된 카탈로그에는 42개 스킬이 함께 제공됩니다.
+Codex의 훅과 마켓플레이스가 컴파일된 LitCodex 구성요소와 모델 정책을 거쳐 내구성 원장으로 이어지는 실제 연결입니다. 설치된 카탈로그에는 44개 스킬이 함께 제공됩니다.
 
 ```mermaid
 flowchart LR
@@ -52,7 +52,7 @@ flowchart LR
     HK --> COMP --> LEDGER
     MP --> LX
     COMP --> MODEL
-    LX --> S["42 skills"]
+    LX --> S["44 skills"]
 ```
 
 계획, 검토, 연구, 리캡, 이해, 인수인계, 로컬 지식 기능도 함께 제공합니다. Codex skill picker에서
@@ -219,16 +219,23 @@ Codex의 native goal과 로컬 루프 기록은 별도로 관리됩니다. nativ
 | `litwork` | **litwork** | 수동 QA 증거를 포함한 결과 중심 작업 |
 | `lit-plan` 또는 `lit plan` | **lit-plan** | 범위가 제한된 계획과 검증 체크리스트 작성 |
 | `deep-interview` 또는 `lit deep interview` | **deep-interview** | 모호한 요구를 질문으로 좁히는 계획 전용 탐색 |
-| `litgoal` 또는 `lit goal` | **litgoal** | 목표와 기준을 루프 상태에 연결 |
+| `lit brainstorm`, `lit ideation` 또는 `lit idea` | **lit-brainstorm** | 서로 다른 선택지를 많이 낸 뒤 고를 수 있는 짧은 목록으로 좁힘, 만들지는 않음 |
+| `litgoal` 또는 `lit goal` | **litgoal** | 완료 기준을 정하고 유지: 목표와 기준을 lit-loop와 Start Work가 향해 가는 루프 상태에 연결 |
 | `lit-recap` 또는 `lit recap` | **lit-recap** | `.litcodex` 원장을 읽기 전용으로 요약 |
 | `lit-comprehend` 또는 `comprehend` | **lit-comprehend** | 작업 트리 밖에 자체 완결형 설명 자료 생성 |
-| `review-work` 또는 `lit review` | **review-work** | 계획 또는 완료 작업을 읽기 전용으로 검토 |
+| `review-work` 또는 `lit review` | **review-work** | Start Work 전에는 계획 검토, 뒤에는 작업 검토(읽기 전용). 있는 것을 보고 모드를 고르며 `lit review plan` 또는 `lit review work`로 지정 |
 | `litresearch`, `/litresearch` 또는 `lit research` | **litresearch** | 사실·가설·출처·불확실성을 나누는 연구 저널 |
 | `lit start work <plan-name>` | **Start Work** | 승인된 계획을 증거와 함께 실행 |
 | 정확히 단독으로 입력한 `handoff` | **lit-handoff** | 비밀값을 보호하는 재개 패킷 생성 또는 갱신 |
 | 정확히 단독으로 입력한 `lit-scientific-visualization` | **lit-scientific-visualization** | 훅을 통해 출판용 시각화 어댑터 로드 |
 
-같은 모드를 한 세션에서 다시 입력해도 중복 실행하지 않습니다. 스킬은 Codex skill picker 또는
+세션의 첫 `lit …`은 전체 활성화를 보냅니다. 같은 모드를 다시 입력하면 그 모드가 이미 켜져 있다는 짧은 안내만 가고,
+스킬 파일을 다시 읽거나 새 계획·목표를 만들거나 단계를 초기화하지 않습니다. `lit` 다음에 `lit plan`을 입력하면
+모드가 바뀌므로 계획 활성화를 한 번 전체로 보냅니다. 단독 `lit`이나 `lit continue`는 모드를 바꾸지 않고 켜져 있는 모드를 이어 갑니다. 진행 중인 Start Work 계획, 발행된 계획, 열린 목표가 있을 때
+단독 `lit` 또는 `lit continue`를 입력하면 그 작업을 이어 간다고 알리고 새 계획을 만들지 않습니다. `lit new …`,
+`lit restart …`, 새 세션, 압축 직후의 첫 `lit`은 처음부터 전체로 보냅니다. 작업도 진행 중인 일도 없이 단독으로
+입력한 `lit`은 무엇을 시작할지 되묻습니다. Start Work는 프롬프트에 권한 부여가 들어 있으므로 항상 전체 활성화를 보냅니다.
+세션별 기록은 `.litcodex/lit-reentry/`에 남고, 파일이 없거나 읽을 수 없으면 전체 활성화를 보냅니다. 스킬은 Codex skill picker 또는
 `$litcodex:lit-fetch`, `$litcodex:lit-korean` 같은 정확한 ID로 선택할 수 있습니다.
 
 ## 명령어

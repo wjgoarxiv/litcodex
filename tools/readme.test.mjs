@@ -101,8 +101,8 @@ describe("readme content invariants", () => {
 	test("README cover and native icon match the product asset pins", () => {
 		for (const [path, expected] of [
 			["docs/assets/cover.svg", "beaebae32674155ff5f3e1e1e5ea8283184613208d3e10f9d75f4b73959d11f0"],
-			["docs/assets/cover.webp", "ca303edfd346c6c4756d14f269ec56799be1ae43b1c74593295026610b174e45"],
-			["docs/assets/cover-motion.webp", "0a03475d3e9c508c64acdaad01f152b14986ab6b2e04e1e3a32c952ab1f299d1"],
+			["docs/assets/cover.webp", "90099f77838a47c26ebd52fdec8c25a67071345a6c3b2bcbe7324d35d7ebb086"],
+			["docs/assets/cover-motion.webp", "f3d8a87f8172af36bcc7ac6f20cad5fc9712a512f32681534055ca912aecca98"],
 			["plugins/litcodex/assets/logo.png", "bb718ab43988aa059b17dea1ef9e83262f0cfe2c3c9679092eb3f03e327a7674"],
 		]) {
 			assert.equal(
@@ -233,8 +233,8 @@ describe("readme content invariants", () => {
 			assert.ok(
 				source.includes(
 					path === README_KO_PATH || path === PKG_README_KO_PATH
-						? 'alt="LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitCodex 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상"'
-						: 'alt="LitFamily motion cover: five armored robots power on one by one, the LitCodex robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up."',
+						? 'alt="LitFamily 모션 커버: 일곱 머신의 칸이 차례로 켜지고, 셋째 칸의 LitCodex 머신이 주황 바이저와 테두리를 밝힌 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상"'
+						: 'alt="LitFamily motion cover: seven armored machines power on bay by bay, the LitCodex machine in the third bay wakes with a glowing orange visor and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up."',
 				),
 				"README describes the motion cover",
 			);
@@ -318,7 +318,7 @@ describe("readme content invariants", () => {
 					.slice(start, end)
 					.matchAll(/<tr>\n<td><img src="([^"]+)" width="240" alt="[^"]+" \/><\/td>\n<td>(.*?)<br \/>/g),
 			];
-			assert.equal(rows.length, 41, `${heading} has one row per user-facing skill plus the automatic checks`);
+			assert.equal(rows.length, 42, `${heading} has one row per user-facing skill plus the automatic checks`);
 			assert.deepEqual(
 				rows.map(([, src]) => src).sort(),
 				snapshots.map((name) => `${base}/${name}`),

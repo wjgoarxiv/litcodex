@@ -1,4 +1,5 @@
 import { type LitMode } from "./modes.js";
+import { type ReentryContext } from "./reentry.js";
 /**
  * Accepted stdin event shape AFTER JSON.parse. The declared canonical wire form is snake_case;
  * `isLitUserPromptSubmitInput` additionally accepts the camelCase event-name/transcript keys at
@@ -19,6 +20,7 @@ export type HookDecision = {
     readonly kind: "inject";
     readonly stdout: string;
     readonly mode: LitMode;
+    readonly entry?: "continue";
 } | {
     readonly kind: "noop";
 };
@@ -49,5 +51,8 @@ export declare function applyPreToolUseCreateGoalGuard(input: unknown): PreToolU
  * (guard 0) → resolve the mode → run guards 1-3 against the MATCHED mode's marker (RC1) → load that
  * mode's directive fail-silent. Returns { kind:"noop" } for a wrong-shape value, no trigger, a guard
  * veto, or a fail-silent empty directive; { kind:"inject", stdout } only on a real activation.
+ *
+ * `reentry` is read only once a lit-family route has matched. A route whose contract this session
+ * already holds gets the short continue context (`entry: "continue"`) instead of the full activation.
  */
-export declare function runUserPromptSubmitHook(input: unknown): HookDecision;
+export declare function runUserPromptSubmitHook(input: unknown, reentry?: () => ReentryContext): HookDecision;

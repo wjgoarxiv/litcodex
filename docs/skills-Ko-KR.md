@@ -29,14 +29,14 @@
 <td>승인된 계획을 다섯 관문으로 실행합니다. 끝에는 리뷰 다섯 개를 모두 통과해야 합니다.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/review-work.webp" width="240" alt="리뷰 다섯 개가 따로 돌고, 하나라도 통과하지 못하면 승인이 나지 않습니다." /></td>
+<td><img src="./assets/skills/review-work.webp" width="240" alt="Start Work 전에는 계획 검토, 뒤에는 작업 검토를 합니다. 검사 다섯 개가 따로 돌고 하나라도 통과하지 못하면 승인이 나지 않으며, 모드는 있는 것을 보고 고릅니다." /></td>
 <td><code>review-work</code><br /><sub><code>lit review</code> · <code>$litcodex:review-work</code></sub></td>
-<td>리뷰 다섯 개가 따로 돌고, 하나라도 통과하지 못하면 승인이 나지 않습니다.</td>
+<td>Start Work 전에는 계획 검토, 뒤에는 작업 검토를 합니다. 검사 다섯 개가 따로 돌고 하나라도 통과하지 못하면 승인이 나지 않으며, 모드는 있는 것을 보고 고릅니다.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/litgoal.webp" width="240" alt="눈으로 확인할 수 있는 기준을 단 목표 하나를 lit-loop에 걸어, 세션이 바뀌어도 이어지게 합니다." /></td>
+<td><img src="./assets/skills/litgoal.webp" width="240" alt="눈으로 확인할 수 있는 기준을 단 목표 하나를 정해 lit-loop 상태에 보관하고, 루프와 Start Work가 그 기준을 향해 실행합니다. 세션이 바뀌어도 이어집니다." /></td>
 <td><code>litgoal</code><br /><sub><code>lit goal</code> · <code>$litcodex:litgoal</code></sub></td>
-<td>눈으로 확인할 수 있는 기준을 단 목표 하나를 lit-loop에 걸어, 세션이 바뀌어도 이어지게 합니다.</td>
+<td>눈으로 확인할 수 있는 기준을 단 목표 하나를 정해 lit-loop 상태에 보관하고, 루프와 Start Work가 그 기준을 향해 실행합니다. 세션이 바뀌어도 이어집니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-recap.webp" width="240" alt="읽기 전용 요약입니다. 끝난 일, 진행 중인 일, 막힌 곳, 증거 위치, 다음 단계를 보여줍니다." /></td>
@@ -52,6 +52,11 @@
 <td><img src="./assets/skills/deep-interview.webp" width="240" alt="한 번에 한 질문씩 물어 만들 수 있을 만큼 분명하게 다듬습니다. Quick, Standard, Deep 중에서 목표를 고릅니다." /></td>
 <td><code>deep-interview</code><br /><sub><code>deep-interview</code> · <code>$litcodex:deep-interview</code></sub></td>
 <td>한 번에 한 질문씩 물어 만들 수 있을 만큼 분명하게 다듬습니다. Quick, Standard, Deep 중에서 목표를 고릅니다.</td>
+</tr>
+<tr>
+<td><img src="./assets/skills/lit-brainstorm.webp" width="240" alt="서로 다른 선택지를 먼저 많이 내고, 고를 수 있도록 장단점이 붙은 짧은 목록으로 좁힙니다. 아이디어만 다루며 만들지는 않습니다." /></td>
+<td><code>lit-brainstorm</code><br /><sub><code>lit brainstorm</code> · <code>$litcodex:lit-brainstorm</code></sub></td>
+<td>서로 다른 선택지를 먼저 많이 내고, 고를 수 있도록 장단점이 붙은 짧은 목록으로 좁힙니다. 아이디어만 다루며 만들지는 않습니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/litresearch.webp" width="240" alt="조사를 요청할 때만 움직입니다. 여러 갈래로 증거를 모아 출처와 함께 종합합니다." /></td>
@@ -159,9 +164,9 @@
 <td>사실에 맞는 README와 움직이는 커버를 만들고, 휴대폰과 데스크톱 폭, 라이트와 다크 모드에서 확인합니다.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/lit-typographic-motion.webp" width="240" alt="lit으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 직접 만든 무대 페이지나 타입 엔진으로 영상을 만들고, 사운드를 입힌 뒤 렌더링된 스틸을 보며 다듬습니다." /></td>
+<td><img src="./assets/skills/lit-typographic-motion.webp" width="240" alt="lit으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 직접 만든 무대 페이지나 타입 엔진으로 영상을 만들고, 사운드를 입힌 뒤 렌더링된 스틸을 보며 다듬습니다. README 커버는 소리 없이 이음매 없이 도는 루프로 만들고, 인코딩된 파일로 검사합니다." /></td>
 <td><code>lit-typographic-motion</code><br /><sub><code>$litcodex:lit-typographic-motion</code></sub></td>
-<td><code>lit</code>으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 직접 만든 무대 페이지나 타입 엔진으로 영상을 만들고, 사운드를 입힌 뒤 렌더링된 스틸을 보며 다듬습니다.</td>
+<td><code>lit</code>으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 직접 만든 무대 페이지나 타입 엔진으로 영상을 만들고, 사운드를 입힌 뒤 렌더링된 스틸을 보며 다듬습니다. README 커버는 소리 없이 이음매 없이 도는 루프로 만들고, 인코딩된 파일로 검사합니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/structural-search.webp" width="240" alt="글자 대신 문법 구조로 코드를 찾고, 바꾸기 전에 결과를 미리 보여줍니다." /></td>
