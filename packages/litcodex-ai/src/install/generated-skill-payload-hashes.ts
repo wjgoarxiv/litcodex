@@ -431,7 +431,7 @@ export const README_STUDIO_PAYLOAD_HASHES = {
 	"templates/hyperframes-cover/package.json": "9ec0e871126193a545f898f0ed994412a518e2bf06170cd07b3fc9e61cae2530",
 	"templates/readme-cover-section.md": "324e61dd601c42af7117f0eed7ef6ca58c66444c0607919831a64685f4d49b7a",
 	"templates/readme-facts.json": "3155f9b36f98db20d588f68358d0152aa24ad395c1cb62c39a72d2084abb6ddd",
-	"templates/remotion-cover/package-lock.json": "586931a24fffb1117eb5b04f5a4917b5c099f0c040f6c04d278e2ba3c39f1f77",
+	"templates/remotion-cover/package-lock.json": "70b73745a2f763bd55b080a6a20433f9eb4c79fe26bc751f55fdf3408baf124f",
 	"templates/remotion-cover/package.json": "88448fd7021c32527fb36ee4d6a709f32f1289eae126d9532fca033c4b2debeb",
 	"templates/remotion-cover/src/ReadmeCover.tsx": "bdaddbadcddd99102e2f915eb16eaa1d1def9d8aacd777772afc6d66d106443d",
 	"templates/remotion-cover/src/Root.tsx": "0b3e22dd556216d67bbbca4745f5b041c9fc2a986ca3ba9945bf4b916a51e004",
