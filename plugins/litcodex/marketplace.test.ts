@@ -67,7 +67,7 @@ function stageRepo(prefix = "litcodex-meta-"): string {
 	// Aggregate package.json carries the sole version source (G14.2).
 	writeFileSync(
 		join(root, "plugins", "litcodex", "package.json"),
-		`${JSON.stringify({ name: "@litcodex/plugin", version: "1.0.29", private: true }, null, "\t")}\n`,
+		`${JSON.stringify({ name: "@litcodex/plugin", version: "1.0.30", private: true }, null, "\t")}\n`,
 	);
 	return root;
 }
@@ -152,7 +152,7 @@ describe("#given the shipped metadata #when loaded #then the resolver returns ca
 		expect(md.marketplaceName).toBe("litcodex");
 		expect(md.pluginName).toBe("litcodex");
 		expect(md.pluginSource).toBe("./plugins/litcodex");
-		expect(md.pluginVersion).toBe("1.0.29");
+		expect(md.pluginVersion).toBe("1.0.30");
 	});
 
 	it("resource pointers are exact strings", () => {
@@ -166,6 +166,7 @@ describe("#given the shipped metadata #when loaded #then the resolver returns ca
 			readFileSync(join(REPO_ROOT, "plugins", "litcodex", ".codex-plugin", "plugin.json"), "utf8"),
 		);
 		expect(mp.plugins[0].name).toBe("litcodex");
+		expect(mp.plugins[0].source).toEqual({ source: "local", path: "./plugins/litcodex" });
 		expect(pj.name).toBe("litcodex");
 	});
 
@@ -177,6 +178,28 @@ describe("#given the shipped metadata #when loaded #then the resolver returns ca
 		expect(plugin.interface?.composerIcon).toBe("./assets/logo.png");
 		const png = readFileSync(join(REPO_ROOT, "plugins", "litcodex", "assets", "logo.png"));
 		expect(png.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+	});
+
+	it("publishes the listing details Codex and plugin directories show", () => {
+		const plugin = JSON.parse(
+			readFileSync(join(REPO_ROOT, "plugins", "litcodex", ".codex-plugin", "plugin.json"), "utf8"),
+		) as Record<string, unknown> & { interface: Record<string, unknown> };
+		expect(plugin["author"]).toEqual({ name: "LitCodex Authors" });
+		expect(plugin["homepage"]).toBe("https://github.com/wjgoarxiv/litcodex#readme");
+		expect(plugin["repository"]).toBe("https://github.com/wjgoarxiv/litcodex");
+		expect(plugin.interface["developerName"]).toBe("LitCodex Authors");
+		expect(plugin.interface["websiteURL"]).toBe("https://github.com/wjgoarxiv/litcodex");
+		expect(plugin.interface["privacyPolicyURL"]).toBe(
+			"https://github.com/wjgoarxiv/litcodex/blob/main/docs/privacy.md",
+		);
+		expect(plugin.interface["termsOfServiceURL"]).toBe("https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE");
+		expect(plugin.interface["screenshots"]).toEqual(["./assets/screenshot-lit-ignited.png"]);
+		const png = readFileSync(join(REPO_ROOT, "plugins", "litcodex", "assets", "screenshot-lit-ignited.png"));
+		expect(png.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+		expect(png.length).toBeLessThan(200_000);
+		for (const file of ["LICENSE", "README.md", "SECURITY.md"]) {
+			expect(readFileSync(join(REPO_ROOT, "plugins", "litcodex", file), "utf8").length).toBeGreaterThan(0);
+		}
 	});
 
 	it("component set is exactly lit-loop", () => {
@@ -390,14 +413,45 @@ describe("#given a malformed repo #when loaded #then a typed error is thrown", (
 		expect(["METADATA_SCHEMA_INVALID", "METADATA_CROSSFILE_MISMATCH", "METADATA_LEGACY_TOKEN"]).toContain(err.code);
 	});
 
+	it("rejects listing details that are missing, insecure or outside the plugin folder", () => {
+		const cases: [string, (iface: Record<string, unknown>, json: Record<string, unknown>) => void][] = [
+			["author", (_iface, json) => delete json["author"]],
+			["repository", (_iface, json) => (json["repository"] = "http://github.com/wjgoarxiv/litcodex")],
+			["developerName", (iface) => delete iface["developerName"]],
+			["privacyPolicyURL", (iface) => (iface["privacyPolicyURL"] = "http://example.com/privacy")],
+			["screenshots", (iface) => (iface["screenshots"] = ["../outside.png"])],
+			["screenshots", (iface) => (iface["screenshots"] = [])],
+		];
+		for (const [field, mutate] of cases) {
+			const root = stageRepo();
+			rewriteJson(pathIn(root, "plugins", "litcodex", ".codex-plugin", "plugin.json"), (json) => {
+				mutate(json["interface"] as Record<string, unknown>, json);
+			});
+			const err = loadErr(root);
+			expect(err.code).toBe("METADATA_SCHEMA_INVALID");
+			expect(err.message).toContain(field);
+		}
+	});
+
 	it("rejects a non-canonical plugin source", () => {
-		const root = stageRepo();
-		rewriteJson(pathIn(root, ".agents", "plugins", "marketplace.json"), (json) => {
-			const plugins = json["plugins"] as { source: string }[];
-			const p0 = plugins.at(0);
-			if (p0) p0.source = "../x";
-		});
-		expect(loadErr(root).code).toBe("METADATA_SCHEMA_INVALID");
+		for (const source of [
+			"../x",
+			"./plugins/litcodex",
+			{ source: "local", path: "../x" },
+			{ source: "local" },
+			{ source: "git", path: "./plugins/litcodex" },
+			{ source: "local", path: "./plugins/litcodex", ref: "main" },
+		]) {
+			const root = stageRepo();
+			rewriteJson(pathIn(root, ".agents", "plugins", "marketplace.json"), (json) => {
+				const plugins = json["plugins"] as { source: unknown }[];
+				const p0 = plugins.at(0);
+				if (p0) p0.source = source;
+			});
+			const err = loadErr(root);
+			expect(err.code).toBe("METADATA_SCHEMA_INVALID");
+			expect(err.message).toContain("plugins[0].source");
+		}
 	});
 });
 
@@ -409,7 +463,7 @@ describe("#given the plugin version source #when checked #then the lockstep fail
 		const md = loadMarketplaceMetadata(root);
 		const agg = JSON.parse(readFileSync(pathIn(root, "plugins", "litcodex", "package.json"), "utf8"));
 		expect(md.pluginVersion).toBe(agg.version);
-		expect(agg.version).toBe("1.0.29");
+		expect(agg.version).toBe("1.0.30");
 	});
 
 	it("absent aggregate package.json fails CLOSED", () => {
@@ -439,7 +493,7 @@ describe("#given the plugin version source #when checked #then the lockstep fail
 		);
 		const err = loadErr(root);
 		expect(err.code).toBe("METADATA_CROSSFILE_MISMATCH");
-		expect(err.detail).toContain("1.0.29");
+		expect(err.detail).toContain("1.0.30");
 		expect(err.detail).toContain("9.9.9");
 	});
 });

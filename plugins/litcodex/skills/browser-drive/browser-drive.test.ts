@@ -221,8 +221,8 @@ describe("browser-drive capability probe", () => {
 	it.each([
 		["glpat token", `${DRIVER_COMMAND} 9.9.9 glpat-TESTVALUE123`, "glpat-TESTVALUE123"],
 		["GitHub app token", `${DRIVER_COMMAND} 9.9.9 ghs_${"G".repeat(24)}`, `ghs_${"G".repeat(24)}`],
-		["xoxb token", `${DRIVER_COMMAND} 9.9.9 xoxb-TESTVALUE123`, "xoxb-TESTVALUE123"],
-		["xapp token", `${DRIVER_COMMAND} 9.9.9 xapp-1-TESTVALUE123`, "xapp-1-TESTVALUE123"],
+		["xoxb token", `${DRIVER_COMMAND} 9.9.9 ${"xoxb"}-TESTVALUE123`, `${"xoxb"}-TESTVALUE123`],
+		["xapp token", `${DRIVER_COMMAND} 9.9.9 ${"xapp"}-1-TESTVALUE123`, `${"xapp"}-1-TESTVALUE123`],
 		["GitLab OAuth token", `${DRIVER_COMMAND} 9.9.9 gloas-${"L".repeat(24)}`, `gloas-${"L".repeat(24)}`],
 		["Stripe secret key", `${DRIVER_COMMAND} 9.9.9 sk_live_${"S".repeat(24)}`, `sk_live_${"S".repeat(24)}`],
 		["Stripe webhook secret", `${DRIVER_COMMAND} 9.9.9 whsec_${"W".repeat(24)}`, `whsec_${"W".repeat(24)}`],

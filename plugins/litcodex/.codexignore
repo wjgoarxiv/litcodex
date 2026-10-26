@@ -1,0 +1,10 @@
+# Local state and secrets that never belong in the plugin folder.
+# Do not add node_modules/ or dist/: hooks load components/*/dist/ and the vendored
+# components/rules/node_modules/picomatch at runtime.
+.env
+.env.*
+*.pem
+*.key
+.litcodex/
+*.tsbuildinfo
+.DS_Store

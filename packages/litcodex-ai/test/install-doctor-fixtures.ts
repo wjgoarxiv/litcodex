@@ -42,7 +42,7 @@ export function doctorDeps(
 	fsFiles: string[],
 	rootConfig?: string,
 	marketplaceSource = `${codexHome}/marketplaces/litcodex`,
-	pluginVersion = "1.0.29",
+	pluginVersion = "1.0.30",
 	codexVersion = "0.144.0",
 	handoffAvailable = true,
 	scientificVisualizationAvailable = true,

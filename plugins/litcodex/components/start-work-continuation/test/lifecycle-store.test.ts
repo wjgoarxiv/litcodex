@@ -251,7 +251,7 @@ describe("start-work lifecycle store", () => {
 		const stale = workspace("active", 0);
 		const staleLock = `${statePathFor(stale)}.lock`;
 		writeFileSync(staleLock, JSON.stringify({ token: "stale", createdAt: 0 }), "utf8");
-		const replacement = JSON.stringify({ token: "replacement", createdAt: 40_000 });
+		const replacement = JSON.stringify({ token: "fresh", createdAt: 40_000 });
 		transitionWork(
 			stale,
 			{
@@ -501,7 +501,7 @@ describe("start-work lifecycle store", () => {
 		const root = workspace("active", 0);
 		const lock = `${statePathFor(root)}.lock`;
 		const displaced = `${lock}.old`;
-		const replacement = JSON.stringify({ token: "replacement", createdAt: 40_000 });
+		const replacement = JSON.stringify({ token: "fresh", createdAt: 40_000 });
 		transitionWork(root, transition("pause", 0, "replace", "authorization_required"), {
 			afterStateWrite: () => {
 				renameSync(lock, displaced);

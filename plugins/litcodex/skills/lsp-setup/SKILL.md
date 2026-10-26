@@ -323,4 +323,5 @@ been observed.
 | `scripts/verify-lsp.ts` | Real single-file diagnostics roundtrip; spawns the language server over stdio. Exits 0 OK / 1 FAIL / 2 usage / 3 SKIP. |
 | `scripts/lsp-server-table.ts` | Hand-maintained server table used by `detect-lsp.ts` and `verify-lsp.ts`. |
 
-Run with [Bun](https://bun.sh): `curl -fsSL https://bun.sh/install | bash`.
+Run with [Bun](https://bun.sh) (install steps: <https://bun.sh/docs/installation>) or with
+`node --experimental-strip-types`.

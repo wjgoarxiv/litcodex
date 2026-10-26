@@ -103,7 +103,7 @@ describe("ledger event kinds #given/#when/#then", () => {
 			plan: ".litcodex/plans/plan.md",
 			sessionId: "codex:s1",
 			reasonCode: "authorization_required",
-			progressToken: "progress-token",
+			progressToken: "pt-4",
 		};
 		expect(entry.kind).toBe("start_work_paused");
 		expect(entry.revision).toBe(4);

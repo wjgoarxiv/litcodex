@@ -5,7 +5,7 @@
 		"name": "name",
 		"interfaceDisplayName": "interface.displayName",
 		"pluginName": "plugins[].name",
-		"pluginSource": "plugins[].source",
+		"pluginSource": "plugins[].source.path",
 		"pluginCategory": "plugins[].category",
 		"installation": "plugins[].policy.installation",
 		"authentication": "plugins[].policy.authentication"

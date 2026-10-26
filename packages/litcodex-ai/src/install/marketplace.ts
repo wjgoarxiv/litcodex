@@ -27,6 +27,14 @@ interface MarketplacePathFs {
 	readFileSync?(path: string, encoding: "utf8"): string;
 }
 
+/** Current payloads use the object source; installs from 1.0.29 and earlier still carry the string form. */
+function isLitcodexPluginSource(source: unknown): boolean {
+	if (source === "./plugins/litcodex") return true;
+	if (typeof source !== "object" || source === null) return false;
+	const entry = source as Record<string, unknown>;
+	return entry["source"] === "local" && entry["path"] === "./plugins/litcodex";
+}
+
 /** A native identity authorizes replacing the generated cache, never following a redirected path. */
 export function isSafeManagedMarketplaceRoot(
 	codexHome: string,
@@ -75,7 +83,7 @@ export function isSafeManagedMarketplaceRoot(
 					typeof entry === "object" &&
 					entry !== null &&
 					(entry as Record<string, unknown>)["name"] === LITCODEX_PLUGIN &&
-					(entry as Record<string, unknown>)["source"] === "./plugins/litcodex",
+					isLitcodexPluginSource((entry as Record<string, unknown>)["source"]),
 			)
 		);
 	} catch {

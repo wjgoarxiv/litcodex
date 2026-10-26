@@ -1,6 +1,6 @@
 {
 	"name": "@litcodex/wikify-knowledge",
-	"version": "1.0.29",
+	"version": "1.0.30",
 	"description": "Local review-gated knowledge records for the LitCodex Wikify surface.",
 	"type": "module",
 	"private": true,

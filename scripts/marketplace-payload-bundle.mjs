@@ -25,6 +25,7 @@ const REQUIRED_RUNTIME_FILES = new Set([
 	".agents/plugins/marketplace.json",
 	"plugins/litcodex/.codex-plugin/plugin.json",
 	"plugins/litcodex/assets/logo.png",
+	"plugins/litcodex/assets/screenshot-lit-ignited.png",
 	"plugins/litcodex/.mcp.json",
 	"plugins/litcodex/hooks/hooks.json",
 	"plugins/litcodex/skills/visual-qa/schemas/design-contract.v1alpha1.json",

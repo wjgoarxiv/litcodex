@@ -29,7 +29,10 @@ describe("materializeManagedMarketplace", () => {
 		mkdirSync(join(sourceRoot, "plugins", "litcodex", ".codex-plugin"), { recursive: true });
 		writeFileSync(
 			join(sourceRoot, ".agents", "plugins", "marketplace.json"),
-			JSON.stringify({ name: "litcodex", plugins: [{ name: "litcodex", source: "./plugins/litcodex" }] }),
+			JSON.stringify({
+				name: "litcodex",
+				plugins: [{ name: "litcodex", source: { source: "local", path: "./plugins/litcodex" } }],
+			}),
 		);
 		writeFileSync(
 			join(sourceRoot, "plugins", "litcodex", ".codex-plugin", "plugin.json"),
@@ -164,6 +167,26 @@ describe("materializeManagedMarketplace", () => {
 		) as { version: string };
 		expect(manifest.version).toBe("0.3.44");
 		expect(existsSync(join(paths.targetRoot, "stale.txt"))).toBe(false);
+	});
+
+	it("replaces an older install whose manifest still names the plugin by a string source", () => {
+		const paths = fixture("0.3.44");
+		materializeManagedMarketplace(paths);
+		writeFileSync(
+			join(paths.targetRoot, ".agents", "plugins", "marketplace.json"),
+			JSON.stringify({ name: "litcodex", plugins: [{ name: "litcodex", source: "./plugins/litcodex" }] }),
+		);
+		writeFileSync(
+			join(paths.targetRoot, "plugins", "litcodex", ".codex-plugin", "plugin.json"),
+			JSON.stringify({ name: "litcodex", version: "0.3.28" }),
+		);
+
+		materializeManagedMarketplace(paths);
+
+		const marketplace = JSON.parse(
+			readFileSync(join(paths.targetRoot, ".agents", "plugins", "marketplace.json"), "utf8"),
+		) as { plugins: { source: unknown }[] };
+		expect(marketplace.plugins[0]?.source).toEqual({ source: "local", path: "./plugins/litcodex" });
 	});
 
 	it("keeps a byte-exact same-version managed payload as a no-op", () => {

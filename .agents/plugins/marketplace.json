@@ -6,7 +6,10 @@
 	"plugins": [
 		{
 			"name": "litcodex",
-			"source": "./plugins/litcodex",
+			"source": {
+				"source": "local",
+				"path": "./plugins/litcodex"
+			},
 			"category": "Developer Tools",
 			"policy": {
 				"installation": "AVAILABLE",

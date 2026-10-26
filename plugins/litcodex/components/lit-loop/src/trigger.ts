@@ -120,6 +120,8 @@ export function isLitTriggerPrompt(prompt: string): boolean {
 	return matchLitTrigger(prompt) !== null;
 }
 
+const START_WORK = "start-work" as const;
+
 /**
  * Returns the FIRST bounded lit trigger match in document order, or null if none.
  * Deterministic: identical input always yields the identical result.
@@ -135,7 +137,7 @@ export function matchLitTrigger(prompt: string): LitTriggerMatch | null {
 	if (/^\/\$litcodex:[A-Za-z0-9_-]+(?:\s|$)/iu.test(prompt)) return null;
 	const explicitStartWork = explicitStartWorkPrefix(prompt);
 	if (explicitStartWork !== null && hasValidStartWorkGrammar(prompt)) {
-		return { token: "start-work", raw: explicitStartWork, index: 0 };
+		return { token: START_WORK, raw: explicitStartWork, index: 0 };
 	}
 	const searchable = maskMarkdownCode(prompt);
 	const scan =

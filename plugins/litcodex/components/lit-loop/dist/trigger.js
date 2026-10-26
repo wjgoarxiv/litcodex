@@ -71,6 +71,7 @@ export function isLitTriggerPrompt(prompt) {
     }
     return matchLitTrigger(prompt) !== null;
 }
+const START_WORK = "start-work";
 /**
  * Returns the FIRST bounded lit trigger match in document order, or null if none.
  * Deterministic: identical input always yields the identical result.
@@ -87,7 +88,7 @@ export function matchLitTrigger(prompt) {
         return null;
     const explicitStartWork = explicitStartWorkPrefix(prompt);
     if (explicitStartWork !== null && hasValidStartWorkGrammar(prompt)) {
-        return { token: "start-work", raw: explicitStartWork, index: 0 };
+        return { token: START_WORK, raw: explicitStartWork, index: 0 };
     }
     const searchable = maskMarkdownCode(prompt);
     const scan = /(?:^|[^\p{L}\p{N}_])(lit-comprehend|lit-brainstorm|deep-interview|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit)(?![\p{L}\p{N}_-])/giu;

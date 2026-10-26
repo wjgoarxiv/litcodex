@@ -575,6 +575,18 @@ export function runCiCheck(opts) {
 		}
 	}
 
+	// Action pin check: every remote action is pinned to a full commit SHA, not a movable tag.
+	for (const [jobName, job] of Object.entries(workflow.jobs ?? {})) {
+		const jobSteps = Array.isArray(job?.steps) ? job.steps : [];
+		for (const step of jobSteps) {
+			if (typeof step?.uses !== "string" || step.uses.startsWith("./")) continue;
+			const uses = step.uses.replace(/\s+#.*$/u, "");
+			if (!/^[^@\s]+@[0-9a-f]{40}$/u.test(uses)) {
+				push("LITCODEX_CI_ACTION_UNPINNED", `action not pinned to a commit SHA: ${uses}`, { job: jobName, uses });
+			}
+		}
+	}
+
 	// Publish-step check (parsed run literals).
 	const publishMarkers = [["npm", "publish"].join(" "), "gh release", "git tag", "git push"];
 	for (const run of runs) {

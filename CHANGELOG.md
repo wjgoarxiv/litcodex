@@ -6,6 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.30] - 2026-10-26
+
+### Added
+
+- The plugin folder now carries its own license, security policy, README and `.codexignore`, and the plugin
+  manifest names the author, project links and a screenshot, so Codex can show a complete listing.
+
+### Changed
+
+- The marketplace names the plugin with an object-form local source (`{"source": "local", "path": …}`), which
+  Codex CLI 0.144.0 through 0.164.0 install. Upgrading over 1.0.29 or earlier keeps working: the installer still
+  recognises a marketplace written with the old string form.
+- The `lsp-setup` skill links Bun's installation page instead of a pipe-to-shell command, and notes that its
+  scripts also run with `node --experimental-strip-types`.
+
+### Fixed
+
+- The rules component ships picomatch 4.0.7, the same version the package lock resolves, so a fresh build no
+  longer leaves the checkout modified.
+- Update the motion audio `certifi` pin and the `hono` and `fast-uri` versions in the README cover template locks.
+
 ## [1.0.29] - 2026-10-22
 
 ### Added

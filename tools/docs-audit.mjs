@@ -76,6 +76,8 @@ export const USER_FACING_DOCS = Object.freeze([
 	"docs/release/provenance.md",
 	"docs/release/publish-checklist.md",
 	"RELEASE_CHECKLIST.md",
+	"plugins/litcodex/README.md",
+	"plugins/litcodex/SECURITY.md",
 	"plugins/litcodex/components/lit-loop/README.md",
 	"plugins/litcodex/components/lit-loop/skills/lit-loop/SKILL.md",
 	"plugins/litcodex/components/lit-loop/skills/lit-loop/references/full-workflow.md",

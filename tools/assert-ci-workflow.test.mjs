@@ -57,10 +57,10 @@ jobs:
       matrix:
         node: [20, 22]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Use Node.js \${{ matrix.node }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: \${{ matrix.node }}
           cache: "npm"
@@ -299,6 +299,16 @@ describe("assert-ci-workflow validator", () => {
 		assert.equal(report.ok, false);
 		assert.ok(report.drifts.some((d) => d.code === "LITCODEX_CI_TRIGGER_INVALID"));
 		writeEvidence("task-09-default-branch.json", report);
+	});
+
+	it("rejects an action pinned to a tag instead of a commit SHA", () => {
+		const tagged = CANONICAL_WORKFLOW.replace(/actions\/checkout@[0-9a-f]{40} # v4\.4\.0/u, "actions/checkout@v4");
+		const report = runCiCheck({ repoRoot: makeFixture(tagged) });
+		assert.equal(report.ok, false);
+		assert.deepEqual(
+			report.drifts.filter((d) => d.code === "LITCODEX_CI_ACTION_UNPINNED").map((d) => d.details.uses),
+			["actions/checkout@v4"],
+		);
 	});
 
 	it("detects node matrix drift", () => {

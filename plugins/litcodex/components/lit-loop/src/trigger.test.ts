@@ -106,11 +106,8 @@ describe("accepts", () => {
 
 	it("accepts slash litresearch as the only slash-command mode trigger", () => {
 		for (const prompt of ["/litresearch", "/litresearch current dir", "/litresearch 현재 디렉터리"]) {
-			expect(matchLitTrigger(prompt)).toEqual({
-				token: "litresearch",
-				raw: "litresearch",
-				index: 1,
-			});
+			const mode = "litresearch";
+			expect(matchLitTrigger(prompt)).toEqual({ token: mode, raw: mode, index: 1 });
 		}
 	});
 

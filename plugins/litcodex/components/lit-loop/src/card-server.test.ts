@@ -13,6 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { runInNewContext } from "node:vm";
 import { afterEach, describe, expect, it } from "vitest";
 import { CARD_HTML } from "./card-html.js";
 import { CARD_MIME, CARD_STATUS_TOOL, CARD_TOOL, cardResourceUri, handleCardMessage } from "./card-mcp.js";
@@ -436,7 +437,7 @@ describe("card MCP server", () => {
 	it("says how long a turn took down to the second", () => {
 		const source = CARD_HTML.match(/function span\(ms\)\{.*?\n/u)?.[0];
 		expect(source).toBeDefined();
-		const span = new Function(`${source}; return span;`)() as (ms: number) => string;
+		const span = runInNewContext(`${source}; span`) as (ms: number) => string;
 		expect(span(49_000)).toBe("49s");
 		expect(span(60_000)).toBe("1m");
 		expect(span(77_000)).toBe("1m 17s");

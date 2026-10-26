@@ -1,6 +1,11 @@
 {
   "name": "litcodex",
-  "version": "1.0.29",
+  "version": "1.0.30",
+  "author": {
+    "name": "LitCodex Authors"
+  },
+  "homepage": "https://github.com/wjgoarxiv/litcodex#readme",
+  "repository": "https://github.com/wjgoarxiv/litcodex",
   "description": "LitCodex Codex plugin: the lit-loop activation, durable loop runtime, and local review-gated knowledge.",
   "license": "MIT",
   "keywords": [
@@ -17,6 +22,7 @@
     "displayName": "LitCodex",
     "shortDescription": "Loop-native Codex enhancement: bare `lit` activates lit-loop.",
     "longDescription": "LitCodex turns Codex into a loop-native agent harness. A bare `lit` trigger activates lit-loop through a UserPromptSubmit hook. Accepted local Wikify records add bounded project context from .litcodex/knowledge. Successful objective-only create_goal calls add review-needed checkpoints.",
+    "developerName": "LitCodex Authors",
     "category": "Developer Tools",
     "capabilities": [
       "Hooks",
@@ -29,6 +35,12 @@
     ],
     "brandColor": "#FF6337",
     "logo": "./assets/logo.png",
-    "composerIcon": "./assets/logo.png"
+    "composerIcon": "./assets/logo.png",
+    "websiteURL": "https://github.com/wjgoarxiv/litcodex",
+    "privacyPolicyURL": "https://github.com/wjgoarxiv/litcodex/blob/main/docs/privacy.md",
+    "termsOfServiceURL": "https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE",
+    "screenshots": [
+      "./assets/screenshot-lit-ignited.png"
+    ]
   }
 }

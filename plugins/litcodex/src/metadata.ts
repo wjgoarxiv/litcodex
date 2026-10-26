@@ -332,6 +332,35 @@ export class MarketplaceMetadataError extends Error {
 	}
 }
 
+// ── Listing details (author, links, screenshots) ─────────────────────────────
+
+const isHttpsUrl = (value: unknown): boolean => typeof value === "string" && /^https:\/\/\S+$/u.test(value);
+const isNonEmptyString = (value: unknown): boolean => typeof value === "string" && value.trim() !== "";
+const isPluginAssetPath = (value: unknown): boolean =>
+	typeof value === "string" && /^\.\/assets\/[\w.-]+$/u.test(value) && !value.includes("..");
+
+function parseListing(pjPath: string, pj: Record<string, unknown>): void {
+	const author = pj["author"] as Record<string, unknown> | undefined;
+	if (author === null || typeof author !== "object" || !isNonEmptyString(author["name"])) {
+		schemaFail(pjPath, "author.name: must be a non-empty string");
+	}
+	for (const field of ["homepage", "repository"]) {
+		if (!isHttpsUrl(pj[field])) schemaFail(pjPath, `${field}: must be an https URL`);
+	}
+	const iface = pj["interface"] as Record<string, unknown> | undefined;
+	if (iface === null || typeof iface !== "object") schemaFail(pjPath, "interface: must be an object");
+	if (!isNonEmptyString(iface["developerName"])) {
+		schemaFail(pjPath, "interface.developerName: must be a non-empty string");
+	}
+	for (const field of ["websiteURL", "privacyPolicyURL", "termsOfServiceURL"]) {
+		if (!isHttpsUrl(iface[field])) schemaFail(pjPath, `interface.${field}: must be an https URL`);
+	}
+	const screenshots = iface["screenshots"];
+	if (!Array.isArray(screenshots) || screenshots.length === 0 || !screenshots.every(isPluginAssetPath)) {
+		schemaFail(pjPath, "interface.screenshots: must list ./assets/ paths inside the plugin folder");
+	}
+}
+
 // ── loadMarketplaceMetadata ───────────────────────────────────────────────────
 
 export function loadMarketplaceMetadata(repoRoot: string): MarketplaceMetadata {
@@ -354,7 +383,16 @@ export function loadMarketplaceMetadata(repoRoot: string): MarketplaceMetadata {
 	if (!Array.isArray(plugins) || plugins.length !== 1) schemaFail(mpPath, "plugins: must be an array of length 1");
 	const p0 = plugins[0] as Record<string, unknown>;
 	expectString(mpPath, p0["name"], PLUGIN_NAME, "plugins[0].name");
-	expectString(mpPath, p0["source"], PLUGIN_SOURCE, "plugins[0].source");
+	const source = p0["source"] as Record<string, unknown> | undefined;
+	if (
+		source === null ||
+		typeof source !== "object" ||
+		Object.keys(source).sort().join(",") !== "path,source" ||
+		source["source"] !== "local" ||
+		source["path"] !== PLUGIN_SOURCE
+	) {
+		schemaFail(mpPath, `plugins[0].source: must equal {"source":"local","path":${JSON.stringify(PLUGIN_SOURCE)}}`);
+	}
 	expectString(mpPath, p0["category"], "Developer Tools", "plugins[0].category");
 	const policy = p0["policy"] as Record<string, unknown> | undefined;
 	if (!policy || typeof policy !== "object") schemaFail(mpPath, "plugins[0].policy: must be an object");
@@ -368,6 +406,7 @@ export function loadMarketplaceMetadata(repoRoot: string): MarketplaceMetadata {
 	expectString(pjPath, pj.json["hooks"], RES_HOOKS, "hooks");
 	expectString(pjPath, pj.json["skills"], RES_SKILLS, "skills");
 	expectString(pjPath, pj.json["mcpServers"], RES_MCP, "mcpServers");
+	parseListing(pjPath, pj.json);
 
 	// hooks.json schema (hardened command + statusMessage — G14.1).
 	const hooks = parseHooks(hkPath, hk.json["hooks"]);
