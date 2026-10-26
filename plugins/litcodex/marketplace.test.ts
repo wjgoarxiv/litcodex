@@ -357,6 +357,24 @@ describe("#given the aggregate hooks.json #when validated #then the command + st
 		}
 	});
 
+	it("registers the child-agent lane pair, quietly labelled, one handler per event", () => {
+		const hooks = JSON.parse(readFileSync(join(REPO_ROOT, "plugins", "litcodex", "hooks", "hooks.json"), "utf8")) as {
+			hooks: Record<string, { matcher?: string; hooks: MutableHandler[] }[]>;
+		};
+		for (const [event, subcommand] of [
+			["SubagentStart", "subagent-start"],
+			["SubagentStop", "subagent-stop"],
+		] as const) {
+			const command = `node "\${PLUGIN_ROOT}/components/lit-loop/dist/cli.js" hook ${subcommand}`;
+			const groups = hooks.hooks[event] ?? [];
+			expect(groups).toHaveLength(1);
+			expect(groups[0]?.hooks).toEqual([{ type: "command", command, timeout: 5, statusMessage: "🔥 LIT · lanes" }]);
+			expect(EXPECTED_HOOKS.filter((entry) => entry.event === event)).toEqual([
+				{ component: "lit-loop", event, subcommand, statusMessage: "🔥 LIT · lanes" },
+			]);
+		}
+	});
+
 	it("authoritative hooks.json path is the aggregate one", () => {
 		expect(HOOKS_JSON_RELPATH).toBe("plugins/litcodex/hooks/hooks.json");
 	});

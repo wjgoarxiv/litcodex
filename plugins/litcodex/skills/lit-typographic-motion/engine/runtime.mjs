@@ -85,16 +85,55 @@ export function resolveRuntime(env = process.env) {
 	};
 }
 
-async function fetchPinned(item, mirror) {
+const PIN_TIMEOUT_MS = 120_000;
+const PIN_MAX_BYTES = 64 * 1024 * 1024;
+
+/**
+ * One pinned file: from the local mirror, or over the network inside a deadline and a byte cap (the pin's
+ * own size, else maxBytes), hashed while it streams. The size and sha256 pin is checked either way.
+ * `fetchImpl`, `timeoutMs` and `maxBytes` are injectable for tests.
+ */
+export async function fetchPinned(item, mirror, { fetchImpl = globalThis.fetch, timeoutMs = PIN_TIMEOUT_MS, maxBytes = PIN_MAX_BYTES } = {}) {
 	let bytes;
-	if (mirror) bytes = readFileSync(join(mirror, item.path));
-	else {
-		const response = await fetch(item.url, { redirect: "follow" });
-		if (!response.ok) throw new Error(`fetch ${item.url}: HTTP ${response.status}`);
-		bytes = Buffer.from(await response.arrayBuffer());
+	let digest;
+	if (mirror) {
+		bytes = readFileSync(join(mirror, item.path));
+		digest = sha256(bytes);
+	} else {
+		const limit = item.bytes ?? maxBytes;
+		const signal = AbortSignal.timeout(timeoutMs);
+		const tooLarge = () => new Error(`fetch ${item.url}: larger than ${limit} bytes`);
+		try {
+			const response = await fetchImpl(item.url, { redirect: "follow", signal });
+			if (!response.ok) throw new Error(`fetch ${item.url}: HTTP ${response.status}`);
+			if (Number(response.headers.get("content-length") ?? 0) > limit) {
+				await response.body?.cancel();
+				throw tooLarge();
+			}
+			const hash = createHash("sha256");
+			const chunks = [];
+			let total = 0;
+			const reader = response.body.getReader();
+			for (;;) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				total += value.length;
+				if (total > limit) {
+					await reader.cancel();
+					throw tooLarge();
+				}
+				hash.update(value);
+				chunks.push(Buffer.from(value));
+			}
+			bytes = Buffer.concat(chunks);
+			digest = hash.digest("hex");
+		} catch (error) {
+			if (signal.aborted) throw new Error(`fetch ${item.url}: timed out after ${timeoutMs / 1000} s`);
+			throw error;
+		}
 	}
 	if (item.bytes !== undefined && bytes.length !== item.bytes) throw new Error(`${item.path}: ${bytes.length} bytes, pinned ${item.bytes}`);
-	if (sha256(bytes) !== item.sha256) throw new Error(`${item.path}: sha256 mismatch against its pin`);
+	if (digest !== item.sha256) throw new Error(`${item.path}: sha256 mismatch against its pin`);
 	return bytes;
 }
 
@@ -245,12 +284,18 @@ export function chromeLadder(platform = process.platform) {
 }
 
 /**
- * The stage path's one launch rung: the ladder's software rung (SwiftShader, CPU raster), the stage
- * determinism and network flags, and the frame size. There is no GPU rung on the stage path, so a
- * determinism mismatch is always a page leak.
+ * The stage path's launch flags: the software rung (SwiftShader, CPU raster) by default, or the
+ * platform's GPU rung for a 3D film (WebGL on the GPU through the platform's angle backend; page
+ * raster stays on the CPU on both), then the stage determinism and network flags and the frame size.
+ * A round uses one rung for the master and every replay, so a determinism mismatch is still a page
+ * leak. Accepts (width, height, platform, rung) or ({ width, height, rung, platform }).
  */
-export function stageFlags(width, height, platform = process.platform) {
-	return [...chromeLadder(platform)[1], ...CHROME_STAGE_FLAGS, `--window-size=${width},${height}`];
+export function stageFlags(width, height, platform = process.platform, rung = "software") {
+	if (width && typeof width === "object") return stageFlags(width.width, width.height, width.platform ?? process.platform, width.rung ?? "software");
+	if (rung !== "gpu" && rung !== "software") throw new Error(`stageFlags: rung is gpu or software (got ${rung})`);
+	const ladder = chromeLadder(platform);
+	const base = rung === "gpu" ? [...ladder[0].filter((flag) => flag !== "--enable-gpu-rasterization"), "--disable-gpu-rasterization", "--disable-partial-raster"] : ladder[1];
+	return [...base, ...CHROME_STAGE_FLAGS, `--window-size=${width},${height}`];
 }
 
 /**
@@ -258,8 +303,8 @@ export function stageFlags(width, height, platform = process.platform) {
  * and never partial: at 2x, glyph edges rastered in GPU tiles came out one level apart between fresh
  * browsers.
  */
-export function coverFlags(width, height, scale, platform = process.platform) {
-	return [...stageFlags(width, height, platform).map((flag) => (flag === "--force-device-scale-factor=1" ? `--force-device-scale-factor=${scale}` : flag)), "--disable-gpu-rasterization", "--disable-partial-raster"];
+export function coverFlags(width, height, scale, platform = process.platform, rung = "software") {
+	return [...stageFlags(width, height, platform, rung).map((flag) => (flag === "--force-device-scale-factor=1" ? `--force-device-scale-factor=${scale}` : flag)), "--disable-gpu-rasterization", "--disable-partial-raster"];
 }
 
 export const isSoftware = (renderer) => SOFTWARE_GL.some((needle) => String(renderer).toLowerCase().includes(needle));

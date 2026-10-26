@@ -21,6 +21,8 @@ export type HookDecision = {
     readonly stdout: string;
     readonly mode: LitMode;
     readonly entry?: "continue";
+    /** True when the film context was added, so the completion gate (motion-gate.ts) arms the turn. */
+    readonly film?: true;
 } | {
     readonly kind: "noop";
 };

@@ -1,14 +1,17 @@
 // Sound for both render paths. The generated bed is pure code: a tempo grid, a pulse on every beat
 // and a pad that plays a chord progression changing on the film's cuts, in one of four documented
-// timbre palettes, plus accents only where a treatment beat's `sound` asks for one. It is measured
-// with ITU-R BS.1770-4 integrated loudness in product code and normalized to -16 LUFS with a peak
-// at or under -2 dBFS. Supplied and authored tracks are fitted to the picture with ffmpeg (padded
-// or trimmed, 50 ms fade) and always muxed. Nothing here touches the network or model weights.
+// timbre palettes, plus accents only where a treatment beat's `sound` asks for one and one sound
+// per on-screen event (`sound.events`). The `score` mode (score.mjs) is the layered per-film track
+// of a rich film. Both built tracks end in `masterTo`: ITU-R BS.1770-4 integrated loudness measured
+// in product code, a gain to -16 LUFS and a lookahead limiter that keeps the sample peak at or
+// under -2 dBFS. Supplied and authored tracks are fitted to the picture with ffmpeg (padded or
+// trimmed, 50 ms fade) and always muxed. Nothing here touches the network or model weights.
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
-import { EXIT, Exit, SOUND_PALETTES } from "./constants.mjs";
+import { EVENT_SOUNDS, EXIT, Exit, SOUND_PALETTES } from "./constants.mjs";
 import { ffmpegProbe, firstLine } from "./runtime.mjs";
+import { writeScore } from "./score.mjs";
 import { fnv1a32, mulberry32 } from "./util.mjs";
 
 export const SOUND = Object.freeze({
@@ -16,6 +19,9 @@ export const SOUND = Object.freeze({
 	targetLufs: -16,
 	lufsTolerance: 2,
 	bedPeakDb: -2,
+	limiterCeilingDb: -2.1,
+	limiterLookaheadSec: 0.005,
+	limiterReleaseSec: 0.08,
 	muxPeakDb: -0.5,
 	silenceDb: -50,
 	silenceWindowSec: 0.05,
@@ -187,6 +193,77 @@ const ACCENTS = [
 /** Accent kinds a beat's `sound` field asks for. */
 export const accentsFor = (text) => ACCENTS.filter(([, pattern]) => pattern.test(String(text ?? ""))).map(([kind]) => kind);
 
+const onePole = (cutoffHz, sr = SOUND.sampleRate) => 1 - Math.exp((-2 * Math.PI * Math.max(1, cutoffHz)) / sr);
+const round4 = (x) => Math.round(x * 1e4) / 1e4;
+
+/**
+ * One `event` cue per on-screen event (treatment `sound.events`) at the event's own time: an event
+ * follows the picture, so it never snaps to a cut. `fromCut` is the distance to the nearest cut.
+ */
+export function eventCues({ events, durationSec, cutTimes = [], beats = [] }) {
+	const cues = [];
+	for (const e of Array.isArray(events) ? events : []) {
+		if (!EVENT_SOUNDS.includes(e?.kind) || !(e.t >= 0 && e.t < durationSec)) continue;
+		const beat = Math.max(0, beats.findIndex((b) => e.t >= Number(b.t0) && e.t < Number(b.t1)));
+		const near = cutTimes.reduce((best, c) => (best === null || Math.abs(e.t - c) < Math.abs(e.t - best) ? c : best), null);
+		cues.push({ kind: "event", sound: e.kind, t: round4(e.t), beat, cutT: round4(e.t), delta: 0, on: String(e.on ?? ""), fromCut: near === null ? null : round4(Math.abs(e.t - near)) });
+	}
+	return cues;
+}
+
+/**
+ * Add the sound of one event cue into the stereo buffers: a tap (a click with a pitched body: a key,
+ * a latch, a landing), a hit (low thump with a snap), a whoosh (air that ends on the event) or a
+ * chime (two notes of the key: something completes). `tonicMidi` is the key's tonic in octave 4.
+ */
+export function drawEvent(L, R, cue, { tonicMidi, minor, rand, sr = SOUND.sampleRate }) {
+	const n = L.length;
+	const s0 = Math.round(cue.t * sr);
+	const put = (s, v, left = 1, right = 1) => {
+		if (s < 0 || s >= n) return;
+		L[s] += v * left;
+		R[s] += v * right;
+	};
+	if (cue.sound === "tap") {
+		const hzTap = hz(tonicMidi + 12 + (minor ? 3 : 7));
+		const c = onePole(4500, sr);
+		let f = 0;
+		for (let i = 0; i < Math.round(0.3 * sr); i++) {
+			const t = i / sr;
+			f += c * (rand() * 2 - 1 - f);
+			put(s0 + i, 1.2 * Math.exp(-t / 0.008) * f + 0.6 * Math.exp(-t / 0.07) * Math.sin(2 * Math.PI * hzTap * t), 1, 0.9);
+		}
+	} else if (cue.sound === "whoosh") {
+		const lead = Math.round(0.4 * sr);
+		const tail = Math.round(0.08 * sr);
+		let f = 0;
+		for (let i = 0; i < lead + tail; i++) {
+			const u = i < lead ? i / lead : 1 - (i - lead) / tail;
+			f += onePole(300 + 3200 * u, sr) * (rand() * 2 - 1 - f);
+			put(s0 - lead + i, 0.7 * u * u * f, 1 - 0.4 * u, 0.6 + 0.4 * u);
+		}
+	} else if (cue.sound === "chime") {
+		[[0, 12, 1, 0.6], [0.09, 19, 0.6, 1]].forEach(([delay, semis, left, right]) => {
+			const f0 = hz(tonicMidi + semis);
+			const at = s0 + Math.round(delay * sr);
+			for (let i = 0; i < Math.round(1.4 * sr); i++) {
+				const t = i / sr;
+				put(at + i, 0.5 * (Math.sin(2 * Math.PI * f0 * t) + 0.2 * Math.sin(2 * Math.PI * f0 * 3 * t)) * envelope(t, 0.002, 0.5), left, right);
+			}
+		});
+	} else {
+		const c = onePole(1800, sr);
+		let f = 0;
+		let ph = 0;
+		for (let i = 0; i < Math.round(0.6 * sr); i++) {
+			const t = i / sr;
+			f += c * (rand() * 2 - 1 - f);
+			ph += (2 * Math.PI * (50 + 90 * Math.exp(-t / 0.02))) / sr;
+			put(s0 + i, 0.55 * Math.exp(-t / 0.12) * f + 0.8 * Math.exp(-t / 0.22) * Math.sin(ph));
+		}
+	}
+}
+
 const envelope = (t, attack, decay) => (t < 0 ? 0 : t < attack ? t / attack : Math.exp(-(t - attack) / decay));
 
 /**
@@ -337,6 +414,12 @@ export function buildBed({ treatment, frameCount, fps, cuts = null }) {
 			});
 	});
 
+	// On-screen events: each sound sits on its own event time, whatever the cuts do.
+	for (const cue of eventCues({ events: plan.events, durationSec: duration, cutTimes, beats })) {
+		cues.push(cue);
+		drawEvent(L, R, cue, { tonicMidi: root + 12, minor, rand: random });
+	}
+
 	// Ends: a short fade in at 0 and a 50 ms fade out at the last sample, so no click lands on a cut.
 	const fade = Math.round(SOUND.fadeSec * sr);
 	for (let i = 0; i < Math.min(fade, n); i++) {
@@ -345,33 +428,81 @@ export function buildBed({ treatment, frameCount, fps, cuts = null }) {
 		R[n - 1 - i] *= g;
 	}
 
-	const channels = normalize([L, R]);
+	const mastered = masterTo(L, R);
+	const channels = [mastered.left, mastered.right];
 	const quantized = readWav(writeWav(channels, sr)).channels;
 	const stats = { ...soundStats(quantized, sr), lufs: Math.round(integratedLoudness(quantized, sr) * 100) / 100, samples: n, palette: plan.palette, key: plan.key, tempo };
 	cues.sort((x, y) => x.t - y.t || x.beat - y.beat || x.kind.localeCompare(y.kind));
 	return { wav: writeWav(channels, sr), cues: { palette: plan.palette, key: plan.key, tempo, beatSec, cues }, stats };
 }
 
-/** Gain to -16 LUFS, then a soft knee that keeps the sample peak at or under -2 dBFS. */
-function normalize(channels) {
-	const ceiling = 10 ** (SOUND.bedPeakDb / 20) * 0.995;
-	const knee = ceiling * 0.6;
-	let out = channels;
-	for (let pass = 0; pass < 4; pass++) {
-		const lufs = integratedLoudness(out);
-		if (!Number.isFinite(lufs)) return out;
-		const gain = 10 ** ((SOUND.targetLufs - lufs) / 20);
-		out = out.map((ch) =>
-			ch.map((x) => {
-				const y = x * gain;
-				const m = Math.abs(y);
-				if (m <= knee) return y;
-				return Math.sign(y) * (knee + (m - knee) / (1 + (m - knee) / (ceiling - knee)));
-			}),
-		);
-		if (Math.abs(integratedLoudness(out) - SOUND.targetLufs) < 0.1) break;
+/**
+ * The master stage every built track ends in: a gain to -16 LUFS through a lookahead limiter that
+ * keeps the sample peak at or under -2 dBFS, quantized as the WAV will be. Returns the channels,
+ * the gain applied and the integrated loudness.
+ *
+ * The limiter turns the gain down smoothly before a peak (5 ms lookahead, both channels linked,
+ * 80 ms release) instead of bending the waveform. A waveshaper adds harmonics that an AAC encode
+ * turns into overshoot: a peak at -2.1 dBFS in the WAV decoded above 0 dBFS from the mux.
+ */
+export function masterTo(L, R) {
+	const n = L.length;
+	const sr = SOUND.sampleRate;
+	const ceiling = 10 ** (SOUND.limiterCeilingDb / 20);
+	const ahead = Math.max(1, Math.round(SOUND.limiterLookaheadSec * sr));
+	const release = 1 - Math.exp(-1 / (SOUND.limiterReleaseSec * sr));
+	const q = (v) => Math.round(Math.max(-1, Math.min(1, v)) * 32767) / 32767;
+	const render = (gain) => {
+		// need[s]: the gain that keeps sample s under the ceiling. held[s]: the lowest need in the
+		// next `ahead` samples (a monotonic deque). The release lets the gain rise slowly, and a
+		// moving average over `ahead` samples reaches every held value before its peak.
+		const need = new Float32Array(n);
+		for (let s = 0; s < n; s++) {
+			const a = Math.max(Math.abs(L[s]), Math.abs(R[s])) * gain;
+			need[s] = a > ceiling ? ceiling / a : 1;
+		}
+		const held = new Float32Array(n);
+		const deque = new Int32Array(n + ahead + 1);
+		let head = 0;
+		let tail = 0;
+		let next = 0;
+		for (let s = 0; s < n; s++) {
+			for (; next < Math.min(n, s + ahead + 1); next++) {
+				while (tail > head && need[deque[tail - 1]] >= need[next]) tail--;
+				deque[tail++] = next;
+			}
+			while (deque[head] < s) head++;
+			held[s] = need[deque[head]];
+		}
+		let env = 1;
+		const smooth = new Float32Array(n);
+		for (let s = 0; s < n; s++) {
+			env = Math.min(held[s], env + (1 - env) * release);
+			smooth[s] = env;
+		}
+		const left = new Float32Array(n);
+		const right = new Float32Array(n);
+		// The averaging window starts full of unity gain; the hard ceiling catches the first 5 ms.
+		let win = ahead;
+		for (let s = 0; s < n; s++) {
+			win += smooth[s] - (s >= ahead ? smooth[s - ahead] : 1);
+			const g = win / ahead;
+			left[s] = q(Math.max(-ceiling, Math.min(ceiling, L[s] * gain * g)));
+			right[s] = q(Math.max(-ceiling, Math.min(ceiling, R[s] * gain * g)));
+		}
+		return [left, right];
+	};
+	const first = integratedLoudness([L, R]);
+	if (!Number.isFinite(first)) return { left: Float32Array.from(L), right: Float32Array.from(R), gain: 1, lufs: first };
+	let gain = 10 ** ((SOUND.targetLufs - first) / 20);
+	let [left, right] = render(gain);
+	let lufs = integratedLoudness([left, right]);
+	for (let pass = 0; pass < 6 && Number.isFinite(lufs) && Math.abs(lufs - SOUND.targetLufs) > 0.05; pass++) {
+		gain *= 10 ** ((SOUND.targetLufs - lufs) / 20);
+		[left, right] = render(gain);
+		lufs = integratedLoudness([left, right]);
 	}
-	return out;
+	return { left, right, gain, lufs };
 }
 
 // ------------------------------------------------------------------------------ tracks for a render
@@ -380,9 +511,10 @@ function normalize(channels) {
 export const trackPath = (outDir, file) => (isAbsolute(file) ? file : resolve(outDir, file));
 
 /**
- * The WAV to mux for a render, exactly the picture's length: the generated bed (default), or the
- * supplied/authored track padded or trimmed with a 50 ms fade. Writes <out>/sound/ and
- * <out>/sound-cues.json. Returns { wav, mode, notes } with wav null when the mode is none.
+ * The WAV to mux for a render, exactly the picture's length: the film's score (a rich film's
+ * default), the generated bed (a minimal film's), or the supplied/authored track padded or trimmed
+ * with a 50 ms fade. Writes <out>/sound/ and <out>/sound-cues.json (the score also keeps its stems
+ * under <out>/sound/stems/). Returns { wav, mode, notes } with wav null when the mode is none.
  */
 export function prepareTrack({ outDir, treatment, frameCount, fps, cuts = null, supplied = null }) {
 	const mode = supplied ? "supplied" : (treatment.sound?.mode ?? "generated");
@@ -390,6 +522,12 @@ export function prepareTrack({ outDir, treatment, frameCount, fps, cuts = null, 
 	mkdirSync(dir, { recursive: true });
 	const duration = frameCount / fps;
 	if (mode === "none") return { wav: null, mode, notes: ["sound: none (the user asked for silence or the channel plays muted)"] };
+	if (mode === "score") {
+		const score = writeScore({ treatment, frameCount, fps, cutTimes: cuts, dir: outDir });
+		const audible = score.stems.filter((x) => x.kind !== "return").length;
+		const stats = { peakDb: score.peakDb, lufs: score.lufs, ...soundStats(readWav(readFileSync(score.file)).channels) };
+		return { wav: score.file, mode, stats, notes: [`sound: score, ${score.genre} in ${score.key}, ${score.tempo} BPM, ${audible} stems kept in sound/stems/, ${score.lufs} LUFS, peak ${stats.peakDb.toFixed(2)} dBFS, sidechain ${score.sidechainDb.toFixed(1)} dB`] };
+	}
 	if (mode === "generated") {
 		const bed = buildBed({ treatment, frameCount, fps, cuts });
 		const wav = join(dir, "bed.wav");
@@ -442,8 +580,10 @@ export function measureMuxed(mp4) {
 /**
  * Sound rules over the decoded muxed stream when the treatment plans sound: a stream is present,
  * its length matches the video within 0.1 s, its sample peak is at or under -0.5 dBFS, and (for a
- * generated bed only) the first 3 s never sit under -50 dBFS for more than 1.5 s. A failed sound
- * rule makes the render exit 20; the lead check is only a WARN for supplied or authored tracks.
+ * built track (a generated bed or a score) the first 3 s never sit under -50 dBFS for more than
+ * 1.5 s and the loudness stays within 2 LU of -16 LUFS (a WARN). A failed sound rule makes the
+ * render exit 20; the lead check is only a WARN for supplied or authored tracks, whose loudness is
+ * reported, not judged.
  */
 export function soundRules(measured, { mode, videoDuration }) {
 	if (!mode || mode === "none") return [{ id: "SOUND-STREAM", name: "sound stream", status: "PASS", detail: "sound mode none (asked for silence or a muted channel)" }];
@@ -454,8 +594,11 @@ export function soundRules(measured, { mode, videoDuration }) {
 	const off = Math.abs(measured.durationSec - videoDuration);
 	rules.push({ id: "SOUND-LENGTH", name: "sound length", status: off <= SOUND.durationToleranceSec + 1e-6 ? "PASS" : "FAIL", detail: `${measured.durationSec.toFixed(3)} s against the video's ${videoDuration.toFixed(3)} s (tolerance 0.1 s)`, sound: true });
 	rules.push({ id: "SOUND-PEAK", name: "sound sample peak", status: measured.peakDb <= SOUND.muxPeakDb + 1e-9 ? "PASS" : "FAIL", detail: `${measured.peakDb.toFixed(2)} dBFS (limit -0.5)`, sound: true });
+	const built = mode === "generated" || mode === "score";
 	const quiet = measured.leadSilenceSec > SOUND.maxLeadSilenceSec + 1e-9;
-	rules.push({ id: "SOUND-LEAD", name: "no silent opening", status: quiet ? (mode === "generated" ? "FAIL" : "WARN") : "PASS", detail: `longest stretch under -50 dBFS in the first 3 s: ${measured.leadSilenceSec.toFixed(2)} s (limit 1.5 s)`, sound: mode === "generated" });
+	rules.push({ id: "SOUND-LEAD", name: "no silent opening", status: quiet ? (built ? "FAIL" : "WARN") : "PASS", detail: `longest stretch under -50 dBFS in the first 3 s: ${measured.leadSilenceSec.toFixed(2)} s (limit 1.5 s)`, sound: built });
+	const inRange = Number.isFinite(measured.lufs) && Math.abs(measured.lufs - SOUND.targetLufs) <= SOUND.lufsTolerance + 1e-9;
+	rules.push({ id: "SOUND-LOUDNESS", name: "sound loudness", status: built && !inRange ? "WARN" : "PASS", detail: `${Number.isFinite(measured.lufs) ? measured.lufs : "-inf"} LUFS integrated (BS.1770-4${built ? `, target ${SOUND.targetLufs} +/- ${SOUND.lufsTolerance}` : ", reported"})` });
 	return rules;
 }
 

@@ -2,7 +2,7 @@
 
 This guide turns motion into a small, testable part of the interface. Start with one sentence naming the page, target components, and out-of-scope areas; follow it with labeled sections in implementation order. Specify the stack, visual tokens, layers, timing, viewport behavior, reduced-motion behavior, assets, and performance limits before describing a page. Name exact files or components so the implementation does not invent unrelated sections. A page brief may name component families such as hero, pricing, footer, or dashboard before detailing the chosen one.
 
-All values below are starting defaults. Keep the page calm when motion does not explain hierarchy, state, or cause and effect.
+All values below are starting defaults. Motion earns its place by explaining hierarchy, state, or cause and effect, and a rich lock (the default; see `house-styles.md`) layers more of it: up to four elements may move together in a section. The flash and reduced-motion floors do not relax at any density, and a calm brief or `calm` lock keeps the page quiet.
 
 ## 1. Stack, tokens, and composition
 
@@ -49,7 +49,7 @@ Use named curves so a later editor can change the motion family without hunting 
 
 ## 3. Motion and resource budgets
 
-**Do:** Give each section one entrance sequence and no more than two simultaneously moving elements. Give the hero one principal scroll or entrance effect and one animated headline. Keep controls responsive while decorative motion runs.
+**Do:** Give each section one entrance sequence and no more than two simultaneously moving elements on a calm lock (four on a rich one). Give the hero one principal scroll or entrance effect and one animated headline. Keep controls responsive while decorative motion runs.
 
 **Don't:** animate the headline, background, cards, icons, and navigation at once. Remove any motion whose absence does not change comprehension or feedback.
 

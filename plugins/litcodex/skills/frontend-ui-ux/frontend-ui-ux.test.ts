@@ -145,11 +145,11 @@ describe("frontend-ui-ux clean-room product contract", () => {
 		expect(profile.spacing).toEqual({
 			base_px: 8,
 			microstep_px: 4,
-			desktop_section_gap_px: [80, 128],
-			mobile_section_gap_px: [40, 64],
+			desktop_section_gap_px: [72, 96],
+			mobile_section_gap_px: [40, 56],
 		});
 		expect(profile.typography).toEqual({
-			display_px: { desktop: [56, 104], mobile: [36, 56] },
+			display_px: { desktop: [56, 96], mobile: [36, 56] },
 			latin_leading: [0.95, 1.05],
 			korean_leading: [1.12, 1.25],
 			body_leading: [1.5, 1.7],

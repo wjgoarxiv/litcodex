@@ -6,9 +6,12 @@ import { existsSync, lstatSync, readdirSync, readFileSync, realpathSync, statSyn
 import { availableParallelism } from "node:os";
 import { extname, join, relative, sep } from "node:path";
 import { Worker } from "node:worker_threads";
-import { EXIT, Exit, INSTALL_COMMAND, STAGE_ORIGIN } from "./constants.mjs";
+import { BLENDER, readPlate } from "./blender.mjs";
+import { EXIT, Exit, INSTALL_COMMAND, SOFTWARE_GL, STAGE_ORIGIN } from "./constants.mjs";
 import { launchStage } from "./driver.mjs";
 import { FONTS, fontPath, SKILL_ROOT } from "./fonts.mjs";
+import { firstLine } from "./runtime.mjs";
+import { readStyle, styleCss, styleScript } from "./styles.mjs";
 
 export const CONTENT_TYPES = Object.freeze({
 	".html": "text/html; charset=utf-8",
@@ -40,6 +43,11 @@ const FORBIDDEN_API = /\bnew\s+Audio\s*\(|\b(?:webkit)?AudioContext\b|\bOfflineA
 const NETWORK_API = /\bWebSocket\b|\bWebTransport\b|\bRTCPeerConnection\b|\bEventSource\b/u;
 
 const inside = (root, path) => path === root || path.startsWith(root + sep);
+
+// The pinned three.js build and its two addons (engine/vendor/three, MIT, hashes in THIRD_PARTY_NOTICES),
+// served at /lit/three/ for the 3D route (references/depth.md). A page reaches them through an import
+// map; nothing is fetched and nothing else is served from this folder.
+export const THREE_DIR = join(SKILL_ROOT, "engine", "vendor", "three");
 
 /** Pixel size of a PNG, JPEG, WebP or GIF, and whether it is animated; null when unreadable. */
 export function rasterInfo(bytes, ext) {
@@ -82,8 +90,9 @@ export function rasterInfo(bytes, ext) {
 }
 
 /**
- * Pre-flight scan of the stage folder before any browser starts. Returns the file list and the
- * raster URLs to decode; throws Exit 17 (contract) or 19 (network) naming the file and the reason.
+ * Pre-flight scan of the stage folder before any browser starts. Returns the file list, the raster
+ * URLs to decode and the Blender plate (or null); throws Exit 17 (contract) or 19 (network) naming
+ * the file and the reason.
  */
 export function scanStage(stageDir) {
 	if (!existsSync(join(stageDir, "index.html"))) throw new Exit(EXIT.STAGE_CONTRACT_ERROR, `STAGE_CONTRACT_ERROR: no stage/index.html in ${stageDir}; author the page first (references/stage.md)`);
@@ -103,13 +112,21 @@ export function scanStage(stageDir) {
 				if (!link.isSymbolicLink()) pending.push(path);
 				continue;
 			}
+			// A pipe, socket or device would block or flood the read below; the browser route refuses the same.
+			if (!statSync(real).isFile()) throw new Exit(EXIT.STAGE_CONTRACT_ERROR, `STAGE_CONTRACT_ERROR: ${rel} is not a regular file`);
 			const ext = extname(name).toLowerCase();
-			if (!CONTENT_TYPES[ext]) throw new Exit(EXIT.STAGE_CONTRACT_ERROR, `STAGE_CONTRACT_ERROR: ${rel} is not an allowed stage asset (${Object.keys(CONTENT_TYPES).join(" ")})`);
+			if (!CONTENT_TYPES[ext] && rel !== "scene.py") throw new Exit(EXIT.STAGE_CONTRACT_ERROR, `STAGE_CONTRACT_ERROR: ${rel} is not an allowed stage asset (${Object.keys(CONTENT_TYPES).join(" ")})`);
 			files.push({ rel, path: real, ext, bytes: statSync(real).size });
 		}
 	}
 	const rasters = [];
+	// A Blender plate and its preview stills are frames the runner wrote and plate.json lists by name
+	// and size; they are not page rasters. Anything the receipt does not list is held to the raster limits.
+	const plate = readPlate(root, "plate");
+	const preview = readPlate(root, "plate-preview");
+	const listed = new Set([plate, preview].filter(Boolean).flatMap((p) => p.frames.map((f) => `${p.dir}/${f.name}`)));
 	for (const file of files) {
+		if (RASTER_TYPES.has(file.ext) && listed.has(file.rel.split(sep).join("/"))) continue;
 		if (TEXT_TYPES.has(file.ext)) {
 			const text = readFileSync(file.path, "utf8");
 			for (const match of text.matchAll(ABSOLUTE_URL)) {
@@ -139,7 +156,7 @@ export function scanStage(stageDir) {
 	const bySize = new Map();
 	for (const r of rasters) bySize.set(r.size, (bySize.get(r.size) ?? 0) + 1);
 	for (const [size, count] of bySize) if (size !== "unknown" && count >= RASTER_LIMITS.flipbook) throw new Exit(EXIT.STAGE_CONTRACT_ERROR, `STAGE_CONTRACT_ERROR: ${count} rasters of ${size} look like a flipbook; animate with the page, not a frame sequence`);
-	return { root, files, rasters: rasters.map((r) => `/${r.rel.split(sep).join("/")}`) };
+	return { root, files, rasters: rasters.map((r) => `/${r.rel.split(sep).join("/")}`), plate };
 }
 
 const FONT_FORMAT = { ".ttf": "truetype", ".otf": "opentype", ".woff": "woff", ".woff2": "woff2" };
@@ -172,9 +189,10 @@ export function stageFontFaults(faults) {
  * Route every request. Only the synthetic origin is served: the kit, fonts.css, the faces, and
  * files whose realpath lies inside the stage folder. Anything else is refused and recorded.
  */
-export function stageRouter({ root, fonts, record }) {
+export function stageRouter({ root, fonts, record, style = null }) {
 	const kit = readFileSync(join(SKILL_ROOT, "engine", "stage-kit.js"));
 	const loopKit = readFileSync(join(SKILL_ROOT, "engine", "loop-kit.js"));
+	const threeRoot = realpathSync(THREE_DIR);
 	return async (route) => {
 		const url = route.request().url();
 		if (!url.startsWith(`${STAGE_ORIGIN}/`)) {
@@ -192,6 +210,18 @@ export function stageRouter({ root, fonts, record }) {
 		if (path === "/lit/stage-kit.js") return route.fulfill({ status: 200, contentType: CONTENT_TYPES[".js"], body: kit });
 		if (path === "/lit/loop-kit.js") return route.fulfill({ status: 200, contentType: CONTENT_TYPES[".js"], body: loopKit });
 		if (path === "/lit/fonts.css") return route.fulfill({ status: 200, contentType: CONTENT_TYPES[".css"], body: fonts.css });
+		// The film's house style (references/studio.md): type, colour and zone tokens, and the shot timeline.
+		if (style && path === "/lit/style.css") return route.fulfill({ status: 200, contentType: CONTENT_TYPES[".css"], body: style.css });
+		if (style && path === "/lit/style.js") return route.fulfill({ status: 200, contentType: CONTENT_TYPES[".js"], body: style.js });
+		if (path.startsWith("/lit/three/")) {
+			const sub = path.slice("/lit/three/".length);
+			const file = join(threeRoot, ...sub.split("/"));
+			if (sub.split("/").includes("..") || !sub.endsWith(".js") || !existsSync(file) || !inside(threeRoot, realpathSync(file))) {
+				record.missing.push(path);
+				return route.fulfill({ status: 404, body: "" });
+			}
+			return route.fulfill({ status: 200, contentType: CONTENT_TYPES[".js"], body: readFileSync(file) });
+		}
 		const font = fonts.routes.get(path);
 		if (font) return route.fulfill({ status: 200, contentType: font.type, body: readFileSync(font.file) });
 		const rel = path === "/" ? "index.html" : path.replace(/^\/+/u, "");
@@ -218,18 +248,38 @@ export function stageRouter({ root, fonts, record }) {
 	};
 }
 
+/** The film's /lit/style.css and /lit/style.js from its treatment's house style, or null when it names none. */
+export function stageStyle(treatment) {
+	if (!treatment.style) return null;
+	const style = readStyle(treatment.style);
+	return { css: styleCss(style, treatment.format), js: styleScript(style, treatment.format, treatment) };
+}
+
+/**
+ * The browser rung of a round: a three.js world asks for the GPU; a Blender film shows its path-traced
+ * plate under HTML type, so its page needs only the software rung, and it needs the plate, all of it.
+ */
+export function stageRung(treatment, scan, out) {
+	if (treatment.render3d !== "blender") return treatment.depth === "3d" ? "gpu" : "software";
+	const want = Math.round(treatment.durationSec * BLENDER.plateFps);
+	if (!scan.plate) throw new Exit(EXIT.STAGE_CONTRACT_ERROR, `STAGE_CONTRACT_ERROR: render3d is blender but stage/plate/plate.json is missing or does not match its frames; render the plate first: blender --out ${out} --final (no Blender: set render3d to three and use the GPU rung)`);
+	if (scan.plate.frames.length !== want) throw new Exit(EXIT.STAGE_CONTRACT_ERROR, `STAGE_CONTRACT_ERROR: the plate has ${scan.plate.frames.length} frames; a ${treatment.durationSec} s film needs ${want} at ${BLENDER.plateFps} fps (render it again: blender --out ${out} --final)`);
+	return "software";
+}
+
 const INIT = () => readFileSync(join(SKILL_ROOT, "engine", "stage-init.js"), "utf8");
 
 /**
  * Open one stage session: launch, route, inject the clock, load the page, load every face and
  * decode every raster. Returns the session and the page's declared contract.
  */
-export async function openStage({ runtime, outDir, scan, fonts, width, height, fps, seed, extraInit = null }) {
-	const session = await launchStage({ runtime, outDir, width, height });
+export async function openStage({ runtime, outDir, scan, fonts, width, height, fps, seed, extraInit = null, style = null, rung = "software" }) {
+	const session = await launchStage({ runtime, outDir, width, height, rung });
 	const record = { blocked: [], rejected: [], missing: [], pageErrors: [], console: [] };
 	session.record = record;
 	try {
-		await session.context.route("**/*", stageRouter({ root: scan.root, fonts, record }));
+		if (rung === "gpu") await probeGpu(session);
+		await session.context.route("**/*", stageRouter({ root: scan.root, fonts, record, style }));
 		await session.context.addInitScript({ content: INIT().replaceAll("__LIT_STAGE_CONFIG__", JSON.stringify({ fps, seed })) });
 		if (extraInit) await session.context.addInitScript({ content: extraInit });
 		session.page.on("pageerror", (error) => record.pageErrors.push(error.message));
@@ -249,6 +299,42 @@ export async function openStage({ runtime, outDir, scan, fonts, width, height, f
 	}
 }
 
+/** The GPU rung must give a page a WebGL2 context on a hardware renderer; anything else falls back. */
+export async function probeGpu(session) {
+	const probe = await session.page.evaluate(() => {
+		const gl = document.createElement("canvas").getContext("webgl2");
+		if (!gl) return { ok: false, renderer: null };
+		const info = gl.getExtension("WEBGL_debug_renderer_info");
+		return { ok: true, renderer: info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : "unknown" };
+	});
+	if (!probe.ok) throw new Error("the GPU rung gave the page no WebGL2 context");
+	if (SOFTWARE_GL.some((needle) => String(probe.renderer).toLowerCase().includes(needle))) throw new Error(`the GPU rung gave a software renderer (${probe.renderer})`);
+	session.gpuRenderer = probe.renderer;
+}
+
+/**
+ * Open a stage session on the round's rung. `ctx` is { rung, notices } shared by the master and its
+ * replays: a 3D film asks for "gpu", and when that rung cannot launch, gives the page no WebGL2 or
+ * gives a software renderer, every browser of the round falls back to the software rung (one rung for
+ * master and replays) and a notice says so. A page contract fault is never swallowed by the fallback.
+ */
+export async function openStageChecked(options, ctx) {
+	if (ctx.rung === "gpu") {
+		try {
+			const session = await openStage({ ...options, rung: "gpu" });
+			const webgl = await session.page.evaluate(() => window.__litClock.report().webgl);
+			if (!webgl || webgl.ok) return session;
+			await closeStage(session);
+			ctx.notices.push("the 3D route asked for the GPU rung and the page got no WebGL there; rendered on the software rung (SwiftShader), slower, same frames");
+		} catch (error) {
+			if (error instanceof Exit) throw error;
+			ctx.notices.push(`the 3D route asked for the GPU rung and it did not start (${firstLine(String(error.message)).slice(0, 120)}); rendered on the software rung (SwiftShader), slower, same frames`);
+		}
+		ctx.rung = "software";
+	}
+	return openStage({ ...options, rung: "software" });
+}
+
 export async function closeStage(session) {
 	await session?.context?.close().catch(() => {});
 }
@@ -262,7 +348,7 @@ export async function assertClean(session) {
 	const network = report.violations.filter((v) => v.kind === "network");
 	if (network.length) throw new Exit(EXIT.STAGE_NETWORK_REQUEST, `STAGE_NETWORK_REQUEST: the page used ${network.map((v) => v.name).join(", ")}; a stage page never opens a connection`);
 	if (report.violations.length) throw new Exit(EXIT.STAGE_CONTRACT_ERROR, `STAGE_CONTRACT_ERROR: the page used ${report.violations.map((v) => v.name).join(", ")}, which a stage page may not use`);
-	if (report.webgl && !report.webgl.ok) throw new Exit(EXIT.BLOCKED_NO_WEBGL2, "BLOCKED_NO_WEBGL2: the page requested a WebGL context and the software rung returned none");
+	if (report.webgl && !report.webgl.ok) throw new Exit(EXIT.BLOCKED_NO_WEBGL2, `BLOCKED_NO_WEBGL2: the page requested a WebGL context and the ${session.rung ?? "software"} rung returned none`);
 	return report;
 }
 

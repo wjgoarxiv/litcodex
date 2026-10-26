@@ -10,10 +10,12 @@ import {
 	DIAGRAM_DRAWER_PAYLOAD_HASHES,
 	DOCX_PAYLOAD_HASHES,
 	FRONTEND_UIUX_PAYLOAD_HASHES,
+	HIJACK_PAYLOAD_HASHES,
 	HUMANIZER_PAYLOAD_HASHES,
 	MOTION_PAYLOAD_HASHES,
 	PPTX_PAYLOAD_HASHES,
 	README_STUDIO_PAYLOAD_HASHES,
+	SCHEMATIC_PAYLOAD_HASHES,
 	STRUCTURAL_SEARCH_PAYLOAD_HASHES,
 	VISUAL_QA_PAYLOAD_HASHES,
 	WIKIFY_PAYLOAD_HASHES,
@@ -35,6 +37,7 @@ export const CANONICAL_SKILL_IDS = [
 	"debugging",
 	"deep-interview",
 	"frontend-ui-ux",
+	"lit-adhd",
 	"lit-brainstorm",
 	"lit-burnoff",
 	"lit-burnoff-file",
@@ -46,12 +49,14 @@ export const CANONICAL_SKILL_IDS = [
 	"lit-docx",
 	"lit-fetch",
 	"lit-handoff",
+	"lit-hijack",
 	"lit-humanizer",
 	"lit-init",
 	"lit-loop",
 	"lit-plan",
 	"lit-pptx",
 	"lit-recap",
+	"lit-schematic",
 	"lit-scientific-visualization",
 	"lit-team",
 	"lit-typographic-motion",
@@ -90,6 +95,9 @@ export const CANONICAL_SKILL_RESOURCE_PATHS = [
 	...Object.keys(FRONTEND_UIUX_PAYLOAD_HASHES)
 		.filter((path) => path !== "SKILL.md")
 		.map((path) => `frontend-ui-ux/${path}`),
+	...Object.keys(HIJACK_PAYLOAD_HASHES)
+		.filter((path) => path !== "SKILL.md")
+		.map((path) => `lit-hijack/${path}`),
 	...Object.keys(HUMANIZER_PAYLOAD_HASHES)
 		.filter((path) => path !== "SKILL.md")
 		.map((path) => `lit-humanizer/${path}`),
@@ -102,6 +110,9 @@ export const CANONICAL_SKILL_RESOURCE_PATHS = [
 	...Object.keys(PPTX_PAYLOAD_HASHES)
 		.filter((path) => path !== "SKILL.md")
 		.map((path) => `lit-pptx/${path}`),
+	...Object.keys(SCHEMATIC_PAYLOAD_HASHES)
+		.filter((path) => path !== "SKILL.md")
+		.map((path) => `lit-schematic/${path}`),
 	...Object.keys(MOTION_PAYLOAD_HASHES)
 		.filter((path) => path !== "SKILL.md")
 		.map((path) => `lit-typographic-motion/${path}`),
@@ -150,6 +161,8 @@ export function probeSkillCatalogPayload(
 		["lit-diagram-drawer", DIAGRAM_DRAWER_PAYLOAD_HASHES],
 		["lit-docx", DOCX_PAYLOAD_HASHES],
 		["lit-pptx", PPTX_PAYLOAD_HASHES],
+		["lit-hijack", HIJACK_PAYLOAD_HASHES],
+		["lit-schematic", SCHEMATIC_PAYLOAD_HASHES],
 		["lit-typographic-motion", MOTION_PAYLOAD_HASHES],
 		["readme-studio", README_STUDIO_PAYLOAD_HASHES],
 		["visual-qa", VISUAL_QA_PAYLOAD_HASHES],

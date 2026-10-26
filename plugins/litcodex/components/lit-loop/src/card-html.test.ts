@@ -274,12 +274,31 @@ function bootCard(options: HostOptions) {
 
 const T0 = 1_000_000;
 
+function lookForMode(mode: string): string | null {
+	if (mode === "lit-adhd" || mode === "lit-rewind") return "rewind";
+	if (mode === "review-work") return "review";
+	return null;
+}
+
 function working(extra: Record<string, unknown> = {}): Record<string, unknown> {
+	const mode = typeof extra["mode"] === "string" ? extra["mode"] : "lit-loop";
+	const state = typeof extra["state"] === "string" ? extra["state"] : "ignited";
+	const isWorking = extra["working"] !== undefined ? extra["working"] : true;
+	const turnEnded = extra["turnEndedAt"] !== undefined && extra["turnEndedAt"] !== null;
+	const look =
+		extra["look"] !== undefined
+			? extra["look"]
+			: state === "complete"
+				? "done"
+				: !isWorking && state === "ignited" && turnEnded
+					? "turn"
+					: lookForMode(mode);
 	return {
 		version: 1,
 		thread: "t1",
 		state: "ignited",
 		mode: "lit-loop",
+		look,
 		ignitedAt: T0 - 60_000,
 		map: {
 			family: "main",
@@ -464,5 +483,302 @@ describe("LIT card script", () => {
 		await host.advance(1_500);
 		expect(host.right()?.textContent).not.toBe("DONE ✓");
 		expect(host.card.classList.contains("is-done")).toBe(false);
+	});
+});
+
+const STACK = {
+	breadcrumb: "lit-loop ‖ > lit-brainstorm",
+	row: "⏸ lit-loop GREEN [▉▉░░░] 2/5 ‖ ▶ lit-brainstorm interview · back: lit continue",
+	paused: [{ name: "lit-loop", stage: "GREEN", gauge: "[▉▉░░░] 2/5", note: "" }],
+	running: { name: "lit-brainstorm", stage: "interview", gauge: null, note: "" },
+};
+
+describe("LIT card workflow stack", () => {
+	it("shows the paused frame with its gauge, the running frame and the way back, under the map", async () => {
+		const host = bootCard({ bridge: "mcp", poll: working({ stack: STACK }), now: T0 });
+		await host.advance(0);
+		const row = host.card.querySelector(".stk");
+		expect(row).not.toBeNull();
+		expect(row?.textContent).toContain("lit-loop GREEN");
+		expect(row?.textContent).toContain("[▉▉░░░] 2/5");
+		expect(row?.textContent).toContain("lit-brainstorm");
+		expect(row?.textContent).toContain("lit continue");
+		const order = host.card.children.map((child) => child.className.split(" ")[0]);
+		expect(order.indexOf("map")).toBeLessThan(order.indexOf("row"));
+	});
+
+	it("draws no stack row for a thread with one line of work, or a status from before the stack", async () => {
+		for (const poll of [working({ stack: null }), working()]) {
+			const host = bootCard({ bridge: "mcp", poll, now: T0 });
+			await host.advance(0);
+			expect(host.card.querySelector(".stk")).toBeNull();
+		}
+	});
+});
+
+const row = (name: string, extra: Record<string, unknown> = {}): Record<string, unknown> => ({
+	key: name,
+	kind: "frame",
+	name,
+	stage: null,
+	gauge: null,
+	note: "",
+	state: "running",
+	active: false,
+	...extra,
+});
+
+const THREADS = {
+	chain: [
+		row("lit-loop", { stage: "GREEN", gauge: "[▉▉░░░] 2/5", state: "paused" }),
+		row("lit-brainstorm", { stage: "interview" }),
+	],
+	lanes: [
+		row("Aquinas", { kind: "lane", gauge: "[▉▉░░░] 2/5" }),
+		row("Lagrange", { kind: "lane", note: "3 steps" }),
+		row("Hume", { kind: "lane", note: "starting" }),
+	],
+	others: [],
+	laneCount: 5,
+	more: 2,
+	back: true,
+};
+
+describe("LIT card threads", () => {
+	it("draws the parent chain, a fork line, the lanes, the way back and the overflow, under the map", async () => {
+		const host = bootCard({ bridge: "mcp", poll: working({ threads: THREADS }), now: T0 });
+		await host.advance(0);
+		const box = host.card.querySelector(".thr");
+		expect(box).not.toBeNull();
+		const text = box?.textContent ?? "";
+		expect(text).toContain("lit-loop");
+		expect(text).toContain("[▉▉░░░] 2/5");
+		expect(text).toContain("5 lanes in parallel");
+		expect(text).toContain("Aquinas");
+		expect(text).toContain("3 steps");
+		expect(text).toContain("lit continue");
+		expect(text).toContain("+2 more");
+		expect(host.card.querySelector(".stk")).toBeNull();
+		const order = host.card.children.map((child) => child.className.split(" ")[0]);
+		expect(order.indexOf("map")).toBeLessThan(order.indexOf("thr"));
+	});
+
+	it("never draws a placeholder, and pulses a running row that has no gauge", async () => {
+		const host = bootCard({ bridge: "mcp", poll: working({ threads: THREADS }), now: T0 });
+		await host.advance(0);
+		const text = host.card.querySelector(".thr")?.textContent ?? "";
+		expect(text).not.toMatch(/\?\/|\?\?\?|\/\?/u);
+		const rows = host.card.querySelector(".thr")?.querySelectorAll(".tr") ?? [];
+		const hume = rows.find((r) => r.textContent.includes("Hume"));
+		expect(hume?.querySelector(".pbar")).not.toBeNull();
+		const aquinas = rows.find((r) => r.textContent.includes("Aquinas"));
+		expect(aquinas).toBeDefined();
+		expect(aquinas?.querySelector(".pbar")).toBeNull();
+	});
+
+	it("falls back to the stack row when the status carries no threads", async () => {
+		for (const poll of [working({ stack: STACK }), working({ stack: STACK, threads: null })]) {
+			const host = bootCard({ bridge: "mcp", poll, now: T0 });
+			await host.advance(0);
+			expect(host.card.querySelector(".thr")).toBeNull();
+			expect(host.card.querySelector(".stk")).not.toBeNull();
+		}
+	});
+});
+
+describe("LIT card rewind look", () => {
+	it("is worn by the lit-adhd brief only, never by another mode, a ready card or a folded one", async () => {
+		const adhd = bootCard({ bridge: "mcp", poll: working({ mode: "lit-adhd" }), now: T0 });
+		await adhd.advance(0);
+		expect(adhd.card.classList.contains("rewind")).toBe(true);
+		for (const poll of [
+			working(),
+			working({ mode: "lit-recap" }),
+			{ ...working({ mode: "lit-adhd" }), state: "ready" },
+		]) {
+			const host = bootCard({ bridge: "mcp", poll, now: T0 });
+			await host.advance(0);
+			expect(host.card.classList.contains("rewind")).toBe(false);
+		}
+	});
+
+	it("keeps the drift slow and smooth, and stands still under reduced motion", () => {
+		const css = CARD_HTML.match(/<style>([\s\S]*?)<\/style>/u)?.[1] ?? "";
+		const rule = css.match(/\.lc\.rewind\{[^}]*\}/u)?.[0] ?? "";
+		const seconds = Number(rule.match(/animation:drift (\d+(?:\.\d+)?)s linear infinite/u)?.[1]);
+		// One pass of the gradient takes at least 10 s, so a 1 s window sees at most a tenth of it; the strobe limit is
+		// three opposing 10 % luminance swings in any second, and a linear colour drift makes none.
+		expect(seconds).toBeGreaterThanOrEqual(10);
+		const drift = css.match(/@keyframes drift\{[^}]*\}[^}]*\}/u)?.[0] ?? "";
+		expect(drift).toMatch(/from\{[^}]*\}to\{[^}]*\}/u);
+		expect(drift).not.toMatch(/opacity|filter|brightness|invert/u);
+		expect(rule).not.toMatch(/steps\(|blink|strobe/u);
+		const reduced = css.match(/@media \(prefers-reduced-motion:reduce\)\{.*\}/u)?.[0] ?? "";
+		expect(reduced).toContain(".lc,.lc *{animation:none!important}");
+		expect(reduced).toMatch(/\.lc\.rewind\{animation:none!important/u);
+	});
+
+	it("wears an unmistakable rainbow: a thick border, a tinted header strip, a rainbow pill and label, a hue-cycling gauge", () => {
+		const css = CARD_HTML.match(/<style>([\s\S]*?)<\/style>/u)?.[1] ?? "";
+		const rule = css.match(/\.lc\.rewind\{[^}]*\}/u)?.[0] ?? "";
+		// The card face keeps its ordinary colour under the border rainbow, so text stays readable.
+		expect(rule).toContain("linear-gradient(var(--bg),var(--bg)) padding-box");
+		expect(rule).toMatch(/border-box;background-size/u);
+		expect(Number(rule.match(/border:(\d+)px solid transparent/u)?.[1])).toBeGreaterThanOrEqual(3);
+		expect(css).toMatch(/\.lc\.rewind \.head\{[^}]*linear-gradient\(100deg,var\(--rbt\)\)[^}]*animation:slide/u);
+		expect(css).toMatch(/\.lc\.rewind \.brand,\.lc\.rewind \.nowpill\{[^}]*var\(--rb\)/u);
+		expect(css).toMatch(/\.lc\.rewind \.name\{[^}]*background-clip:text/u);
+		expect(css).toMatch(/\.lc\.rewind \.bar,\.lc\.rewind \.pbar\{animation:hue/u);
+		expect(css).toMatch(/\.lc\.rewind \.pbar i\{background:linear-gradient\(90deg,transparent,#ff2d95/u);
+	});
+
+	it("stays under three flashes a second: every rainbow animation is slow, smooth and unstepped", () => {
+		const css = CARD_HTML.match(/<style>([\s\S]*?)<\/style>/u)?.[1] ?? "";
+		const rules = css.split("\n").filter((line) => /\.lc\.rewind|\.sparks/u.test(line) && /animation:/u.test(line));
+		expect(rules.length).toBeGreaterThanOrEqual(6);
+		for (const line of rules) {
+			expect(line).not.toMatch(/steps\(|blink|strobe/u);
+			for (const m of line.matchAll(/animation:([^;}]*)/gu)) {
+				for (const part of (m[1] ?? "").split(",")) {
+					const seconds = part.match(/\s(\d+(?:\.\d+)?)s\s/u)?.[1];
+					if (seconds !== undefined) expect(Number(seconds)).toBeGreaterThanOrEqual(4);
+				}
+			}
+		}
+		// The glow only moves between hues of one shadow, never between light and dark.
+		const glow = css.match(/@keyframes glow\{.*?\}\}/u)?.[0] ?? "";
+		expect(glow).not.toMatch(/opacity|filter|brightness|invert|rgba?\(0/u);
+	});
+
+	it("draws every cell of the use bars in its own hue, even at a low fill, and only for the brief", async () => {
+		const usage = { ctx: 6, fiveHour: 13, week: 16 };
+		const adhd = bootCard({ bridge: "mcp", poll: working({ mode: "lit-adhd", usage }), now: T0 });
+		await adhd.advance(0);
+		const filled = (host: typeof adhd, index: number): unknown[] =>
+			(host.card.querySelectorAll(".mini")[index]?.children ?? [])
+				.map((cell) => cell.style["background"])
+				.filter(Boolean);
+		const ctx = filled(adhd, 0);
+		const five = filled(adhd, 1);
+		expect(ctx).toHaveLength(1);
+		expect(five).toHaveLength(1);
+		const week = filled(adhd, 2);
+		expect(week).toHaveLength(2);
+		expect(new Set(week).size).toBe(2);
+		expect(ctx[0]).toBe("#ff2d95");
+		const plain = bootCard({ bridge: "mcp", poll: working({ usage }), now: T0 });
+		await plain.advance(0);
+		expect(filled(plain, 2).length).toBe(2);
+		expect(new Set(filled(plain, 2)).size).toBe(1);
+	});
+
+	it("keeps the warning colours on a use bar that is nearly full, rainbow or not", async () => {
+		const host = bootCard({
+			bridge: "mcp",
+			poll: working({ mode: "lit-adhd", usage: { ctx: 95, fiveHour: 75, week: 20 } }),
+			now: T0,
+		});
+		await host.advance(0);
+		const [ctx, five, week] = host.card
+			.querySelectorAll(".mini")
+			.map((bar) => new Set(bar.children.map((cell) => cell.style["background"]).filter(Boolean)));
+		expect(ctx?.size).toBe(1);
+		expect(five?.size).toBe(1);
+		expect((week?.size ?? 0) > 1).toBe(true);
+	});
+
+	it("draws the stage words and the stage gauge cell by cell through the wheel in the brief only", async () => {
+		const map = {
+			family: "main",
+			cells: [
+				{ key: "plan", word: "plan", state: "done", label: null, progress: null },
+				{ key: "work", word: "work", state: "done", label: null, progress: null },
+				{ key: "review", word: "review", state: "current", label: null, progress: null },
+			],
+			next: "check the table",
+		};
+		const colours = async (mode: string): Promise<string[]> => {
+			const host = bootCard({ bridge: "mcp", poll: working({ mode, map }), now: T0 });
+			await host.advance(0);
+			return host.card
+				.querySelectorAll(".done")
+				.filter((word) => word.classList.contains("st"))
+				.map((word) => String(word.style["color"]));
+		};
+		const rainbow = await colours("lit-adhd");
+		expect(rainbow).toHaveLength(2);
+		expect(rainbow[0]).toBe("#ff2d95");
+		expect(new Set(rainbow).size).toBe(2);
+		const ordinary = await colours("lit-loop");
+		expect(ordinary).not.toEqual(rainbow);
+	});
+
+	it("turns the use bars and stage words round the wheel slowly, and stops them under reduced motion", () => {
+		const css = CARD_HTML.match(/<style>([\s\S]*?)<\/style>/u)?.[1] ?? "";
+		expect(css).toMatch(/\.lc\.rewind \.mini,\.lc\.rewind \.st\.done\{animation:hue (\d+)s linear infinite\}/u);
+		const seconds = Number(css.match(/\.lc\.rewind \.mini,\.lc\.rewind \.st\.done\{animation:hue (\d+)s/u)?.[1]);
+		expect(seconds).toBeGreaterThanOrEqual(4);
+		const reduced = css.match(/@media \(prefers-reduced-motion:reduce\)\{.*\}/u)?.[0] ?? "";
+		expect(reduced).toContain(".lc.rewind .mini,.lc.rewind .st.done");
+	});
+
+	it("keeps a static rainbow under reduced motion and hides the sparkle trail and done burst", () => {
+		const css = CARD_HTML.match(/<style>([\s\S]*?)<\/style>/u)?.[1] ?? "";
+		const reduced = css.match(/@media \(prefers-reduced-motion:reduce\)\{.*\}/u)?.[0] ?? "";
+		expect(reduced).toContain(".sparks");
+		expect(reduced).toContain(".done-burst");
+		expect(reduced).toContain("display:none");
+		expect(reduced).toContain(".lc,.lc *{animation:none!important}");
+		expect(reduced).toContain(".lc.turn{animation:none!important}");
+		expect(reduced).not.toMatch(/\.lc\.rewind\{[^}]*background:none/u);
+	});
+});
+
+describe("done burst plays once per completion", () => {
+	it("two renders of the same complete status add the burst element only on the first", async () => {
+		const status = complete({ look: "done" });
+		const host = bootCard({ bridge: "mcp", poll: status, now: T0 });
+		await host.advance(0);
+		const firstBursts = host.card.querySelectorAll(".done-burst").length;
+		// Second render with the same status (simulates a resize or theme change)
+		host.card.textContent = "";
+		await host.advance(0);
+		const secondBursts = host.card.querySelectorAll(".done-burst").length;
+		expect(firstBursts).toBe(1);
+		expect(secondBursts).toBe(0);
+	});
+
+	it("a new completion with a different key replays the burst", async () => {
+		const first = complete({ look: "done", ignitedAt: T0 - 60_000 });
+		const second = complete({ look: "done", ignitedAt: T0 - 30_000 });
+		const host = bootCard({ bridge: "mcp", poll: first, now: T0 });
+		await host.advance(0);
+		expect(host.card.querySelectorAll(".done-burst").length).toBe(1);
+		// New completion
+		host.card.textContent = "";
+		const host2 = bootCard({ bridge: "mcp", poll: second, now: T0 + 1000 });
+		await host2.advance(0);
+		expect(host2.card.querySelectorAll(".done-burst").length).toBe(1);
+	});
+});
+
+describe("review look", () => {
+	it("the card wears the review class for review-work mode", async () => {
+		const host = bootCard({ bridge: "mcp", poll: working({ mode: "review-work", look: "review" }), now: T0 });
+		await host.advance(0);
+		expect(host.card.classList.contains("review")).toBe(true);
+	});
+
+	it("draws the review-lanes container when reviewLanes is present", async () => {
+		const status = working({
+			mode: "review-work",
+			look: "review",
+			reviewLanes: ["pass", "running", "dim", "dim", "dim"],
+		});
+		const host = bootCard({ bridge: "mcp", poll: status, now: T0 });
+		await host.advance(0);
+		const container = host.card.querySelector(".review-lanes");
+		expect(container).not.toBeNull();
+		expect(container?.children.length).toBe(5);
 	});
 });

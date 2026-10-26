@@ -90,9 +90,24 @@ the checks that run on their own.
 <td>A checked, editable diagram for slides and documents, with PNG and Office-safe SVG exports.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/lit-pptx.webp" width="240" alt="Ask for slides with lit and the skill first picks one of eight design directions for the content, names it with two alternatives, then builds an editable, dense PowerPoint deck in Pretendard with its Markdown source. QA checks layout, title variety and fill; rendered slides are inspected when LibreOffice is present." /></td>
+<td><img src="./assets/skills/lit-schematic.webp" width="240" alt="Draws real equipment to scale: a P&amp;ID or PFD with ISA tags, a journal apparatus figure, or an isometric cutaway in full material colour, checked by a QA gate and exported as SVG, PDF and 600 dpi PNG." /></td>
+<td><code>lit-schematic</code><br /><sub><code>lit schematic</code> · <code>$litcodex:lit-schematic</code></sub></td>
+<td>Draws real equipment to scale: a P&amp;ID or PFD with ISA tags, a journal apparatus figure, or an isometric cutaway in full material colour, checked by a QA gate and exported as SVG, PDF and 600 dpi PNG.</td>
+</tr>
+<tr>
+<td><img src="./assets/skills/lit-hijack.webp" width="240" alt="Ports a technique from a post, repo or PDF into your skill: licence check, a spec free of the source wording, a separate build and a before and after proof." /></td>
+<td><code>lit-hijack</code><br /><sub><code>lit hijack</code> · <code>$litcodex:lit-hijack</code></sub></td>
+<td>Ports one technique from public posts, articles, repos or PDFs into a skill of yours: captures each source with its origin and licence, writes a spec without the source wording, has it built from that spec alone, and proves the change with a before and after run.</td>
+</tr>
+<tr>
+<td><img src="./assets/skills/lit-adhd.webp" width="240" alt="One read-only brief across recent Codex sessions: what each was asked, what waits on you, progress gauges, paused work and one next step to run with go." /></td>
+<td><code>lit-adhd</code><br /><sub><code>lit adhd</code> · <code>lit rewind</code> · <code>$litcodex:lit-adhd</code></sub></td>
+<td>Answers "where was I" across your recent Codex sessions without touching anything: what each session was asked and last said, which ones wait on you, a progress gauge for each and for this worktree, paused work, and one next step you start by saying <code>go</code>.</td>
+</tr>
+<tr>
+<td><img src="./assets/skills/lit-pptx.webp" width="240" alt="Ask for slides with lit and the skill first picks one of thirteen design directions for the content (or the one you name, such as neo-brutalism), names it with two alternatives, then builds an editable, dense PowerPoint deck in Pretendard with its Markdown source. QA checks layout, title variety and fill; rendered slides are inspected when LibreOffice is present." /></td>
 <td><code>lit-pptx</code><br /><sub><code>$litcodex:lit-pptx</code></sub></td>
-<td>Ask for slides with <code>lit</code> and the skill first picks one of eight design directions for the content, names it with two alternatives, then builds an editable, dense PowerPoint deck in Pretendard with its Markdown source. QA checks layout, title variety and fill; rendered slides are inspected when LibreOffice is present.</td>
+<td>Ask for slides with <code>lit</code> and the skill first picks one of thirteen design directions for the content (or the one you name, such as neo-brutalism), names it with two alternatives, then builds an editable, dense PowerPoint deck in Pretendard with its Markdown source. QA checks layout, title variety and fill; rendered slides are inspected when LibreOffice is present.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-docx.webp" width="240" alt="Ask for a report with lit and the skill picks one of six document directions, names it with two alternatives, and builds a restrained, print-grade Word file with its Markdown source. A gate checks headings, restraint and the rendered pages when LibreOffice is present." /></td>
@@ -165,9 +180,9 @@ the checks that run on their own.
 <td>A factual README with a moving cover, checked at phone and desktop widths in light and dark.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/lit-typographic-motion.webp" width="240" alt="Ask for a video with lit. A treatment comes first, then an authored stage page or the type engine, a sound bed, and look rounds on the rendered stills. A README cover becomes a silent, seamless loop checked on the encoded file." /></td>
+<td><img src="./assets/skills/lit-typographic-motion.webp" width="240" alt="Ask for a video with lit. A treatment comes first, in one of four house styles, then a storyboard to check before the film, an authored stage page (3D when the subject calls for it) or the type engine, a layered score, and look rounds on the rendered stills. A README cover becomes a silent, seamless loop, 3D hero included, checked on the encoded file." /></td>
 <td><code>lit-typographic-motion</code><br /><sub><code>$litcodex:lit-typographic-motion</code></sub></td>
-<td>Ask for a video with <code>lit</code>. A treatment comes first, then an authored stage page or the type engine, a sound bed, and look rounds on the rendered stills. A README cover becomes a silent, seamless loop checked on the encoded file.</td>
+<td>Ask for a video with <code>lit</code>. A treatment comes first, in one of four house styles, then a storyboard to check before the film, an authored stage page (3D when the subject calls for it) or the type engine, a layered score, and look rounds on the rendered stills. A README cover becomes a silent, seamless loop, 3D hero included, checked on the encoded file.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/structural-search.webp" width="240" alt="Finds code by its syntax shape, not its text, and previews rewrites before applying them." /></td>
@@ -185,9 +200,9 @@ the checks that run on their own.
 <td>Drives a real page after verifying the browser driver. If there is none, it says so.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/frontend-ui-ux.webp" width="240" alt="Builds a working interface, then a measured probe renders it in seven views: four widths, dark, reduced motion and 200% zoom." /></td>
+<td><img src="./assets/skills/frontend-ui-ux.webp" width="240" alt="Builds a working interface from a locked house style and a token-only kit, then a measured probe renders it in seven views: four widths, dark, reduced motion and 200% zoom." /></td>
 <td><code>frontend-ui-ux</code><br /><sub><code>$litcodex:frontend-ui-ux</code></sub></td>
-<td>Builds a working interface, then a measured probe renders it in seven views: four widths, dark, reduced motion and 200% zoom.</td>
+<td>Builds a working interface from a locked house style and a token-only kit, then a measured probe renders it in seven views: four widths, dark, reduced motion and 200% zoom.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-burnoff.webp" width="240" alt="Cleans AI-written bloat out of a change set after tests lock what it does." /></td>
@@ -230,14 +245,32 @@ A few skills are worth knowing by name:
 - **Diagrams.** For architecture, workflow, system and conceptual diagrams, pick `lit-diagram-drawer`
   from the Codex skill picker. A diagram request with `lit` also tells Codex to load it. Product screens
   and plots of measured data have their own skills.
+- **Equipment drawings.** For a P&ID, PFD, a lab-rig figure for a paper or an isometric cutaway, use
+  `lit schematic` or pick `lit-schematic`; a plain `lit` with such a request reaches it as well. It writes the
+  process truth first, builds from its own kit, runs a QA gate, and exports SVG, PDF and a 600 dpi PNG.
+- **Borrowing a technique.** To bring a method that someone published (an X post or article, a repo, a PDF, a blog
+  page) into a skill you own, use `lit hijack` or pick `lit-hijack`; the Korean words 하이재킹 and 하이잭 after `lit`
+  work too. It records where each source came from and under which licence, takes mechanisms and never wording,
+  checks the spec against the captures for shared text, builds from the spec in a fresh agent context, and
+  closes with a parity run and a report. Nothing is committed for you.
+- **Where was I.** After a break, `lit adhd` (or `lit rewind`) lists your recent Codex sessions with what each was
+  asked, what waits on you, a gauge such as `[▉▉▉░░] 3/5` only when both numbers are real (otherwise the
+  known facts in words, such as `12 steps · 4m · last: apply_patch`), paused work, a roadmap of done, now and later
+  with dates, and one next step. On the desktop card the look turns rainbow while it runs; the card and the session
+  start offer `lit adhd` quietly after a break. Say `go` within 30 minutes to run that step. If you started a side discipline in
+  the middle of a loop, `lit continue` returns to the loop at the stage and count it left. Nothing is edited, and
+  `lit approve` or `lit deny` for a Start Work boundary stay yours to type.
 - **Word and PowerPoint.** Pick `lit-docx` for a Word report or proposal and `lit-pptx` for slides.
   A `lit` request for either one loads the matching skill, and asking for both loads both. Before it
   builds anything, each skill reads your material and decides what kind of deck or document it is: a
   numbers-heavy review, a pitch, a lecture, a Korean briefing; a report, a one-page memo, a proposal,
   a procedure. It names the design direction it chose and two it considered, then builds without
-  asking you questions. Decks come in eight directions (Ledger, Signal, Atlas, Chalk, Paper, Gazette,
-  Studio, Night), each with its own colours, title placements and layouts, and every slide carries
-  the facts that back its point down to the bottom of the page. Titles name the topic, the claim
+  asking you questions. Decks come in thirteen directions (Ledger, Signal, Atlas, Chalk, Paper, Gazette,
+  Studio, Night, Computational Brutalism, Neo-Brutalism, Bauhaus, Riso, Newsroom), each with its own
+  colours, title treatments and layouts, all sharing one slide grid so a title sits in the same
+  place whichever direction is chosen, and every slide carries the facts that back its point down to
+  the bottom of the page. A request such as "a 10-slide deck in neo-brutalism" is a full deck request
+  and picks that direction. Titles name the topic, the claim
   opens the body, and numbers are stated as measured. Documents come in six directions (Report, Brief, Manual,
   Proposal, Memo, Journal) that differ in structure: what stands on page one, how the summary is set,
   whether sections are numbered. All of them print the way an institute report does, with ink

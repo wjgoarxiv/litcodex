@@ -43,6 +43,7 @@ The shared verifier reports overlap candidates, label bounds, off-canvas geometr
 - **Opposed arrowheads:** one directed polyline has both a start marker and an end marker. Keep one arrowhead per directed edge unless the brief explicitly defines a two-way relationship.
 - **Sequence lifeline:** a participant has no dashed lifeline, the line does not start at its box center or reach the final message, a message misses its named lifeline, or message order is not top-to-bottom. Bind each message endpoint to its actor lifeline and preserve order.
 - **Content fill:** the declared node bounds use less than 68% of canvas width or 40% of canvas height. Recompose the subject to use the available slide area.
+- **Accent count (OF-202):** node fills use six or more saturated hue families. Three to five families is the default palette and passes; bind each to one role, name it in the legend, and pair it with a label, icon or line style. Reduce the families by merging roles, not by greying out the drawing.
 
 ## Type checks
 

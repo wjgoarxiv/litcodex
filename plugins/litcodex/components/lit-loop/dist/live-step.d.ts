@@ -7,6 +7,8 @@ export interface LiveStep {
     readonly turnEndedAt: number | null;
     /** The tool that finished last in this turn; most steps end between two card polls. */
     readonly lastTool: string | null;
+    /** Why the session waits on the user: "question", "blocked", or null (no reason detected). */
+    readonly waitReason?: string | null;
 }
 export interface ThreadPointer {
     readonly cwd: string;
@@ -50,7 +52,9 @@ export declare function recordLiveStepEnd(repoRoot: string, sessionId: string, r
  * End whatever step this session still shows, since no tool runs once Stop fires, and close the turn
  * unless a Stop guard is sending the model back to work (`closeTurn` false).
  */
-export declare function endLiveStep(repoRoot: string, sessionId: string, now?: number, closeTurn?: boolean): void;
+export declare function endLiveStep(repoRoot: string, sessionId: string, now?: number, closeTurn?: boolean, waitReason?: string | null): void;
+/** Detect why the session waits on the user from the last assistant message, or null. */
+export declare function detectWaitReason(lastMessage: string | null): string | null;
 /** `$CODEX_HOME`, else `$HOME/.codex`, read from the given environment only; null when neither is set. */
 export declare function codexHomeFrom(env: NodeJS.ProcessEnv): string | null;
 export declare function threadPointerPath(env: NodeJS.ProcessEnv, threadId: string): string | null;

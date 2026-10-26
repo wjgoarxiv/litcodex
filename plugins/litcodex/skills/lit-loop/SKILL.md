@@ -204,7 +204,10 @@ banner loop is the same skill's cover mode: a silent, seamless loop gated on the
 
 When this task creates or changes a user-facing web interface, put its UI behavior and probe in the
 plan or bounded acceptance checks. Load the installed sibling `../frontend-ui-ux/SKILL.md` as a
-supporting skill without a second banner. Run `../frontend-ui-ux/scripts/probe.mjs` on the built page at the seven-entry
+supporting skill without a second banner. A request to build a page or screen, in English or Korean (a landing
+page, a dashboard, 화면 만들어줘), is this deliverable: before building, take its "Choose the design first" step (skipped under a bare `lit` or when the prompt names the look), then run
+`../frontend-ui-ux/scripts/design-lock.mjs init` so the look is locked, and the probe then checks DS-001 to DS-008
+against that lock. Run `../frontend-ui-ux/scripts/probe.mjs` on the built page at the seven-entry
 RS matrix and retain the JSON and screenshots. Remaining HIGH findings block done until fixed or named
 as a specific limitation; an exit 2 keeps the UI criterion BLOCKED. This hand-off applies even when
 the larger task is an app. For a CLI or backend-only task with no user-facing web interface, do not load
@@ -214,14 +217,18 @@ For a requested diagram deliverable (such as a system architecture, process flow
 sequence, or relationship map), load the installed sibling `../lit-diagram-drawer/SKILL.md` before drawing.
 Use the host skill catalog or resolve that sibling from this installed skill; do not look in a global
 source checkout. Follow its relevant references, rendering and visual checks as a supporting skill
-without a second activation banner or durable setup. Keep product screens with `frontend-ui-ux` and
-measured scientific plots with `lit-scientific-visualization`. Do not treat quoted examples or keywords alone as a routing request.
+without a second activation banner or durable setup. A drawing of real equipment (a P&ID, PFD,
+apparatus figure or isometric cutaway; 공정도, 계통도) goes to the sibling `../lit-schematic/SKILL.md`
+instead. A request to port a technique that someone else published (X posts, repos, PDFs) into the user's
+own skill goes to the sibling `../lit-hijack/SKILL.md`, which `lit hijack` reaches directly. Keep product screens with `frontend-ui-ux` and measured scientific plots with
+`lit-scientific-visualization`. Do not treat quoted examples or keywords alone as a routing request.
 
 For a requested Word report or document deliverable (보고서, 리포트, 기획서, 제안서, 문서,
 워드, report, doc, docx, Word), load the installed sibling `../lit-docx/SKILL.md`
 before drafting. For requested slides or a PowerPoint deliverable (발표자료, 발표,
 슬라이드, 덱, PPT, 피피티, slides, deck, presentation, pptx), load the installed
-sibling `../lit-pptx/SKILL.md`. Load both when both formats are requested. Under
+sibling `../lit-pptx/SKILL.md`. A request that gives only a slide count and a style
+name (덱 10장, 네오 브루탈리즘 스타일로) is a full deck request, not a question. Load both when both formats are requested. Under
 `lit`, produce editable Markdown next to the DOCX/PPTX, use the skills' default
 profiles without preference questions, and honor explicit user design choices.
 The request must actually seek an output; quoted examples and input-file names
@@ -274,6 +281,8 @@ instead of this directive. Keep working under the contract you already hold: do 
 restart the workflow. A different mode, `lit new …`, `lit restart …` and the first `lit` after a compaction
 send the full activation again. A bare `lit` or `lit continue` carries on whichever mode is active, and over an active start-work plan, a published
 plan or open goals arrives as a resume note: pick that work up and create no new plan.
+
+When a side discipline (for example `lit brainstorm`) was started in the middle of this loop, the loop is paused on the session's workflow stack under `.litcodex/workflow-stack/` with its stage and k/n. `lit continue` closes the side discipline and brings the loop back as a resume note: keep that stage and count, and do not restart. Record the stage you are in with `node <plugin-root>/components/lit-loop/dist/cli.js stage --family loop --stage GREEN --n 2 --total 5` so a pause keeps it. An active `lit-plan` is the exception: its persistence gate stays armed and `lit continue` stays inside it. `lit adhd` (alias `lit rewind`) is the read-only brief across sessions; `go` after it runs the one next step it named.
 
 ## Codex tool mapping
 

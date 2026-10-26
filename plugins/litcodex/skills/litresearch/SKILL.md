@@ -353,6 +353,13 @@ rejected paths, and evidence obligations. If sources disagree, name the disagree
 would settle it. If the research found a tempting larger redesign, also name the minimum complete path and the
 reason the larger redesign should be rejected or deferred.
 
+## Research that feeds a port
+
+When the research exists to port someone else's technique into a skill or system, hand the verified sources to
+`lit-hijack`: it captures them with provenance, gates the licence, writes a source-free spec and proves the port on
+the real surface. litresearch finds and verifies the sources; the port is `lit-hijack`'s job, and its run folder
+`.litcodex/hijack/<slug>/` is separate from this journal.
+
 ## Stale-state and package evidence during research
 
 Research often touches generated or cached material: package archives, installed plugin copies, downloaded

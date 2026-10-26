@@ -8,7 +8,12 @@
 // Recap aliases (`litrecap` / `recap` / `리캡`) normalize to the single `lit-recap` token.
 // The bare `comprehend` alias normalizes to the `lit-comprehend` token. `lit` followed by an ideation
 // word (brainstorm, brainstorming, ideation, ideate, idea, ideas) routes to `lit-brainstorm`; those words
-// never route without the `lit` in front. Rejects
+// never route without the `lit` in front. `lit schematic` and the glued `lit-schematic` route to the drawing
+// skill; a bare `lit` with a P&ID, PFD or cutaway request reaches it through schematic-route.ts. `lit hijack`,
+// `lit hijacking`, `lit 하이재킹`, `lit 하이잭` and the glued `lit-hijack` route to the porting skill; the route
+// word has to sit directly after `lit`, so "lit debug the session hijack" stays elsewhere. `lit adhd`, `lit rewind`
+// and the glued `lit-adhd` / `lit-rewind` route to the cross-session brief; the word has to end at a boundary, so
+// "lit adhder" and "lit rewinding" keep their ordinary routes. Rejects
 // every substring collision (`split`, `literal`, `litmus`, `lithium`, `glitter`, `flit`, `slit`,
 // `litter`, `recapture`, …) while respecting Korean (Hangul) and English boundaries.
 //
@@ -28,6 +33,9 @@ import { renamedSkillId } from "./skill-renames.js";
 export type LitTriggerToken =
 	| "lit-comprehend"
 	| "lit-brainstorm"
+	| "lit-schematic"
+	| "lit-hijack"
+	| "lit-adhd"
 	| "deep-interview"
 	| "lit-crucible"
 	| "lit-init"
@@ -49,6 +57,9 @@ export type LitTriggerToken =
 export const LIT_TRIGGER_TOKENS: readonly LitTriggerToken[] = Object.freeze([
 	"lit-comprehend",
 	"lit-brainstorm",
+	"lit-schematic",
+	"lit-hijack",
+	"lit-adhd",
 	"deep-interview",
 	"lit-crucible",
 	"lit-init",
@@ -83,7 +94,7 @@ export const LIT_TRIGGER_TOKENS: readonly LitTriggerToken[] = Object.freeze([
  * No nested quantifiers / no backreferences ⇒ ReDoS-free.
  */
 export const LIT_TRIGGER_PATTERN =
-	/(?:^|[^\p{L}\p{N}_])(lit-comprehend|lit-brainstorm|deep-interview|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit)(?![\p{L}\p{N}_-])/iu;
+	/(?:^|[^\p{L}\p{N}_])(lit-comprehend|lit-brainstorm|lit-schematic|lit-hijack|lit-rewind|lit-adhd|deep-interview|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit)(?![\p{L}\p{N}_-])/iu;
 
 /** Structured result of a successful match. */
 export interface LitTriggerMatch {
@@ -141,7 +152,7 @@ export function matchLitTrigger(prompt: string): LitTriggerMatch | null {
 	}
 	const searchable = maskMarkdownCode(prompt);
 	const scan =
-		/(?:^|[^\p{L}\p{N}_])(lit-comprehend|lit-brainstorm|deep-interview|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit)(?![\p{L}\p{N}_-])/giu;
+		/(?:^|[^\p{L}\p{N}_])(lit-comprehend|lit-brainstorm|lit-schematic|lit-hijack|lit-rewind|lit-adhd|deep-interview|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit)(?![\p{L}\p{N}_-])/giu;
 	for (const m of searchable.matchAll(scan)) {
 		const raw = m[1];
 		if (raw === undefined) {
@@ -155,7 +166,9 @@ export function matchLitTrigger(prompt: string): LitTriggerMatch | null {
 				? "lit-recap"
 				: lowered === "comprehend"
 					? "lit-comprehend"
-					: ((renamedSkillId(lowered) ?? lowered) as LitTriggerToken);
+					: lowered === "lit-rewind"
+						? "lit-adhd"
+						: ((renamedSkillId(lowered) ?? lowered) as LitTriggerToken);
 		if (isSlashCommandOrPathToken(prompt, index, token)) {
 			if (index === 1) {
 				return null;
@@ -231,8 +244,13 @@ function naturalPhraseAfterLit(
 ): LitTriggerMatch | null {
 	const start = index + rawLength;
 	const rest = searchable.slice(start);
+	// Korean route words take a particle ("하이재킹을"), so they use a boundary that only blocks Latin word characters.
+	const hangul = /^(\s+)(하이재킹|하이잭)(?![A-Za-z0-9_-])/u.exec(rest);
+	if (hangul?.[1] !== undefined && hangul[2] !== undefined) {
+		return { token: "lit-hijack", raw: prompt.slice(index, start + hangul[1].length + hangul[2].length), index };
+	}
 	const m =
-		/^(\s+)(start\s+work|deep\s+interview|lit-brainstorm|lit-crucible|lit-init|hyperplan|init-deep|comprehend|brainstorming|brainstorm|ideation|ideate|ideas?|plan|review|research|goal|recap)(?![\p{L}\p{N}_-])/iu.exec(
+		/^(\s+)(start\s+work|deep\s+interview|lit-brainstorm|lit-schematic|lit-hijack|lit-adhd|lit-rewind|lit-crucible|lit-init|hyperplan|init-deep|comprehend|brainstorming|brainstorm|ideation|ideate|ideas?|schematic|hijacking|hijack|adhd|rewind|plan|review|research|goal|recap)(?![\p{L}\p{N}_-])/iu.exec(
 			rest,
 		);
 	if (m === null || m[1] === undefined || m[2] === undefined) {
@@ -243,6 +261,15 @@ function naturalPhraseAfterLit(
 		"start work": "start-work",
 		"deep interview": "deep-interview",
 		"lit-brainstorm": "lit-brainstorm",
+		"lit-schematic": "lit-schematic",
+		schematic: "lit-schematic",
+		"lit-hijack": "lit-hijack",
+		hijacking: "lit-hijack",
+		hijack: "lit-hijack",
+		"lit-adhd": "lit-adhd",
+		"lit-rewind": "lit-adhd",
+		adhd: "lit-adhd",
+		rewind: "lit-adhd",
 		"lit-crucible": "lit-crucible",
 		hyperplan: "lit-crucible",
 		"lit-init": "lit-init",

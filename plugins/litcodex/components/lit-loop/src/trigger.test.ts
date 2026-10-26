@@ -299,6 +299,9 @@ describe("token set hygiene", () => {
 		expect(LIT_TRIGGER_TOKENS).toEqual([
 			"lit-comprehend",
 			"lit-brainstorm",
+			"lit-schematic",
+			"lit-hijack",
+			"lit-adhd",
 			"deep-interview",
 			"lit-crucible",
 			"lit-init",

@@ -1,4 +1,4 @@
-// Cover capture, the browser side. One headless Chrome per pass on the stage path's software rung, its
+// Cover capture, the browser side. One headless Chrome per pass on the stage path's software rung (the GPU rung for a 3D hero), its
 // viewport the cover page's CSS size at device scale 2, the cover folder served on the synthetic
 // stage origin (kit, loop kit, faces, nothing else), and the cover init script injected before any page
 // script. The renderer SEEKS: it calls window.renderFrame(t, { mask }) for any t in [0, 1) in any
@@ -12,17 +12,18 @@ import { EXIT, Exit, STAGE_ORIGIN } from "./constants.mjs";
 import { launchCover } from "./driver.mjs";
 import { SKILL_ROOT } from "./fonts.mjs";
 import { firstLine } from "./runtime.mjs";
-import { stageRouter } from "./stage.mjs";
+import { probeGpu, stageRouter } from "./stage.mjs";
 
 const COVER_INIT = () => readFileSync(join(SKILL_ROOT, "engine", "cover-init.js"), "utf8");
 const pause = (ms) => new Promise((done) => setTimeout(done, ms));
 
 export class CoverSession {
 	/** Open the cover page and wait until it sets window.ready and defines window.renderFrame. */
-	static async open({ runtime, scan, fonts, width, height, scale, profileDir, env = process.env }) {
-		const { context, page } = await launchCover({ runtime, width, height, scale, profileDir, env });
-		const session = new CoverSession({ context, page, width, height, scale, profileDir });
+	static async open({ runtime, scan, fonts, width, height, scale, profileDir, rung = "software", env = process.env }) {
+		const { context, page } = await launchCover({ runtime, width, height, scale, profileDir, rung, env });
+		const session = new CoverSession({ context, page, width, height, scale, profileDir, rung });
 		try {
+			if (rung === "gpu") await probeGpu(session);
 			await context.route("**/*", stageRouter({ root: scan.root, fonts, record: session.record }));
 			await context.addInitScript({ content: COVER_INIT() });
 			page.on("pageerror", (error) => session.record.pageErrors.push(firstLine(error.message)));
@@ -36,8 +37,8 @@ export class CoverSession {
 		}
 	}
 
-	constructor({ context, page, width, height, scale, profileDir }) {
-		Object.assign(this, { context, page, width, height, scale, profileDir });
+	constructor({ context, page, width, height, scale, profileDir, rung = "software" }) {
+		Object.assign(this, { context, page, width, height, scale, profileDir, rung });
 		this.record = { blocked: [], rejected: [], missing: [], pageErrors: [] };
 	}
 

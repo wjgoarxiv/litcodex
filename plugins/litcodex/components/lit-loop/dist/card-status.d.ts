@@ -1,3 +1,5 @@
+import { type LaneState } from "./card-looks.js";
+import { type ThreadView } from "./threads.js";
 import { type WorkflowMap } from "./workflow-map.js";
 export interface CardStatus {
     readonly version: 1;
@@ -5,6 +7,8 @@ export interface CardStatus {
     readonly thread: string | null;
     readonly state: "ready" | "ignited" | "complete";
     readonly mode: string | null;
+    /** The card's look: "rewind", "review", "turn" (waiting on the user), "done" (just finished), or null. */
+    readonly look: string | null;
     readonly ignitedAt: number | null;
     readonly map: WorkflowMap | null;
     readonly step: {
@@ -21,6 +25,12 @@ export interface CardStatus {
     readonly working: boolean;
     /** Percent of the context window and of each quota window in use, from the thread's last token count. */
     readonly usage: Usage | null;
+    /** Work paused under a side discipline, or null while the thread has a single line of work. */
+    readonly stack?: CardStack | null;
+    /** Frames, child agents and other live sessions as rows; null while the stack row says all there is to say. */
+    readonly threads?: ThreadView | null;
+    /** The five review-work lane states, in border-draw order; null when the mode is not review-work. */
+    readonly reviewLanes?: readonly LaneState[] | null;
     /** The workspace's checked-out branch, or a short commit when detached. */
     readonly branch: string | null;
     /** Folder name of the workspace only; the full path stays out of the card. */
@@ -28,6 +38,23 @@ export interface CardStatus {
     /** When the newest card of this thread opened; an older card that sees a later time folds itself. */
     readonly cardOpenedAt: number | null;
     readonly now: number;
+}
+/**
+ * One frame of the session's workflow stack as the card names it: the skill and its stage, and a gauge only when
+ * both counts are real. A frame without a total carries a short `note` in words instead (`step 2`, or empty).
+ */
+export interface CardFrame {
+    readonly name: string;
+    readonly stage: string | null;
+    readonly gauge: string | null;
+    readonly note: string;
+}
+/** A side discipline running over paused work: what is paused, what runs, and the way back. */
+export interface CardStack {
+    readonly breadcrumb: string;
+    readonly row: string;
+    readonly paused: readonly CardFrame[];
+    readonly running: CardFrame;
 }
 export interface Usage {
     readonly ctx: number | null;

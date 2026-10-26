@@ -99,6 +99,10 @@ const DECK_KEYED_MAPS = ["palette", "faces", "faces-a2z", "role-defaults", "disp
 // Pack keys the engine does not read, each with the reason it stays in the pack.
 const DECK_ALLOWLIST = new Map([
 	["avoid", "advice for whoever writes the deck, kept beside the pack's reference page; it draws nothing"],
+	[
+		"qa.offset-shadow",
+		"an allowance the quality gate reads (craft_extras.pack_allowances) to let a hard shadow pass OF-120",
+	],
 ]);
 
 // The document engine reads a key as `x["key"]` or `x.get("key")` (also `x.get("a" if … else "key")`). The allowed-key sets and validation

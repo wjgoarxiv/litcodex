@@ -16,7 +16,7 @@ Prepare a list of up to five named lanes, each with a stable owner id and option
 2. Place process steps in chronological order along one shared axis. Each step belongs to exactly one lane and remains fully inside it. Use similarly sized cards for similar actions; allow a lane with one step to keep its empty space.
 3. Draw lane dividers as quiet hairlines. Route ordinary progression mostly straight; route handoffs through short orthogonal turns with clear arrowheads. Give each handoff a visible exit and entry point on its lane boundary.
 4. Reorder steps when their order is flexible to reduce back-and-forth connector crossings. Keep genuine returns and branches explicit; do not disguise a loop as a normal handoff.
-5. Limit the figure to five lanes, nine steps, and twelve arrows under the global diagram budget. Split parallel teams or subprocesses into a second view when the crossings obscure ownership.
+5. Limit the figure to five lanes, nine steps, and twelve arrows as this type's own budget, tighter than the overview range in the style guide. Split parallel teams or subprocesses into a second view when the crossings obscure ownership.
 
 ## Visual encoding
 

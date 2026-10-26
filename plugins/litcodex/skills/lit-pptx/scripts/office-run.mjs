@@ -15,6 +15,7 @@ const commands = {
     qa: ["python", join(deckRoot, "scripts/qa_deck.py")],
     inventory: ["python", join(deckRoot, "scripts/inventory.py")],
     embed: ["python", join(deckRoot, "scripts/embed_fonts.py")],
+    render: ["python", join(deckRoot, "scripts/render_pages.py")],
     learn: ["python", join(deckRoot, "scripts/learn_template.py")],
     validate: ["python", join(deckRoot, "scripts/validate_pptx.py")],
   },
@@ -150,7 +151,7 @@ function main() {
   }
   const selected = commands[skill]?.[command];
   if (!selected) {
-    process.stderr.write("Usage: office-run.mjs doctor | pptx <compile|qa|inventory|embed|learn|validate> ... | docx <convert|qa|edit|pdf|extract_pdf|slop|audit|clean|images> ...\n");
+    process.stderr.write("Usage: office-run.mjs doctor | pptx <compile|qa|inventory|embed|render|learn|validate> ... | docx <convert|qa|edit|pdf|extract_pdf|slop|audit|clean|images> ...\n");
     process.exitCode = 2;
     return;
   }

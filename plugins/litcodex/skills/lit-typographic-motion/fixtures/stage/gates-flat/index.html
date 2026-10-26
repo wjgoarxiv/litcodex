@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="/lit/fonts.css"><script src="/lit/stage-kit.js"></script>
+<style>
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0C0E13; font-family: "Archivo"; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(45deg, #2A3140 0 24px, #0C0E13 24px 48px); }
+.t { position: absolute; margin: 0; white-space: nowrap; color: #E9EBE4; }
+.display { font: 900 128px "Archivo"; }
+.headline { font: 700 76px "Archivo"; }
+#a { left: 200px; top: 420px; } #cream { position: absolute; inset: 0; background: #F3EDE2; }
+</style></head>
+<body>
+<div class="stripes"></div>
+<div id="cream"></div>
+<h1 class="t display" id="a">Tide pool at noon</h1>
+<script>
+LitStage.text(document.getElementById("a"));
+LitStage.define({ width: 1920, height: 1080, fps: 30, duration: 6, render(t) {
+	document.getElementById("cream").style.opacity = t >= 2 && t < 4.5 ? "1" : "0";
+	document.getElementById("a").style.opacity = t < 2 ? "1" : "0";
+} });
+</script></body></html>

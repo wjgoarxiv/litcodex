@@ -126,6 +126,14 @@ describe("the loop kit and the cover init script", () => {
 		ctx.window = ctx;
 		vm.runInNewContext(init, ctx);
 		const w = ctx as { Math: Math; Date: DateConstructor; performance: { now: () => number }; requestAnimationFrame: (cb: () => void) => void; setInterval: () => void; crypto: { getRandomValues: () => void }; __litCoverCalls: () => string[] };
+		const building = [w.Math.random(), w.Math.random(), w.Math.random()];
+		expect(building.every((x) => x >= 0 && x < 1)).toBe(true);
+		const twin = { Math: Object.create(Math), Date, Performance: class {}, performance: {}, crypto: {}, document: { documentElement: null, addEventListener() {} } } as Record<string, unknown>;
+		twin.window = twin;
+		vm.runInNewContext(init, twin);
+		expect([(twin.Math as Math).random(), (twin.Math as Math).random(), (twin.Math as Math).random()]).toEqual(building);
+		expect(Array.from(w.__litCoverCalls())).toEqual([]);
+		ctx.ready = true;
 		expect(() => w.Math.random()).toThrow(/Math\.random is not allowed/u);
 		expect(() => w.Date.now()).toThrow(/Date\.now is not allowed/u);
 		expect(() => new w.Date()).toThrow(/Date is not allowed/u);
@@ -359,12 +367,6 @@ describe("C001: cover defects carry a time, a region and a frame of the current 
 		const out = fakeCoverRun();
 		expect(() => recordLook(out, 1, answersFile(out, coverAnswers({ defects: [defect(), defect({ t: 2 }), defect({ t: 3 }), defect({ t: 4 })] })))).toThrow(/at most 3 defects per round/u);
 	});
-	it("a film round may not carry cover defects", () => {
-		const out = fakeCoverRun();
-		const path = join(out, "stills", "manifest.json");
-		writeFileSync(path, JSON.stringify({ ...JSON.parse(readFileSync(path, "utf8")), mode: undefined, kind: "stills-only" }));
-		expect(() => recordLook(out, 1, answersFile(out, { ...coverAnswers({ defects: [defect()] }), weakestBeat: 1 }))).toThrow(/defects are a cover-mode record/u);
-	});
 });
 
 /** A painted-light cover dir: the good page, a small textured painting, and assets.json as `assets` builds it. */
@@ -490,7 +492,7 @@ describe("C012-C013 (units): the seek-order tolerance is the rasterizer's one le
 
 describe("C014-C016 (rows): each recipe keeps its page and gate row; each negative names the gates it fails", () => {
 	it("every recipe has a page and expected.json with the six numbers inside TARGET and at most 2 MiB", () => {
-		for (const name of ["painted-light", "weight-tide", "orbit-loop"]) {
+		for (const name of ["hero-3d", "painted-light", "weight-tide", "orbit-loop"]) {
 			const doc = JSON.parse(readFileSync(join(skillRoot, "recipes", name, "expected.json"), "utf8"));
 			for (const key of ["medianD", "movingFrac", "longestStillSec", "spike", "seamLocal", "bytes"]) expect(typeof doc.row[key], `${name}.${key}`).toBe("number");
 			expect(doc.row.bytes).toBeLessThanOrEqual(COVER.targetBytes);

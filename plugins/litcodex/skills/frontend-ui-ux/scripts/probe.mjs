@@ -1,19 +1,40 @@
 #!/usr/bin/env node
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { extname, resolve } from 'node:path';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { probeBrowserDriver } from '../../browser-drive/scripts/capability-probe.mjs';
 import { inspectPage } from './page-probe.mjs';
 import { hoverCandidates, inspectHovered } from './hover-probe.mjs';
-import { ALL_PROBE_RULES, CHECKED_RULES, LIMITS, VIEWPORTS } from './rule-data.mjs';
+import { measureLock } from './lock-probe.mjs';
+import { ALL_PROBE_RULES, CHECKED_RULES, LIMITS, LOCK_RULES, LOOK_RUBRIC, VIEWPORTS } from './rule-data.mjs';
 
 export const cases = VIEWPORTS;
+export { LOOK_RUBRIC };
+
+const LOCK_SCHEMA = 'litcodex.design-lock/v1';
+const LOCK_RULE_IDS = Object.freeze(Object.keys(LOCK_RULES));
+
+// A design.lock.json beside the page (or named by --lock) turns on the DS-* rules. A lock that cannot be
+// read is reported, never silently skipped.
+export function findLock(page, explicit) {
+  const candidates = explicit ? [resolve(explicit)] : /^https?:/.test(page) ? [] : [join(dirname(resolve(page)), 'design.lock.json')];
+  const path = candidates.find((candidate) => existsSync(candidate));
+  if (!path) return { lock: null, path: null, error: explicit ? `lock not found: ${explicit}` : null };
+  try {
+    const lock = JSON.parse(readFileSync(path, 'utf8'));
+    if (lock.schema_id !== LOCK_SCHEMA || typeof lock.style !== 'string') return { lock: null, path, error: `design.lock.json is not a ${LOCK_SCHEMA} file` };
+    return { lock, path, error: null };
+  } catch (error) { return { lock: null, path, error: `design.lock.json unreadable: ${error.message}` }; }
+}
+
+// Which row of the matrix a viewport is: the lock rules that read the first screen run on the plain rows only.
+const passOf = (item) => (item.reducedMotion ? 'reduced-motion' : item.media === 'dark' ? 'dark' : item.zoomEmulation ? 'zoom' : 'base');
 
 const STATIC_RULES = Object.freeze([
   'SLOP-009', 'SLOP-008', 'SLOP-015', 'SLOP-016', 'SLOP-006', 'SLOP-024', 'CF-505',
   'SLOP-026', 'SLOP-057', 'SLOP-058', 'SLOP-060', 'SLOP-061', 'SLOP-012',
-  'SLOP-040', 'SLOP-036', 'SLOP-039', 'CF-507', 'CF-106', 'CF-107', 'CF-503',
+  'SLOP-040', 'SLOP-036', 'SLOP-039', 'CF-507', 'CF-106', 'CF-107', 'CF-503', 'DS-006',
 ]);
 
 function hueFromHex(value) {
@@ -54,13 +75,16 @@ export function staticFallback(source, file = '<source>') {
       add(rule, match, severity, tier);
     }
   }
+  const clipped = [];
   for (const match of source.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     const selector = match[1], declarations = match[2];
-    if (/background-clip\s*:\s*text/i.test(declarations) && /gradient\(/i.test(declarations)) add('SLOP-009', match, 'MEDIUM');
+    if (/background-clip\s*:\s*text/i.test(declarations) && /gradient\(/i.test(declarations)) clipped.push({ match, violet: violetLiteral(declarations) });
     if ((/(?:^|[\s,.>])h[1-6]\b|heading|title/i.test(selector) || /gradient\(/i.test(declarations)) && violetLiteral(declarations)) add('SLOP-008', match, 'MEDIUM');
     if (/(?:border-(?:left|top)\s*:\s*[2-9]\d*px|box-shadow\s*:[^;]*\b(?:[3-9]|1[0-2])px\s+0(?:px)?\b)/i.test(declarations)) add('SLOP-015', match, 'LOW');
     if (/background-image\s*:[^;]*repeating-(?:linear|radial)-gradient\(/i.test(declarations)) add('SLOP-012', match, 'MEDIUM');
   }
+  // Source alone cannot weigh contrast: one gradient headline in palette hues is craft, a violet stop or a repeat is the reflex.
+  for (const { match, violet } of clipped) if (violet || clipped.length > LIMITS.gradientTextMax) add('SLOP-009', match, 'MEDIUM');
   scan('SLOP-015', /\b(?:border-l|border-t|border-left|border-top)-(?:[2-9]|1[0-2])\b/gi, 'LOW');
   const overusedFonts = /(?:Inter|Roboto|Open Sans|Lato|Montserrat|Arial|Helvetica|Fraunces|Mona Sans|Plus Jakarta Sans|Space Grotesk|Recoleta|Instrument Sans|Instrument Serif)/i;
   for (const match of source.matchAll(/(?:font-family\s*:\s*[^;}]+|fonts\.googleapis\.com\/css[^"'\s<]+)/gi)) {
@@ -87,6 +111,7 @@ export function staticFallback(source, file = '<source>') {
   }
   scan('SLOP-026', /transition(?:-property)?\s*:[^;}]*\b(?:width|height|padding|margin|top|left)\b/gi, 'MEDIUM');
   const text = source.replace(/<(?:style|script)\b[^>]*>[\s\S]*?<\/\s*(?:style|script)\s*>/gi, (part) => part.replace(/[^\n]/g, ' ')).replace(/<[^>]*>/g, (part) => part.replace(/[^\n]/g, ' '));
+  for (const match of source.matchAll(new RegExp(LOCK_RULES['DS-006'].threshold.pattern, 'gu'))) add('DS-006', match, 'HIGH', 'measured');
   scan('SLOP-061', /<marquee\b/gi, 'LOW', 'measured');
   if (/animation\s*:[^;}]*\binfinite\b/i.test(source) && !/\b(?:pause|stop)\b/i.test(text)) scan('SLOP-061', /@keyframes\s+[\w-]+[\s\S]{0,600}?translateX\(\s*100%\s*\)/gi, 'LOW');
   const copyScan = (rule, pattern, severity = 'LOW') => { for (const match of text.matchAll(pattern)) add(rule, match, severity, 'measured'); };
@@ -103,9 +128,9 @@ export function staticFallback(source, file = '<source>') {
   return { manifest: { url: null, viewports_run: [], browser_version: null, not_verified: notVerified, screenshots: [], exit_code: 2, blocked_reason: 'browser unavailable' }, findings };
 }
 
-export function matrixExitCode(findings, viewports) {
+export function matrixExitCode(findings, viewports, required = VIEWPORTS) {
   if (findings.some((finding) => finding.severity === 'HIGH' && finding.tier !== 'not_verified')) return 1;
-  return VIEWPORTS.every((item) => viewports.includes(item.id)) ? 0 : 2;
+  return required.every((item) => viewports.includes(item.id)) ? 0 : 2;
 }
 
 function run(executable, args, options = {}) {
@@ -150,13 +175,19 @@ export async function probe(page, evidenceRoot, options = {}) {
   if (!capability.available) return blocked(capability.reason === 'identity-unverified' ? 'browser identity unverified' : 'browser unavailable');
   mkdirSync(evidenceRoot, { recursive: true });
   const source = inspectPage.toString();
+  const lockSource = measureLock.toString();
+  const lockState = findLock(page, options.lock);
+  const lock = lockState.lock;
   const hoverSource = hoverCandidates.toString();
   const inspectHoverSource = inspectHovered.toString();
+  // `options.viewports` narrows the matrix to the named rows; tests use it, a release run never does.
+  const matrix = options.viewports ? cases.filter((item) => options.viewports.includes(item.id)) : cases;
   const findings = [];
   const notVerified = [];
   const screenshots = [];
   const viewports = [];
   const localUrl = /^https?:\/\/127\.0\.0\.1:\d+\//.test(page) ? page : null;
+  if (!lock) for (const rule of LOCK_RULE_IDS) notVerified.push({ rule, reason: lockState.error ?? 'no design.lock.json beside the page; lock conformance not checked' });
   let server = null;
   if (!localUrl) {
     try { if (!statSync(resolve(page)).isFile() || extname(page).toLowerCase() !== '.html') return blocked('no entry page found'); }
@@ -178,14 +209,14 @@ export async function probe(page, evidenceRoot, options = {}) {
   try {
     const started = Date.now();
     let startupError = null;
-    for (const item of cases) {
+    for (const item of matrix) {
       if (Date.now() - started > LIMITS.totalBudgetMs) { for (const rule of ALL_PROBE_RULES) notVerified.push({ rule, viewport: item.id, reason: 'time budget exceeded' }); continue; }
       try {
         command(['set', 'viewport', String(item.width), String(item.height)]);
         command(['set', 'media', item.media, ...(item.reducedMotion ? ['reduced-motion'] : [])]);
         command(['open', target]);
         command(['wait', String(LIMITS.settleMs)]);
-        const script = `JSON.stringify((${source})(${JSON.stringify(item)},${JSON.stringify(LIMITS)}))`;
+        const script = `JSON.stringify((${source})(${JSON.stringify({ ...item, density: lock?.density ?? null })},${JSON.stringify(LIMITS)}))`;
         const observed = resultValue(command(['eval', '--stdin'], { input: script }));
         if (observed.readyState !== 'complete') {
           command(['wait', '200']);
@@ -193,6 +224,14 @@ export async function probe(page, evidenceRoot, options = {}) {
         }
         findings.push(...observed.findings);
         notVerified.push(...observed.notVerified);
+        if (lock) {
+          const lockOptions = { rules: LOCK_RULES, limits: { findingsPerRule: LIMITS.findingCapPerRule, nodes: LIMITS.elementCap, textChars: LIMITS.textCap }, lock, pass: passOf(item), viewport: item.id };
+          try {
+            const locked = resultValue(command(['eval', '--stdin'], { input: `JSON.stringify((${lockSource})(${JSON.stringify(lockOptions)}))` }));
+            findings.push(...locked.findings);
+            notVerified.push(...locked.notVerified);
+          } catch (error) { notVerified.push({ rule: 'DS-001', viewport: item.id, reason: `design-lock pass failed: ${error.message.slice(0, 120)}` }); }
+        }
         const shot = resolve(evidenceRoot, `${item.id}.png`);
         command(['screenshot', shot]);
         screenshots.push({ viewport: item.id, path: shot, bytes: statSync(shot).size, width: item.width, height: item.height });
@@ -214,9 +253,9 @@ export async function probe(page, evidenceRoot, options = {}) {
         for (const rule of ALL_PROBE_RULES) notVerified.push({ rule, viewport: item.id, reason: `matrix entry failed: ${error.message}` });
       }
     }
-    const exitCode = matrixExitCode(findings, viewports);
+    const exitCode = matrixExitCode(findings, viewports, matrix);
     for (const rule of ALL_PROBE_RULES) if (!CHECKED_RULES.includes(rule) && !notVerified.some((entry) => entry.rule === rule && !entry.viewport)) notVerified.push({ rule, reason: 'manual judgment or automated check not implemented' });
-    const missing = cases.filter((item) => !viewports.includes(item.id)).map((item) => item.id);
+    const missing = matrix.filter((item) => !viewports.includes(item.id)).map((item) => item.id);
     outcome = exitCode === 2 && !viewports.length && startupError
       ? blocked('browser unavailable', findings, notVerified, screenshots, viewports, target, startupError)
       : { manifest: { url: target, viewports_run: viewports, browser_version: capability.version, zoom_emulation: 'viewport-halved', not_verified: notVerified, screenshots, exit_code: exitCode, ...(exitCode === 2 ? { blocked_reason: `matrix incomplete (${missing.join(',')})` } : {}) }, findings };
@@ -231,12 +270,19 @@ export async function probe(page, evidenceRoot, options = {}) {
     }
     if (closed.status !== 0 || (server && server.child.exitCode === null)) outcome = blocked('browser cleanup failed', findings, notVerified, screenshots, viewports, target);
   }
+  outcome.manifest.design_lock = lock ? { path: lockState.path, style: lock.style, family: lock.family ?? null, density: lock.density ?? null } : null;
   return outcome;
 }
 
 export function formatProbeConsole(output, staticMode = false) {
+  const looks = !staticMode && output.manifest.exit_code !== 2 && output.manifest.screenshots?.length;
   const stderr = [
     ...(output.manifest.detail ? [`Detail: ${output.manifest.detail}`] : []),
+    ...(looks ? [
+      'Look before calling it done (open these screenshots; fix the two worst answers, re-run the probe, two look rounds at most):',
+      ...output.manifest.screenshots.filter((shot) => ['1440', '390', '320'].includes(shot.viewport)).map((shot) => `- ${shot.viewport}: ${shot.path}`),
+      ...LOOK_RUBRIC.map(([id, text]) => `${id} ${text}`),
+    ] : []),
     ...(staticMode ? [`Static source checks: ${STATIC_RULES.length} rules (${STATIC_RULES.join(', ')}), ${output.findings.length} findings; rendered rules not verified`] : []),
   ];
   return { stdout: output.manifest.exit_code === 2 ? `BLOCKED: ${output.manifest.blocked_reason}\n` : `${JSON.stringify(output)}\n`, stderr: stderr.length ? `${stderr.join('\n')}\n` : '' };
@@ -251,8 +297,8 @@ if (invokedDirectly) {
   const pageIndex = process.argv.indexOf('--page');
   let output;
   if (staticIndex >= 0) output = staticFallback(readFileSync(resolve(option('--static')), 'utf8'), resolve(option('--static')));
-  else if (pageIndex >= 0 && process.argv.includes('--evidence-root')) output = await probe(option('--page'), resolve(option('--evidence-root')));
-  else { process.stderr.write('Usage: probe.mjs --page URL|FILE --evidence-root DIR | --static FILE\n'); process.exit(2); }
+  else if (pageIndex >= 0 && process.argv.includes('--evidence-root')) output = await probe(option('--page'), resolve(option('--evidence-root')), process.argv.includes('--lock') ? { lock: option('--lock') } : {});
+  else { process.stderr.write('Usage: probe.mjs --page URL|FILE --evidence-root DIR [--lock design.lock.json] | --static FILE\n'); process.exit(2); }
   if (process.argv.includes('--out')) writeFileSync(resolve(option('--out')), `${JSON.stringify(output, null, 2)}\n`);
   const consoleResult = formatProbeConsole(output, staticIndex >= 0);
   process.stdout.write(consoleResult.stdout);

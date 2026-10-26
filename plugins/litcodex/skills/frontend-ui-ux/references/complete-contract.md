@@ -140,6 +140,7 @@ Load only the smallest complete set:
 | --- | --- |
 | Every frontend mode: numbered craft and responsive rules | `references/craft-floor.md` |
 | Every frontend mode: generic-pattern and functional register | `references/slop-register.md` |
+| Building a new page or screen: the design lock, five house styles, density, signature moment, starters | `references/house-styles.md` |
 | Probe execution, mode routing, fix loop, and findings table | `references/probe-and-review.md` |
 | Product framing, research, inclusive scenarios, decision quality | `references/product-direction.md` |
 | Tokens, themes, components, governance | `references/system-foundations.md` |

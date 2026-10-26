@@ -66,7 +66,7 @@ describe("lit-typographic-motion corpus and caps", () => {
 	const skill = readFileSync(join(skillRoot, "SKILL.md"), "utf8");
 	it("keeps SKILL.md within the 4,096-byte entrypoint cap and pointing at every reference", () => {
 		expect(Buffer.byteLength(skill, "utf8")).toBeLessThanOrEqual(4096);
-		for (const ref of ["treatment", "stage", "style-bibles", "type-and-timing", "quality-gate", "runtime", "cover"]) expect(skill).toContain(`references/${ref}.md`);
+		for (const ref of ["treatment", "studio", "stage", "depth", "sound", "style-bibles", "type-and-timing", "quality-gate", "runtime", "cover", "design-choice"]) expect(skill).toContain(`references/${ref}.md`);
 		for (const phrase of ["ask no questions", "--stills-only", "completion --out O", "Hand-encoded films are not the deliverable", "litcodex motion-runtime install", "at least 600 s", "invent a labelled example subject"]) expect(skill).toContain(phrase);
 		for (const gone of ["kinetic-typography film", "not this deliverable", "sample copy", "3-6 short lines"]) expect(skill).not.toContain(gone);
 	});
@@ -79,7 +79,8 @@ describe("lit-typographic-motion corpus and caps", () => {
 			"runtime.md": [900, ["## Commands", "## The six probes", "## Chrome launch ladder", "## Frame egress", "## Blocked states"]],
 			"cover.md": [3000, ["## What changes from a film", "## The page contract", "## The cover treatment", "## Assets (`assets.json`)", "## Craft rules, ranked", "## Recipes", "## The loop kit", "## Encode", "## The gate (decoded file)", "## Review", "## Defects and window re-renders", "## Rounds and done", "## Recipe rows and negatives", "## Commands and exit codes"]],
 			"stage.md": [1500, ["## What you write", "## The contract", "## How a frame is made", "## The kit", "## Craft on the stage", "## Commands and outputs", "## Exit codes on this path"]],
-			"treatment.md": [1300, ["## Path rule", "## Field reference", "## Placeholder example", "## Genre arcs", "## Craft rules"]],
+			"treatment.md": [1300, ["## Path rule", "## Field reference", "## Placeholder example", "## Story", "## Protagonist", "## Named products", "## Genre arcs", "## Craft rules", "## Sound"]],
+			"studio.md": [2000, ["## The flow", "## Register: rich is the default", "## House styles", "## Choosing the style", "## Shots and layouts", "## Scaffold", "## The board round", "## Style rules in the gate", "## The house file"]],
 		};
 		for (const [name, [floor, sections]] of Object.entries(floors)) {
 			const text = readFileSync(join(skillRoot, "references", name), "utf8");

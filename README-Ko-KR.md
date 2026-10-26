@@ -225,10 +225,54 @@ lit notes.md로 월요일 회의용 열 장짜리 발표자료를 만들어줘
 | --- | --- |
 | 코드 | `debugging`, `refactor`, `lit-code`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`, `structural-search`, `lsp-setup`, `lit-init` |
 | 계획과 팀 작업 | `deep-interview`, `lit-brainstorm`, `lit-crucible`, `litgoal`, `litwork`, `lit-team` |
-| 조사와 지식 | `autoresearch`, `autoconference`, `wikify`, `lit-fetch`, `coding-session-audit`, `lit-comprehend` |
-| 화면, 그림, 영상 | `frontend-ui-ux`, `visual-qa`, `browser-drive`, `readme-studio`, `lit-diagram-drawer`, `lit-scientific-visualization`, `lit-typographic-motion` |
+| 조사와 지식 | `autoresearch`, `autoconference`, `wikify`, `lit-fetch`, `coding-session-audit`, `lit-comprehend`, `lit-hijack`, `lit-adhd` |
+| 화면, 그림, 영상 | `frontend-ui-ux`, `visual-qa`, `browser-drive`, `readme-studio`, `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`, `lit-typographic-motion` |
 | LitCodex 관리 | `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix` |
 | 알아서 도는 검사 | `rules`, `lsp`, `comment-checker`: 프롬프트마다 프로젝트 규칙을 넣고, 수정 뒤에는 LSP와 주석을 확인 |
+
+## 만들 수 있는 것
+
+번들 스킬의 스크립트를 이 컴퓨터에서 직접 돌려 만든 그림 네 장입니다. 그림 속 수치는 모두 예시 자료입니다.
+
+### 어디까지 했더라
+
+```text
+lit adhd
+```
+
+`lit-adhd`는 최근 Codex 세션을 읽어 내게 답을 기다리는 일, 돌아가는 일, 끝난 일과 다음 한 걸음을 펼칩니다. 이 브리핑은 예시 세션으로 만들었고 Codex 터미널이 그렸습니다.
+
+<p align="center"><img src="./docs/assets/gallery/adhd-brief.webp" width="720" alt="Codex 터미널에 나온 lit adhd 브리핑. 세션 여섯 개 중 하나는 답을 기다리고 하나는 실행 중이라는 제목, 세션마다 목표와 단계와 다음 걸음이 든 카드, 진행 막대가 있는 로드맵, 끝난 세션 네 개의 표, 상자에 담은 추천 다음 단계가 보인다." /></p>
+
+### 발표자료
+
+```text
+lit 구 주거 실태 설문을 10장 브리핑 덱으로, 뉴스룸 스타일로
+```
+
+`lit-pptx`는 Markdown을 PowerPoint에서 바로 고칠 수 있는 덱으로 만들고, Pretendard를 넣은 뒤 넘침, 대비, 빈 슬라이드를 검사합니다. 스킬에 들어 있는 뉴스룸 예시를 쪽 이미지로 그린 것입니다.
+
+<p align="center"><img src="./docs/assets/gallery/deck-newsroom.webp" width="720" alt="열한 장짜리 한국어 뉴스룸 스타일 덱의 한눈 보기. 핵심 수치 세 개가 있는 표지, 목차, 선과 막대 차트, 설문 쪽, 동별 표, 타임라인, 출처 쪽, 마무리 요약이 따뜻한 흰 바탕에 주황색 계열 하나로 이어진다." /></p>
+
+### 웹 페이지
+
+```text
+lit 주간 대중교통 이용 브리핑 서비스 랜딩 페이지를 네오 브루탈리즘으로 만들어줘
+```
+
+`frontend-ui-ux`는 먼저 하우스 스타일을 잠그고 키트로 만든 뒤, 320, 390, 768, 1440픽셀에서 페이지를 점검합니다. 1440픽셀과 390픽셀로 보여 줍니다.
+
+<p align="center"><img src="./docs/assets/gallery/page-landing.webp" width="720" alt="이용 브리핑 서비스의 네오 브루탈리즘 랜딩 페이지. 1440픽셀 너비에서는 노란색에서 연보라로 번지는 히어로에 큰 1.28M 수치와 테두리 있는 통계 카드 두 개가 있고, 그 옆에 390픽셀 너비에서 한 열로 쌓인 같은 히어로가 있다." /></p>
+
+### P&ID
+
+```text
+lit 차아염소산나트륨 주입 스키드 P&ID를 A3 한 장으로 그려줘
+```
+
+`lit-schematic`은 ISA 기호, 태그가 붙은 배관, 범례, 표제란을 그리며, 이 도면은 QA 검사를 통과했습니다.
+
+<p align="center"><img src="./docs/assets/gallery/pid-dosing-skid.webp" width="720" alt="A3 한 장짜리 주입 스키드 P&ID. 저장 탱크, 필터와 체크 밸브가 붙은 주입 펌프 두 대(운전·예비), 안전 밸브, 압력·유량 계기가 있고 오른쪽에 범례 열, 아래에 표제란이 있다." /></p>
 
 ## 핸드오프를 LitCodex에 맡기기
 
@@ -370,6 +414,9 @@ Codex 목표 도구로 이어지는 점선은 도구가 있을 때 에이전트�
 | `lit-plan` 또는 `lit plan` | **lit-plan** | 계획만 작성: 증거와 마지막 완료 주장이 담긴 범위 있는 계획 |
 | `deep-interview` 또는 `lit deep interview` | **deep-interview** | 계획만 작성: 모호한 요구를 질문으로 좁힘 |
 | `lit brainstorm`, `lit ideation` 또는 `lit idea` | **lit-brainstorm** | 서로 다른 선택지를 많이 낸 뒤 고를 수 있는 짧은 목록으로 좁힘, 만들지는 않음 |
+| `lit schematic` 또는 `lit-schematic` | **lit-schematic** | 실제 장비를 SVG, PDF, PNG로 그림: P&ID, PFD, 실험 장치 그림, 아이소메트릭 컷어웨이. 이런 요청을 담은 단독 `lit`도 이 스킬로 이어짐 |
+| `lit hijack` 또는 `lit-hijack` | **lit-hijack** | 다른 사람이 공개한 기법(게시물, 아티클, 저장소, PDF)을 내 스킬로 옮김: 출처와 라이선스를 먼저 적고, 원문 표현 없는 명세를 쓰고, 따로 구현한 뒤 전후 비교로 증명함. `lit` 뒤에 하이재킹, 하이잭도 가능 |
+| `lit adhd` 또는 `lit rewind` | **lit-adhd** | 읽기 전용 "나 어디까지 했지": 최근 Codex 세션 전체를 한 번에 정리함. 각 세션의 요청, 나를 기다리는 것, 진행 게이지, 멈춘 작업, 다음 한 걸음(`go`라고 입력하면 실행). `lit continue`는 멈춘 루프를 그 단계 그대로 되살림 |
 | `litgoal` 또는 `lit goal` | **litgoal** | 완료 기준을 정하고 유지: 목표와 기준을 lit-loop와 Start Work가 향해 가는 루프 상태에 연결 |
 | `lit-recap` 또는 `lit recap` | **lit-recap** | `.litcodex` 원장을 읽기 전용으로 요약 |
 | `lit-comprehend` 또는 `comprehend` | **lit-comprehend** | 작업 트리 밖에 자체 완결형 설명 자료 생성 |

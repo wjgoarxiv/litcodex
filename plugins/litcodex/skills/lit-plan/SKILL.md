@@ -366,6 +366,12 @@ untracked paths, exclude them from every todo unless the user approved touching 
 worker to re-check the diff before completion. Plans that say “clean up the workspace” without scoping the
 cleanup to artifacts created by this task are rejected.
 
+## Plans that come from a lit-hijack spec
+
+A plan written from a `lit-hijack` spec (`.litcodex/hijack/<slug>/SPEC.md`) cites SPEC sections (`M1`, `M2`) and the
+target's files in its rows and References. Keep the run's captured sources out of the plan: the implementer works
+from the spec alone, and the hijack build gate fails a plan that names them.
+
 ## Minimum-first plan review
 
 Every todo should be the smallest change that satisfies the accepted goal. Before finalizing, challenge

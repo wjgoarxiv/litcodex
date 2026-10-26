@@ -12,7 +12,7 @@ No LibreOffice / rendering engine required: everything is read from the OOXML
 via python-pptx. A renderer is needed only for separate visual preview.
 
 With --sibling OTHER.pptx (the same source compiled under another tonality) the
-office craft check also fails two decks that draw one skeleton (OF-116).
+office craft check also fails two decks that set titles or bodies in different places (OF-116).
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE, MSO_SHAPE_TYPE
 from pptx.opc.constants import RELATIONSHIP_TYPE as RT
-from craft_extras import DISPLAY_FAMILY, GRID_MARGIN, PACK_STAMP, analyze_craft, compare_skeletons, family_of, title_frame
+from craft_extras import DISPLAY_FAMILY, GRID_MARGIN, PACK_STAMP, analyze_craft, compare_placement, family_of, title_frame
 
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATE = ROOT / "scripts" / "validate_pptx.py"
@@ -598,18 +598,12 @@ def check_objective_quality(path: Path) -> dict[str, Any]:
 
 
 def _pack_frame(slide, width: float, height: float, margin: float):
-    """Body frame of a pack slide in inches (x0, y0, x1, y1): beside a side rail, above a bottom
-    title, else under the title; inside the grid margin and above the foot strip."""
+    """Body frame of a pack slide in inches (x0, y0, x1, y1): every title sits on the shared title zone,
+    so the body is the page under it, inside the grid margin and above the foot strip."""
     title = title_frame(list(slide.shapes))
     x0, y0, x1, y1 = margin, margin, width - margin, min(height - margin, 6.83)
     if title is not None:
-        tx0, ty0, tx1, ty1 = _bbox_in(title)
-        if title.name == "title@side-rail":
-            x0 = tx1 + 0.1
-        elif title.name == "title@bottom-anchor":
-            y1 = ty0 - 0.1
-        else:
-            y0 = ty1 + 0.1
+        y0 = _bbox_in(title)[3] + 0.1
     return (x0, y0, x1, max(y0 + 0.1, y1))
 
 
@@ -795,9 +789,9 @@ def qa(pptx: Path, sibling: Path | None = None) -> dict[str, Any]:
     objective = check_objective_quality(pptx)
     content_quality = check_content_quality(pptx)
     office_craft = analyze_craft(Presentation(pptx))
-    # The same source under another tonality, when given: the two decks must not share one skeleton (OF-116).
+    # The same source under another tonality, when given: the two decks must set titles and bodies in the same places (OF-116).
     if sibling is not None:
-        office_craft["findings"] += compare_skeletons(pptx, sibling)
+        office_craft["findings"] += compare_placement(pptx, sibling)
         office_craft["pass"] = not any(f["severity"] == "HIGH" for f in office_craft["findings"])
 
     reasons: list[str] = []

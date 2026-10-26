@@ -11,9 +11,11 @@
 import { lstatSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { cardStatusText, readCardStatus } from "./card-status.js";
+import { clean, cleanDeep } from "./control-chars.js";
 import { codexHomeFrom, liveStepPath, plainDirsOrMissing, readLiveStep, readSmallJson, readThreadPointer, threadPointerPath, } from "./live-step.js";
 import { LIT_LOOP_DIR, LIT_LOOP_GOALS, normalizeSessionId } from "./state-paths.js";
 import { workflowTurn } from "./workflow-map.js";
+export { clean } from "./control-chars.js";
 const POINTER_DIR = "litcodex/lit-loop/threads";
 const MAX_LIVE_STEP_BYTES = 4_096;
 /** The cap the workflow map itself reads its state files under. */
@@ -183,19 +185,9 @@ export function readHud(env, wanted, now) {
         return { wanted, session: null, status: null, unreadable: ["LIT records"] };
     }
 }
-/** C0/C1 controls (ESC, CSI, BEL among them) plus zero-width and bidi format characters. */
-const CONTROL = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/gu;
-export function clean(text) {
-    return text.replace(CONTROL, "");
-}
 /** The card with every record-derived string stripped of control characters. */
 export function cleanStatus(status) {
-    return {
-        ...status,
-        mode: status.mode === null ? null : clean(status.mode),
-        step: status.step === null ? null : { ...status.step, tool: clean(status.step.tool) },
-        map: status.map === null ? null : { ...status.map, next: status.map.next === null ? null : clean(status.map.next) },
-    };
+    return cleanDeep(status);
 }
 const MARK = /^\p{M}$/u;
 const WIDE_EMOJI = /^\p{Emoji_Presentation}$/u;
@@ -257,6 +249,22 @@ function age(lastSeen, now) {
 const BOLD = "\u001b[1m";
 const DIM = "\u001b[2m";
 const RESET = "\u001b[0m";
+const AMBER_FG = "\u001b[38;2;255;175;60m";
+const GREEN_FG = "\u001b[38;2;107;219;143m";
+/** 256-colour codes, one per cell: red, orange, yellow, green, cyan, blue, violet, pink. */
+const RAINBOW = [203, 209, 221, 114, 80, 75, 141, 205];
+/** One line tinted cell by cell through the rainbow; still, never animated. */
+function rainbowLine(line) {
+    let index = 0;
+    let out = BOLD;
+    for (const cell of cells(line)) {
+        if (cell.text === " ")
+            out += cell.text;
+        else
+            out += `\u001b[38;5;${RAINBOW[index++ % RAINBOW.length]}m${cell.text}`;
+    }
+    return `${out}${RESET}`;
+}
 /** One frame as text: a header, the card, and at most one "cannot read" line. Pure. */
 export function renderHud(view, options) {
     const width = Math.max(10, Math.floor(options.width));
@@ -280,17 +288,25 @@ export function renderHud(view, options) {
     else {
         const { id, folder, lastSeen } = view.session;
         lines.push({ text: `${id.slice(0, SHORT_ID)} · ${clean(folder)} · ${age(lastSeen, options.now)}`, style: DIM });
+        const look = view.status?.look ?? null;
+        const tint = look === "turn" ? AMBER_FG : look === "done" ? GREEN_FG : "";
         cardStatusText(cleanStatus(view.status))
             .split("\n")
             .forEach((text, index) => {
-            lines.push({ text, style: index === 0 ? BOLD : "" });
+            lines.push({
+                text,
+                style: index === 0 ? `${BOLD}${tint}` : tint || "",
+                rainbow: index === 0 && look === "rewind",
+            });
         });
     }
     if (view.unreadable.length > 0)
         lines.push({ text: `cannot read ${view.unreadable.join(", ")}`, style: DIM });
     return lines
-        .map(({ text, style }) => {
+        .map(({ text, style, rainbow }) => {
         const line = fit(clean(text), width);
+        if (options.color && rainbow === true)
+            return rainbowLine(line);
         return options.color && style !== "" ? `${style}${line}${RESET}` : line;
     })
         .join("\n");

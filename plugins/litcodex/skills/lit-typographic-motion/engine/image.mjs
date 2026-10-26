@@ -146,6 +146,95 @@ export function luminancePercentile(bytes, fraction) {
 	return 1;
 }
 
+/**
+ * The low and high luminance percentiles of an RGBA frame from one histogram pass: `low` is the lower
+ * edge of the bin holding the `lowFraction` quantile, `high` the upper edge of the bin holding the
+ * `highFraction` quantile (the same rule as luminancePercentile). Their
+ * spread is how much the frame holds besides one flat colour (FLAT-FRAME).
+ */
+export function luminanceBand(bytes, lowFraction, highFraction) {
+	const bins = new Uint32Array(1024);
+	const count = bytes.length / 4;
+	for (let i = 0; i < bytes.length; i += 4) {
+		const l = 0.2126 * LINEAR[bytes[i]] + 0.7152 * LINEAR[bytes[i + 1]] + 0.0722 * LINEAR[bytes[i + 2]];
+		bins[Math.min(1023, Math.floor(l * 1024))]++;
+	}
+	let seen = 0;
+	let low = null;
+	let high = 1;
+	for (let k = 0; k < 1024; k++) {
+		seen += bins[k];
+		if (low === null && seen >= count * lowFraction) low = k / 1024;
+		if (seen >= count * highFraction) {
+			high = (k + 1) / 1024;
+			break;
+		}
+	}
+	return { low: low ?? 0, high };
+}
+
+const luma8 = (p, o) => Math.round(0.299 * p[o] + 0.587 * p[o + 1] + 0.114 * p[o + 2]);
+
+/**
+ * Share of 48 px cells that carry something (DEAD-AIR): a cell is busy when its luma varies (sd > 6)
+ * or its mean sits more than 16 levels off the frame's ground, the most common luma smoothed over
+ * +-3 levels. Sampled on a 3 px lattice; an opaque RGBA frame in, a 0..1 share out.
+ */
+export function busyShare(rgba, width, height, { cell = 48, step = 3 } = {}) {
+	const hist = new Uint32Array(256);
+	for (let y = 0; y < height; y += step) for (let x = 0; x < width; x += step) hist[luma8(rgba, (y * width + x) * 4)] += 1;
+	let ground = 0;
+	let best = -1;
+	for (let i = 0; i < 256; i++) {
+		let sum = 0;
+		for (let k = Math.max(0, i - 3); k <= Math.min(255, i + 3); k++) sum += hist[k];
+		if (sum > best) {
+			best = sum;
+			ground = i;
+		}
+	}
+	let busy = 0;
+	let cells = 0;
+	for (let cy = 0; cy + cell <= height; cy += cell) {
+		for (let cx = 0; cx + cell <= width; cx += cell) {
+			let sum = 0;
+			let sq = 0;
+			let n = 0;
+			for (let y = cy; y < cy + cell; y += step)
+				for (let x = cx; x < cx + cell; x += step) {
+					const l = luma8(rgba, (y * width + x) * 4);
+					sum += l;
+					sq += l * l;
+					n += 1;
+				}
+			const mean = sum / n;
+			if (Math.sqrt(Math.max(0, sq / n - mean * mean)) > 6 || Math.abs(mean - ground) > 16) busy += 1;
+			cells += 1;
+		}
+	}
+	return cells ? busy / cells : 0;
+}
+
+// RICH-FILL: the frame cut into 4 x 3 regions, each judged by its own busyShare.
+export const FILL_GRID = Object.freeze({ cols: 4, rows: 3 });
+
+/** The busyShare of each region of the FILL_GRID, row by row. */
+export function regionFill(rgba, width, height) {
+	const out = [];
+	const rw = Math.floor(width / FILL_GRID.cols);
+	const rh = Math.floor(height / FILL_GRID.rows);
+	for (let r = 0; r < FILL_GRID.rows; r++)
+		for (let c = 0; c < FILL_GRID.cols; c++) {
+			const sub = new Uint8Array(rw * rh * 4);
+			for (let y = 0; y < rh; y++) {
+				const from = ((r * rh + y) * width + c * rw) * 4;
+				sub.set(rgba.subarray(from, from + rw * 4), y * rw * 4);
+			}
+			out.push(busyShare(sub, rw, rh));
+		}
+	return out;
+}
+
 // A 3x5 bitmap face for contact-sheet labels only (time and frame numbers); never film type.
 const GLYPHS = {
 	0: "111101101101111",

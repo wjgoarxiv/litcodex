@@ -11,6 +11,8 @@ describe("doctor — bundled skill payloads", () => {
 			"browser-drive",
 			"lit-humanizer",
 			"lit-diagram-drawer",
+			"lit-schematic",
+			"lit-hijack",
 			"readme-studio",
 			"structural-search",
 			"coding-session-audit",
@@ -40,6 +42,54 @@ describe("doctor — bundled skill payloads", () => {
 				expect(report.missingSkillResourcePaths).toContain("<lit-diagram-drawer-payload-integrity>");
 			} else {
 				expect(report.missingSkillIds).toContain("lit-diagram-drawer");
+			}
+		}
+	});
+
+	it("fails health when the schematic skill is missing or its files drift", () => {
+		for (const payloadMutation of [{ missing: "lit-schematic" }, { tamper: "lit-schematic" }] as const) {
+			const report = runDoctor(
+				doctorDeps(
+					[codexBin, sentinelPath],
+					undefined,
+					undefined,
+					undefined,
+					undefined,
+					true,
+					true,
+					payloadMutation,
+				),
+			);
+			expect(report.skillCatalogComplete).toBe(false);
+			expect(report.ok).toBe(false);
+			if ("tamper" in payloadMutation) {
+				expect(report.missingSkillResourcePaths).toContain("<lit-schematic-payload-integrity>");
+			} else {
+				expect(report.missingSkillIds).toContain("lit-schematic");
+			}
+		}
+	});
+
+	it("fails health when the hijack skill is missing or its files drift", () => {
+		for (const payloadMutation of [{ missing: "lit-hijack" }, { tamper: "lit-hijack" }] as const) {
+			const report = runDoctor(
+				doctorDeps(
+					[codexBin, sentinelPath],
+					undefined,
+					undefined,
+					undefined,
+					undefined,
+					true,
+					true,
+					payloadMutation,
+				),
+			);
+			expect(report.skillCatalogComplete).toBe(false);
+			expect(report.ok).toBe(false);
+			if ("tamper" in payloadMutation) {
+				expect(report.missingSkillResourcePaths).toContain("<lit-hijack-payload-integrity>");
+			} else {
+				expect(report.missingSkillIds).toContain("lit-hijack");
 			}
 		}
 	});

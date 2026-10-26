@@ -142,6 +142,7 @@ export function readLiveStep(repoRoot, sessionId) {
         return null;
     const text = (value) => (typeof value === "string" && value !== "" ? value : null);
     const time = (value) => (typeof value === "number" && Number.isFinite(value) ? value : null);
+    const waitReason = text(record["waitReason"]);
     return {
         tool: text(record["tool"]),
         toolUseId: text(record["toolUseId"]),
@@ -150,6 +151,7 @@ export function readLiveStep(repoRoot, sessionId) {
         turnStartedAt: time(record["turnStartedAt"]),
         turnEndedAt: time(record["turnEndedAt"]),
         lastTool: text(record["lastTool"]),
+        ...(waitReason !== null ? { waitReason } : {}),
     };
 }
 function writeLiveStep(repoRoot, path, step) {
@@ -224,7 +226,7 @@ export function recordLiveStepEnd(repoRoot, sessionId, ref, now = Date.now()) {
  * End whatever step this session still shows, since no tool runs once Stop fires, and close the turn
  * unless a Stop guard is sending the model back to work (`closeTurn` false).
  */
-export function endLiveStep(repoRoot, sessionId, now = Date.now(), closeTurn = true) {
+export function endLiveStep(repoRoot, sessionId, now = Date.now(), closeTurn = true, waitReason) {
     const path = liveStepPath(repoRoot, sessionId);
     const current = path === null ? null : readLiveStep(repoRoot, sessionId);
     if (path === null || current === null)
@@ -239,7 +241,21 @@ export function endLiveStep(repoRoot, sessionId, now = Date.now(), closeTurn = t
         turnStartedAt: current.turnStartedAt,
         turnEndedAt: closeTurn ? now : current.turnEndedAt,
         lastTool: current.tool ?? current.lastTool,
+        ...(closeTurn && waitReason != null ? { waitReason } : {}),
     });
+}
+/** The last words ask the person something: a closing question, or a request to approve, confirm or deny. */
+const ASKS = /[?？]\s*$|`?lit approve`?|`?lit deny`?|승인해\s*주|확인해\s*주|괜찮을까요|할까요/iu;
+const BLOCKED_RE = /^BLOCKED:/mu;
+/** Detect why the session waits on the user from the last assistant message, or null. */
+export function detectWaitReason(lastMessage) {
+    if (lastMessage === null || lastMessage === "")
+        return null;
+    if (BLOCKED_RE.test(lastMessage))
+        return "blocked";
+    if (ASKS.test(lastMessage))
+        return "question";
+    return null;
 }
 /** `$CODEX_HOME`, else `$HOME/.codex`, read from the given environment only; null when neither is set. */
 export function codexHomeFrom(env) {

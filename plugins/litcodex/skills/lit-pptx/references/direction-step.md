@@ -2,15 +2,17 @@
 
 A deck's look is decided once, at the start, and written down. The decision names a tonality: a
 pack of palette, faces, title treatments, layout families, decoration and two dials (density,
-variance) that the compiler reads as data. Eight tonalities ship with this skill; four older
+variance) that the compiler reads as data. Thirteen tonalities ship with this skill; four older
 single-look templates stay available for users who ask for them by name. Skipping the step is
 how every deck ends up blue and white regardless of subject, so the build does not start until
 the direction card below exists.
 
 The step costs a few minutes. Close the brief, take the deck type's candidates, count the outline,
-reorder, write the card, and tell the user the pick with two alternatives. Questions to the user
-are reserved for two cases: the brief leaves the look open on purpose (build the compare strip),
-or a dial needs a bigger move than the skill is allowed to make unasked.
+reorder, ask the user to choose with the SKILL.md "Choose the design first" step (the ranked pick first, the
+two alternatives, a compare option and the slide frame; skipped when the brief names them or hands the choice
+over, and under a bare `lit`), write the card from the answer, and tell the user the pick with two
+alternatives. The ranking only proposes. A brief that leaves the look open on purpose also gets the compare
+strip, and a dial needs the user when it must move further than the skill is allowed to move it unasked.
 
 ## Inputs: four facts about the brief
 
@@ -19,7 +21,7 @@ attached material, and mark the line `(inferred)` so the user can overrule it.
 
 | Fact | What to record | Why it matters |
 |---|---|---|
-| Deck type | one of the eight rows below, or "other, closest to …" | picks the candidate list |
+| Deck type | one of the thirteen rows below, or "other, closest to …" | picks the candidate list |
 | Reader | who, in what setting, for how long ("투자 심사역 4명, 회의실, 15분") | presented vs read, glyph budget |
 | Delivery | spoken live, sent ahead and read alone, or both | moves Gazette and Ledger |
 | Language | Korean, English, mixed | Korean bodies carry about half the characters of Latin ones |
@@ -39,6 +41,11 @@ now starts at density 10 (the compact step); the variance shown is the pack defa
 | 이미지 중심 (product, site, portfolio) | Atlas, v7 | Studio, v8 | Signal, v6 for a launch with few pictures |
 | 보고서형 덱 (Korean text briefing) | Gazette, v4 | Ledger, v5 | — |
 | 주간·월간 보고 (status update) | Ledger, v5 | Gazette, v4 | Night, v6 |
+| 런칭·데모데이·캠페인 (launch, demo day, campaign) | Neo-Brutalism, v7 | Signal, v6 | Studio, v7 |
+| 아키텍처·인프라 리뷰 (engineering or developer review) | Computational Brutalism, v7 | Night, v6 | Ledger, v5 |
+| 디자인·건축·전시 강의 (design or culture lecture) | Bauhaus, v7 | Studio, v8 | Atlas, v7 |
+| 커뮤니티·문화·교육 프로그램 (community or education programme) | Riso, v7 | Studio, v7 | Bauhaus, v7 for a design programme |
+| 주민·독자 대상 데이터 브리핑 (data story for the public) | Newsroom, v6 | Gazette, v4 when read alone | Ledger, v5 |
 
 ## Reordering signals
 
@@ -48,7 +55,7 @@ this order; a tie keeps the deck-type order, which makes the result repeatable.
 
 | # | Signal | Fires when | Effect |
 |---|---|---|---|
-| 1 | Named tonality | the brief or an earlier turn names one | use it; the card is still written |
+| 1 | Named tonality | the brief or an earlier turn names one, or names its style: 네오 브루탈리즘 / neo-brutalism, 컴퓨테이셔널 브루탈리즘 / terminal / retro-futurist, 바우하우스 / Bauhaus, 리소 / risograph / zine, 뉴스룸 / data journalism | use it; the card is still written. A bare 브루탈리즘 / brutalist means Neo-Brutalism for a pitch or launch and Computational Brutalism for a technical deck |
 | 2 | Named legacy template | AZURE-PRO, AZURE-A2Z, BOILERPLATE-PRETENDARD or BOILERPLATE-A2Z is asked for | use it as named; offer two tonalities as alternatives |
 | 3 | Read, not presented | "미리 배포", "보고서", "circulated", "pre-read" | Gazette (Korean) or Ledger (other languages) to the front |
 | 4 | Table share | 30 % of content slides or more carry a table | Ledger or Gazette up one |
@@ -60,8 +67,14 @@ this order; a tie keeps the deck-type order, which makes the result repeatable.
 | 10 | Teaching structure | definitions, formulas, or a how-it-works sequence of three steps or more | Chalk or Paper up one |
 | 11 | Dark room | keynote, stage, demo day | Night up one |
 | 12 | Missing shape | the pack has no family or treatment for one of the outline's slides | drop that pack |
+| 13 | Engineering content | metrics with units, versions or identifiers (p99, rps, v3), commands in the text | Computational Brutalism up one |
+| 14 | Launch audience | a young or consumer audience with a sign-up or funding ask | Neo-Brutalism up one |
+| 15 | Works and makers | works, makers, periods, a sequence of ideas | Bauhaus up one |
+| 16 | Community programme | participants, sessions, dates and places for a public audience | Riso up one |
+| 17 | Public data story | one chart per idea for readers outside the field, a source on every figure | Newsroom up one |
+| 18 | Weighty subject | a board, finance, public-sector, grief, safety or HR topic | Neo-Brutalism, Computational Brutalism, Bauhaus and Riso drop out |
 
-Row 12 decides more often than it seems. Atlas carries no table family. Ledger and Gazette have no
+Row 12 decides more often than it seems. Computational Brutalism sets Hangul in Pretendard inside a mono face, so a long Korean reading deck loses most of its look. Newsroom needs figures: a deck with no chart or table has nothing to colour. Atlas carries no table family. Ledger and Gazette have no
 `statement` treatment or family. Signal has no `ledger-table` and no `dashboard-grid`. Paper has no
 `kpi-row`. Chalk has no chart family. Gazette has no picture family. Check with `--list-layouts`
 before committing:
@@ -197,6 +210,11 @@ closest one before writing a new deck. Data in all of them is invented and marke
 | `11-portfolio-studio-ko.md` | image-led portfolio | Studio | Atlas, Signal |
 | `12-tutorial-chalk-en.md` | technical tutorial | Chalk | Paper, Night |
 | `13-status-update-gazette-ko.md` | status update read at a desk | Gazette | Ledger, Night |
+| `14-engineering-review-computational-brutalism-ko.md` | engineering review | Computational Brutalism | Night, Ledger |
+| `15-launch-pitch-neo-brutalism-ko.md` | launch pitch | Neo-Brutalism | Signal, Studio |
+| `16-design-lecture-bauhaus-ko.md` | design lecture | Bauhaus | Studio, Atlas |
+| `17-community-programme-riso-ko.md` | community programme | Riso | Studio, Bauhaus |
+| `18-public-data-briefing-newsroom-ko.md` | data story for the public | Newsroom | Gazette, Ledger |
 
 Examples that place pictures reference `assets/example-a.png`, `assets/example-b.png` and
 `assets/example-c.png` next to the source. Put real images under those names, or change the paths,

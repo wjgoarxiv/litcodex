@@ -8,6 +8,8 @@ import { spawn, spawnSync } from "node:child_process";
 import { closeSync, createWriteStream, existsSync, mkdirSync, openSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { checkProductFiles, fetchAssets } from "../engine/assets.mjs";
+import { blenderCommand } from "../engine/blender.mjs";
 import { evaluateCompletion } from "../engine/completion.mjs";
 import { Composer } from "../engine/compose.mjs";
 import { CREDIT_LINE, ENGINE_CREDIT, EXIT, Exit, FRAME, INSTALL_COMMAND, MAX_ROUNDS, NEAR_BLACK, PERF, PREVIEW, SAMPLING } from "../engine/constants.mjs";
@@ -18,9 +20,11 @@ import { coverGate, formatCoverReport } from "../engine/cover-gate.mjs";
 export { promote };
 import { Blocked, close, launch, openEgress, perfFrame, renderFrame } from "../engine/driver.mjs";
 import { FlashDetector } from "../engine/flash.mjs";
+import { stylesCommand } from "../engine/gallery.mjs";
 import { FONTS, fontEntry, fontPath, verifyFonts, verifyStrokeFonts } from "../engine/fonts.mjs";
 import { evaluate, flashFailed, gatePassed, isSoftwareRenderer, timelineRules } from "../engine/gate.mjs";
 import { contactSheet, decodePng, downscale, encodePng, luminancePercentile, rgbaSha256 } from "../engine/image.mjs";
+import { recordHouse } from "../engine/house.mjs";
 import { passRanges, planPasses } from "../engine/passes.mjs";
 import { PRESETS, pickPreset, presetFontKeys } from "../engine/presets.mjs";
 import { renderReport } from "../engine/report.mjs";
@@ -30,20 +34,34 @@ import { loadTreatment, normalizeText, TreatmentError } from "../engine/treatmen
 import { gateStage, runStage, stillsEntry, writeStills } from "../engine/stage-render.mjs";
 import { recordLook, viewedFor } from "../engine/look.mjs";
 import { measureMuxed, prepareTrack, soundFailed, trackPath } from "../engine/sound.mjs";
+import { scaffoldCommand } from "../engine/scaffold.mjs";
 import { loadStrokeFont, strokeText } from "../engine/stroke.mjs";
+import { readStyle } from "../engine/styles.mjs";
 import { FontBook, missingGlyphs } from "../engine/type.mjs";
 
 const SELF = fileURLToPath(import.meta.url);
-const MODES = ["stage", "cover", "cover-gate", "sound", "look", "film", "stills", "sheet", "video", "perf", "gate", "completion", "determinism"];
+const MODES = ["scaffold", "styles", "stage", "cover", "cover-gate", "assets", "blender", "sound", "look", "film", "stills", "sheet", "video", "perf", "gate", "completion", "determinism"];
 
 export const USAGE = `lit-typographic-motion render CLI (LitCodex)
 Every render reads <dir>/treatment.json first (or --treatment <file>); references/treatment.md.
 Usage:
+  node render.mjs scaffold --out <dir>
+                         (writes the starting <dir>/stage/index.html from treatment.json: the COPY block, one section per
+                          shot in its zones, the style's tokens, one DRAW function per shot; never overwrites a page)
+  node render.mjs styles --out <dir> [--format 16:9|9:16]
+                         (renders one short demo in each house style and sheets the boards into <dir>/styles.png)
   node render.mjs stage  --out <dir> [--round N] [--stills-only] [--detach]
-                         (renders <dir>/stage/index.html; references/stage.md)
+                         (renders <dir>/stage/index.html; references/stage.md; --stills-only writes the beat stills and the
+                          storyboard stills/board.png and runs the layout check, no video)
   node render.mjs cover  --out <dir> [--round N] [--window t0,t1] [--detach]
                          (a seamless README cover loop from <dir>/cover/index.html; references/cover.md;
                           --window re-renders only t0-0.5 s .. t1+0.5 s and sheets it, never done)
+  node render.mjs assets --out <dir> --url <link> [--cover]
+                         (a linked product's real logo, README images and words, fetched as untrusted data into
+                          <dir>/stage/assets/ or, with --cover, <dir>/cover/assets/; exit 22 when nothing is reachable)
+  node render.mjs blender --out <dir> [--preview | --final]
+                         (renders <dir>/stage/scene.py with Cycles: preview stills, or the plate in <dir>/stage/plate/;
+                          without Blender it renders nothing and names the three.js fallback; references/depth.md)
   node render.mjs cover-gate --file <cover.webp|cover.gif|frames dir> [--frames d --frames2 d --masks d
                          --title x,y,w,h] [--strict] [--json]   (the cover gate on a decoded file)
   node render.mjs sound  --out <dir>   (builds <dir>/sound/bed.wav and sound-cues.json from the treatment)
@@ -73,7 +91,7 @@ export function parseArgs(argv) {
 		const token = rest[i];
 		if (!token.startsWith("--")) throw new Error(`unexpected argument: ${token}`);
 		const key = token.slice(2);
-		if (["stills-only", "cuts", "word-timing", "help", "detach", "strict", "json"].includes(key)) args.flags.add(key);
+		if (["stills-only", "cuts", "word-timing", "help", "detach", "strict", "json", "cover", "preview", "final"].includes(key)) args.flags.add(key);
 		else {
 			const value = rest[i + 1];
 			if (value === undefined || value.startsWith("--")) throw new Error(`--${key} needs a value`);
@@ -106,6 +124,7 @@ export function resolveTreatment(args, expectPath) {
 		if (error instanceof TreatmentError) throw new Exit(EXIT.BLOCKED_TREATMENT_INVALID, `BLOCKED_TREATMENT_INVALID: ${error.message}`);
 		throw error;
 	}
+	checkProductFiles(outDir, treatment);
 	mkdirSync(join(outDir, ".run"), { recursive: true });
 	const first = join(outDir, ".run", "treatment-first.json");
 	if (!existsSync(first)) writeFileSync(first, `${JSON.stringify(treatment, null, 2)}\n`);
@@ -116,10 +135,12 @@ export function resolveTreatment(args, expectPath) {
 /** The type engine's brief from the treatment; an explicit --brief may only add per-line staging. */
 function typeBrief(args, treatment) {
 	const plan = treatment.typePlan ?? {};
+	// The type preset follows the film's house style unless the plan names one.
+	const preset = plan.preset ?? (treatment.style ? readStyle(treatment.style).typePreset : undefined);
 	const brief = {
 		lines: treatment.copy.lines,
 		durationSec: treatment.durationSec,
-		...(plan.preset ? { preset: plan.preset, presetSource: plan.presetSource === "user" ? "user" : "agent" } : {}),
+		...(preset ? { preset, presetSource: plan.presetSource === "user" ? "user" : "agent" } : {}),
 		...(plan.filmName ? { filmName: plan.filmName } : {}),
 		showIndex: plan.showIndex === true,
 		...(treatment.sound?.mode === "generated" ? { bpm: treatment.sound.tempo } : {}),
@@ -603,6 +624,7 @@ async function runFilm(args, ctx) {
 		out(`report: ${join(ctx.outDir, "gate-report.txt")}`);
 		if (soundFailed(rules)) throw new Exit(EXIT.SOUND_INVALID, `SOUND_INVALID: ${rules.filter((r) => r.sound && r.status === "FAIL").map((r) => `${r.id} ${r.detail}`).join("; ")}`);
 		if (passed) {
+			if (ctx.treatment?.style) recordHouse(ctx.outDir, { style: ctx.treatment.style, path: ctx.treatment.path, format: ctx.treatment.format, durationSec: ctx.treatment.durationSec });
 			out(`GATE PASS: ${join(ctx.outDir, "film.mp4")}`);
 			return EXIT.OK;
 		}
@@ -763,6 +785,19 @@ export async function main(argv = process.argv.slice(2)) {
 			else out(`look round ${entry.round} recorded against stills ${entry.manifestSha256.slice(0, 12)}: ${Object.keys(entry.frames).length} frames stamped${entry.needsAnotherRound ? `; another round needed: ${entry.openItems.map((item) => item.split(":")[0]).join(", ")}` : "; nothing asks for another round"}`);
 			return EXIT.OK;
 		}
+		if (args.mode === "assets") {
+			if (!args.out || !args.url) throw new Exit(EXIT.USAGE, "assets needs --out <dir> --url <link>");
+			const result = await fetchAssets({ out: resolve(args.out), url: args.url, cover: args.flags.has("cover") });
+			out(result.message);
+			return result.code;
+		}
+		if (args.mode === "blender") {
+			if (args.flags.has("preview") && args.flags.has("final")) throw new Exit(EXIT.USAGE, "blender takes --preview or --final, not both");
+			const { treatment } = resolveTreatment(args, "stage");
+			const result = await blenderCommand({ out: resolve(args.out), treatment, final: args.flags.has("final"), log: out });
+			out(result.message);
+			return result.code;
+		}
 		if (args.mode === "cover") {
 			if (!args.out) throw new Exit(EXIT.USAGE, "--out <dir> is required");
 			const outDir = resolve(args.out);
@@ -792,6 +827,18 @@ export async function main(argv = process.argv.slice(2)) {
 			for (const note of track.notes) out(note);
 			if (track.wav) out(`track: ${track.wav}\ncues: ${join(outDir, "sound-cues.json")}`);
 			return EXIT.OK;
+		}
+		if (args.mode === "scaffold") {
+			if (!args.out) throw new Exit(EXIT.USAGE, "--out <dir> is required");
+			resolveTreatment(args, "stage");
+			out(scaffoldCommand({ out: resolve(args.out) }));
+			return EXIT.OK;
+		}
+		if (args.mode === "styles") {
+			if (!args.out) throw new Exit(EXIT.USAGE, "--out <dir> is required");
+			const result = await stylesCommand({ out: resolve(args.out), format: args.format ?? "16:9", log: out });
+			out(result.message);
+			return result.code;
 		}
 		if (args.mode === "stage") {
 			const { treatment } = resolveTreatment(args, "stage");

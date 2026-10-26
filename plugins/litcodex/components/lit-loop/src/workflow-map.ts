@@ -127,8 +127,17 @@ export function countPlanRows(markdown: string): Progress {
 	};
 }
 
+/** Done and total checkbox rows of a project-relative plan file; null when it cannot be read or holds none. */
+export function planProgress(repoRoot: string, rel: string): { readonly done: number; readonly total: number } | null {
+	if (typeof repoRoot !== "string" || !isAbsolute(repoRoot) || rel.includes("..") || isAbsolute(rel)) return null;
+	const text = readText(repoRoot, join(repoRoot, rel));
+	if (text === null) return null;
+	const { done, total } = countPlanRows(text);
+	return total > 0 ? { done, total } : null;
+}
+
 /** The counted checkbox rows in order, as start-work reads them. */
-function planRows(markdown: string): { readonly done: boolean; readonly label: string }[] {
+export function planRows(markdown: string): { readonly done: boolean; readonly label: string }[] {
 	const lines = markdown.split(/\r?\n/);
 	const visible: string[] = [];
 	let fence: { marker: string; length: number } | null = null;

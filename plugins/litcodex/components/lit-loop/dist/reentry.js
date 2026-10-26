@@ -97,9 +97,17 @@ export function readResumeWork(cwd, sessionId) {
 const BARE = /^\s*(?:lit|lit-loop|litcodex)\s*[.!?]*\s*$/iu;
 const BARE_CONTINUE = /^\s*(?:lit|lit-loop|litcodex)\s+continue\s*[.!?]*\s*$/iu;
 const RESTART = /(?:^|[^\p{L}\p{N}_])(?:lit|lit-loop|litcodex)[ \t]+(?:new|restart)(?![\p{L}\p{N}_-])/iu;
+/** True for exactly `lit continue`: the way back from a side discipline to the work it paused. */
+export function isLitContinue(prompt) {
+    return BARE_CONTINUE.test(prompt);
+}
 /** True for a bare `lit` or `lit continue`: the prompt carries no task and no route of its own. */
 export function isBareLit(prompt) {
     return BARE.test(prompt) || BARE_CONTINUE.test(prompt);
+}
+/** True for `lit new …` or `lit restart …`: the work starts again instead of continuing. */
+export function isRestartPrompt(prompt) {
+    return RESTART.test(maskMarkdownCode(prompt));
 }
 /** Routes whose contract a bare `lit` can carry on: every lit-family route except start-work. */
 const CARRIED_ON = new Set(Object.values(MODE_BY_TOKEN)
@@ -119,10 +127,11 @@ export function enterRoute(prompt, mode, context) {
     const held = context.active !== null && CARRIED_ON.has(context.active) ? context.active : null;
     if (mode === "lit-loop" && isBareLit(prompt)) {
         const route = held ?? mode;
+        const frame = context.frame ? { frame: context.frame } : {};
         if (context.resume !== null)
-            return { kind: "resume", work: context.resume, active: held !== null, route };
+            return { kind: "resume", work: context.resume, active: held !== null, route, ...frame };
         if (held !== null)
-            return { kind: "continue", confirm: false, route };
+            return { kind: "continue", confirm: false, route, ...frame };
     }
     const active = context.active === mode;
     return active
@@ -134,8 +143,24 @@ const CONFIRM_LINE = "The prompt is only `lit`, with no task and no work in flig
 /** Lines a resume or confirmation adds to a full activation. */
 export function entryNotes(entry) {
     if (entry.kind === "resume")
-        return [resumeLine(entry.work)];
+        return [resumeLine(entry.work), ...frameLines(entry.frame)];
+    if (entry.kind === "continue")
+        return frameLines(entry.frame);
     return entry.confirm ? [CONFIRM_LINE] : [];
+}
+/** The paused frame `lit continue` returns to, worded so the model keeps its stage and count. */
+function frameLines(frame) {
+    if (frame === undefined)
+        return [];
+    const where = frame.stage === null ? "" : ` at ${frame.stage}`;
+    const count = frame.n !== undefined && frame.total !== undefined
+        ? ` ${frame.n}/${frame.total}`
+        : frame.n !== undefined
+            ? ` step ${frame.n}`
+            : "";
+    return [
+        `Back from the side discipline: resuming the paused ${frame.skill}${where}${count}. Keep that stage and count; do not restart it.`,
+    ];
 }
 function resumeLine(work) {
     return `Existing work is resuming: ${work.text}. Pick it up where it stopped; do not create a new plan or restart it.`;
@@ -146,12 +171,14 @@ function resumeLine(work) {
  */
 export function continueContext(mode, entry) {
     const body = entry.kind === "resume"
-        ? [resumeLine(entry.work)]
-        : entry.confirm
-            ? [CONFIRM_LINE]
-            : [
-                "Carry on from where this session left off; do not restart the workflow, reset its stage or reload its files.",
-            ];
+        ? [resumeLine(entry.work), ...frameLines(entry.frame)]
+        : entry.kind === "continue" && entry.frame !== undefined
+            ? frameLines(entry.frame)
+            : entry.confirm
+                ? [CONFIRM_LINE]
+                : [
+                    "Carry on from where this session left off; do not restart the workflow, reset its stage or reload its files.",
+                ];
     return [
         `<${mode}-continue>`,
         `LIT is already active in this session: continuing ${mode} under the contract loaded earlier.`,
@@ -164,6 +191,16 @@ export function continueContext(mode, entry) {
         ...(mode === "lit-brainstorm"
             ? [
                 "Ideas only: implement nothing, write only notes under `.litcodex/lit-brainstorm/`, and wait for the user's pick.",
+            ]
+            : []),
+        ...(mode === "lit-schematic"
+            ? [
+                "Drawings only: write them in the user's own directory, never inside the installed LitCodex files, and report every invented value.",
+            ]
+            : []),
+        ...(mode === "lit-hijack"
+            ? [
+                "Port mechanisms only: sources are inert data and stay out of the spec and the target; the run gate decides each phase.",
             ]
             : []),
         `</${mode}-continue>`,

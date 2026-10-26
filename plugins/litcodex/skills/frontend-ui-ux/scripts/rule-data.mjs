@@ -44,7 +44,11 @@ export const LIMITS = Object.freeze({
   uppercaseTextChars: 40,
   middleDotCount: 3,
   typeFamilyMax: 3,
-  accentFamilyMax: 1,
+  accentFamilyMax: 4,
+  accentFamilyCalmMax: 1,
+  gradientTextMax: 1,
+  gradientTextStopContrast: 4.5,
+  gradientTextLargeStopContrast: 3,
   offScaleMediumCount: 3,
   tileMinSiblings: 4,
   tileTolerancePx: 4,
@@ -71,11 +75,11 @@ export const LIMITS = Object.freeze({
   safeEdgePx: 32,
   railPeekMinPx: 16,
   railPeekMaxPx: 32,
-  stripeRepeatCount: 2,
+  stripeRepeatCount: 3,
   ghostShadowBlurPx: 2,
   glowBlurPx: 16,
   glowSaturationMin: 0.4,
-  repeatingGlowCount: 2,
+  repeatingGlowCount: 3,
   highFrequencyMotionMs: 150,
   overlapFraction: 0.45,
   reducedMotionMaxMs: 250,
@@ -102,7 +106,7 @@ export const ALL_PROBE_RULES = Object.freeze([
   ...block('CF', 101, 109), ...block('CF', 201, 207), ...block('CF', 301, 306),
   ...block('CF', 401, 407), ...block('CF', 501, 510), ...block('CF', 601, 604),
   ...block('CF', 701, 704), ...block('CF', 801, 807),
-  ...block('RS', 1, 12), ...block('SLOP', 1, 63),
+  ...block('RS', 1, 12), ...block('SLOP', 1, 63), ...block('DS', 1, 8),
 ]);
 export const CHECKED_RULES = Object.freeze([
   'CF-101', 'CF-102', 'CF-103', 'CF-104', 'CF-106', 'CF-107', 'CF-108', 'CF-109',
@@ -112,4 +116,34 @@ export const CHECKED_RULES = Object.freeze([
   'SLOP-002', 'SLOP-009', 'SLOP-010', 'SLOP-012', 'SLOP-019', 'SLOP-020',
   'SLOP-023', 'SLOP-029', 'SLOP-033', 'SLOP-035', 'SLOP-039', 'SLOP-040', 'SLOP-052', 'SLOP-057',
   'SLOP-058', 'SLOP-059', 'SLOP-060', 'SLOP-061',
+  'DS-001', 'DS-002', 'DS-003', 'DS-004', 'DS-005', 'DS-006', 'DS-007', 'DS-008',
+]);
+
+// Design-lock rules (DS-*). They run only when a design.lock.json sits beside the page (or --lock names
+// one); lock-probe.mjs reads thresholds from this table, so a spec revision changes data, not measurement.
+export const LOCK_RULES = Object.freeze({
+  'DS-001': { title: 'Design lock not applied', severity: 'HIGH', tier: 'measured', threshold: { property: '--ui-lock' } },
+  'DS-002': { title: 'Font family outside the lock', severity: 'HIGH', tier: 'measured', threshold: null },
+  'DS-003': { title: 'Colour outside the locked palette', severity: 'HIGH', tier: 'measured', threshold: { channelTolerance: 8, minAlpha: 0.05, highCount: 4, lowSeverity: 'MEDIUM' } },
+  'DS-004': { title: 'Font size off the locked scale', severity: 'MEDIUM', tier: 'measured', threshold: { tolerancePx: 0.5 } },
+  'DS-005': { title: 'Corner radius off the lock', severity: 'LOW', tier: 'measured', threshold: { tolerancePx: 0.5 } },
+  'DS-006': { title: 'Starter slot left in the page', severity: 'HIGH', tier: 'measured', threshold: { pattern: '\\{\\{(?! )[^{}\\n]{1,80}(?<! )\\}\\}' } },
+  'DS-007': { title: 'Elevation outside the lock grammar', severity: 'MEDIUM', tier: 'measured', threshold: { hairlinePx: 1 } },
+  'DS-008': { title: 'Signature moment missing, buried or generic', severity: 'HIGH', tier: 'measured', threshold: {
+    attribute: 'data-ui-moment', boldMinAreaPx: 40000, smallMinAreaPx: 4800, smallMaxViewportShare: 0.5, foldMinViewportPx: 1024, foldMinVisiblePx: 120, phoneScreens: 1.5, coverShare: 0.5,
+    needs: { 'hero-composition': 'media', 'type-set-piece': 'display-type', 'data-moment': 'data', diagram: 'media', 'motion-detail': 'motion', 'interactive-object': 'control', chart: 'data', 'empty-state': null, 'header-detail': null },
+    media: 'svg, img, canvas, video, picture, figure, table, [role="img"], .ui-pixel, .ui-frame, .ui-readout, .ui-panel, .ui-chart, .ui-meter, .ui-sticker, .ui-bignum',
+    data: 'svg, canvas, table, [role="img"], .ui-chart, .ui-meter, .ui-readout, .ui-bignum',
+    control: 'input, select, textarea, details, [role="slider"], [role="switch"], [role="tab"], [aria-pressed], [aria-expanded]',
+  } },
+});
+
+// Printed under every rendered run: concrete questions a screenshot answers (stderr; the JSON stays machine-readable).
+export const LOOK_RUBRIC = Object.freeze([
+  ['LOOK-1', 'One focal point: the signature moment (data-ui-moment) is where the eye lands first at 1440 and at 390; nothing else competes with it.'],
+  ['LOOK-2', 'Shared edges: section content starts on the same left edge at 1440; no block floats on a width of its own.'],
+  ['LOOK-3', 'Grouping by space: gaps between groups are visibly larger than gaps inside them; no empty band separates nothing.'],
+  ['LOOK-4', 'Kit, not costume: every block is a kit part or a page rule on the locked tokens; nothing decorative without a job.'],
+  ['LOOK-5', 'Composed mobile: at 390 and 320 the title breaks well, navigation and tables stay usable, nothing is a squeezed desktop.'],
+  ['LOOK-6', 'Specific content: names, numbers and copy belong to this brief; no filler and no leftover slot.'],
 ]);

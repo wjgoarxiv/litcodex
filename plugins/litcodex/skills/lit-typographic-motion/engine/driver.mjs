@@ -69,18 +69,18 @@ export async function launch({ runtime, outDir, scale, env = process.env, log = 
 }
 
 /**
- * Launch the stage path's Chrome: one software rung with the stage flags, a profile under the run's
- * .run/ folder, service workers blocked, and a viewport exactly the film's frame. The caller
- * installs routes before the first navigation.
+ * Launch the stage path's Chrome: the round's rung (software by default, "gpu" for a 3D film) with the
+ * stage flags, a profile under the run's .run/ folder, service workers blocked, and a viewport exactly
+ * the film's frame. The caller installs routes before the first navigation.
  */
-export async function launchStage({ runtime, outDir, width, height, env = process.env }) {
+export async function launchStage({ runtime, outDir, width, height, rung = "software", env = process.env }) {
 	const chrome = findChrome(env);
 	if (!chrome) throw new Blocked(EXIT.BLOCKED_NO_CHROME, "BLOCKED_NO_CHROME", "Chrome/Chromium not found: install Google Chrome or set CHROME_PATH");
 	const { chromium } = await import(pathToFileURL(runtime.playwright).href);
 	const runDir = join(outDir, ".run");
 	mkdirSync(runDir, { recursive: true });
 	const profileRoot = mkdtempSync(join(runDir, "s"));
-	const flags = stageFlags(width, height);
+	const flags = stageFlags(width, height, process.platform, rung);
 	let context;
 	try {
 		context = await chromium.launchPersistentContext(join(profileRoot, "p"), {
@@ -97,7 +97,7 @@ export async function launchStage({ runtime, outDir, width, height, env = proces
 		throw new Blocked(EXIT.BLOCKED_NO_CHROME, "BLOCKED_NO_CHROME", `Chrome failed to launch headless: ${firstLine(error.message.replace(/^browserType\.launchPersistentContext:\s*/u, ""))}`);
 	}
 	const page = context.pages()[0] ?? (await context.newPage());
-	return { context, page, chrome, flags, profileRoot };
+	return { context, page, chrome, flags, rung, profileRoot };
 }
 
 /**
@@ -105,12 +105,12 @@ export async function launchStage({ runtime, outDir, width, height, env = proces
  * viewport the cover page's CSS size, a profile at `profileDir`, service workers blocked. The caller
  * installs routes before the first navigation and removes the profile after closing.
  */
-export async function launchCover({ runtime, width, height, scale, profileDir, env = process.env }) {
+export async function launchCover({ runtime, width, height, scale, profileDir, rung = "software", env = process.env }) {
 	const chrome = findChrome(env);
 	if (!chrome) throw new Blocked(EXIT.BLOCKED_NO_CHROME, "BLOCKED_NO_CHROME", "Chrome/Chromium not found: install Google Chrome or set CHROME_PATH");
 	const { chromium } = await import(pathToFileURL(runtime.playwright).href);
 	try {
-		const context = await chromium.launchPersistentContext(profileDir, { executablePath: chrome, headless: true, args: coverFlags(width, height, scale), viewport: { width, height }, deviceScaleFactor: scale, serviceWorkers: "block", timeout: 45000 });
+		const context = await chromium.launchPersistentContext(profileDir, { executablePath: chrome, headless: true, args: coverFlags(width, height, scale, process.platform, rung), viewport: { width, height }, deviceScaleFactor: scale, serviceWorkers: "block", timeout: 45000 });
 		return { context, page: context.pages()[0] ?? (await context.newPage()) };
 	} catch (error) {
 		rmSync(profileDir, { recursive: true, force: true });

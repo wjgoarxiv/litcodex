@@ -28,6 +28,12 @@ Build follows build → probe → fix, at most three fix rounds, then a final pr
 
 The probe's JSON contains `{manifest,findings}`. A finding has `rule`, `severity`, `tier`, `viewport`, `value`, `threshold`, and optionally `selector`/`note`. `measured` means a direct style, rect, pixel, or state read; `derived` means a calculation from sound measured inputs. If a source value is unreadable or stale, downgrade the claim to inferred prose or put the rule in `manifest.not_verified`. Human-only JUDG observations are `Inferred` in the report and never fabricated as machine JSON.
 
+## Design lock and look review
+
+A build starts from a lock, not from taste. `node "$FRONTEND_UIUX_SKILL_ROOT/scripts/design-lock.mjs" init --brief "<the user's words>" --dir <project>` picks one of five house styles (or take `--style`), writes `design.lock.json` and the token layer, and scaffolds the kit; `references/house-styles.md` holds the catalogue, density, signature moment and starters. The probe finds `design.lock.json` beside the page (or `--lock path`) and adds DS-001..008: tokens present, no off-palette colour, type and radius drift, leftover `{{slot}}` text, elevation grammar, and the declared signature moment. Without a lock the DS rules go to **Not verified**; the manifest records `design_lock`.
+
+After a run with a browser, the probe prints the 1440, 390 and 320 screenshot paths and the LOOK-1..6 rubric on stderr. Open those images and answer each LOOK row from what you see; a rubric answer is Inferred prose, never a measured row, and a page that passes every rule can still fail the look.
+
 ## Human review
 
 Present the findings table with exactly these columns:

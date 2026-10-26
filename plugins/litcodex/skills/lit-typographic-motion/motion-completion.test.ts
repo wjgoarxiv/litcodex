@@ -1,6 +1,8 @@
-import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { evaluateCompletion } from "./engine/completion.mjs";
 import { stageTreatment } from "./fixtures/treatments.mjs";
@@ -51,5 +53,42 @@ describe("a film turn is not done without a verified render and a look receipt",
 		const out = run();
 		rmSync(join(out, "gate-report.txt"));
 		expect(evaluateCompletion(out).complete).toBe(false);
+	});
+});
+
+// The Stop hook runs this check synchronously with a 5 s manifest timeout. A render folder is written by a
+// model, so a fifo or a link to a device at a path the check reads must end in a verdict, never a hang.
+describe("the done-check reads only bounded regular files", () => {
+	const completion = fileURLToPath(new URL("./engine/completion.mjs", import.meta.url));
+	const verdictInChild = (out: string) =>
+		spawnSync(process.execPath, ["--input-type=module", "-e", `const { evaluateCompletion } = await import(${JSON.stringify(completion)}); console.log(JSON.stringify(evaluateCompletion(${JSON.stringify(out)})));`], { encoding: "utf8", timeout: 8_000, killSignal: "SIGKILL" });
+	const NAMES = ["treatment.json", "manifest.json", "gate-report.txt"];
+
+	it.each(NAMES)("a fifo at %s is a not-complete verdict, not a hang", (name) => {
+		const out = run();
+		rmSync(join(out, name));
+		expect(spawnSync("mkfifo", [join(out, name)]).status).toBe(0);
+		const child = verdictInChild(out);
+		expect(child.error, "the check must return before the timeout").toBeUndefined();
+		expect(child.status).toBe(0);
+		expect(JSON.parse(child.stdout).complete).toBe(false);
+	});
+
+	it.each(NAMES)("a link to /dev/zero at %s is a not-complete verdict, not a hang", (name) => {
+		const out = run();
+		rmSync(join(out, name));
+		symlinkSync("/dev/zero", join(out, name));
+		const child = verdictInChild(out);
+		expect(child.error, "the check must return before the timeout").toBeUndefined();
+		expect(child.status).toBe(0);
+		expect(JSON.parse(child.stdout).complete).toBe(false);
+	});
+
+	it("an oversize treatment.json is not read", () => {
+		const out = run();
+		writeFileSync(join(out, "treatment.json"), `{"pad":"${"x".repeat(5 * 1024 * 1024)}"}`);
+		const verdict = evaluateCompletion(out);
+		expect(verdict.complete).toBe(false);
+		expect(verdict.reason).toMatch(/too large|not a regular file|not valid/u);
 	});
 });

@@ -27,6 +27,8 @@ required_sections:
 
 This directive is an LLM-facing contract injected by the LitCodex Codex plugin, not user-authored prompt text. Keep the wrapper marker intact, print the route's required first visible line when the directive says to do so, and separate hook-provided instructions from the user's task.
 
+A recap covers this session only. When the person asks about other sessions or worktrees, name `lit adhd` as the route that reads them; do not run it.
+
 ## #contract.inputs
 
 ```json

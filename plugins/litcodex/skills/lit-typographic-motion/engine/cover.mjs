@@ -22,7 +22,7 @@ import { loadCoverTreatment } from "./cover-treatment.mjs";
 import { countFlashes, detectLoopingStream } from "./flash.mjs";
 import { FONTS, verifyFonts } from "./fonts.mjs";
 import { encodePng } from "./image.mjs";
-import { resolveRuntime, which } from "./runtime.mjs";
+import { firstLine, resolveRuntime, which } from "./runtime.mjs";
 import { fontRoutes, scanStage, stageFontFaults } from "./stage.mjs";
 import { TreatmentError } from "./treatment.mjs";
 import { findDwebp, findImg2webp } from "./webp.mjs";
@@ -175,9 +175,22 @@ export async function renderCover({ outDir, round, log = () => {}, env = process
 	let master;
 	let replay;
 	let sought;
+	// The 3D hero asks for the GPU rung. When it cannot start or draw there, all three passes take the
+	// software rung (they must share one) and the report says so.
+	let rung = treatment.recipe === "hero-3d" ? "gpu" : "software";
+	const notices = [];
 	try {
 		const pass = async (label, work) => {
-			const session = await CoverSession.open({ runtime, scan, fonts, width: pw, height: ph, scale: COVER.captureScale, profileDir: join(runDir, `chrome-${label}`), env });
+			const open = () => CoverSession.open({ runtime, scan, fonts, width: pw, height: ph, scale: COVER.captureScale, profileDir: join(runDir, `chrome-${label}`), rung, env });
+			let session;
+			try {
+				session = await open();
+			} catch (error) {
+				if (rung !== "gpu" || error instanceof Exit) throw error;
+				notices.push(`the 3D hero asked for the GPU rung and it did not start (${firstLine(String(error.message)).slice(0, 120)}); rendered on the software rung (SwiftShader), slower, same frames`);
+				rung = "software";
+				session = await open();
+			}
 			try {
 				return await work(session);
 			} finally {
@@ -257,7 +270,7 @@ export async function renderCover({ outDir, round, log = () => {}, env = process
 	const stillsManifest = `${JSON.stringify({ schema: 1, kind: "cover", mode: "cover", round, width: gate.width, height: gate.height, fps: treatment.fps, durationSec: gate.sourceDurationSec, files: stills.files }, null, 2)}\n`;
 	writeFileSync(join(stills.dir, "manifest.json"), stillsManifest);
 	writeFileSync(join(outDir, "poster.png"), readFileSync(join(stills.dir, "poster.png")));
-	const report = formatCoverReport(gate, { strict: true });
+	const report = `${formatCoverReport(gate, { strict: true })}${notices.map((n) => `warning: ${n}\n`).join("")}`;
 	writeFileSync(join(outDir, "gate-report.txt"), report);
 	const manifest = {
 		schemaVersion: 1,
@@ -265,6 +278,8 @@ export async function renderCover({ outDir, round, log = () => {}, env = process
 		mode: "cover",
 		round,
 		recipe: treatment.recipe,
+		rung,
+		warnings: notices,
 		treatmentSha256: sha256(readFileSync(join(outDir, "treatment.json"))),
 		stillsManifestSha256: sha256(stillsManifest),
 		page: treatment.page,
@@ -319,7 +334,7 @@ export async function renderCoverWindow({ outDir, round, window: [t0, t1], log =
 	mkdirSync(dir, { recursive: true });
 	const size = treatment.size;
 	const pool = new CoverPool();
-	const session = await CoverSession.open({ runtime, scan, fonts, width: treatment.page[0], height: treatment.page[1], scale: COVER.captureScale, profileDir: join(outDir, ".run", "cover-window-chrome"), env });
+	const session = await CoverSession.open({ runtime, scan, fonts, width: treatment.page[0], height: treatment.page[1], scale: COVER.captureScale, profileDir: join(outDir, ".run", "cover-window-chrome"), rung: treatment.recipe === "hero-3d" ? "gpu" : "software", env });
 	try {
 		await capturePass({ session, pool, times: [...new Set(picks.map((p) => p.index))].map((i) => [i, i / treatment.frames]), dir, size });
 	} finally {

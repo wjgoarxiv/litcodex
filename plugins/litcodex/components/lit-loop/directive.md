@@ -183,7 +183,9 @@ banner loop is the same skill's cover mode: a silent, seamless loop gated on the
 When this task creates or changes a user-facing web interface, put its UI behavior and probe in the
 plan or bounded acceptance checks. Resolve the installed sibling `frontend-ui-ux/SKILL.md` through
 the host skill catalog or this route's installed skill root; load it as support without a second banner.
-Run its `scripts/probe.mjs` on the built page at the seven-entry RS matrix and retain JSON and
+A request to build a page or screen, in English or Korean (a landing page, a dashboard, 화면 만들어줘), is
+this deliverable: before building, take its "Choose the design first" step (skipped under a bare `lit` or when the prompt names the look), then run its `scripts/design-lock.mjs init` so the look is locked, and the probe
+then checks DS-001 to DS-008 against that lock. Run its `scripts/probe.mjs` on the built page at the seven-entry RS matrix and retain JSON and
 screenshots. Remaining HIGH findings block done until fixed or named as a specific limitation; an
 exit 2 keeps the UI criterion BLOCKED. This hand-off applies even when the larger task is an app.
 For a CLI or backend-only task with no user-facing web interface, do not load the frontend skill or
@@ -193,14 +195,18 @@ For a requested diagram deliverable (such as a system architecture, process flow
 sequence, or relationship map), load the installed sibling `../lit-diagram-drawer/SKILL.md` before drawing.
 Use the host skill catalog or resolve that sibling from this installed skill; do not look in a global
 source checkout. Follow its relevant references, rendering and visual checks as a supporting skill
-without a second activation banner or durable setup. Keep product screens with `frontend-ui-ux` and
-measured scientific plots with `lit-scientific-visualization`. Do not treat quoted examples or keywords alone as a routing request.
+without a second activation banner or durable setup. A drawing of real equipment (a P&ID, PFD,
+apparatus figure or isometric cutaway; 공정도, 계통도) goes to the sibling `../lit-schematic/SKILL.md`
+instead. A request to port a technique that someone else published (X posts, repos, PDFs) into the user's
+own skill goes to the sibling `../lit-hijack/SKILL.md`, which `lit hijack` reaches directly. Keep product screens with `frontend-ui-ux` and measured scientific plots with
+`lit-scientific-visualization`. Do not treat quoted examples or keywords alone as a routing request.
 
 For a requested Word report or document deliverable (보고서, 리포트, 기획서, 제안서, 문서,
 워드, report, doc, docx, Word), load the installed sibling `../lit-docx/SKILL.md`
 before drafting. For requested slides or a PowerPoint deliverable (발표자료, 발표,
 슬라이드, 덱, PPT, 피피티, slides, deck, presentation, pptx), load the installed
-sibling `../lit-pptx/SKILL.md`. Load both when both formats are requested. Under
+sibling `../lit-pptx/SKILL.md`. A request that gives only a slide count and a style
+name (덱 10장, 네오 브루탈리즘 스타일로) is a full deck request, not a question. Load both when both formats are requested. Under
 `lit`, produce editable Markdown next to the DOCX/PPTX, use the skills' default
 profiles without preference questions, and honor explicit user design choices.
 The request must actually seek an output; quoted examples and input-file names

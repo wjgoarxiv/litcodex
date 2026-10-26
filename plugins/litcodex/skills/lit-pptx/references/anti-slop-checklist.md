@@ -5,8 +5,9 @@ Run after building any deck. Brand specifics (palette, fonts) come from the chos
 ## Automated checks
 - `node "$OFFICE" pptx qa output.pptx` — honest gate: overflow/overlap/off-slide + WCAG contrast + anti-slop terms + objective executive/research OOXML checks (exit non-zero = FAIL).
 - `node "$OFFICE" pptx inventory output.pptx verification.json --issues-only` — geometry issues only.
-- `node "$OFFICE" pptx qa output.pptx --sibling other.pptx` — when two tonalities of one source are offered, OF-116 fails the pair unless at least two content slides differ in title zone or partition (colour alone is not an alternative).
+- `node "$OFFICE" pptx qa output.pptx --sibling other.pptx` — when two tonalities of one source are offered, OF-116 fails the pair when any slide's title frame or body corner stands in a different place (1 pt tolerance): a tonality changes the look, never the place.
 - On a tonality deck the gate also reads regions (OF-115): a bottom title on the floor, a side rail that carries its slide's criteria, takeaways or source, a text or picture column with no empty band over 40 % of the body beside a longer one (a chart's values table under its takeaways is part of their column, and the neighbour's length never exempts a column), a title panel as tall as its text, no plate under an empty page; OF-117 fails a mostly-white figure picture on a dark ground (give it a `.dark` variant or a `::: chart`); OF-118 a bold run-in label with no separator after it; OF-119 a numeral beside an agenda title.
+- On a tonality deck OF-101 allows four accent hue families on a slide and fails at five, with no advisory below (a pack's `qa:` block can widen the limit to five or six, never narrow it); OF-113 holds every content title to the slide grid's one title frame and every statement to the display frame, within 1 pt; OF-120 passes a hard offset shadow (an outer shadow with no blur) only in a pack whose `qa:` block sets `offset-shadow: true`, and fails a soft shadow beside it.
 - A clean gate means **no known defects, not that the deck looks good** — render and eyeball every slide (next section).
 
 ## Human-eye checks
@@ -40,7 +41,7 @@ export: no motion, no gradients, no outline or shadow on type.
 
 ### Confirm none of these appear
 - [ ] A coloured stripe down one side of a card (anything over 1 px). If a group needs a marker, use a 1 px hairline, a flat tint, a real numeral, or an icon placed on the wrapper.
-- [ ] A box that is both outlined and shadowed, or an empty outlined box kept for decoration. One box gets either a 1 px border or a shadow of 8 px or less.
+- [ ] A box that is both outlined and shadowed, or an empty outlined box kept for decoration. One box gets either a 1 px border or a shadow of 8 px or less. The exception is a pack that declares a hard shadow (`shadow:` in the pack, Neo-Brutalism): every surface there takes the border and the shadow together, with no blur, and no other shadow appears in the deck.
 - [ ] Mixed corner radii. The deck follows one radius rule (sharp unless the pack says otherwise); pill shapes are for tags only.
 - [ ] A grid of identical cards. Vary span or size, or set some groups without a card.
 - [ ] Eyebrow words above titles, or `01·02·03` on slides that are not an ordered sequence.
@@ -54,7 +55,9 @@ export: no motion, no gradients, no outline or shadow on type.
 - [ ] The accent covers roughly a tenth of the slide at most, and each colour keeps one meaning across the deck. No one-off hex values outside the palette.
 
 ### Type
+- [ ] Pretendard Regular and Bold by default; A2Z only when the user or the source asks. The one other face is JetBrains Mono, for Latin letters and figures in Computational Brutalism; Hangul inside a mono run is set in Pretendard and a body is never mono.
 - [ ] One family, three or four weights, each weight with one job; body text never in a display cut. With fonts that ship one family per weight (에이투지체, Example Sans), choose the weight by family name, not with a bold flag.
+- [ ] Cover, section and statement titles take the hero step when they fit (`hero: false` turns it off for a calm deck); presented type belongs to a pack that declares `register: bold`. A decoration the source adds to a pack comes from the shared set with `decoration:` in the front matter.
 - [ ] Three or four sizes per slide, all from one ramp, with no near-duplicates. On the boilerplate templates display stays around 40 pt or below.
 - [ ] Uppercase labels get positive tracking. Headings set at 1.1-1.2 line height, body at 1.3-1.7 (Korean body at the looser end).
 - [ ] No heading ends on a single orphaned word (break by hand; `text-wrap` is lost in export). Numeric columns align right.

@@ -19,7 +19,7 @@ The SVG node's metadata binds `data-block-id`, `data-block-parent`, and `data-bl
 
 1. Follow the Tree layout: root above its children, with short vertical stem, orthogonal sibling bus, and drops into child boxes. Keep a stable sibling order and one parent for every nonroot block.
 2. Place the id badge as a compact tag inside the node box. Put the block name in the normal name slot. A short I/O qualifier may occupy the existing sublabel line; it never becomes a separate connector label.
-3. Snap tree geometry to the layout grid. Keep the root-plus-three-tier maximum and five-per-level ceiling, with the stricter global maximum of nine nodes. Split at subsystem boundaries and preserve stable ids between diagrams when the hierarchy is larger.
+3. Snap tree geometry to the layout grid. Keep the root-plus-three-tier maximum and five-per-level ceiling, with this type's own nine-node maximum, tighter than the overview range in the style guide. Split at subsystem boundaries and preserve stable ids between diagrams when the hierarchy is larger.
 4. Draw connectors before boxes. Do not add I/O arrows between siblings or cousins; that changes the layout into a dependency graph. Avoid visible constraints or assumptions that would turn a compact map into a specification wall.
 5. Verify that the registry contains every block and that each visible badge, node, metadata record, and implementation reference resolves to the same stable id.
 

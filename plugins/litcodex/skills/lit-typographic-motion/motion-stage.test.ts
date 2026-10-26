@@ -126,6 +126,16 @@ describe("static pre-flight scan (exits 17 and 19 before any browser)", () => {
 		symlinkSync(join(out, "treatment.json"), join(out, "stage", "leak.json"));
 		expect(() => scanStage(join(out, "stage"))).toThrow(/leaves the stage folder/u);
 	});
+	it.each(["x.png", "x.html"])("a named pipe at %s is refused before any read, not a hang", (name) => {
+		const out = stageRun({ "index.html": page("") });
+		expect(spawnSync("mkfifo", [join(out, "stage", name)]).status).toBe(0);
+		const stageModule = fileURLToPath(new URL("./engine/stage.mjs", import.meta.url));
+		const code = `const { scanStage } = await import(${JSON.stringify(stageModule)}); try { scanStage(${JSON.stringify(join(out, "stage"))}); console.log("no error"); } catch (error) { console.log(error.code + " " + error.message); }`;
+		const child = spawnSync(process.execPath, ["--input-type=module", "-e", code], { encoding: "utf8", timeout: 8_000, killSignal: "SIGKILL" });
+		expect(child.error, "scanStage must return before the timeout").toBeUndefined();
+		expect(child.stdout).toContain(`${EXIT.STAGE_CONTRACT_ERROR} `);
+		expect(child.stdout).toMatch(/not a regular file/u);
+	});
 });
 
 describe("frame plan (6f sample frames, 9 stills)", () => {

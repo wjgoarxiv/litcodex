@@ -1,6 +1,6 @@
 # The stage path
 
-Load this file after `treatment.json` says `path: stage`. On the stage path you are the motion designer and the renderer is the camera: you author the film as a web page, `stage/index.html` in the output directory, and `node "$R" stage --out <dir>` steps the page on a virtual clock, captures every frame in a headless Chrome, encodes the pinned MP4, and runs the gate. You never need a type-path reference here.
+Load this file after `treatment.json` says `path: stage`, together with `references/studio.md`. On the stage path you are the motion designer and the renderer is the camera: you start from `node "$R" scaffold --out <dir>`, which writes the page `stage/index.html` in the output directory from the treatment, draw each shot's subject, and `node "$R" stage --out <dir>` steps the page on a virtual clock, captures every frame in a headless Chrome, encodes the pinned MP4, and runs the gate. You never need a type-path reference here.
 
 ## What you write
 
@@ -8,11 +8,13 @@ Load this file after `treatment.json` says `path: stage`. On the stage path you 
 <out>/
   treatment.json        the plan (references/treatment.md)
   stage/
-    index.html          the film
+    index.html          the film (start from `scaffold`)
+    assets/             a named product's real files (`assets`, treatment.md)
+    scene.py, plate/    the Blender rung only (depth.md)
     *.svg *.png *.jpg *.webp *.js *.css *.wav   your own local assets
 ```
 
-Assets are your own work: SVG you draw, small rasters you make as textures or stills, your own scripts and styles, and, when the treatment's sound is `authored`, a WAV you wrote. Never install, download or copy a third-party library into `stage/`; use the kit below and your own code. The renderer refuses:
+Assets are your own work: SVG you draw, small rasters you make as textures or stills, your own scripts and styles, and, when the treatment's sound is `authored`, a WAV you wrote. Never install, download or copy a third-party library into `stage/`; use the kit below, the vendored three.js build the renderer serves at `/lit/three/` (`depth.md`) and your own code. The renderer refuses:
 
 - `<video>`, `<audio>`, `<iframe>`, `<object>`, `<embed>`, `<frame>` (exit 17);
 - `new Audio()`, `AudioContext`, `OfflineAudioContext`, workers and service workers (exit 17);
@@ -20,12 +22,16 @@ Assets are your own work: SVG you draw, small rasters you make as textures or st
 - more than 24 raster images or 8 MB of rasters, 10 or more rasters of one size (a flipbook), and any animated GIF, APNG or WebP (exit 17). Rasters are textures and stills, never a frame sequence;
 - any file type outside html, js, mjs, css, svg, png, jpg, webp, gif, wav, woff, woff2, ttf, otf and json, a `node_modules` folder, and links that leave `stage/` (exit 17).
 
-The page loads two product routes:
+The page loads these product routes (the scaffold writes them):
 
 ```html
 <link rel="stylesheet" href="/lit/fonts.css">
+<link rel="stylesheet" href="/lit/style.css">
+<script src="/lit/style.js"></script>
 <script src="/lit/stage-kit.js"></script>
 ```
+
+`/lit/style.css` and `/lit/style.js` carry the treatment's house style and shot timeline (`studio.md`, The page).
 
 `/lit/fonts.css` declares this product's verified faces with `font-display: block`: `"Archivo"` (weights 400, 700, 900; `font-stretch` 75 %, 100 %, 125 %), `"Pretendard"` (400, 700) for Hangul, `"VT323"`, `"Galmuri9"`, `"MesloLGS NF"` and `"JetBrains Mono"` (variable `wght` 100 to 800, a fixed advance, so weight motion never reflows). Name only these families; any other face is a system fallback the text check reports.
 
@@ -47,7 +53,7 @@ LitStage.define({ width: 1920, height: 1080, fps: 60, duration: 12, render(t) { 
 
 Keep every on-screen word in one `COPY` object at the top of `index.html`, so a later change is one edit. The reply tells the user where it lives.
 
-CSS animations and transitions, the Web Animations API (including `finished.then` chains), SVG SMIL, `setTimeout`, `setInterval`, `requestAnimationFrame` loops with Canvas2D or WebGL all work: the renderer drives them from the same virtual clock. `Date`, `performance.now()`, `document.timeline.currentTime` and `Math.random()` read that clock and a seed taken from the treatment. Anything else that varies between runs (`performance.timeOrigin`, `crypto.getRandomValues`, reading real time any other way) breaks determinism and the render exits 18 naming the frame and the region that differed.
+CSS animations and transitions, the Web Animations API (including `finished.then` chains), SVG SMIL, `setTimeout`, `setInterval`, `requestAnimationFrame` loops with Canvas2D or WebGL all work: the renderer drives them from the same virtual clock. `Date`, `performance.now()`, `document.timeline.currentTime` and `Math.random()` read that clock and a seed taken from the treatment. Anything else that varies between runs (`performance.timeOrigin`, `crypto.getRandomValues`, reading real time any other way) breaks determinism and the render exits 18 naming the frame and the region that differed. Fractional SVG geometry can do the same: a rect edge at a fractional pixel may rasterise one pixel differently in a fresh Chrome (exit 18, a region one or two pixels wide at a shape's corner), so snap the x, y, width and height of drawn rects to whole pixels with `Math.round`.
 
 Mark text so the checks can find it:
 
@@ -68,6 +74,8 @@ Pages must declare the film at load. A `define` hidden behind a timer never runs
 ## The kit
 
 `LitStage` holds motion primitives only. It has no scene, layout, object or copy for any subject: you draw what the treatment calls for.
+
+**Shots and style.** `LitStage.shot(t)`, `LitStage.zone(layout, part)`, `LitStage.place(el, layout, part)` and `LitStage.tokens()` read the house style and the treatment's shots (`studio.md`, The page); `LitStage.plate(...)` shows a Blender plate (`depth.md`).
 
 **Eases.** `LitStage.ease.<name>(p)` for `linear`, `in/out/inOut` + `Quad`, `Cubic`, `Quart`, `Quint`, `Sine`, `Expo`, `Back`, plus `slam`, `drift`, `snap` and `anticipate`. `LitStage.cubicBezier(x1, y1, x2, y2)` builds your own.
 
@@ -147,7 +155,8 @@ Keep flashes out: no full-frame colour swap in one frame, no strobing, no more t
 ## Commands and outputs
 
 ```
-node "$R" stage --out <dir> --stills-only --round 1   # stills set only, no encode (seconds)
+node "$R" scaffold --out <dir>                       # the starting page from the treatment (never overwrites)
+node "$R" stage --out <dir> --stills-only --round 1   # stills, stills/board.png and the board check; no encode (seconds)
 node "$R" look  --out <dir> --round 1 --answers <file>  # record what you saw (references/quality-gate.md)
 node "$R" stage --out <dir> --round 2                  # full render; give the call at least 600 s
 node "$R" gate  --out <dir>                            # recheck without rendering
@@ -155,7 +164,9 @@ node "$R" gate  --out <dir>                            # recheck without renderi
 
 `--detach` runs a full render in the background and writes `<dir>/.run/progress.json`; poll that file instead of shortening the film to save time.
 
-Every render writes `stills/`: one full-size midpoint still per beat (`beat-NN.png`), a transition strip per cut (`cut-NN-MM.png`, frames -6 / 0 / +6), a 12-frame `contact-sheet.png`, `poster.png` and `manifest.json` with each file's hash. A full render adds `film.mp4`, `preview.webp` (or `.gif`), `poster.png`, `reduced-motion.png` (the final beat's midpoint), `manifest.json`, `render.jsonl` and `gate-report.txt`.
+The stills round is the board round (`studio.md`, The board round): after the stills it runs the text and style rules on the board frames and exits 13 on a failure before any film is encoded. `node "$R" styles --out <dir>` renders the style gallery.
+
+Every render writes `stills/`: one full-size midpoint still per beat (`beat-NN.png`), a transition strip per cut (`cut-NN-MM.png`, frames -6 / 0 / +6), a 12-frame `contact-sheet.png`, `poster.png`, the storyboard `board.png` on a stills-only round, and `manifest.json` with each file's hash. A full render adds `film.mp4`, `preview.webp` (or `.gif`), `poster.png`, `reduced-motion.png` (the final beat's midpoint), `manifest.json`, `render.jsonl` and `gate-report.txt`.
 
 The gate checks the flash audit on the master and the looping preview (the audit grid transposes to 180 x 320 cells for 9:16), the exact frame size, fps and duration against the treatment, file sizes, the reduced-motion still, near-black runs, and determinism: 8 to 16 frames (frame 0, the last frame, every beat's first frame) are re-captured in a fresh Chrome replaying the clock from 0 and compared by the SHA-256 of the decoded pixels.
 
@@ -173,5 +184,6 @@ The gate checks the flash audit on the master and the looping preview (the audit
 | 18 | Nondeterministic frame (frame and region named) | Replace the leaking source with `t` or `LitStage.rand` |
 | 19 | Network request or connection | Make the asset local |
 | 20 | Sound invalid | See the sound plan in the treatment |
+| 22 | A named product's real assets are missing or unreachable | Ask the user for the logo, screens and words; never draw a stand-in |
 
 A README cover loop uses the same page rules and kit but its own contract (`window.renderFrame(t)` over a loop, a 2x seek capture, the decoded-file gate): `references/cover.md`.

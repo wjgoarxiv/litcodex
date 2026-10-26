@@ -1,4 +1,5 @@
 import { type CardStatus } from "./card-status.js";
+export { clean } from "./control-chars.js";
 export interface HudSession {
     readonly id: string;
     readonly cwd: string;
@@ -31,7 +32,6 @@ export declare function listSessions(env: NodeJS.ProcessEnv): HudSession[];
 export declare function pickSession(env: NodeJS.ProcessEnv, wanted?: string | null): HudSession | null;
 /** Everything one frame needs, read once. Never throws and never writes. */
 export declare function readHud(env: NodeJS.ProcessEnv, wanted: string | null, now: number): HudView;
-export declare function clean(text: string): string;
 /** The card with every record-derived string stripped of control characters. */
 export declare function cleanStatus(status: CardStatus): CardStatus;
 /** Terminal cells a plain string takes: CJK and emoji take two, combining marks none. */

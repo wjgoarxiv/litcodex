@@ -28,7 +28,10 @@ describe("start-work Stop hook", () => {
 		expect(continuationEvents).toEqual(["UserPromptSubmit", "Stop"]);
 		expect(manifest.hooks["UserPromptSubmit"]).toBeDefined();
 		expect(manifest.hooks["Stop"]).toBeDefined();
-		expect(manifest.hooks["SubagentStop"]).toBeUndefined();
+		// The only child-agent hook is the lit-loop lane recorder; start-work-continuation never resumes on a child's stop.
+		const subagentStops = JSON.stringify(manifest.hooks["SubagentStop"] ?? []);
+		expect(subagentStops).toContain("components/lit-loop/dist/cli.js");
+		expect(subagentStops).not.toContain(START_WORK_CONTINUATION_COMPONENT_DIR);
 	});
 
 	it("#given stop hook is already active #when hook runs #then returns empty output", () => {

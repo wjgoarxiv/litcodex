@@ -13,10 +13,13 @@ import { FONTS, verifyFonts } from "./fonts.mjs";
 import { contactSheet, decodePng, downscale, encodePng } from "./image.mjs";
 import { viewedFor } from "./look.mjs";
 import { ffmpegProbe, firstLine, resolveRuntime, stageFlags } from "./runtime.mjs";
-import { assertClean, capture, closeStage, DecodePool, fontRoutes, openStage, scanStage, stageFontFaults, stepFrame } from "./stage.mjs";
+import { assertClean, capture, closeStage, DecodePool, fontRoutes, openStageChecked, scanStage, stageFontFaults, stageRung, stageStyle, stepFrame } from "./stage.mjs";
 import { evaluateStage, loadStageData, renderStageReport, stagePassed } from "./stage-gate.mjs";
 import { prepareTrack, soundFailed } from "./sound.mjs";
-import { collectQA, qaRules, qaScript } from "./stage-qa.mjs";
+import { assetUsed } from "./assets.mjs";
+import { writeBoard } from "./board.mjs";
+import { recordHouse } from "./house.mjs";
+import { boardQA, collectQA, qaRules, qaScript } from "./stage-qa.mjs";
 import { fnv1a32 } from "./util.mjs";
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -144,7 +147,13 @@ export async function runStage({ outDir, treatment, round, stillsOnly, log = () 
 	rmSync(join(outDir, "withheld"), { recursive: true, force: true });
 	let session = null;
 	try {
-		session = await openStage({ runtime, outDir, scan, fonts, width, height, fps: fpsHint, seed });
+		// One rung per round: a 3D film asks for the GPU, a Blender film needs its whole plate, and a GPU rung
+		// that does not start falls back (with a notice) for the master and every replay alike.
+		const ctx = { rung: stageRung(treatment, scan, outDir), notices: [] };
+		const style = stageStyle(treatment);
+		const open = (extra = {}) => openStageChecked({ runtime, outDir, scan, fonts, width, height, fps: fpsHint, seed, style, ...extra }, ctx);
+		session = await open();
+		for (const note of ctx.notices) log(note);
 		const { fps, frameCount } = checkContract(session.contract, treatment, format);
 		const plan = framePlan(treatment, fps, frameCount);
 		const kept = new Map();
@@ -154,11 +163,27 @@ export async function runStage({ outDir, treatment, round, stillsOnly, log = () 
 			const stills = writeStills({ outDir, plan, frames: kept, width, height, fps, round, kind: "stills-only" });
 			const track = prepareTrack({ outDir, treatment, frameCount, fps, cuts: treatment.beats.slice(1).map((b) => b.t0) });
 			for (const note of track.notes) log(note);
-			writeFileSync(join(runDir, "stills-run.json"), `${JSON.stringify({ round, manifestSha256: stills.manifestSha256, fps, frameCount, seconds: (Date.now() - started) / 1000 }, null, 2)}\n`);
-			log(`stills: ${stills.files.map((f) => join(stills.dir, f.file)).join(" ")}`);
-			log(`stills manifest: ${join(stills.dir, "manifest.json")} (sha256 ${stills.manifestSha256})`);
+			// The board round: the style's text rules at the beat midpoints and around every cut, then one
+			// storyboard page. A failing board still gets written, so the look at it names the fix.
+			await closeStage(session);
+			session = null;
+			const qaSession = await open({ extraInit: qaScript() });
+			let check;
+			try {
+				check = await boardQA({ session: qaSession, treatment, fps, frameCount, width, height, pool });
+			} finally {
+				await closeStage(qaSession);
+			}
+			writeFileSync(join(runDir, "board-qa.json"), `${JSON.stringify(check, null, 2)}\n`);
+			const board = await writeBoard({ outDir, treatment, beatFiles: plan.beats.map((b) => join(stills.dir, `beat-${pad(b.index + 1)}.png`)), check, runtime, fonts });
+			writeFileSync(join(runDir, "stills-run.json"), `${JSON.stringify({ round, manifestSha256: board.manifestSha256, fps, frameCount, seconds: (Date.now() - started) / 1000 }, null, 2)}\n`);
+			log(`stills: ${stills.files.map((f) => join(stills.dir, f.file)).join(" ")} ${board.file}`);
+			log(`stills manifest: ${join(stills.dir, "manifest.json")} (sha256 ${board.manifestSha256})`);
 			if (!hasFfmpeg && !stillsOnly) requireFfmpeg();
-			log("stills-only: view every still, then record the look round; this is not a finished film.");
+			const failed = check.rules.filter((r) => r.status === "FAIL");
+			if (failed.length) throw new Exit(EXIT.GATE_FAIL_QA, `GATE_FAIL_QA (board): ${failed.map((r) => `${r.id} ${r.detail}`).join("; ")}. The stills and the board are in ${stills.dir}; view them, fix the page and rerun the stills round.`);
+			log(`board: ${board.file}`);
+			log("stills-only: view the board and every still, then record the look round; this is not a finished film.");
 			return EXIT.OK;
 		}
 
@@ -189,7 +214,7 @@ export async function runStage({ outDir, treatment, round, stillsOnly, log = () 
 		const consume = async ({ f, png, d }) => {
 			if (d.width !== width || d.height !== height) throw new Exit(EXIT.STAGE_CONTRACT_ERROR, `STAGE_CONTRACT_ERROR: captured ${d.width}x${d.height}, the format is ${width}x${height}`);
 			const flash = detector.ingestGrid(d.grid);
-			frameLog.write(`${JSON.stringify({ frame: f, pass: null, rgbaSha256: d.sha, flash, p995: Math.round(d.p995 * 1e4) / 1e4 })}\n`);
+			frameLog.write(`${JSON.stringify({ frame: f, pass: null, rgbaSha256: d.sha, flash, p995: Math.round(d.p995 * 1e4) / 1e4, p005: Math.round(d.p005 * 1e4) / 1e4, busy: Math.round(d.busy * 1e4) / 1e4 })}\n`);
 			masterSha.set(f, d.sha);
 			if (detSet.has(f)) writeFileSync(join(detDir, `${f}.png`), png);
 			keepFrame(kept, plan, f, png, d.rgba, width, height);
@@ -224,7 +249,7 @@ export async function runStage({ outDir, treatment, round, stillsOnly, log = () 
 		progress(outDir, { phase: "determinism and text QA", frame: 0, total: frameCount });
 		const determinism = { frames: [], region: null };
 		const replayDeterminism = async () => {
-			const replaySession = await openStage({ runtime, outDir, scan, fonts, width, height, fps: fpsHint, seed });
+			const replaySession = await open();
 			try {
 				await replay(replaySession, {
 					wanted: detSet,
@@ -242,7 +267,7 @@ export async function runStage({ outDir, treatment, round, stillsOnly, log = () 
 			}
 		};
 		const replayQA = async () => {
-			const qaSession = await openStage({ runtime, outDir, scan, fonts, width, height, fps: fpsHint, seed, extraInit: qaScript() });
+			const qaSession = await open({ extraInit: qaScript() });
 			try {
 				const collected = await collectQA({ session: qaSession, treatment, fps, frameCount, width, height, pool });
 				return qaRules({ treatment, width, height, fps, collected });
@@ -276,8 +301,12 @@ export async function runStage({ outDir, treatment, round, stillsOnly, log = () 
 			targetDurationSec: treatment.durationSec,
 			round,
 			seed,
-			chromeFlags: stageFlags(width, height),
+			chromeFlags: stageFlags(width, height, process.platform, ctx.rung),
+			rung: ctx.rung,
 			renderer: report.webgl?.renderer ?? null,
+			plate: scan.plate ? { blender: scan.plate.blender, engine: scan.plate.engine, device: scan.plate.device, samples: scan.plate.samples, fps: scan.plate.fps, frames: scan.plate.frames.length } : null,
+			notices: ctx.notices,
+			assetUsed: assetUsed(treatment, scan.files),
 			webgl: report.webgl,
 			previewEncoder: pv.encoder,
 			stillsManifestSha256: stills.manifestSha256,
@@ -289,7 +318,7 @@ export async function runStage({ outDir, treatment, round, stillsOnly, log = () 
 			generatedAt: new Date().toISOString(),
 		};
 		writeFileSync(join(outDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
-		const notes = [...track.notes, `preview rung: ${pv.rung.width}x${pv.rung.height} @ ${pv.rung.fps} fps, ${pv.bytes} B, encoder ${pv.encoder}`, `stills manifest sha256 ${stills.manifestSha256}`];
+		const notes = [...ctx.notices, ...track.notes, `preview rung: ${pv.rung.width}x${pv.rung.height} @ ${pv.rung.fps} fps, ${pv.bytes} B, encoder ${pv.encoder}`, `stills manifest sha256 ${stills.manifestSha256}`];
 		const outcome = gateStage(outDir, { round, notes });
 		log(`report: ${join(outDir, "gate-report.txt")}`);
 		log(`stills manifest: ${join(stills.dir, "manifest.json")} (sha256 ${stills.manifestSha256})`);
@@ -298,6 +327,7 @@ export async function runStage({ outDir, treatment, round, stillsOnly, log = () 
 		if (qa.missing.length) throw new Exit(EXIT.STAGE_CONTRACT_ERROR, `STAGE_CONTRACT_ERROR: copy line${qa.missing.length > 1 ? "s" : ""} never on screen: ${qa.missing.map((line) => `"${line}"`).join(", ")}; every copy line must appear in the film (as page text or registered canvas text). Report: ${join(outDir, "gate-report.txt")}`);
 		if (outcome.soundInvalid) throw new Exit(EXIT.SOUND_INVALID, `SOUND_INVALID: ${outcome.rules.filter((r) => r.sound && r.status === "FAIL").map((r) => `${r.id} ${r.detail}`).join("; ")}. Report: ${join(outDir, "gate-report.txt")}`);
 		if (outcome.passed) {
+			recordHouse(outDir, { style: treatment.style, path: treatment.path, format: treatment.format, durationSec: treatment.durationSec });
 			log(`GATE PASS: ${join(outDir, "film.mp4")}`);
 			return EXIT.OK;
 		}

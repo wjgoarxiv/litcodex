@@ -1,0 +1,928 @@
+// src/rewind.ts — the lit-adhd collector: where the work stands across sessions and worktrees.
+//
+// Reads Codex session records (rewind-rollout.ts), `git worktree list`, and each worktree's own saved
+// state (workflow stacks, the start-work record, plan checkboxes, lit-loop goals, a HANDOFF heading). It
+// writes one file, the next-step note `.litcodex/adhd/next-<session>.json` that a following `go` consumes,
+// and nothing else. Every string that leaves is redacted and stripped of control characters; a source it
+// cannot read is named `unknown` instead of guessed. The brief itself is composed by the model from the
+// JSON; `renderBrief` is the Markdown draft of the same parts: a headline, live session cards, one table row for
+// each ended session, a roadmap and one boxed next step.
+
+import { execFileSync } from "node:child_process";
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { homedir } from "node:os";
+import { basename, isAbsolute, join, relative } from "node:path";
+import { clean, cleanDeep, cleanLines } from "./control-chars.js";
+import { displayWidth, fit } from "./hud.js";
+import { codexHomeFrom, plainDirsOrMissing, readSmallJson, writeFileAtomic } from "./live-step.js";
+import { makeRedactor } from "./rewind-redact.js";
+import {
+	type ByteBudget,
+	listRollouts,
+	newBudget,
+	type RolloutFacts,
+	readRollout,
+	TOTAL_BYTES,
+} from "./rewind-rollout.js";
+import { normalizeSessionId } from "./state-paths.js";
+import { countPlanRows, planRows, readWorkflowSignals } from "./workflow-map.js";
+import {
+	frameLabel,
+	frameNote,
+	pausedSpine,
+	readStack,
+	STACK_DIR,
+	type StackFrame,
+	stackGauge,
+} from "./workflow-stack.js";
+
+export const ADHD_DIR = ".litcodex/adhd";
+/** A session written to in the last quarter hour is still running. */
+export const ACTIVE_MS = 15 * 60 * 1000;
+/** How long a briefed next step stays runnable by `go`. */
+export const GO_WINDOW_MS = 30 * 60 * 1000;
+export const DEFAULT_SINCE_MS = 7 * 24 * 60 * 60 * 1000;
+export const DEFAULT_MAX = 12;
+const MAX_WORKTREES = 12;
+const MAX_STATE_BYTES = 1_000_000;
+const MAX_HANDOFF_BYTES = 16 * 1024;
+const GIT_TIMEOUT_MS = 3000;
+
+export type SessionStatus = "waiting-on-user" | "active" | "ended" | "unknown";
+export type NextKind = "resume-frame" | "approve-boundary" | "continue-work" | "start-plan" | "none";
+
+export interface NextStep {
+	readonly kind: NextKind;
+	readonly text: string;
+	readonly skill?: string;
+	readonly stage?: string | null;
+	readonly n?: number;
+	readonly total?: number;
+	readonly plan?: string;
+}
+
+export interface RewindSession {
+	readonly id: string;
+	readonly shortId: string;
+	readonly current: boolean;
+	readonly cwd: string | null;
+	readonly status: SessionStatus;
+	readonly lastAt: number | null;
+	/** The worktree folder this session runs in (redacted), so the brief can group by it. */
+	readonly tree: string | null;
+	/** The session's own stage gauge from its workflow stack; null unless both counts are real. */
+	readonly gauge: string | null;
+	/** What is known when there is no gauge, in words: `12 steps · 4m · last: apply_patch`. */
+	readonly facts: string;
+	readonly title: string | null;
+	readonly lastUser: string | null;
+	readonly lastAgent: string | null;
+	/** What the session last reported, in plain words, for the card's "done" line. */
+	readonly done: string | null;
+	/** What this session needs from the person, in plain words, for the card's "next" line. */
+	readonly needs: string;
+	/** The tools it used most, most used first (at most three); names only, never counted. */
+	readonly tools: readonly string[];
+	/** Files `apply_patch` touched in the part of the record that was read (a floor when the record was cut). */
+	readonly edited: number;
+	/** What its last tool call was about, as `apply_patch “card.ts”`; a program or file base name, never a command line. */
+	readonly doing: string | null;
+}
+
+/** One line of a worktree's timeline: finished (with its date), under way now, or still ahead. */
+export interface RewindMilestone {
+	readonly state: "done" | "now" | "later";
+	readonly label: string;
+	readonly date: string | null;
+}
+
+export interface RewindWorktree {
+	readonly path: string;
+	readonly branch: string | null;
+	readonly lastCommit: string | null;
+	/** The worktree's roadmap gauge: its start-work plan, else its lit-loop goals, else null. */
+	readonly gauge: string | null;
+	readonly work: {
+		readonly status: string;
+		readonly done: number;
+		readonly total: number;
+		readonly gauge: string | null;
+	} | null;
+	readonly goals: { readonly done: number; readonly total: number; readonly gauge: string | null } | null;
+	readonly openPlans: readonly OpenPlan[];
+	/** Recent commits (done, dated), the step under way, and the next open plan rows. */
+	readonly milestones: readonly RewindMilestone[];
+	readonly paused: readonly { readonly session: string; readonly label: string }[];
+	readonly handoff: string | null;
+}
+
+export type SourceState = "ok" | "unknown";
+
+export interface RewindResult {
+	readonly generatedAt: string;
+	readonly codexHome: string | null;
+	readonly sessions: readonly RewindSession[];
+	readonly worktrees: readonly RewindWorktree[];
+	readonly next: NextStep;
+	/**
+	 * A step to recommend when `next.kind` is `none`, chosen from the records: a session that waits on the user, a
+	 * paused workflow, an open plan item, the latest active session, the latest ended one. Shown, never recorded.
+	 */
+	readonly suggestion: string;
+	/** The window read, so the brief can say how far back it looked. */
+	readonly scope: { readonly sinceMs: number; readonly worktrees: number };
+	readonly sources: { readonly sessions: SourceState; readonly git: SourceState; readonly state: SourceState };
+	readonly budget: { readonly limit: number; readonly used: number; readonly exhausted: boolean };
+}
+
+/** Runs git in a folder and returns its stdout, or null when it fails. Injectable for tests. */
+export type GitRunner = (cwd: string, args: readonly string[]) => string | null;
+
+export const runGit: GitRunner = (cwd, args) => {
+	try {
+		return execFileSync("git", ["-C", cwd, ...args], {
+			encoding: "utf8",
+			timeout: GIT_TIMEOUT_MS,
+			stdio: ["ignore", "pipe", "ignore"],
+			env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
+			maxBuffer: 1_000_000,
+		});
+	} catch {
+		return null;
+	}
+};
+
+export interface RewindOptions {
+	readonly env: NodeJS.ProcessEnv;
+	readonly cwd: string;
+	readonly here?: boolean;
+	readonly sinceMs?: number;
+	readonly max?: number;
+	/** The session asking; its next-step note is written for `go`. */
+	readonly sessionId?: string | null;
+	readonly now?: number;
+	readonly git?: GitRunner;
+	/** Overrides the Codex home (a test seam; the command reads `CODEX_HOME` or `~/.codex`). */
+	readonly codexHome?: string | null;
+	/** Overrides the whole-run read allowance in bytes (a test seam). */
+	readonly budgetBytes?: number;
+}
+
+/** `7d`, `36h`, `90m` as milliseconds; null for anything else. */
+export function parseSince(text: string): number | null {
+	const match = /^(\d{1,4})([dhm])$/u.exec(text.trim());
+	if (match?.[1] === undefined || match[2] === undefined) return null;
+	const unit = match[2] === "d" ? 86_400_000 : match[2] === "h" ? 3_600_000 : 60_000;
+	return Number(match[1]) * unit;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function insideDir(path: string, dir: string): boolean {
+	const rel = relative(dir, path);
+	return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+}
+
+// ── Sessions ─────────────────────────────────────────────────────────────────
+
+/** The last words ask the person something: a closing question, or a request to approve, confirm or deny. */
+const ASKS = /[?？]\s*$|`?lit approve`?|`?lit deny`?|승인해\s*주|확인해\s*주|괜찮을까요|할까요/iu;
+
+function statusOf(facts: RolloutFacts, mtimeMs: number, now: number): SessionStatus {
+	const last = facts.lastAt ?? mtimeMs;
+	if (facts.last === null && facts.lastAt === null) return "unknown";
+	// A turn that has finished and asks something no longer runs, however recent it is.
+	if (facts.last === "complete" && ASKS.test(facts.lastAgent ?? "")) return "waiting-on-user";
+	if (now - Math.max(last, mtimeMs) < ACTIVE_MS) return "active";
+	// A finished turn that asks nothing is history, not something that waits.
+	if ((facts.last === "complete" || facts.last === "agent") && ASKS.test(facts.lastAgent ?? ""))
+		return "waiting-on-user";
+	return "ended";
+}
+
+function snippet(redact: (text: string) => string, text: string | null, width: number): string | null {
+	if (text === null) return null;
+	const flat = clean(redact(text)).replace(/\s+/gu, " ").trim();
+	return flat === "" ? null : fit(flat, width);
+}
+
+// ── Worktrees ────────────────────────────────────────────────────────────────
+
+interface Tree {
+	readonly path: string;
+	readonly branch: string | null;
+}
+
+/** UUIDv7 ids open with a timestamp, so sessions started minutes apart share the first 8 characters; use the random tail then. */
+export function shortIdOf(id: string): string {
+	return /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-/iu.test(id) ? id.slice(-8) : id.slice(0, 8);
+}
+
+function worktreesOf(folders: readonly string[], git: GitRunner): { trees: Tree[]; gitState: SourceState } {
+	const trees = new Map<string, Tree>();
+	let gitState: SourceState = "ok";
+	const listed = new Set<string>();
+	for (const folder of folders) {
+		if (!existsSync(folder)) continue;
+		if ([...trees.keys()].some((known) => insideDir(folder, known))) continue;
+		const top = git(folder, ["rev-parse", "--show-toplevel"]);
+		if (top === null) {
+			// A folder that is simply not a repository is not a git failure; only a git that cannot run is.
+			if (git(folder, ["--version"]) === null) gitState = "unknown";
+			if (!trees.has(folder)) trees.set(folder, { path: folder, branch: null });
+			continue;
+		}
+		const root = top.trim();
+		if (listed.has(root)) continue;
+		listed.add(root);
+		const porcelain = git(root, ["worktree", "list", "--porcelain"]);
+		if (porcelain === null) {
+			trees.set(root, { path: root, branch: null });
+			continue;
+		}
+		for (const block of porcelain.split(/\n\n+/u)) {
+			const path = /^worktree (.+)$/mu.exec(block)?.[1];
+			if (path === undefined) continue;
+			const branch = /^branch refs\/heads\/(.+)$/mu.exec(block)?.[1] ?? null;
+			trees.set(path, { path, branch });
+			listed.add(path);
+		}
+	}
+	// A repo with many worktrees must not push the folders the sessions ran in past the cap.
+	const holds = (tree: Tree): boolean => folders.some((folder) => insideDir(folder, tree.path));
+	const ordered = [...trees.values()];
+	return {
+		trees: [...ordered.filter(holds), ...ordered.filter((tree) => !holds(tree))].slice(0, MAX_WORKTREES),
+		gitState,
+	};
+}
+
+function listDir(dir: string, suffix: string, limit: number): string[] {
+	try {
+		const lst = lstatSync(dir);
+		if (!lst.isDirectory()) return [];
+		return readdirSync(dir)
+			.filter((name) => name.endsWith(suffix))
+			.sort()
+			.slice(0, limit);
+	} catch {
+		return [];
+	}
+}
+
+interface OpenPlan {
+	readonly name: string;
+	readonly done: number;
+	readonly total: number;
+	readonly gauge: string | null;
+	/** When the plan file last changed; null when that cannot be read. */
+	readonly changedMs: number | null;
+}
+
+/** A plan scaffold nobody filled in: a row that is still a `<placeholder>`, or every row the same. */
+function isTemplate(rows: readonly { readonly label: string }[]): boolean {
+	return (
+		rows.some((row) => /<[^<>]{1,40}>/u.test(row.label)) ||
+		(rows.length > 1 && new Set(rows.map((row) => row.label.trim())).size === 1)
+	);
+}
+
+function openPlansOf(path: string): OpenPlan[] {
+	if (!plainDirsOrMissing(path, ".litcodex/plans")) return [];
+	const plans: OpenPlan[] = [];
+	for (const file of listDir(join(path, ".litcodex/plans"), ".md", 40)) {
+		try {
+			const full = join(path, ".litcodex/plans", file);
+			const stat = lstatSync(full);
+			if (!stat.isFile() || stat.size > MAX_STATE_BYTES) continue;
+			const text = readFileSync(full, "utf8");
+			const rows = countPlanRows(text);
+			if (rows.total > 0 && rows.done < rows.total && !isTemplate(planRows(text))) {
+				plans.push({
+					name: file,
+					done: rows.done,
+					total: rows.total,
+					gauge: stackGauge({ n: rows.done, total: rows.total }),
+					changedMs: stat.mtimeMs,
+				});
+			}
+		} catch {
+			// An unreadable plan is left out.
+		}
+	}
+	return plans;
+}
+
+function pausedFramesOf(path: string): { session: string; frame: StackFrame }[] {
+	if (!plainDirsOrMissing(path, STACK_DIR)) return [];
+	const out: { session: string; frame: StackFrame }[] = [];
+	for (const file of listDir(join(path, STACK_DIR), ".json", 20)) {
+		const session = file.slice(0, -".json".length);
+		for (const frame of readStack(path, session).frames) if (frame.status === "paused") out.push({ session, frame });
+	}
+	return out;
+}
+
+function handoffHeading(path: string): string | null {
+	for (const name of listDir(path, ".md", 200)
+		.filter((file) => /^HANDOFF/iu.test(file))
+		.slice(0, 1)) {
+		try {
+			const full = join(path, name);
+			const stat = lstatSync(full);
+			if (!stat.isFile()) continue;
+			const text = readFileSync(full, "utf8").slice(0, MAX_HANDOFF_BYTES);
+			return /^#{1,3}\s+(.+)$/mu.exec(text)?.[1]?.trim() ?? null;
+		} catch {
+			return null;
+		}
+	}
+	return null;
+}
+
+// ── Session and timeline words ───────────────────────────────────────────────
+
+/** `6m`, `2h 5m`, `3d` for a length of time. */
+function spanWords(ms: number): string {
+	const minutes = Math.max(1, Math.round(ms / 60_000));
+	if (minutes < 60) return `${minutes}m`;
+	if (minutes < 48 * 60)
+		return minutes % 60 === 0 ? `${minutes / 60}h` : `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+	return `${Math.round(minutes / 1440)}d`;
+}
+
+/** What a session's records show, in words: `12 steps · 4m · last: apply_patch`. Empty when they show nothing. */
+function sessionFacts(facts: RolloutFacts, redact: (text: string) => string): string {
+	const parts: string[] = [];
+	if (facts.steps > 0)
+		parts.push(`${facts.steps}${facts.stepsPartial ? "+" : ""} step${facts.steps === 1 ? "" : "s"}`);
+	if (facts.startedAt !== null && facts.lastAt !== null && facts.lastAt > facts.startedAt)
+		parts.push(spanWords(facts.lastAt - facts.startedAt));
+	if (facts.lastTool !== null) parts.push(`last: ${clean(redact(facts.lastTool))}`);
+	return parts.join(" · ");
+}
+
+/** What this session needs from the person, in plain words. */
+function needsOf(status: SessionStatus, doing: string | null): string {
+	if (status === "waiting-on-user") return "answer its question";
+	if (status === "active") return doing === null ? "nothing yet; it is still working" : `now: ${doing}`;
+	if (status === "ended") return "pick it up again, or leave it";
+	return "unknown; open it to see";
+}
+
+/** What a session reported, else what it did without a report: files edited, or the tools it used most. */
+function doneOf(
+	facts: RolloutFacts,
+	lastAgent: string | null,
+	tools: readonly string[],
+	redact: (text: string) => string,
+): string | null {
+	if (lastAgent !== null) return lastAgent;
+	if (facts.edited.length > 0) {
+		const names = facts.edited.slice(0, 3).map((name) => clean(redact(name)));
+		return `edited ${plural(facts.edited.length, "file")}${facts.stepsPartial ? " or more" : ""}: ${names.join(", ")}`;
+	}
+	return tools.length > 0 ? `no edits yet; used ${tools.join(", ")}` : null;
+}
+
+const OPEN_ROWS_SHOWN = 2;
+
+/** A worktree's timeline: recent commits (done, dated), the step under way, then the next open plan rows. */
+function milestonesOf(
+	path: string,
+	git: GitRunner,
+	paused: readonly string[],
+	plans: readonly { name: string }[],
+	now: number,
+): RewindMilestone[] {
+	const out: RewindMilestone[] = [];
+	const log = git(path, ["log", "-3", "--format=%cs%x09%s"]);
+	if (log !== null) {
+		const commits = log
+			.split("\n")
+			.map((line) => /^(\d{4}-\d{2}-\d{2})\t(.+)$/u.exec(line))
+			.filter((match): match is RegExpExecArray => match !== null)
+			.map((match) => ({ state: "done" as const, label: match[2] ?? "", date: match[1] ?? null }))
+			.reverse();
+		out.push(...commits);
+	}
+	const today = new Date(now).toISOString().slice(0, 10);
+	for (const label of paused) out.push({ state: "now", label: `paused: ${label}`, date: today });
+	const rows: { done: boolean; label: string; plan: string }[] = [];
+	for (const plan of plans.slice(0, 1)) {
+		try {
+			const full = join(path, ".litcodex/plans", plan.name);
+			const stat = lstatSync(full);
+			if (!stat.isFile() || stat.size > MAX_STATE_BYTES) continue;
+			for (const row of planRows(readFileSync(full, "utf8"))) rows.push({ ...row, plan: plan.name });
+		} catch {
+			// An unreadable plan adds no rows.
+		}
+	}
+	const open = rows.filter((row) => !row.done);
+	const current = open[0];
+	if (current !== undefined && paused.length === 0) out.push({ state: "now", label: current.label, date: today });
+	const ahead = paused.length === 0 ? open.slice(1) : open;
+	for (const row of ahead.slice(0, OPEN_ROWS_SHOWN)) out.push({ state: "later", label: row.label, date: null });
+	return out;
+}
+
+// ── Next step ────────────────────────────────────────────────────────────────
+
+/** A paused start-work record waiting on a boundary answer, read from the workspace state file. */
+function pendingBoundary(cwd: string): boolean {
+	if (!plainDirsOrMissing(cwd, ".litcodex/start-work")) return false;
+	const state = readSmallJson(join(cwd, ".litcodex/start-work/state.json"), MAX_STATE_BYTES);
+	if (!isRecord(state) || !isRecord(state["works"])) return false;
+	return Object.values(state["works"])
+		.filter(isRecord)
+		.some((work) => work["status"] === "paused" && isRecord(work["pending_boundary"]));
+}
+
+/**
+ * The one step worth taking next, in priority order: the paused frame of this session's stack, then a boundary
+ * waiting for an answer (shown, never started), then work already under way, then the single open plan.
+ */
+export function chooseNext(cwd: string, sessionId: string | null): NextStep {
+	return cleanDeep(chooseNextRaw(cwd, sessionId));
+}
+
+function chooseNextRaw(cwd: string, sessionId: string | null): NextStep {
+	if (sessionId !== null) {
+		const spine = pausedSpine(readStack(cwd, sessionId));
+		if (spine !== null) {
+			return {
+				kind: "resume-frame",
+				text: `resume the paused ${frameLabel(spine)} with \`lit continue\``,
+				skill: spine.skill ?? "work",
+				stage: spine.stage,
+				...(spine.n === undefined ? {} : { n: spine.n }),
+				...(spine.total === undefined ? {} : { total: spine.total }),
+			};
+		}
+	}
+	if (pendingBoundary(cwd)) {
+		return {
+			kind: "approve-boundary",
+			text: "start-work waits at a boundary: answer `lit approve` or `lit deny` yourself",
+		};
+	}
+	const signals = readWorkflowSignals(cwd, sessionId);
+	const work = signals.work;
+	if (work !== null && work.status !== "completed" && work.done < work.total) {
+		return {
+			kind: "continue-work",
+			text: `continue the ${work.status} start-work plan, ${work.done} of ${work.total} tasks done`,
+		};
+	}
+	if (signals.goals !== null && signals.goals.done < signals.goals.total) {
+		return {
+			kind: "continue-work",
+			text: `continue the open lit-loop goals, ${signals.goals.done} of ${signals.goals.total} done`,
+		};
+	}
+	const open = openPlansOf(cwd);
+	const only = open[0];
+	if (open.length === 1 && only !== undefined && (work === null || work.status === "completed")) {
+		return {
+			kind: "start-plan",
+			text: `start work on ${only.name}, ${only.done} of ${only.total} tasks done`,
+			plan: only.name,
+		};
+	}
+	return { kind: "none", text: "no single next step stands out; say what to work on" };
+}
+
+function nextPath(cwd: string, sessionId: string): string | null {
+	const id = normalizeSessionId(sessionId);
+	return id === null || !isAbsolute(cwd) ? null : join(cwd, ADHD_DIR, `next-${id}.json`);
+}
+
+/** Save the briefed step for `go`, or remove a stale one when there is nothing to run. Never throws. */
+export function writeNext(cwd: string, sessionId: string, next: NextStep, now: number): void {
+	const path = nextPath(cwd, sessionId);
+	if (path === null) return;
+	try {
+		if (!plainDirsOrMissing(cwd, ADHD_DIR)) return;
+		if (next.kind === "none") {
+			rmSync(path, { force: true });
+			return;
+		}
+		mkdirSync(join(cwd, ADHD_DIR), { recursive: true });
+		const record = { version: 1, sessionId, at: now, ...next };
+		writeFileAtomic(path, `${JSON.stringify(record)}\n`);
+	} catch {
+		// Without the note `go` simply finds nothing to run.
+	}
+}
+
+// ── Collect ──────────────────────────────────────────────────────────────────
+
+export function collectRewind(options: RewindOptions): RewindResult {
+	const now = options.now ?? Date.now();
+	const env = options.env;
+	const home = env["HOME"] ?? homedir();
+	const redact = makeRedactor(env, home);
+	const git = options.git ?? runGit;
+	const codexHome = options.codexHome ?? codexHomeFrom(env);
+	const sinceMs = options.sinceMs ?? DEFAULT_SINCE_MS;
+	const max = Math.max(1, Math.min(options.max ?? DEFAULT_MAX, 50));
+	const sessionId =
+		options.sessionId === undefined || options.sessionId === null ? null : normalizeSessionId(options.sessionId);
+	const limit = options.budgetBytes ?? TOTAL_BYTES;
+	const budget: ByteBudget = newBudget(limit);
+
+	let sessionsState: SourceState = codexHome === null ? "unknown" : "ok";
+	const sessions: RewindSession[] = [];
+	if (codexHome !== null) {
+		const files = listRollouts(codexHome).filter((file) => now - file.mtimeMs <= sinceMs);
+		for (const file of files) {
+			if (sessions.length >= max) break;
+			const facts = readRollout(file, budget);
+			if (facts === null) {
+				if (budget.exhausted) break;
+				continue;
+			}
+			if (facts.subagent) continue;
+			if (options.here === true && (facts.cwd === null || !insideDir(facts.cwd, options.cwd))) continue;
+			const top = facts.cwd === null ? undefined : readStack(facts.cwd, facts.id).frames.at(-1);
+			const status = statusOf(facts, file.mtimeMs, now);
+			const lastAgent = snippet(redact, facts.lastAgent, 160);
+			const gauge = stackGauge(top ?? {});
+			const noted = top === undefined ? "" : frameNote(top);
+			const facted = sessionFacts(facts, redact);
+			const tools = facts.tools.slice(0, 3).map(([name]) => clean(redact(name)));
+			const tool = facts.lastTool === null ? null : clean(redact(facts.lastTool));
+			const doing =
+				tool === null ? null : facts.lastTarget === null ? tool : `${tool} “${clean(redact(facts.lastTarget))}”`;
+			sessions.push({
+				id: facts.id,
+				shortId: shortIdOf(facts.id),
+				current: sessionId !== null && normalizeSessionId(facts.id) === sessionId,
+				cwd: facts.cwd === null ? null : redact(facts.cwd),
+				status,
+				lastAt: facts.lastAt ?? file.mtimeMs,
+				tree: null,
+				gauge,
+				facts: [noted, facted].filter((part) => part !== "").join(" · "),
+				title: snippet(redact, facts.firstUser, 80),
+				lastUser: snippet(redact, facts.lastUser, 120),
+				lastAgent,
+				done: doneOf(facts, lastAgent, tools, redact),
+				needs: needsOf(status, doing),
+				tools,
+				edited: facts.edited.length,
+				doing,
+			});
+		}
+		if (files.length === 0 && listRollouts(codexHome).length === 0) sessionsState = "unknown";
+	}
+
+	const folders = [
+		options.cwd,
+		...sessions.flatMap((session) => {
+			const found = session.cwd === null ? undefined : session.cwd.replace(/^~(?=$|\/)/u, home);
+			return found === undefined ? [] : [found];
+		}),
+	];
+	const unique = [...new Set(folders)].filter((folder) => isAbsolute(folder));
+	const { trees, gitState } = worktreesOf(unique, git);
+	const worktrees: RewindWorktree[] = trees.map((tree) => {
+		const signals = readWorkflowSignals(tree.path, null, now);
+		const subject = git(tree.path, ["log", "-1", "--format=%s"]);
+		const work =
+			signals.work === null
+				? null
+				: {
+						status: signals.work.status,
+						done: signals.work.done,
+						total: signals.work.total,
+						gauge: stackGauge({ n: signals.work.done, total: signals.work.total }),
+					};
+		const goals =
+			signals.goals === null
+				? null
+				: {
+						done: signals.goals.done,
+						total: signals.goals.total,
+						gauge: stackGauge({ n: signals.goals.done, total: signals.goals.total }),
+					};
+		// This worktree's open plans stay; another worktree's count only if changed inside the window.
+		const local = insideDir(options.cwd, tree.path);
+		const openPlans = openPlansOf(tree.path)
+			.filter((plan) => local || (plan.changedMs !== null && now - plan.changedMs <= sinceMs))
+			.slice(0, 4);
+		const pausedHere = pausedFramesOf(tree.path);
+		return {
+			path: redact(tree.path),
+			branch: tree.branch,
+			lastCommit: snippet(redact, subject, 80),
+			gauge: work?.gauge ?? goals?.gauge ?? null,
+			work,
+			goals,
+			openPlans,
+			milestones: milestonesOf(
+				tree.path,
+				git,
+				pausedHere.map(({ frame }) => redact(frameLabel(frame))),
+				openPlans,
+				now,
+			).map((milestone) => ({ ...milestone, label: snippet(redact, milestone.label, 80) ?? "" })),
+			paused: pausedHere.map(({ session, frame }) => ({
+				session: session.slice(0, 8),
+				label: frameLabel(frame),
+			})),
+			handoff: snippet(redact, handoffHeading(tree.path), 80),
+		};
+	});
+	const homed = (path: string): string => path.replace(/^~(?=$|\/)/u, home);
+	const placed = sessions.map((session) => {
+		const where = session.cwd === null ? undefined : homed(session.cwd);
+		const owner =
+			where === undefined
+				? undefined
+				: [...worktrees]
+						.sort((a, b) => b.path.length - a.path.length)
+						.find((tree) => insideDir(where, homed(tree.path)));
+		return { ...session, tree: owner?.path ?? null };
+	});
+
+	const next = chooseNext(options.cwd, sessionId);
+	if (sessionId !== null) writeNext(options.cwd, sessionId, next, now);
+
+	// Commit subjects, branch names, plan rows and names, goals and paths are record text: none of it may carry a control.
+	return cleanDeep({
+		generatedAt: new Date(now).toISOString(),
+		codexHome: codexHome === null ? null : redact(codexHome),
+		sessions: placed,
+		worktrees,
+		next,
+		suggestion: suggestionOf(placed, worktrees),
+		scope: { sinceMs, worktrees: worktrees.length },
+		sources: { sessions: sessionsState, git: gitState, state: "ok" },
+		budget: { limit, used: limit - budget.remaining, exhausted: budget.exhausted },
+	});
+}
+
+// ── Suggestion ───────────────────────────────────────────────────────────────
+
+const homeless = (path: string | null): string => (path === null ? "unknown" : basename(path));
+
+/** The worktree folder a session runs in, else the folder it started in, as a short name. */
+function placeOf(session: RewindSession): string {
+	return homeless(session.tree ?? session.cwd);
+}
+
+/** The last sentence of a session's final words that ends in a question mark, clipped. */
+function lastQuestion(text: string | null): string | null {
+	const found = [...(text ?? "").matchAll(/[^.!?。？\n]{4,}[?？]/gu)].at(-1)?.[0];
+	return found === undefined ? null : fit(found.replace(/\s+/gu, " ").trim(), 90);
+}
+
+/**
+ * The step to recommend when nothing can run on `go`, so the brief never ends on "nothing". In order: a session
+ * that waits on the user, a paused workflow, the open plan item of a worktree where a session is live, any
+ * open plan item, the latest other active session, the latest other ended one. It is shown, never recorded.
+ */
+export function suggestionOf(sessions: readonly RewindSession[], worktrees: readonly RewindWorktree[]): string {
+	const others = sessions.filter((session) => !session.current);
+	const waiting = others.find((session) => session.status === "waiting-on-user");
+	if (waiting !== undefined) {
+		const question = lastQuestion(waiting.lastAgent);
+		return `answer ${waiting.shortId} in ${placeOf(waiting)}${question === null ? "" : `: “${question}”`}`;
+	}
+	for (const tree of worktrees) {
+		const paused = tree.paused[0];
+		if (paused !== undefined) return `resume ${paused.label} in ${paused.session} (${homeless(tree.path)})`;
+	}
+	const liveTrees = new Set(sessions.filter((session) => session.status !== "ended").map((session) => session.tree));
+	const withItem = worktrees
+		.filter((tree) => tree.openPlans.length > 0 && tree.milestones.some((item) => item.state === "now"))
+		.sort((a, b) => Number(liveTrees.has(b.path)) - Number(liveTrees.has(a.path)));
+	const tree = withItem[0];
+	const item = tree?.milestones.find((milestone) => milestone.state === "now");
+	if (tree !== undefined && item !== undefined)
+		return `next in ${tree.openPlans[0]?.name ?? "the open plan"} (${homeless(tree.path)}): ${item.label}`;
+	const active = others.find((session) => session.status === "active");
+	if (active !== undefined)
+		return `check on ${active.shortId} in ${placeOf(active)} (${fit(active.title ?? "no first request", 50)})${active.doing === null ? "" : `, now ${active.doing}`}`;
+	const ended = others.find((session) => session.status === "ended");
+	if (ended !== undefined)
+		return `pick up ${ended.shortId} in ${placeOf(ended)}: ${fit(ended.title ?? "no first request", 50)}`;
+	return "no session or plan in this window: say what to start";
+}
+
+// ── Brief ────────────────────────────────────────────────────────────────────
+
+function pad(text: string, width: number): string {
+	const cut = fit(text, width);
+	return cut + " ".repeat(Math.max(0, width - displayWidth(cut)));
+}
+
+function ago(from: number | null, now: number): string {
+	if (from === null) return "a while ago";
+	const minutes = Math.max(0, Math.round((now - from) / 60_000));
+	if (minutes < 1) return "just now";
+	if (minutes < 60) return `${minutes}m ago`;
+	if (minutes < 48 * 60) return `${Math.round(minutes / 60)}h ago`;
+	return `${Math.round(minutes / 1440)}d ago`;
+}
+
+/** The age in its largest unit only (`20m`, `14h`, `3d`), short enough for a table cell. */
+function agoShort(from: number | null, now: number): string {
+	if (from === null) return "·";
+	const minutes = Math.max(0, Math.round((now - from) / 60_000));
+	if (minutes < 60) return `${minutes}m`;
+	if (minutes < 48 * 60) return `${Math.round(minutes / 60)}h`;
+	return `${Math.round(minutes / 1440)}d`;
+}
+
+const BADGE: Record<SessionStatus, string> = {
+	"waiting-on-user": "🟡 **WAITS ON YOU**",
+	active: "🟢 **RUNNING**",
+	ended: "⚪ **ENDED**",
+	unknown: "⚫ **NO RECORD**",
+};
+
+const MARK: Record<RewindMilestone["state"], string> = { done: "✓", now: "▶", later: "○" };
+
+function plural(count: number, one: string, many = `${one}s`): string {
+	return `${count} ${count === 1 ? one : many}`;
+}
+
+/** The headline's step: the recorded `next`, else the suggestion drawn from the records. */
+function stepOf(result: RewindResult): string {
+	return result.next.kind === "none" ? result.suggestion : result.next.text;
+}
+
+/** The one-line headline: how many sessions, what waits on the person, and the one next step. */
+export function briefHeadline(result: RewindResult): string {
+	const waiting = result.sessions.filter((session) => session.status === "waiting-on-user").length;
+	const running = result.sessions.filter((session) => session.status === "active").length;
+	const paused = result.worktrees.reduce((sum, tree) => sum + tree.paused.length, 0);
+	const parts = [
+		plural(result.sessions.length, "session"),
+		waiting === 0 ? "nothing waits on you" : `${waiting} ${waiting === 1 ? "waits" : "wait"} on you`,
+	];
+	if (running > 0) parts.push(`${running} running`);
+	if (paused > 0) parts.push(`${paused} paused`);
+	parts.push(`next: ${stepOf(result)}`);
+	return parts.join(" · ");
+}
+
+// Markdown words: record text is inert data, so every character that would turn it into markup is neutralised.
+const GAUGE = /\[[▉░]{1,10}\] \d+\/\d+/gu;
+const bare = (text: string): string => text.replace(/\s+/gu, " ").trim();
+const escapeMd = (text: string): string =>
+	text
+		.replace(/[<>`]/gu, (char) => (char === "<" ? "‹" : char === ">" ? "›" : "'"))
+		.replace(/[*|[\]\\]|(?<![\p{L}\p{N}])_|_(?![\p{L}\p{N}])/gu, (char) => `\\${char}`);
+const code = (text: string): string => `\`${bare(text).replaceAll("`", "'")}\``;
+
+/** Record text as Markdown; a gauge inside it stays whole in a code span instead of being escaped. */
+function rich(text: string): string {
+	const flat = bare(text);
+	let out = "";
+	let from = 0;
+	for (const match of flat.matchAll(GAUGE)) {
+		out += escapeMd(flat.slice(from, match.index)) + code(match[0]);
+		from = match.index + match[0].length;
+	}
+	return out + escapeMd(flat.slice(from));
+}
+
+function sessionCard(session: RewindSession, now: number): string {
+	const mark = session.current ? " · this session" : "";
+	const progress = [session.gauge === null ? "" : code(session.gauge), rich(session.facts)].filter(
+		(part) => part !== "",
+	);
+	const lines = [
+		`${BADGE[session.status]} · ${code(session.shortId)} · ${ago(session.lastAt, now)}${mark}`,
+		`**${rich(session.title ?? "no first request recorded")}**`,
+		`⏳ ${progress.length === 0 ? "no activity recorded" : progress.join(" · ")}`,
+		`✅ Done: ${session.done === null ? "nothing on record" : rich(session.done)}`,
+		`▶ Next: ${rich(session.needs)}`,
+	];
+	return lines.map((line, index) => (index === 0 ? `- ${line}` : `  ${line}`)).join("  \n");
+}
+
+/** A worktree's roadmap; without a live session here, only when something in it is still open. */
+function roadmapBlock(tree: RewindWorktree, live: boolean): string[] {
+	const lines: string[] = [];
+	const gauge = tree.gauge === null ? "" : ` ${code(tree.gauge)}`;
+	const parts = [
+		tree.work === null
+			? null
+			: `start-work ${rich(tree.work.status)}${tree.work.gauge === null ? "" : ` ${code(tree.work.gauge)}`}`,
+		tree.goals === null ? null : `goals${tree.goals.gauge === null ? "" : ` ${code(tree.goals.gauge)}`}`,
+		...tree.openPlans.map((plan) => `plan ${code(plan.name)}${plan.gauge === null ? "" : ` ${code(plan.gauge)}`}`),
+	].filter((part): part is string => part !== null);
+	const open = parts.length > 0 || tree.milestones.some((item) => item.state !== "done");
+	if (!open && !(live && (tree.milestones.length > 0 || tree.handoff !== null))) return lines;
+	lines.push(`🗺️ **Roadmap**${gauge}`, "");
+	if (parts.length > 0) lines.push(`- 📌 open: ${parts.join(" · ")}`);
+	for (const milestone of tree.milestones) {
+		const when = milestone.date ?? (milestone.state === "later" ? "later" : "");
+		lines.push(`- ${MARK[milestone.state]} ${when === "" ? "" : `${code(when)} · `}${rich(milestone.label)}`);
+	}
+	if (tree.handoff !== null) lines.push(`- 📝 handoff note: ${rich(tree.handoff)}`);
+	return lines;
+}
+
+const ENDED_ROWS = 8;
+
+/** Ended sessions, one table row each, newest first: they are history, so no card. One line per row at 120 columns. */
+export function endedTable(sessions: readonly RewindSession[], now: number, width = 96): string[] {
+	const goalWidth = Math.max(16, Math.min(44, width - 74));
+	const cell = (text: string): string => escapeMd(bare(text)) || "·";
+	const rows = sessions.slice(0, ENDED_ROWS).map((session) => {
+		const done = session.edited > 0 ? plural(session.edited, "file") : "·";
+		const place = fit(session.tree === null && session.cwd === null ? "unknown" : placeOf(session), 20);
+		return `| ${code(session.shortId)} | ${cell(place)} | ${cell(fit(bare(session.title ?? "no first request"), goalWidth))} | ${agoShort(session.lastAt, now)} | ${cell(done)} |`;
+	});
+	const more = sessions.length > ENDED_ROWS ? ["", `*…and ${sessions.length - ENDED_ROWS} more ended*`] : [];
+	return ["| id | where | goal | ago | done |", "|---|---|---|---|---|", ...rows, ...more];
+}
+
+/** A step cut at word breaks to the box, three lines at most, the last one clipped. */
+function wrap(text: string, width: number, limit = 3): string[] {
+	const out: string[] = [""];
+	for (const word of bare(text).split(" ")) {
+		const joined = out.at(-1) === "" ? word : `${out.at(-1)} ${word}`;
+		if (displayWidth(joined) <= width || out.at(-1) === "") out[out.length - 1] = joined;
+		else out.push(word);
+	}
+	const kept = out.slice(0, limit);
+	if (out.length > limit) kept[limit - 1] = `${kept[limit - 1]} ${out.slice(limit).join(" ")}`;
+	return kept.map((line) => fit(line, width));
+}
+
+function nextBox(result: RewindResult, width: number): string[] {
+	const inner = Math.min(Math.max(28, width - 4), 76);
+	const say =
+		result.next.kind === "none"
+			? "nothing runs on its own here: open that session, or say what to do"
+			: result.next.kind === "approve-boundary"
+				? "answer `lit approve` or `lit deny` yourself"
+				: "say `go` to run it";
+	const box = (text: string): string => `│ ${pad(text, inner)} │`;
+	return [
+		"```text",
+		`╭─ Recommended next step ${"─".repeat(Math.max(1, inner - 22))}╮`,
+		...wrap(stepOf(result), inner).map(box),
+		...wrap(say, inner, 2).map(box),
+		`╰${"─".repeat(inner + 2)}╯`,
+		"```",
+	];
+}
+
+/** `7d`, `36h`, `90m` for the window read. */
+function windowWords(ms: number): string {
+	if (ms % 86_400_000 === 0) return `${ms / 86_400_000}d`;
+	if (ms % 3_600_000 === 0) return `${ms / 3_600_000}h`;
+	return `${Math.max(1, Math.round(ms / 60_000))}m`;
+}
+
+/**
+ * The brief as Markdown limited to what the Codex terminal draws: bold, emoji, lists, a table and a fenced box.
+ * Never `#` headings or `>` quotes, which it prints as raw marks. A headline, live session cards (waiting or
+ * running) grouped by worktree with each worktree's roadmap (done ✓ with its date, now ▶, later ○), one table
+ * row for every ended session, and the one recommended next step in a box. A progress gauge appears only when
+ * both counts are real; otherwise the known facts are written out in words.
+ */
+export function renderBrief(result: RewindResult, width = 96): string {
+	const now = Date.parse(result.generatedAt);
+	const lines: string[] = [`**🧭 ${rich(briefHeadline(result))}**`];
+	lines.push(
+		`*last ${windowWords(result.scope.sinceMs)} · ${plural(Math.max(1, result.scope.worktrees), "worktree")}*`,
+	);
+	if (result.sessions.length === 0) lines.push("", "No Codex session records in range.");
+	const live = result.sessions.filter((session) => session.status !== "ended");
+	const ended = result.sessions.filter((session) => session.status === "ended");
+	const groups = new Map<string, RewindSession[]>();
+	for (const session of live) groups.set(session.tree ?? "", [...(groups.get(session.tree ?? "") ?? []), session]);
+	const known = new Set(result.worktrees.map((tree) => tree.path));
+	const order = [...result.worktrees.map((tree) => tree.path), ...[...groups.keys()].filter((key) => !known.has(key))];
+	for (const key of order) {
+		const tree = result.worktrees.find((candidate) => candidate.path === key);
+		const here = groups.get(key) ?? [];
+		const roadmap = tree === undefined ? [] : roadmapBlock(tree, here.length > 0);
+		if (here.length === 0 && roadmap.length === 0) continue;
+		const name = tree === undefined ? "folder unknown" : escapeMd(basename(tree.path));
+		const branch = tree?.branch == null ? "" : `${code(tree.branch)} · `;
+		lines.push("", `🌿 ${branch}**${name}**`);
+		for (const session of here) lines.push("", sessionCard(session, now));
+		if (roadmap.length > 0) lines.push("", ...roadmap);
+	}
+	if (ended.length > 0) lines.push("", `⚪ **Ended · ${ended.length}**`, "", ...endedTable(ended, now, width));
+	if (result.worktrees.length === 0 && result.sessions.length === 0) lines.push("", "No worktree found.");
+	lines.push("", ...nextBox(result, width));
+	const unknown = Object.entries(result.sources)
+		.filter(([, state]) => state === "unknown")
+		.map(([name]) => name);
+	if (unknown.length > 0) lines.push("", `*not readable: ${unknown.join(", ")}*`);
+	if (result.budget.exhausted) lines.push("", "*older sessions were not read (read budget spent)*");
+	return cleanLines(lines.join("\n"));
+}

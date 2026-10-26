@@ -44,6 +44,18 @@ const AUTH_HEADER_SECRET = /\b((?:(?:Proxy-Authorization|Authorization)[ \t]*:[ 
 const BARE_AUTH_SCHEME_SECRET = new RegExp(`\\b((?:Bearer|Basic)[ \t]+)(${PROSE_VALUE}[^\\s"'\`]+)`, "giu");
 const GENERIC_AUTH_HEADER_SECRET =
 	/\b((?:Proxy-Authorization|Authorization)[ \t]*:[ \t]*)([^\r\n]*\S[^\r\n]*)(?=\r?$)/gimu;
+// JSON and quoted maps close the key's quote before the colon (`"api_token": "..."`), which the `key: value`
+// rules above cannot see. The value is a quoted string (escapes allowed) or a bare scalar.
+const JSON_VALUE = String.raw`("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s,}\]"']+)`;
+const JSON_HIGH_SIGNAL_KEY_VALUE_SECRET = new RegExp(
+	String.raw`(["'][A-Za-z0-9_-]*?(?:api[_-]?key|api[_-]?token|access[_-]?token|auth[_-]?token|client[_-]?secret|credentials?|passphrase|passwd|password|private[_-]?key|refresh[_-]?token|secret[_-]?key|authorization)(?:[_-][A-Za-z0-9_-]*)?["']\s*:\s*)${JSON_VALUE}`,
+	"giu",
+);
+// `auth`, `secret` and `token` are also everyday words: a quoted value with spaces is prose and stays.
+const JSON_AMBIGUOUS_KEY_VALUE_SECRET = new RegExp(
+	String.raw`(["'][A-Za-z0-9_-]*?(?:auth|secret|token)(?:[_-][A-Za-z0-9_-]*)?["']\s*:\s*)${JSON_VALUE}`,
+	"giu",
+);
 const URI_USERINFO = /((?:[a-z][a-z0-9+.-]*:\/\/|\/\/))[^/?#\s]*@/giu;
 const PRIVATE_KEY_SECRET =
 	/-----BEGIN [A-Z0-9 ]*PRIVATE KEY(?: BLOCK)?-----[\s\S]*?-----END [A-Z0-9 ]*PRIVATE KEY(?: BLOCK)?-----/giu;
@@ -54,7 +66,21 @@ type RedactionRule = {
 	readonly replacement: (match: RegExpMatchArray) => string;
 };
 
+const redactedJsonValue = (value: string): string => {
+	const quote = value[0];
+	return quote === '"' || quote === "'" ? `${quote}${REDACTED_SECRET}${quote}` : REDACTED_SECRET;
+};
+
 const REDACTION_RULES: readonly RedactionRule[] = Object.freeze([
+	{
+		pattern: JSON_HIGH_SIGNAL_KEY_VALUE_SECRET,
+		replacement: (match: RegExpMatchArray) => `${match[1] ?? ""}${redactedJsonValue(match[2] ?? "")}`,
+	},
+	{
+		pattern: JSON_AMBIGUOUS_KEY_VALUE_SECRET,
+		replacement: (match: RegExpMatchArray) =>
+			/\s/u.test(match[2] ?? "") ? match[0] : `${match[1] ?? ""}${redactedJsonValue(match[2] ?? "")}`,
+	},
 	{ pattern: URI_USERINFO, replacement: (match: RegExpMatchArray) => match[1] ?? "" },
 	{ pattern: PRIVATE_KEY_SECRET, replacement: () => REDACTED_SECRET },
 	{ pattern: PRIVATE_KEY_MARKER_SECRET, replacement: () => REDACTED_SECRET },

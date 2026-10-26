@@ -31,6 +31,8 @@ export const LIT_LOOP_HOOK_STATUS_MESSAGE = activationStatusMessage(LIT_LOOP_COM
 export const LIT_LOOP_CREATE_GOAL_MATCHER = "^create_goal$" as const;
 /** The catch-all live-step pair runs on every tool call, so its label stays short and never says IGNITED. */
 export const LIT_LOOP_LIVE_STEP_STATUS_MESSAGE = "🔥 LIT · live step" as const;
+/** The child-agent pair records a lane row for the card and prints nothing. */
+export const LIT_LOOP_LANE_STATUS_MESSAGE = "🔥 LIT · lanes" as const;
 
 // git-bash component (Windows-only git_bash MCP reminder) — two hooks via the aggregate manifest.
 export const GIT_BASH_COMPONENT_DIR = "git-bash" as const;
@@ -145,6 +147,18 @@ export const EXPECTED_HOOKS: readonly ExpectedHook[] = Object.freeze([
 		event: "PostToolUse",
 		subcommand: "post-tool-use-live",
 		statusMessage: LIT_LOOP_LIVE_STEP_STATUS_MESSAGE,
+	}),
+	Object.freeze({
+		component: LIT_LOOP_COMPONENT_DIR,
+		event: "SubagentStart",
+		subcommand: "subagent-start",
+		statusMessage: LIT_LOOP_LANE_STATUS_MESSAGE,
+	}),
+	Object.freeze({
+		component: LIT_LOOP_COMPONENT_DIR,
+		event: "SubagentStop",
+		subcommand: "subagent-stop",
+		statusMessage: LIT_LOOP_LANE_STATUS_MESSAGE,
 	}),
 	Object.freeze({
 		component: GIT_BASH_COMPONENT_DIR,

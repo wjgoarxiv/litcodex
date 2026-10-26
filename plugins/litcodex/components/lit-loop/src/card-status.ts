@@ -10,6 +10,8 @@
 
 import { closeSync, fstatSync, readdirSync, readSync } from "node:fs";
 import { basename, isAbsolute, join } from "node:path";
+import { type LaneState, lookOf, REVIEW_LANE_IDS } from "./card-looks.js";
+import { cleanDeep, cleanLines } from "./control-chars.js";
 import {
 	codexHomeFrom,
 	type LiveStep,
@@ -19,6 +21,7 @@ import {
 	readThreadPointer,
 } from "./live-step.js";
 import { normalizeSessionId } from "./state-paths.js";
+import { readThreads, type ThreadView, threadLines } from "./threads.js";
 import {
 	readWorkflowSignals,
 	type WorkflowMap,
@@ -26,6 +29,7 @@ import {
 	workflowMapText,
 	workflowTurn,
 } from "./workflow-map.js";
+import { breadcrumb, frameNote, readStack, type StackFrame, stackGauge, stackRow } from "./workflow-stack.js";
 
 /** The rollout header carries the base instructions, so it is read up to this many bytes. */
 const MAX_ROLLOUT_HEADER_BYTES = 256 * 1024;
@@ -48,6 +52,8 @@ export interface CardStatus {
 	readonly thread: string | null;
 	readonly state: "ready" | "ignited" | "complete";
 	readonly mode: string | null;
+	/** The card's look: "rewind", "review", "turn" (waiting on the user), "done" (just finished), or null. */
+	readonly look: string | null;
 	readonly ignitedAt: number | null;
 	readonly map: WorkflowMap | null;
 	readonly step: { readonly tool: string; readonly startedAt: number } | null;
@@ -61,6 +67,12 @@ export interface CardStatus {
 	readonly working: boolean;
 	/** Percent of the context window and of each quota window in use, from the thread's last token count. */
 	readonly usage: Usage | null;
+	/** Work paused under a side discipline, or null while the thread has a single line of work. */
+	readonly stack?: CardStack | null;
+	/** Frames, child agents and other live sessions as rows; null while the stack row says all there is to say. */
+	readonly threads?: ThreadView | null;
+	/** The five review-work lane states, in border-draw order; null when the mode is not review-work. */
+	readonly reviewLanes?: readonly LaneState[] | null;
 	/** The workspace's checked-out branch, or a short commit when detached. */
 	readonly branch: string | null;
 	/** Folder name of the workspace only; the full path stays out of the card. */
@@ -68,6 +80,25 @@ export interface CardStatus {
 	/** When the newest card of this thread opened; an older card that sees a later time folds itself. */
 	readonly cardOpenedAt: number | null;
 	readonly now: number;
+}
+
+/**
+ * One frame of the session's workflow stack as the card names it: the skill and its stage, and a gauge only when
+ * both counts are real. A frame without a total carries a short `note` in words instead (`step 2`, or empty).
+ */
+export interface CardFrame {
+	readonly name: string;
+	readonly stage: string | null;
+	readonly gauge: string | null;
+	readonly note: string;
+}
+
+/** A side discipline running over paused work: what is paused, what runs, and the way back. */
+export interface CardStack {
+	readonly breadcrumb: string;
+	readonly row: string;
+	readonly paused: readonly CardFrame[];
+	readonly running: CardFrame;
 }
 
 export interface Usage {
@@ -296,6 +327,7 @@ function ready(thread: string | null, workspace: string | null, cardOpenedAt: nu
 		thread,
 		state: "ready",
 		mode: null,
+		look: null,
 		ignitedAt: null,
 		map: null,
 		step: null,
@@ -305,11 +337,35 @@ function ready(thread: string | null, workspace: string | null, cardOpenedAt: nu
 		turnEndedAt: null,
 		working: false,
 		usage: null,
+		stack: null,
+		threads: null,
+		reviewLanes: null,
 		branch: null,
 		workspace,
 		cardOpenedAt,
 		now,
 	};
+}
+
+/** The paused frames under the running one, read from the thread's own stack; null when nothing is paused. */
+function readCardStack(cwd: string, thread: string): CardStack | null {
+	try {
+		const stack = readStack(cwd, thread);
+		const row = stackRow(stack);
+		const crumb = breadcrumb(stack);
+		const top = stack.frames.at(-1);
+		if (row === null || crumb === null || top === undefined || !stack.frames.some((f) => f.status === "paused"))
+			return null;
+		const framed = (f: (typeof stack.frames)[number]): CardFrame => ({
+			name: f.skill ?? f.family ?? "work",
+			stage: f.stage,
+			gauge: stackGauge(f),
+			note: frameNote(f),
+		});
+		return { breadcrumb: crumb, row, paused: stack.frames.slice(0, -1).map(framed), running: framed(top) };
+	} catch {
+		return null;
+	}
 }
 
 /**
@@ -367,11 +423,52 @@ export function readCardStatus(
 	const finished =
 		!recorded && turnOver && !open && drawn?.family === "main" && stage !== undefined && FINISHING_STAGES.has(stage);
 	const map = finished && drawn !== null ? finishedMap(drawn) : drawn;
-	return {
+	const state: CardStatus["state"] = recorded || finished ? "complete" : "ignited";
+	const working = step !== null || turnWorking(live, lastStepAt, now);
+	const cardStack = readCardStack(cwd, thread);
+
+	// The look: a completion first, then the session waiting on the user, then the skill's own look.
+	// When the mode has no look (a scoped or implicit skill load that the hook never routed), the
+	// stack's active top frame can carry it: family "main" + stage "review" → "review".
+	// The "turn" look fires only when the last assistant message asked something (question mark,
+	// approval phrase) or reported BLOCKED — not on every finished turn.
+	let skillLook = lookOf(turn.mode);
+	let reviewFrame: StackFrame | undefined;
+	try {
+		const stack = readStack(cwd, thread);
+		reviewFrame = stack.frames.find((f) => f.family === "main" && f.stage === "review" && f.status === "active");
+		if (skillLook === null && reviewFrame !== undefined) {
+			skillLook = "review";
+		}
+	} catch {
+		// The card shows what it can; a missing stack does not break the read.
+	}
+	const waitReason = live?.waitReason ?? null;
+	const waitingOnUser = !working && state === "ignited" && turnOver && waitReason !== null;
+	// The done look fires only for an explicit plan/goal completion (recorded signal), not for a
+	// routine turn that implicitly finishes at a finishing stage.
+	const doneLook = state === "complete" && recorded;
+	const look: string | null = doneLook ? "done" : waitingOnUser ? "turn" : skillLook;
+
+	// Review lane states from the workflow stack's verdicts.
+	let reviewLanes: readonly LaneState[] | null = null;
+	if (skillLook === "review" && reviewFrame !== undefined) {
+		reviewLanes = REVIEW_LANE_IDS.map((id): LaneState => {
+			const v = (reviewFrame as StackFrame).verdicts[id];
+			if (v === "pass") return "pass";
+			if (v === "fail") return "fail";
+			if (v === "running") return "running";
+			return "dim";
+		});
+	}
+
+	// Every string here came from a record; none of it may carry a terminal control.
+	return cleanDeep({
 		version: 1,
 		thread,
-		state: recorded || finished ? "complete" : "ignited",
+		state,
 		mode: turn.mode,
+		look,
 		ignitedAt: turn.startedAt,
 		map,
 		step,
@@ -379,13 +476,16 @@ export function readCardStatus(
 		lastTool: live?.lastTool ? toolDisplayName(live.lastTool) : null,
 		turnStartedAt: live?.turnStartedAt ?? null,
 		turnEndedAt: turnOver ? live.turnEndedAt : null,
-		working: step !== null || turnWorking(live, lastStepAt, now),
+		working,
 		usage: rollout ? readUsage(thread, env) : null,
+		stack: cardStack,
+		threads: readThreads(cwd, thread, now, signals),
+		reviewLanes,
 		branch: readBranch(cwd),
 		workspace,
 		cardOpenedAt,
 		now,
-	};
+	});
 }
 
 /** Minutes and seconds, `m:ss`. */
@@ -397,12 +497,24 @@ export function clock(ms: number): string {
 /** The card as plain text, for hosts that cannot draw it (the terminal `codex`). */
 export function cardStatusText(status: CardStatus): string {
 	if (status.state === "ready")
-		return "🔥 LIT · ready — no LIT skill in this thread yet. Type `lit <task>` to start one.";
-	const lines = [`🔥 LIT ${status.state === "complete" ? "COMPLETE ✓" : "IGNITED"} · ${status.mode ?? "lit"}`];
+		return "🔥 LIT · ready — no LIT skill in this thread yet. Type `lit <task>` to start one, or `lit adhd` after a break.";
+	const lookLabel =
+		status.look === "turn"
+			? "  YOUR TURN"
+			: status.look === "rewind"
+				? "  REWIND <<"
+				: status.look === "review"
+					? "  REVIEW"
+					: "";
+	const lines = [
+		`🔥 LIT ${status.state === "complete" ? "COMPLETE ✓" : "IGNITED"} · ${status.mode ?? "lit"}${lookLabel}`,
+	];
 	if (status.map !== null) {
 		lines.push(workflowMapText(status.map));
 		if (status.map.next !== null) lines.push(`next ▸ ${status.map.next}`);
 	}
+	if (status.threads) lines.push(...threadLines(status.threads));
+	else if (status.stack) lines.push(status.stack.row);
 	if (status.step !== null) lines.push(`⠹ ${status.step.tool} · ${clock(status.now - status.step.startedAt)}`);
-	return lines.join("\n");
+	return cleanLines(lines.join("\n"));
 }

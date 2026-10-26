@@ -39,6 +39,8 @@ export interface LiveStep {
 	readonly turnEndedAt: number | null;
 	/** The tool that finished last in this turn; most steps end between two card polls. */
 	readonly lastTool: string | null;
+	/** Why the session waits on the user: "question", "blocked", or null (no reason detected). */
+	readonly waitReason?: string | null;
 }
 
 export interface ThreadPointer {
@@ -173,6 +175,7 @@ export function readLiveStep(repoRoot: string, sessionId: string): LiveStep | nu
 	if (!isRecord(record) || record["version"] !== 1) return null;
 	const text = (value: unknown): string | null => (typeof value === "string" && value !== "" ? value : null);
 	const time = (value: unknown): number | null => (typeof value === "number" && Number.isFinite(value) ? value : null);
+	const waitReason = text(record["waitReason"]);
 	return {
 		tool: text(record["tool"]),
 		toolUseId: text(record["toolUseId"]),
@@ -181,6 +184,7 @@ export function readLiveStep(repoRoot: string, sessionId: string): LiveStep | nu
 		turnStartedAt: time(record["turnStartedAt"]),
 		turnEndedAt: time(record["turnEndedAt"]),
 		lastTool: text(record["lastTool"]),
+		...(waitReason !== null ? { waitReason } : {}),
 	};
 }
 
@@ -258,7 +262,13 @@ export function recordLiveStepEnd(repoRoot: string, sessionId: string, ref: Tool
  * End whatever step this session still shows, since no tool runs once Stop fires, and close the turn
  * unless a Stop guard is sending the model back to work (`closeTurn` false).
  */
-export function endLiveStep(repoRoot: string, sessionId: string, now = Date.now(), closeTurn = true): void {
+export function endLiveStep(
+	repoRoot: string,
+	sessionId: string,
+	now = Date.now(),
+	closeTurn = true,
+	waitReason?: string | null,
+): void {
 	const path = liveStepPath(repoRoot, sessionId);
 	const current = path === null ? null : readLiveStep(repoRoot, sessionId);
 	if (path === null || current === null) return;
@@ -271,7 +281,20 @@ export function endLiveStep(repoRoot: string, sessionId: string, now = Date.now(
 		turnStartedAt: current.turnStartedAt,
 		turnEndedAt: closeTurn ? now : current.turnEndedAt,
 		lastTool: current.tool ?? current.lastTool,
+		...(closeTurn && waitReason != null ? { waitReason } : {}),
 	});
+}
+
+/** The last words ask the person something: a closing question, or a request to approve, confirm or deny. */
+const ASKS = /[?？]\s*$|`?lit approve`?|`?lit deny`?|승인해\s*주|확인해\s*주|괜찮을까요|할까요/iu;
+const BLOCKED_RE = /^BLOCKED:/mu;
+
+/** Detect why the session waits on the user from the last assistant message, or null. */
+export function detectWaitReason(lastMessage: string | null): string | null {
+	if (lastMessage === null || lastMessage === "") return null;
+	if (BLOCKED_RE.test(lastMessage)) return "blocked";
+	if (ASKS.test(lastMessage)) return "question";
+	return null;
 }
 
 /** `$CODEX_HOME`, else `$HOME/.codex`, read from the given environment only; null when neither is set. */

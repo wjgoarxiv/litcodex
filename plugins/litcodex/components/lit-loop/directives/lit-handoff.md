@@ -29,6 +29,8 @@ fences, block quotes, or `$litcodex:lit-handoff`; the scoped form is handled by 
 **MANDATORY:** the exact first user-visible line is
 `🔥 **LIT IGNITED · lit-handoff** 🔥`.
 
+When the handoff is written, its closing line may point to `lit adhd` as the way to see where every session and worktree stands later; do not run it.
+
 ## #contract.inputs
 
 ```json

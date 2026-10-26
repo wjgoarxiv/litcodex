@@ -80,7 +80,7 @@ above the footer).
 
 - Label every title (subject, measure, period); the claim is the first body line.
 - Give each figure a basis or comparison and a caption with period and source.
-- Keep bullet lists to four or five points, each carrying a number or a name.
+- Let each bullet carry a number or a name; split a long list into labelled groups.
 - End on `closing-ask`: the amount in the title, its uses as a table of item, amount, date and
   owner, and the next meeting with a name on it.
 

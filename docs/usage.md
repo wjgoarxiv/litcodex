@@ -37,7 +37,7 @@ LitCodex installs a `UserPromptSubmit` hook. A bare `lit` injects `<lit-loop-mod
 the runtime stores goals, criteria, and evidence under `.litcodex/lit-loop`. A goal completes only when every
 criterion has passing evidence. Blocked work remains incomplete.
 
-Codex contributes the hook and marketplace entry points; LitCodex's compiled components apply routing and model policy before recording durable loop state. The installed catalog exposes 44 skills.
+Codex contributes the hook and marketplace entry points; LitCodex's compiled components apply routing and model policy before recording durable loop state. The installed catalog exposes 47 skills.
 
 ```mermaid
 flowchart LR
@@ -52,14 +52,14 @@ flowchart LR
     HK --> COMP --> LEDGER
     MP --> LX
     COMP --> MODEL
-    LX --> S["44 skills"]
+    LX --> S["47 skills"]
 ```
 
 The same plugin provides planning, review, research, recap, comprehension, handoff, and local-knowledge
 surfaces. The Codex skill picker exposes the bundled library, including `autoconference`, `autoresearch`,
 `browser-drive`, `coding-session-audit`, `comment-checker`, `debugging`, `frontend-ui-ux`, `lit-brainstorm`, `lit-commit`, `lit-crucible`, `lit-init`, `lit-korean`, `lit-fetch`,
 `litcodex-contribute-bug-fix`, `litcodex-doctor`, `litcodex-report-bug`, `lsp`, `lsp-setup`, `lit-code`,
-`refactor`, `lit-burnoff`, `readme-studio`, `structural-search`, `lit-team`, `visual-qa`, and `wikify`.
+`refactor`, `lit-burnoff`, `lit-schematic`, `lit-hijack`, `lit-adhd`, `readme-studio`, `structural-search`, `lit-team`, `visual-qa`, and `wikify`.
 
 Release history belongs in [CHANGELOG.md](../CHANGELOG.md). The package carries the runtime marketplace
 payload and stages it at `~/.codex/marketplaces/litcodex`; installation does not clone GitHub or require
@@ -196,6 +196,9 @@ blocked native goal needs the documented recovery step below; a handoff does not
 | `lit-plan` or `lit plan` | **lit-plan** | Planning-only, bounded plan with evidence and a Final DoneClaim |
 | `deep-interview` or `lit deep interview` | **deep-interview** | Planning-only discovery for ambiguous briefs |
 | `lit brainstorm`, `lit ideation` or `lit idea` | **lit-brainstorm** | Many different options, then a short list to pick from; nothing is built |
+| `lit schematic` or `lit-schematic` | **lit-schematic** | Draw real equipment as SVG, PDF and PNG: P&ID, PFD, apparatus figure or isometric cutaway; a bare `lit` with such a request reaches it too |
+| `lit hijack` or `lit-hijack` | **lit-hijack** | Port a technique someone else published (post, article, repo, PDF) into your own skill: provenance and licence first, a spec without the source wording, a separate build, a before and after proof |
+| `lit adhd` or `lit rewind` | **lit-adhd** | Read-only brief across recent Codex sessions: asked, waiting, gauges, paused work and one next step to run with `go`; `lit continue` resumes a paused loop at its stage |
 | `litgoal` or `lit goal` | **litgoal** | Set and keep the finish line: bind an objective and criteria into the loop state that lit-loop and Start Work run toward |
 | `lit-recap` or `lit recap` | **lit-recap** | Read-only recap from `.litcodex` ledgers |
 | `lit-comprehend` or `comprehend` | **lit-comprehend** | Build a self-contained explainer outside the worktree |
@@ -215,7 +218,7 @@ The hook keeps this per session under `.litcodex/lit-reentry/`; a missing or unr
 activation. Standalone skills can also be selected by exact ID
 from the Codex picker or with a scoped mention, including `$litcodex:lit-handoff` and
 `$litcodex:lit-scientific-visualization`.
-For report or proposal output, bare `lit` loads `lit-docx`; for slide or presentation output it loads `lit-pptx`. Both are loaded when both formats are requested. Explicit picker or `$litcodex:lit-docx` and `$litcodex:lit-pptx` selection also works. `litcodex install` prepares the pinned runtime outside the session; `litcodex office-runtime status` and `litcodex doctor` report readiness. If offline, run `litcodex office-runtime install` later outside the sandbox.
+For report or proposal output, bare `lit` loads `lit-docx`; for slide or presentation output it loads `lit-pptx`; a count-only request such as "a 10-slide deck in neo-brutalism" counts as a slide request. Both are loaded when both formats are requested. Explicit picker or `$litcodex:lit-docx` and `$litcodex:lit-pptx` selection also works. `litcodex install` prepares the pinned runtime outside the session; `litcodex office-runtime status` and `litcodex doctor` report readiness. If offline, run `litcodex office-runtime install` later outside the sandbox.
 
 ## Commands
 
@@ -274,6 +277,18 @@ records under `.litcodex/` in its project. It writes no file, starts no process 
 logs. A record that exists but cannot be read (corrupt, oversized, symlinked or unreadable) shows as one
 `cannot read …` line. On a terminal it uses the alternate screen; Ctrl-C, SIGTERM and SIGHUP restore the screen
 and cursor and exit 0. Output is plain text when `NO_COLOR` is set or stdout is not a terminal. Tested on macOS.
+
+## Threads on the card
+
+While child agents run under the main thread, or another session of the project moved in the last 15 minutes, the
+card and the text HUD list them under the workflow row: the chain parent first, then a `N lanes in parallel` line
+and one row per child agent, with other sessions last. At most four rows are shown and the rest are counted as
+`+N more`. A row shows a gauge such as `[▉▉░░░] 2/5` only when both numbers are known; otherwise it says what is
+known in words (`step 4`, `3 steps`, `starting`) and the desktop card adds a moving pulse. The children come from
+the plugin's `SubagentStart` and `SubagentStop` hooks, which
+print nothing and fail open, and from the child's own tool calls. Each child keeps a small file under
+`.litcodex/lane-state/<session>/` with its id, display name, agent type and counts; no prompt, command or message
+is stored, and files older than a day are dropped.
 
 ## Card colour
 

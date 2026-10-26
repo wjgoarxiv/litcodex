@@ -23,12 +23,16 @@ import {
 	DEEP_INTERVIEW_DIRECTIVE_MARKER,
 	HANDOFF_DIRECTIVE_CLOSE,
 	HANDOFF_DIRECTIVE_MARKER,
+	LIT_ADHD_DIRECTIVE_CLOSE,
+	LIT_ADHD_DIRECTIVE_MARKER,
 	LIT_BRAINSTORM_DIRECTIVE_CLOSE,
 	LIT_BRAINSTORM_DIRECTIVE_MARKER,
 	LIT_COMPREHEND_DIRECTIVE_CLOSE,
 	LIT_COMPREHEND_DIRECTIVE_MARKER,
 	LIT_CRUCIBLE_DIRECTIVE_CLOSE,
 	LIT_CRUCIBLE_DIRECTIVE_MARKER,
+	LIT_HIJACK_DIRECTIVE_CLOSE,
+	LIT_HIJACK_DIRECTIVE_MARKER,
 	LIT_INIT_DIRECTIVE_CLOSE,
 	LIT_INIT_DIRECTIVE_MARKER,
 	LIT_LOOP_DIRECTIVE_CLOSE,
@@ -37,6 +41,8 @@ import {
 	LIT_PLAN_DIRECTIVE_MARKER,
 	LIT_RECAP_DIRECTIVE_CLOSE,
 	LIT_RECAP_DIRECTIVE_MARKER,
+	LIT_SCHEMATIC_DIRECTIVE_CLOSE,
+	LIT_SCHEMATIC_DIRECTIVE_MARKER,
 	LITGOAL_DIRECTIVE_CLOSE,
 	LITGOAL_DIRECTIVE_MARKER,
 	LITRESEARCH_DIRECTIVE_CLOSE,
@@ -71,7 +77,10 @@ export type LitMode =
 	| "start-work"
 	| "lit-recap"
 	| "lit-comprehend"
-	| "lit-brainstorm";
+	| "lit-brainstorm"
+	| "lit-schematic"
+	| "lit-hijack"
+	| "lit-adhd";
 
 /** Per-mode routing spec: its marker pair (guard) + resolved directive path (loader). */
 export interface LitModeSpec {
@@ -243,6 +252,30 @@ export const MODE_BY_TOKEN: Readonly<Record<LitTriggerToken, LitModeSpec>> = Obj
 		directivePath: resolveFromHere("../directives/lit-brainstorm.md"),
 		skillName: "lit-brainstorm",
 		skillPath: resolveSkillPath("lit-brainstorm"),
+	}),
+	"lit-schematic": Object.freeze({
+		mode: "lit-schematic",
+		openMarker: LIT_SCHEMATIC_DIRECTIVE_MARKER,
+		closeMarker: LIT_SCHEMATIC_DIRECTIVE_CLOSE,
+		directivePath: resolveFromHere("../directives/lit-schematic.md"),
+		skillName: "lit-schematic",
+		skillPath: resolveSkillPath("lit-schematic"),
+	}),
+	"lit-hijack": Object.freeze({
+		mode: "lit-hijack",
+		openMarker: LIT_HIJACK_DIRECTIVE_MARKER,
+		closeMarker: LIT_HIJACK_DIRECTIVE_CLOSE,
+		directivePath: resolveFromHere("../directives/lit-hijack.md"),
+		skillName: "lit-hijack",
+		skillPath: resolveSkillPath("lit-hijack"),
+	}),
+	"lit-adhd": Object.freeze({
+		mode: "lit-adhd",
+		openMarker: LIT_ADHD_DIRECTIVE_MARKER,
+		closeMarker: LIT_ADHD_DIRECTIVE_CLOSE,
+		directivePath: resolveFromHere("../directives/lit-adhd.md"),
+		skillName: "lit-adhd",
+		skillPath: resolveSkillPath("lit-adhd"),
 	}),
 });
 

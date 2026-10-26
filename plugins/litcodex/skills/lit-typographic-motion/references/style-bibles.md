@@ -11,7 +11,7 @@ You normally write no brief at all. `--brief brief.json` is an optional staging 
 | treatment | `copy.lines` | The film's copy, one shot per line, in order (1-8 lines, up to 160 characters each). |
 | treatment | `durationSec` | The target length. Holds scale up to meet it; the reading floors are never cut, and when they force a longer film the gate WARNs and says by how much. |
 | treatment | `sound.tempo` | The beat grid's BPM when the sound is generated, so cuts land on the bed's pulse. |
-| treatment | `typePlan.preset` | `swiss-signal`, `terminalcore` or `tidal`. The report labels it "agent default" unless `typePlan.presetSource` is `user`, which you set only when the user named the style. |
+| treatment | `style`, `typePlan.preset` | `style` is the house style the rules choose (`studio.md`, Choosing the style); `preset` defaults to it and is one of `swiss-signal`, `terminalcore` or `tidal` (`paper` is stage-only). The report labels it "agent default" unless `typePlan.presetSource` is `user`, which you set only when the user named the style. |
 | treatment | `typePlan.filmName` | The film's own name. It prints on the end card only when it is set; a working title or the request never prints. |
 | treatment | `typePlan.showIndex` | `true` puts a shot counter on screen; it is off unless the film asks for one. |
 | brief | `lines[]` objects | `{ "text": "...", "scene": "word-line", "accent": true, "font": "ems-tech" }` to pick a scene, the accent line or a stroke face for one line. |
@@ -23,7 +23,7 @@ Scene assignment is automatic unless a line names `scene`: the first line become
 
 ## Preset auto-pick
 
-The engine applies this table itself and prints the result in `gate-report.txt`; you apply the same table when writing the bible so the two agree. The first matching row wins. Latin keywords match whole words; Korean keywords match only at the start of a word, so they never fire inside a longer compound.
+The treatment's `style` is chosen first by the rules in `studio.md` (the request names a style, the project's house file, the keywords below, the genre, else `swiss-signal`); the table below is the keyword step, and on the type path `paper` is skipped. The engine applies this table itself and prints the result in `gate-report.txt`; you apply the same table when writing the bible so the two agree. The first matching row wins. Latin keywords match whole words; Korean keywords match only at the start of a word, so they never fire inside a longer compound.
 
 | The copy lines mention | Preset |
 | --- | --- |

@@ -34,7 +34,7 @@ installer.
 | Path | Role |
 |---|---|
 | `.codex-plugin/plugin.json` | Plugin manifest: name, version, skills, hooks, MCP server and the listing details Codex shows |
-| `hooks/hooks.json` | Hook commands for `UserPromptSubmit`, `SessionStart`, `PreToolUse`, `PostToolUse`, `PostCompact` and `Stop` |
+| `hooks/hooks.json` | Hook commands for `UserPromptSubmit`, `SessionStart`, `PreToolUse`, `PostToolUse`, `SubagentStart`, `SubagentStop`, `PostCompact` and `Stop` |
 | `.mcp.json` | The local `litcodex` MCP server that draws the LIT card, started from this folder over stdio |
 | `components/*/dist/` | Compiled hook and server code. It is committed because `codex plugin add` copies the folder without a build step |
 | `skills/` | The bundled skills, each with its own `SKILL.md`, references and scripts |

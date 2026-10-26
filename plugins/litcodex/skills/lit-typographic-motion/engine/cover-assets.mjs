@@ -1,5 +1,5 @@
 // Cover assets. Every raster a cover page can load (base art, logo, wordmark, texture) is listed in
-// `<out>/assets.json` with its path, role, source (user or generated) and SHA-256, and the renderer
+// `<out>/assets.json` with its path, role, source (user, fetched or generated) and SHA-256, and the renderer
 // checks the list before the first capture. A listed file that is missing stops the run as
 // BLOCKED_ASSET_MISSING (exit 22): the art is supplied or generated, never replaced by a drawn
 // stand-in, and the painted-light recipe cannot run without its base art. After the render, frame 0
@@ -13,6 +13,7 @@ import { COVER, EXIT, Exit } from "./constants.mjs";
 import { readPngRgba } from "./cover-gate.mjs";
 import { crop, lanczosResize, ssim } from "./cover-image.mjs";
 import { which } from "./runtime.mjs";
+import { readBoundedText } from "./safe-read.mjs";
 import { rasterInfo } from "./stage.mjs";
 
 export const ASSETS_FILE = "assets.json";
@@ -29,7 +30,7 @@ function entry(raw, i, coverDir) {
 	if (!raw || typeof raw !== "object") throw invalid(at, "must be an object");
 	if (typeof raw.path !== "string" || !raw.path.startsWith(`${coverDir}/`) || raw.path.split("/").includes("..")) throw invalid(`${at}.path`, `must be a path inside ${coverDir}/, relative to the output directory`);
 	if (!ASSET_ROLES.includes(raw.role)) throw invalid(`${at}.role`, `must be one of ${ASSET_ROLES.join(", ")}`);
-	if (!["user", "generated"].includes(raw.source)) throw invalid(`${at}.source`, "must be user (supplied) or generated (made for this cover)");
+	if (!["user", "fetched", "generated"].includes(raw.source)) throw invalid(`${at}.source`, "must be user (supplied), fetched (by `render.mjs assets --cover`) or generated (made for this cover)");
 	if (!/^[0-9a-f]{64}$/u.test(raw.sha256 ?? "")) throw invalid(`${at}.sha256`, "must be the file's SHA-256 (64 hex digits)");
 	if ("box" in raw && !isBox(raw.box)) throw invalid(`${at}.box`, "must be [x, y, w, h] as fractions of the cover, inside it");
 	if (raw.role === "base-art" && !raw.box) throw invalid(`${at}.box`, "base art needs the box it fills on the cover");
@@ -66,7 +67,9 @@ export function checkAssets({ outDir, treatment, files, coverDir = "cover" }) {
 			if (sha256(readFileSync(path)) !== asset.sha256) throw new Exit(EXIT.STAGE_CONTRACT_ERROR, `STAGE_CONTRACT_ERROR: ${asset.path} no longer matches its sha256 in assets.json; list it again after changing it`);
 		}
 	}
-	if (treatment.recipe === "painted-light" && !assets.some((a) => a.role === "base-art")) throw new Exit(EXIT.BLOCKED_ASSET_MISSING, "BLOCKED_ASSET_MISSING: the painted-light recipe needs its base art listed in assets.json ({ path, role: base-art, source, sha256, box }); supply or generate the painting, never draw a stand-in");
+	// The painted recipe relights a painting the user supplied. Without one the cover takes hero-3d (or
+	// weight-tide, orbit-loop) instead of a stand-in painting drawn for the occasion.
+	if (treatment.recipe === "painted-light" && !assets.some((a) => a.role === "base-art" && a.source === "user")) throw new Exit(EXIT.BLOCKED_ASSET_MISSING, "BLOCKED_ASSET_MISSING: the painted-light recipe needs its base art listed in assets.json ({ path, role: base-art, source: user, sha256, box }): a painting the user supplied; without one, take hero-3d (or weight-tide, orbit-loop), never draw or generate a stand-in");
 	const listed = new Set(assets.map((a) => a.path));
 	for (const f of files.filter((f) => RASTERS.has(extname(f.rel).toLowerCase()))) {
 		const rel = `${coverDir}/${f.rel.split(sep).join("/")}`;
@@ -105,7 +108,7 @@ export function artCheck({ frame0, width, height, art, box, checkBox = null }) {
 /** The reply labels a generated asset needs; `completion` prints them for the finished cover. */
 export function generatedLabels(outDir) {
 	try {
-		const doc = JSON.parse(readFileSync(join(outDir, ASSETS_FILE), "utf8"));
+		const doc = JSON.parse(readBoundedText(join(outDir, ASSETS_FILE)));
 		return (doc.assets ?? []).filter((a) => a?.source === "generated" && typeof a.path === "string").map((a) => `the ${String(a.role ?? "asset").replace("-", " ")} ${a.path} is generated, not supplied: label it as generated in the reply`);
 	} catch {
 		return [];

@@ -67,9 +67,9 @@ Pick any skill in the Codex skill picker or mention it by scoped name, such as `
 - Loop and planning: `lit-loop` (`lit`), `litwork`, `lit-plan`, Start Work (`lit start work <approved-plan>`),
   `litgoal`, `deep-interview`, `lit-brainstorm`, `lit-crucible`, `lit-team`, `lit-recap` and `lit-handoff`.
 - Review and research: `review-work`, `litresearch`, `autoresearch`, `autoconference`, `lit-fetch`,
-  `wikify`, `coding-session-audit` and `lit-comprehend`.
+  `wikify`, `coding-session-audit`, `lit-comprehend`, `lit-hijack` and `lit-adhd`.
 - Documents, figures and screens: `lit-docx`, `lit-pptx`, `lit-diagram-drawer`,
-  `lit-scientific-visualization`, `lit-typographic-motion`, `lit-humanizer`, `readme-studio`,
+  `lit-schematic`, `lit-scientific-visualization`, `lit-typographic-motion`, `lit-humanizer`, `readme-studio`,
   `frontend-ui-ux`, `visual-qa` and `browser-drive`.
 - Code: `debugging`, `refactor`, `lit-code`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`,
   `structural-search`, `lsp-setup` and `lit-init`.

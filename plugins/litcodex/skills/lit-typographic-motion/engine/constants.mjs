@@ -300,3 +300,9 @@ export const COVER = Object.freeze({
 	}),
 	encode: Object.freeze({ q: 86, edgeQ: 97, edgeFrames: 15, method: 4 }),
 });
+
+// The studio layer (references/studio.md): the genres a film's own score can take, and the sounds an
+// on-screen event can make (treatment `sound.events`). One list each, read by the treatment validator,
+// the score and the sound builder.
+export const SCORE_GENRES = Object.freeze(["house", "tech-house", "deep-house", "garage"]);
+export const EVENT_SOUNDS = Object.freeze(["tap", "hit", "whoosh", "chime"]);

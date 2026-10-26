@@ -89,9 +89,24 @@
 <td>슬라이드와 문서에 넣을 다이어그램을 편집 가능한 형태로 그리고, 검사한 뒤 PNG와 SVG로 내보냅니다.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/lit-pptx.webp" width="240" alt="lit으로 발표자료를 요청하면 내용에 맞는 디자인 방향 여덟 가지 중 하나를 먼저 고르고, 고른 방향과 대안 두 가지를 밝힌 뒤 Pretendard로 빽빽하게 채운 편집 가능한 PowerPoint 파일과 원고 Markdown을 만듭니다. 배치, 제목 다양성, 채움을 검사하고 LibreOffice가 있으면 렌더링된 슬라이드도 확인합니다." /></td>
+<td><img src="./assets/skills/lit-schematic.webp" width="240" alt="실제 장비를 축척에 맞게 그립니다. ISA 태그가 붙은 P&amp;ID와 PFD, 논문용 실험 장치 그림, 재질 색을 모두 입힌 아이소메트릭 컷어웨이를 QA 관문으로 검사해 SVG, PDF, 600 dpi PNG로 내보냅니다." /></td>
+<td><code>lit-schematic</code><br /><sub><code>lit schematic</code> · <code>$litcodex:lit-schematic</code></sub></td>
+<td>실제 장비를 축척에 맞게 그립니다. ISA 태그가 붙은 P&amp;ID와 PFD, 논문용 실험 장치 그림, 재질 색을 모두 입힌 아이소메트릭 컷어웨이를 QA 관문으로 검사해 SVG, PDF, 600 dpi PNG로 내보냅니다.</td>
+</tr>
+<tr>
+<td><img src="./assets/skills/lit-hijack.webp" width="240" alt="게시물, 저장소, PDF의 기법을 내 스킬로 옮깁니다. 라이선스 확인, 원문 표현 없는 명세, 별도 구현, 전후 비교 증명까지 거칩니다." /></td>
+<td><code>lit-hijack</code><br /><sub><code>lit hijack</code> · <code>$litcodex:lit-hijack</code></sub></td>
+<td>다른 사람이 공개한 글, 게시물, 저장소, PDF에서 기법 하나를 내 스킬로 옮깁니다. 출처와 라이선스를 기록하고, 원문 표현이 없는 명세를 쓰고, 그 명세만으로 만든 뒤, 전후 비교 실행으로 확인합니다.</td>
+</tr>
+<tr>
+<td><img src="./assets/skills/lit-adhd.webp" width="240" alt="최근 Codex 세션 전체를 읽기 전용으로 한 번에 정리합니다. 각 세션의 요청, 나를 기다리는 것, 진행 게이지, 멈춘 작업, go로 실행할 다음 한 걸음을 보여줍니다." /></td>
+<td><code>lit-adhd</code><br /><sub><code>lit adhd</code> · <code>lit rewind</code> · <code>$litcodex:lit-adhd</code></sub></td>
+<td>"나 어디까지 했지"에 최근 Codex 세션 전체를 건드리지 않고 답합니다. 세션마다 요청과 마지막 응답, 나를 기다리는 세션, 세션별·워크트리별 진행 게이지, 멈춘 작업, 그리고 <code>go</code>라고 입력해 시작하는 다음 한 걸음을 보여줍니다.</td>
+</tr>
+<tr>
+<td><img src="./assets/skills/lit-pptx.webp" width="240" alt="lit으로 발표자료를 요청하면 내용에 맞는(또는 말씀하신 네오 브루탈리즘 같은) 디자인 방향 열세 가지 중 하나를 먼저 고르고, 고른 방향과 대안 두 가지를 밝힌 뒤 Pretendard로 빽빽하게 채운 편집 가능한 PowerPoint 파일과 원고 Markdown을 만듭니다. 배치, 제목 다양성, 채움을 검사하고 LibreOffice가 있으면 렌더링된 슬라이드도 확인합니다." /></td>
 <td><code>lit-pptx</code><br /><sub><code>$litcodex:lit-pptx</code></sub></td>
-<td><code>lit</code>으로 발표자료를 요청하면 내용에 맞는 디자인 방향 여덟 가지 중 하나를 먼저 고르고, 고른 방향과 대안 두 가지를 밝힌 뒤 Pretendard로 빽빽하게 채운 편집 가능한 PowerPoint 파일과 원고 Markdown을 만듭니다. 배치, 제목 다양성, 채움을 검사하고 LibreOffice가 있으면 렌더링된 슬라이드도 확인합니다.</td>
+<td><code>lit</code>으로 발표자료를 요청하면 내용에 맞는(또는 말씀하신 네오 브루탈리즘 같은) 디자인 방향 열세 가지 중 하나를 먼저 고르고, 고른 방향과 대안 두 가지를 밝힌 뒤 Pretendard로 빽빽하게 채운 편집 가능한 PowerPoint 파일과 원고 Markdown을 만듭니다. 배치, 제목 다양성, 채움을 검사하고 LibreOffice가 있으면 렌더링된 슬라이드도 확인합니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-docx.webp" width="240" alt="lit으로 보고서를 요청하면 문서 방향 여섯 가지 중 하나를 고르고 대안 두 가지와 함께 밝힌 뒤, 절제된 인쇄물 품질의 Word 파일과 원고 Markdown을 만듭니다. 제목, 절제 규칙, LibreOffice가 있으면 렌더링된 페이지까지 검사합니다." /></td>
@@ -164,7 +179,7 @@
 <td>사실에 맞는 README와 움직이는 커버를 만들고, 휴대폰과 데스크톱 폭, 라이트와 다크 모드에서 확인합니다.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/lit-typographic-motion.webp" width="240" alt="lit으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 직접 만든 무대 페이지나 타입 엔진으로 영상을 만들고, 사운드를 입힌 뒤 렌더링된 스틸을 보며 다듬습니다. README 커버는 소리 없이 이음매 없이 도는 루프로 만들고, 인코딩된 파일로 검사합니다." /></td>
+<td><img src="./assets/skills/lit-typographic-motion.webp" width="240" alt="lit으로 영상을 요청하면 트리트먼트를 먼저 쓰고(하우스 스타일 4종), 영상 전에 스토리보드를 확인하고, 직접 만든 무대 페이지(피사체에 맞으면 3D)나 타입 엔진으로 영상을 만들고, 레이어드 스코어를 입힌 뒤 렌더링된 스틸을 보며 다듬습니다. README 커버는 3D 히어로까지 소리 없이 이음매 없이 도는 루프로 만들고, 인코딩된 파일로 검사합니다." /></td>
 <td><code>lit-typographic-motion</code><br /><sub><code>$litcodex:lit-typographic-motion</code></sub></td>
 <td><code>lit</code>으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 직접 만든 무대 페이지나 타입 엔진으로 영상을 만들고, 사운드를 입힌 뒤 렌더링된 스틸을 보며 다듬습니다. README 커버는 소리 없이 이음매 없이 도는 루프로 만들고, 인코딩된 파일로 검사합니다.</td>
 </tr>
@@ -184,9 +199,9 @@
 <td>브라우저 드라이버를 먼저 확인한 뒤 실제 페이지를 조작합니다. 드라이버가 없으면 그렇다고 말합니다.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/frontend-ui-ux.webp" width="240" alt="실제로 동작하는 화면을 만들고, 측정 프로브로 일곱 가지 보기를 렌더링합니다. 네 가지 폭, 다크 모드, 모션 줄이기, 200% 확대입니다." /></td>
+<td><img src="./assets/skills/frontend-ui-ux.webp" width="240" alt="고정한 하우스 스타일과 토큰 전용 키트로 실제로 동작하는 화면을 만들고, 측정 프로브로 일곱 가지 보기를 렌더링합니다. 네 가지 폭, 다크 모드, 모션 줄이기, 200% 확대입니다." /></td>
 <td><code>frontend-ui-ux</code><br /><sub><code>$litcodex:frontend-ui-ux</code></sub></td>
-<td>실제로 동작하는 화면을 만들고, 측정 프로브로 일곱 가지 보기를 렌더링합니다. 네 가지 폭, 다크 모드, 모션 줄이기, 200% 확대입니다.</td>
+<td>고정한 하우스 스타일과 토큰 전용 키트로 실제로 동작하는 화면을 만들고, 측정 프로브로 일곱 가지 보기를 렌더링합니다. 네 가지 폭, 다크 모드, 모션 줄이기, 200% 확대입니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-burnoff.webp" width="240" alt="테스트로 동작을 먼저 묶어 두고, 변경분에 붙은 AI식 군더더기를 걷어냅니다." /></td>
@@ -229,13 +244,28 @@
 - **다이어그램.** 아키텍처, 워크플로, 시스템, 개념 다이어그램은 Codex skill picker에서 `lit-diagram-drawer`를
   고르세요. `lit`으로 다이어그램을 요청해도 이 스킬을 읽도록 안내합니다. 제품 화면과 측정 데이터 그래프는 각자
   전용 스킬이 있습니다.
+- **장비 도면.** P&ID, PFD, 논문용 실험 장치 그림, 아이소메트릭 컷어웨이는 `lit schematic`을 쓰거나
+  `lit-schematic`을 고르세요. 이런 요청을 담은 단독 `lit`도 이 스킬로 이어집니다. 공정의 실제 사실을 먼저 적고,
+  자체 키트로 그린 뒤 QA 관문을 통과시켜 SVG, PDF, 600 dpi PNG로 내보냅니다.
+- **기법 가져오기.** 다른 사람이 공개한 방법(X 게시물이나 아티클, 저장소, PDF, 블로그 글)을 내 스킬에 들이려면
+  `lit hijack`을 쓰거나 `lit-hijack`을 고르세요. `lit` 뒤에 하이재킹이나 하이잭이라고 써도 됩니다. 출처마다 원본 위치와
+  라이선스를 적고, 표현이 아니라 메커니즘만 가져오며, 명세가 원문과 겹치는 문장이 없는지 검사합니다. 구현은
+  명세만 가진 새 에이전트 맥락에서 하고, 전후 비교 실행과 보고서로 마칩니다. 커밋은 대신 하지 않습니다.
+- **나 어디까지 했지.** 쉬었다 돌아오면 `lit adhd`(또는 `lit rewind`)로 최근 Codex 세션을 한눈에 봅니다. 세션마다
+  요청, 나를 기다리는 것, `[▉▉▉░░] 3/5` 같은 게이지(두 숫자를 모두 알 때만, 아니면 `12 steps · 4m · last: apply_patch` 같은
+  확인된 사실을 말로), 멈춘 작업, 끝낸 일·지금·나중을 날짜와 함께 보여 주는 로드맵, 다음 한 걸음이 나옵니다.
+  데스크톱 카드는 실행 중 무지개 모습으로 바뀌고, 쉬었다 돌아오면 카드와 세션 시작이 `lit adhd`를 조용히 권합니다. 30분 안에 `go`라고 입력하면 그 걸음을 실행합니다. 루프 도중 곁가지 스킬을 시작했다면
+  `lit continue`가 루프를 멈춘 단계와 개수 그대로 되살립니다. 아무것도 고치지 않으며, Start Work 경계의
+  `lit approve`와 `lit deny`는 직접 입력해야 합니다.
 - **Word와 PowerPoint.** 보고서·기획서는 `lit-docx`, 발표자료는 `lit-pptx`를 고릅니다. `lit`으로 둘 중 하나를
   요청하면 맞는 스킬을 알아서 읽고, 둘 다 요청하면 둘 다 씁니다. 두 스킬은 만들기 전에 자료를 읽고 이것이 어떤
   덱이나 문서인지부터 정합니다. 숫자 위주의 실적 보고인지, 발표용 피치인지, 강의인지, 읽히는 한국어 보고서형
   덱인지, 또는 보고서, 한 장짜리 안내문, 제안서, 절차서인지를 봅니다. 그러고는 고른 디자인 방향과 함께 검토한
   대안 두 가지를 밝히고, 질문 없이 바로 만듭니다. 발표자료는 Ledger, Signal, Atlas, Chalk, Paper, Gazette,
-  Studio, Night 여덟 방향이 있고, 방향마다 색과 제목 위치와 레이아웃이 다르며, 슬라이드마다 요점을 받치는 사실을
-  아래쪽까지 채워 넣습니다. 제목은 주제를 이름으로 붙이고 주장은 본문 첫 줄에 두며, 숫자는 잰 그대로 씁니다.
+  Studio, Night, Computational Brutalism, Neo-Brutalism, Bauhaus, Riso, Newsroom 열세 방향이 있고, 방향마다 색과
+  제목 처리와 레이아웃이 다르지만 모두 같은 슬라이드 격자를 쓰므로 어떤 방향을 골라도 제목은 같은 자리에 놓입니다.
+  슬라이드마다 요점을 받치는 사실을 아래쪽까지 채워 넣습니다. "덱 10장, 네오 브루탈리즘 스타일로" 같은 요청도
+  완성 덱 요청으로 읽어 그 방향을 고릅니다. 제목은 주제를 이름으로 붙이고 주장은 본문 첫 줄에 두며, 숫자는 잰 그대로 씁니다.
   문서는 Report, Brief, Manual, Proposal, Memo, Journal 여섯 방향이 있고, 첫 쪽에 무엇이 오는지, 요약을 어떻게
   쓰는지, 절에 번호를 붙이는지 같은 구조가 서로 다릅니다. 모두 연구기관 보고서처럼 검은 제목, 칸을 칠하지 않은
   표, 많아야 한 가지 강조색으로 인쇄되고, 한국어 문서는 날짜·표 캡션·단위·줄바꿈을 한국어 관례대로 씁니다.

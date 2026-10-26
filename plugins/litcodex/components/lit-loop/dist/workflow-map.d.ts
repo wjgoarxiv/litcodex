@@ -26,6 +26,16 @@ export interface StopContext {
  * `## Todos` or `## Final verification wave` section only rows inside those sections count.
  */
 export declare function countPlanRows(markdown: string): Progress;
+/** Done and total checkbox rows of a project-relative plan file; null when it cannot be read or holds none. */
+export declare function planProgress(repoRoot: string, rel: string): {
+    readonly done: number;
+    readonly total: number;
+} | null;
+/** The counted checkbox rows in order, as start-work reads them. */
+export declare function planRows(markdown: string): {
+    readonly done: boolean;
+    readonly label: string;
+}[];
 /** One cell per task, at most ten; a partly done plan never draws as full or empty. */
 export declare function progressBar(done: number, total: number): string;
 /**

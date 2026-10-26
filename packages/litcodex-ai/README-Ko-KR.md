@@ -63,8 +63,8 @@ lit 회원가입 폼에 입력 검증을 추가해줘
 - 루프와 계획: `lit-loop`(`lit`), `litwork`, `lit-plan`, Start Work(`lit start work <승인된 계획>`), `litgoal`,
   `deep-interview`, `lit-brainstorm`, `lit-crucible`, `lit-team`, `lit-recap`, `lit-handoff`.
 - 검토와 조사: `review-work`, `litresearch`, `autoresearch`, `autoconference`, `lit-fetch`, `wikify`,
-  `coding-session-audit`, `lit-comprehend`.
-- 문서, 그림, 화면: `lit-docx`, `lit-pptx`, `lit-diagram-drawer`, `lit-scientific-visualization`,
+  `coding-session-audit`, `lit-comprehend`, `lit-hijack`, `lit-adhd`.
+- 문서, 그림, 화면: `lit-docx`, `lit-pptx`, `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`,
   `lit-typographic-motion`, `lit-humanizer`, `readme-studio`, `frontend-ui-ux`, `visual-qa`, `browser-drive`.
 - 코드: `debugging`, `refactor`, `lit-code`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`,
   `structural-search`, `lsp-setup`, `lit-init`.

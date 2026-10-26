@@ -16,6 +16,7 @@ const MAP: WorkflowMap = {
 const INPUT: ScreenCardInput = {
 	mode: "lit-loop",
 	note: "turn started",
+	look: null,
 	map: MAP,
 	checklist: [
 		{ state: "done", label: "Wire the store" },
@@ -73,6 +74,7 @@ describe("renderScreenCard", () => {
 			{
 				mode: `lit-loop${ESC}[31m`,
 				note: `done\u0007‮`,
+				look: null,
 				map: null,
 				checklist: [{ state: "current", label: `Run ${ESC}]0;evil${ESC}\\ tests\r\nnow` }],
 			},

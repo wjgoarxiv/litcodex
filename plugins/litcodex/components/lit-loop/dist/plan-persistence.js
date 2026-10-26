@@ -10,6 +10,7 @@
 import { mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { normalizeSessionId } from "./state-paths.js";
+import { recordStackEvent } from "./workflow-stack.js";
 export const PLAN_PERSISTENCE_DIR = ".litcodex/lit-plan";
 export const PLAN_PERSISTENCE_PLANS_DIR = ".litcodex/plans";
 export const PLAN_PERSISTENCE_MAX_BLOCKS = 2;
@@ -134,6 +135,15 @@ export function evaluatePlanPersistence(repoRoot, sessionId) {
         catch {
             // Losing the satisfied mark only means the next Stop re-checks the (already valid) plan.
         }
+        // The saved plan's name rides on the lit-plan frame, so the work that follows it counts the plan's checkboxes.
+        recordStackEvent(repoRoot, sessionId, {
+            type: "move",
+            family: "main",
+            stage: "plan",
+            scope: "nearest",
+            done: true,
+            ref: { plan: `${PLAN_PERSISTENCE_PLANS_DIR}/${newest.file}` },
+        }, new Date());
         return PASS;
     }
     if (state.blocks >= PLAN_PERSISTENCE_MAX_BLOCKS)

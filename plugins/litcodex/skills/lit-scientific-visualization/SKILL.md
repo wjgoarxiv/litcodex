@@ -10,7 +10,7 @@ metadata:
 
 Emit exactly one probe line for the selected top-level discipline. Supporting skills do not add another probe or repeat the harness-rendered mark.
 
-Use [lit-diagram-drawer](../lit-diagram-drawer/SKILL.md) for conceptual or system diagrams; this skill remains for plots of measured scientific data.
+Use [lit-diagram-drawer](../lit-diagram-drawer/SKILL.md) for conceptual or system diagrams and [lit-schematic](../lit-schematic/SKILL.md) for P&IDs, apparatus figures and isometric cutaways; this skill remains for plots of measured scientific data.
 
 ## #contract.activation
 
@@ -156,8 +156,9 @@ inside them.
    `assets` root into Python's import path. Import `rcparams` from `style_presets.py`,
    `save_publication_figure` or the requested export helper from `figure_export.py`, and palettes from
    `color_palettes.py`; call `rcparams()` before any `plt.figure()` or `plt.subplots()`. Preserve the
-   authored axis-endpoint, zero-origin, grid, legend, scatter-only, layout, color, DPI, and export
-   restraints exactly.
+   authored axis-endpoint, zero-origin, legend, scatter-only, layout, color, DPI, and export
+   correctness rules exactly. The authored grid and ornament restraints are defaults that give way
+   to a request; the rich layer in step 9 is that request, so do not undo it.
 7. **Use resolved assets and helpers.** Keep scripts and assets package-local; do not copy helper
    functions into a new script unless the user explicitly requires a standalone artifact. Prefer
    importing the bundled source and keep bytecode writing disabled during payload verification.
@@ -165,11 +166,36 @@ inside them.
    `matplotlib`. Examples and specialized workflows may additionally require NumPy, seaborn,
    pandas, SciPy, Plotly/Kaleido, colorspacious, MDAnalysis, NGLView, py3Dmol, Pillow, or tifffile.
    Missing optional modules degrade only the capabilities that use them.
-9. **Generate a real artifact when execution is requested.** Use deterministic sample/data inputs,
-   explicit output paths, and the user's requested formats. Do not overwrite unrelated figures.
+9. **Generate a real artifact when execution is requested, rich by default.** Use deterministic
+   sample/data inputs, explicit output paths, and the user's requested formats. Do not overwrite
+   unrelated figures. The rich layer below is LitCodex's standing request on behalf of the user, so
+   the source's "only when requested" clauses for gridlines and annotation are satisfied:
+   - **Light grid.** Major gridlines only, thin and pale, drawn behind the data, applied right after
+     `rcparams()`:
+     ```python
+     rcparams()
+     plt.rcParams.update({"axes.grid": True, "axes.grid.which": "major", "axes.axisbelow": True, "grid.linewidth": 0.4, "grid.alpha": 0.35, "grid.color": "#9a9a9a"})
+     ```
+   - **Direct annotation.** Label series at their line ends or in place instead of a detached legend
+     when it fits; mark the values a reader will ask about (maxima, crossovers, thresholds, a fitted
+     parameter with its uncertainty and units) with short arrowed or offset notes that never sit on
+     data.
+   - **Inset.** When the data has a region that matters at a different scale (low-pressure slope, an
+     onset, a tail), add an inset axis with `indicate_inset_zoom`, or a marginal distribution or
+     residual strip for fitted data.
+   - **Multi-panel context.** When the data supports more than one view (the raw measurement and a
+     derived quantity, per-condition panels, a fit and its residuals), build a multi-panel figure
+     with shared axes where they share units and bold panel labels (a), (b), (c) at the top left.
+   - **Every layer stays true.** Annotations quote only values computed from the data; error bars or
+     bands show the replicate spread when replicates exist; the layer never adds fake precision or a
+     line through unordered observations.
+
+   A minimal figure (no grid, no annotations, one panel) is produced only when the user asks for
+   minimal, clean, simple or a journal's bare style. A P&ID, apparatus figure or isometric cutaway
+   is not a plot of measured data; route it to `lit-schematic`.
 10. **Inspect the result.** Verify file existence and size, raster dimensions/DPI when applicable,
-    vector readability, axis labels/units, endpoint ticks, legend border/opacity, no unwanted title
-    or grid, no clipping, and layout consistency. Use visual QA when the scientific or publication
+    vector readability, axis labels/units, endpoint ticks, legend border/opacity, no unrequested title,
+    only the light major grid, annotations that match the data, no clipping, and layout consistency. Use visual QA when the scientific or publication
     decision depends on appearance.
 11. **Verify current journal rules.** The authored journal reference explicitly warns that publisher
     requirements change. For a real submission, verify current official author guidelines before
@@ -249,7 +275,7 @@ inside them.
 - Do not break the independent `$litcodex:lit-scientific-visualization` and Codex picker routes.
 - Do not silently run package installers, alter global Python, or claim that `npx` installed
   Matplotlib/NumPy/seaborn/Plotly/MDAnalysis.
-- Do not call plotting functions before `rcparams()`, restore unwanted grids/titles/lines, clip axis
+- Do not call plotting functions before `rcparams()`, restore unrequested titles/lines or heavy grids, clip axis
   endpoint labels, hide the zero tick on zero-origin axes, or weaken the authored export settings.
 - Do not treat the CP/SDS reference workflow, palette attributions, or journal checklist as a license
   to invent chemical identity, color semantics, or current submission rules.

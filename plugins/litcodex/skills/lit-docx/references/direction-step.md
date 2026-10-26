@@ -3,9 +3,12 @@
 Before converting anything, lit-docx decides what kind of document it is building and writes that
 decision down. The decision is a **direction card**. It names one of the six tonalities, gives the
 reason in terms of the reader and the source, and lists two alternatives that were considered. A
-bare request ("make this into a report", "이 메모로 제안서 만들어줘") gets a card and a document,
-not questions: the skill decides, says what it decided, and the user can redirect after seeing
-pages.
+bare `lit` request ("lit make this into a report", "lit 이 메모로 제안서 만들어줘") gets a card and a
+document, not questions: the skill decides, says what it decided, and the user can redirect after seeing
+pages. Any other request that names no look first asks the user to choose with the SKILL.md "Choose the
+design first" step: the ranked tonality, the two alternatives, a compare option and the format. The
+question is skipped when the brief names the look or hands it over, and a non-interactive run takes the
+ranked pick and says so in one line.
 
 The six tonalities are not colour themes. They differ in what stands on page 1, how the summary is
 set, whether sections are numbered, which page components may appear and what the running head

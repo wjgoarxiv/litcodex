@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { EXIT } from "./engine/constants.mjs";
+import { RICH_REQUEST, richStage } from "./fixtures/rich-treatment.mjs";
 import { normalizeText, shippedExamples, TreatmentError, validateTreatment } from "./engine/treatment.mjs";
 
 const skillRoot = fileURLToPath(new URL("./", import.meta.url));
@@ -15,45 +16,10 @@ afterAll(() => {
 });
 
 type Json = Record<string, any>;
-const REQUEST = "make a short explainer video about how a rain garden filters street runoff lit";
+const REQUEST = RICH_REQUEST;
 
 /** A valid stage treatment for an explainer request that names no film words. */
-function stageTreatment(): Json {
-	return {
-		request: REQUEST,
-		genre: "explainer",
-		path: "stage",
-		pathReason: "the film shows water moving through soil layers, which needs drawn shapes",
-		idea: "Follow one raindrop from a curb cut down through mulch, sand and roots until it reaches clean groundwater.",
-		audience: "neighbours deciding whether to plant a rain garden",
-		channel: "community newsletter embed, played with sound",
-		format: "16:9",
-		formatReason: "the newsletter player is landscape",
-		durationSec: 16,
-		subject: { name: "Maple Street rain garden", source: "invented", specifics: ["a planted dip beside the curb that catches runoff", "three soil layers under native sedges", "built by the block association"] },
-		beats: [
-			{ t0: 0, t1: 4, purpose: "question", onScreen: "a storm drain swallowing oily water", motion: "rain streaks fall, the drain gulps", sound: "low pulse, a hit on the cut" },
-			{ t0: 4, t1: 8, purpose: "steps", onScreen: "cross-section of mulch, sand and roots", motion: "layers slide in from below", sound: "rise into the change" },
-			{ t0: 8, t1: 12, purpose: "result", onScreen: "the droplet turning clear at the bottom", motion: "a mask wipe follows the droplet", sound: "pad opens" },
-			{ t0: 12, t1: 16, purpose: "recap", onScreen: "the garden at street level with a label", motion: "match cut back to the curb", sound: "closing cadence" },
-		],
-		visualDevices: [
-			{ kind: "illustration", role: "subject", beats: [0, 1, 2, 3] },
-			{ kind: "diagram", role: "support", beats: [1, 2] },
-			{ kind: "particles", role: "texture", beats: [0] },
-		],
-		typePlan: { faces: ["Archivo", "Pretendard"], hierarchy: "one short label per beat, the recap line largest", maxWordsOnScreen: 7 },
-		palette: [
-			{ hex: "#10202A", role: "night soil ground" },
-			{ hex: "#E8F1EC", role: "label type" },
-			{ hex: "#5FB38A", role: "living roots" },
-		],
-		sound: { mode: "generated", plan: "a soft pulse that brightens as the water clears", palette: "felt", key: "D minor", tempo: 92 },
-		copy: { source: "invented", lines: ["Where does the storm go?", "Mulch, sand, roots", "Clear water below", "Maple Street, block 4"] },
-		inventions: ["Maple Street rain garden", "built by the block association", "all four copy lines"],
-		ambition: "Every cut should be a match cut on the droplet, with the soil layers drawn in depth so the filtering reads without words.",
-	};
-}
+const stageTreatment = (): Json => richStage();
 
 function expectField(t: Json, field: string) {
 	let error: unknown = null;
@@ -134,12 +100,15 @@ describe("treatment validator (exit 16 with the field name)", () => {
 	it("path type with no user copy and no type-led cue", () => {
 		const t = stageTreatment();
 		t.path = "type";
+		t.style = "swiss-signal";
 		expectField(t, "path");
 	});
 	it("path type at 9:16", () => {
 		const t = stageTreatment();
-		t.request = 'make a kinetic typography video with "roots hold the rain" lit';
+		t.request = 'make a vertical kinetic typography video with "roots hold the rain" lit';
+		t.genre = "type-led";
 		t.path = "type";
+		t.style = "swiss-signal";
 		t.format = "9:16";
 		expectField(t, "path");
 	});
@@ -147,6 +116,7 @@ describe("treatment validator (exit 16 with the field name)", () => {
 		const t = stageTreatment();
 		t.beats = t.beats.slice(0, 3);
 		t.beats[2].t1 = 16;
+		t.beats[2].transition = "end";
 		t.visualDevices = [
 			{ kind: "illustration", role: "subject", beats: [0, 1, 2] },
 			{ kind: "diagram", role: "support", beats: [1, 2] },
@@ -203,6 +173,7 @@ describe("the render CLI validates the treatment before any render", () => {
 	it("an invalid treatment exits 16 on the type path too, naming the field", () => {
 		const t = stageTreatment();
 		t.path = "type";
+		t.style = "swiss-signal";
 		writeFileSync(join(dir, "t.json"), JSON.stringify(t));
 		const result = spawnSync(process.execPath, [RENDER, "film", "--treatment", join(dir, "t.json"), "--out", join(dir, "b"), "--stills-only"], { encoding: "utf8" });
 		expect(result.status).toBe(16);

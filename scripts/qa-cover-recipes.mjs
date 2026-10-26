@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // Cover recipe regression QA for lit-typographic-motion (needs Chrome, the pre-warmed motion runtime,
-// img2webp and dwebp; it is not part of the unit suite). Every shipped cover recipe is re-rendered
+// img2webp and dwebp; it is not part of the unit suite). The hero-3d recipe runs on the GPU rung when
+// Chrome starts one and falls back to the software rung with a warning; each row prints the rung it
+// rendered on, and a pinned row measured on the other rung is compared with a note, not hidden. Every shipped cover recipe is re-rendered
 // through the real renderer (`render.mjs cover`, every gate on the decoded file) and fails when it
 // leaves the row it was pinned with: median d or the moving share outside +-15 %, seamLocal outside the
 // cover TARGET, more than 2 MiB, or a non-zero exit. `--negatives` also renders the four shipped
@@ -11,7 +13,7 @@
 // failure, never a caught defect. `--feather N` runs only the painted recipe's declared `feather-N`
 // regression.
 //
-//   node scripts/qa-cover-recipes.mjs [--out <dir>] [--only painted-light,weight-tide] [--negatives] [--feather N]
+//   node scripts/qa-cover-recipes.mjs [--out <dir>] [--only hero-3d,weight-tide] [--negatives] [--feather N]
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
@@ -101,7 +103,7 @@ function main() {
 		? []
 		: option("only")
 			? String(option("only")).split(",")
-			: ["painted-light", "weight-tide", "orbit-loop"];
+			: ["hero-3d", "painted-light", "weight-tide", "orbit-loop"];
 	const rows = [];
 	let failed = 0;
 
@@ -133,7 +135,7 @@ function main() {
 		rows.push([
 			name,
 			bad.length ? `FAIL ${bad.join(",")}` : "PASS",
-			`median d ${show(g.medianD)} (row ${e.medianD}) | moving ${show(g.movingFrac)} | still ${show(g.longestStillSec)} s | spike ${show(g.spike)} | seamLocal ${show(g.seamLocal)} | ${r.manifest.bytes} B | exit ${r.status}`,
+			`${r.manifest.rung ?? "software"} rung | median d ${show(g.medianD)} (row ${e.medianD}) | moving ${show(g.movingFrac)} | still ${show(g.longestStillSec)} s | spike ${show(g.spike)} | seamLocal ${show(g.seamLocal)} | ${r.manifest.bytes} B | exit ${r.status}`,
 		]);
 	}
 
@@ -141,7 +143,7 @@ function main() {
 	if (argv.includes("--negatives")) {
 		for (const name of ["title-slam", "card-scenes", "still-glow", "reset-sweep"])
 			cases.push({ kind: "negative", name });
-		for (const recipe of ["painted-light", "weight-tide", "orbit-loop"]) {
+		for (const recipe of ["hero-3d", "painted-light", "weight-tide", "orbit-loop"]) {
 			const declared = readJson(join(skill, "recipes", recipe, "expected.json"))?.regressions ?? {};
 			for (const id of Object.keys(declared)) cases.push({ kind: "regression", recipe, id });
 		}

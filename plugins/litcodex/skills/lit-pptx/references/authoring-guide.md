@@ -7,7 +7,7 @@ How to author a deck in the constrained Markdown dialect that `scripts/compile-d
 node "$OFFICE" pptx compile --list-templates
 node "$OFFICE" pptx compile --list-layouts <TEMPLATE>   # blocks + regions per layout
 ```
-Every new deck is built in one of the eight tonality packs chosen on the direction card (`references/direction-step.md`; `--list-tonalities` prints them) with `tonality: <name>` in the frontmatter. The legacy templates below stay selectable by name with `template:` or `--template` and keep their own look:
+Every new deck is built in one of the thirteen tonality packs chosen on the direction card (`references/direction-step.md`; `--list-tonalities` prints them) with `tonality: <name>` in the frontmatter. The legacy templates below stay selectable by name with `template:` or `--template` and keep their own look:
 | Template | Canvas | Font | Use |
 |----------|--------|------|-----|
 | `BOILERPLATE-PRETENDARD` | 4:3 (10×7.5in) | Pretendard | General professional/technical decks |
@@ -89,10 +89,9 @@ node "$OFFICE" pptx compile deck.md --template <TEMPLATE> --pptx out.pptx --embe
 ## 5. Verify (always)
 ```bash
 node "$OFFICE" pptx qa out.pptx        # overflow/overlap + WCAG contrast + anti-slop; non-zero = FAIL
-soffice -env:UserInstallation=file:///tmp/lit-pptx-preview --headless --convert-to pdf --outdir previews out.pptx
-pdftoppm -png -r 120 previews/out.pdf previews/slide   # inspect each image
+node "$OFFICE" pptx render out.pptx --out-dir previews --pages 99   # PDF plus page-01.png ... through a private LibreOffice profile
 ```
-A clean gate is defect-absence, not quality — read the thumbnails. See `references/anti-slop-checklist.md`.
+`pptx render` installs the fonts the deck embeds (Pretendard, A2Z, JetBrains Mono) into that private profile first, because LibreOffice ignores embedded font parts; a bare `soffice --convert-to pdf` would draw a mono or A2Z deck in a fallback face. A clean gate is defect-absence, not quality — read the thumbnails. See `references/anti-slop-checklist.md`.
 
 ## 6. Anti-patterns (fix before shipping)
 - Generic titles ("개요"/"Overview") → make them specific.

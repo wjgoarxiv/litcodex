@@ -1,0 +1,6 @@
+interface:
+  display_name: "Lit Hijack"
+  short_description: "Port a published technique into your skill, clean-room"
+  default_prompt: "Use $litcodex:lit-hijack to port this technique into my skill."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Lit Schematic"
+  short_description: "Draw P&IDs, apparatus figures and isometric cutaways"
+  default_prompt: "Use $litcodex:lit-schematic to draw this P&ID, apparatus figure or cutaway."
+policy:
+  allow_implicit_invocation: false

@@ -55,7 +55,7 @@ gaps before anything else; on the compact step nothing is enlarged.
 carry the numbers). Since the agenda carries no numeral (OF-119), a chalk deck that relied on it for its
 only kicker needs a step or sidebar slide under `kicker-numeral` to keep three title treatments (OF-110),
 and a sidebar note set across the top is one more top-title slide in a grid, which can carry the top/grid
-share past 40 % of the content slides (OF-111). A comparison sets its criteria on the board rail under a `side-rail` title (the pack's
+share past 40 % of the content slides (OF-111). A comparison sets its criteria as row heads in the body under a `side-rail` title (the pack's
 `structure`).
 
 ## Families and variants

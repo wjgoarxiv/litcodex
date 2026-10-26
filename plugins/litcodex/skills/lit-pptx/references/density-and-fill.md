@@ -2,7 +2,7 @@
 
 Two dials govern how a deck uses its pages. **Density** sets how much a page holds and how tightly
 it is set. **Variance** sets how many title treatments and families one deck mixes. Every pack
-ships with defaults (density 10 in all eight; variance 4-8), and the direction card records the
+ships with defaults (density 10 in all thirteen; variance 4-8), and the direction card records the
 values actually used. Moves of 1 or 2 on either dial are the skill's call, noted on the card;
 anything further waits for the user.
 
@@ -26,8 +26,8 @@ is won or lost in how the source is written.
 
 **The compact step.** Density 10 uses the compact grid (24 pt margins, 54 pt columns, 24 pt
 gutters, 78 pt pitch on 16:9) and the compact ramp: source 9, label 11, body 13, lead 18, title 26,
-display 36, cover 44. A top-rule title sits tight over its rule, so a one-line title lets the body
-start near y 92 instead of 120. Up to 22 lines fit a text column. Type is never enlarged to fill on
+display 36, cover 44. The body starts at y 120 on every slide: the slide grid has one title zone (y 36-108)
+and no treatment buys the body room by shrinking it. Up to 22 lines fit a text column. Type is never enlarged to fill on
 this step. The readable floor holds everywhere: body 12 pt or more, table cells and captions 11 pt
 or more, sources 9 pt or more.
 
@@ -46,7 +46,8 @@ shrinking content instead: cut or split the slide.
 | 9-10 | 5 | up to 2, and no family more than twice in the deck |
 
 The ceiling is also bounded by how many treatments the pack owns (four in Chalk, Gazette, Ledger,
-Paper and Signal; five in Atlas, Night and Studio).
+Paper and Signal; five in Atlas, Bauhaus, Computational Brutalism, Neo-Brutalism, Newsroom, Night, Riso
+and Studio).
 
 ## Fill policies
 
@@ -111,8 +112,21 @@ What the engine cannot refill, the source fixes: two or three takeaways computed
 figures, or a real further group where the slide's subject has one; never smaller type or a decoration.
 
 The treatment choice is also a fill decision: a slide whose body stays short under its role default
-may be drawn under a side rail or a bottom title, where the visual gets the full height. No policy
-adds decoration or pads a card to cover space.
+may be drawn under a side rail or a bottom title. Both draw in the same title zone as every other
+treatment, so the body keeps its start at y 120 and its width; what changes is the surface the title
+is set on. No policy adds decoration or pads a card to cover space.
+
+A point written after two columns (`:::: columns` closing, then a bullet) is kept under them at the
+body's full width, never dropped and never squeezed into a column, in `comparison` and
+`text-two-column` alike.
+
+**Two registers.** A report pack reads at the compact ramp above. A pack that declares `register: bold`
+(Neo-Brutalism) sets the presented ramp instead (body 18 pt, labels 14, sources 12, titles 32, display
+44) and may take the 72 pt hero step on a statement or a big figure. The compiler refuses presented
+type in any other pack. Every pack takes its own hero step on a cover or statement title that fits
+(60 pt on the report packs); a deck sets `hero: false` in its front matter to keep the calmer display
+step. The register changes the size inside a zone, never the zone, so a bold deck holds fewer words per
+slide and still starts its body at y 120.
 
 ## Writing a source that fills
 

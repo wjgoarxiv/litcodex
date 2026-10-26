@@ -48,12 +48,18 @@ def severity(prs, rule):
 
 class PptxCraftChecks(unittest.TestCase):
     def test_accent_families(self):
+        four_hues = [(205, 51, 51), (48, 158, 76), (54, 76, 190), (220, 170, 20)]
+        five_hues = four_hues + [(150, 60, 170)]
         poor, slide = deck()
-        for x, rgb in [(1, (205, 51, 51)), (2, (48, 158, 76)), (3, (54, 76, 190))]:
+        for x, rgb in enumerate(five_hues, 1):
+            shape(slide, x, 1.7, .5, .5, rgb)
+        maximal, slide = deck()
+        for x, rgb in enumerate(four_hues, 1):
             shape(slide, x, 1.7, .5, .5, rgb)
         clean, slide = deck()
         shape(slide, 1, 1.7, .5, .5)
         self.assertIn('HIGH', severity(poor, 'OF-101'))
+        self.assertEqual(severity(maximal, 'OF-101'), [])
         self.assertNotIn('HIGH', severity(clean, 'OF-101'))
 
     def test_body_measure(self):

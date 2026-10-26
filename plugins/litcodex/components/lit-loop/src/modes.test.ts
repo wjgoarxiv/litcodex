@@ -8,6 +8,8 @@ import {
 	LIT_BRAINSTORM_DIRECTIVE_MARKER,
 	LIT_CRUCIBLE_DIRECTIVE_CLOSE,
 	LIT_CRUCIBLE_DIRECTIVE_MARKER,
+	LIT_HIJACK_DIRECTIVE_CLOSE,
+	LIT_HIJACK_DIRECTIVE_MARKER,
 	LIT_INIT_DIRECTIVE_CLOSE,
 	LIT_INIT_DIRECTIVE_MARKER,
 	LIT_LOOP_DIRECTIVE_CLOSE,
@@ -16,6 +18,8 @@ import {
 	LIT_PLAN_DIRECTIVE_MARKER,
 	LIT_RECAP_DIRECTIVE_CLOSE,
 	LIT_RECAP_DIRECTIVE_MARKER,
+	LIT_SCHEMATIC_DIRECTIVE_CLOSE,
+	LIT_SCHEMATIC_DIRECTIVE_MARKER,
 	LITGOAL_DIRECTIVE_CLOSE,
 	LITGOAL_DIRECTIVE_MARKER,
 	LITWORK_DIRECTIVE_CLOSE,
@@ -89,6 +93,24 @@ describe("MODE_BY_TOKEN routing table", () => {
 		expect(spec.skillPath.endsWith("/skills/lit-brainstorm/SKILL.md")).toBe(true);
 	});
 
+	it("maps lit-schematic → lit-schematic mode + directives/lit-schematic.md", () => {
+		const spec = modeForToken("lit-schematic");
+		expect(spec.mode).toBe("lit-schematic");
+		expect(spec.openMarker).toBe(LIT_SCHEMATIC_DIRECTIVE_MARKER);
+		expect(spec.closeMarker).toBe(LIT_SCHEMATIC_DIRECTIVE_CLOSE);
+		expect(spec.directivePath.endsWith("/directives/lit-schematic.md")).toBe(true);
+		expect(spec.skillPath.endsWith("/skills/lit-schematic/SKILL.md")).toBe(true);
+	});
+
+	it("maps lit-hijack → lit-hijack mode + directives/lit-hijack.md", () => {
+		const spec = modeForToken("lit-hijack");
+		expect(spec.mode).toBe("lit-hijack");
+		expect(spec.openMarker).toBe(LIT_HIJACK_DIRECTIVE_MARKER);
+		expect(spec.closeMarker).toBe(LIT_HIJACK_DIRECTIVE_CLOSE);
+		expect(spec.directivePath.endsWith("/directives/lit-hijack.md")).toBe(true);
+		expect(spec.skillPath.endsWith("/skills/lit-hijack/SKILL.md")).toBe(true);
+	});
+
 	it("names every routed skill by its route: litgoal and review-work route to a skill of the same name", () => {
 		for (const token of LIT_TRIGGER_TOKENS) {
 			if (token === "lit" || token === "litcodex" || token === "lit-loop") continue;
@@ -144,7 +166,7 @@ describe("MODE_BY_TOKEN routing table", () => {
 			expect(closeMarker).toBe(openMarker.replace("<", "</"));
 			seen.add(openMarker);
 		}
-		// 13 modes → 13 distinct markers (lit/litcodex/lit-loop share one).
-		expect(seen.size).toBe(13);
+		// 16 modes → 16 distinct markers (lit/litcodex/lit-loop share one).
+		expect(seen.size).toBe(16);
 	});
 });

@@ -29,15 +29,23 @@ test("OF-201 detects weak separation only when two outlined groups exist", () =>
 	assert.ok(!visualQuality(spaced).issues.some((issue) => issue.startsWith("OF-201")));
 });
 
-test("OF-202 counts node-fill accent families with a four-family failure", () => {
-	const poor = svg(
-		node("a", 20, 30, "#d93636") +
-			node("b", 130, 30, "#20a04e") +
-			node("c", 240, 30, "#304cdd") +
-			node("d", 350, 30, "#d3a818"),
-	);
+test("OF-202 passes three to five node-fill accent families and fails at six", () => {
+	const fills = ["#d93636", "#20a04e", "#304cdd", "#d3a818", "#8c4a86", "#14a3b8"];
+	const families = (count) =>
+		svg(
+			fills
+				.slice(0, count)
+				.map((fill, index) => node(`n${index}`, 20 + index * 110, 30, fill))
+				.join(""),
+		);
 	const clean = svg(node("a", 20, 30, "#304cdd") + node("b", 130, 30, "#5068dd"));
-	assert.ok(visualQuality(poor).issues.some((issue) => issue.startsWith("OF-202")));
+	for (const count of [3, 4, 5]) {
+		assert.ok(
+			!visualQuality(families(count)).issues.some((issue) => issue.startsWith("OF-202")),
+			`${count} families`,
+		);
+	}
+	assert.ok(visualQuality(families(6)).issues.some((issue) => issue.startsWith("OF-202")));
 	assert.ok(!visualQuality(clean).issues.some((issue) => issue.startsWith("OF-202")));
 });
 

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Lit ADHD"
+  short_description: "Cross-session brief and one next step (alias lit-rewind)"
+  default_prompt: "Use $litcodex:lit-adhd to brief me on where my recent sessions stand."
+policy:
+  allow_implicit_invocation: false

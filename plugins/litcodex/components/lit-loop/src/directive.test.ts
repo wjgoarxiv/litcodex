@@ -177,6 +177,8 @@ it("routes report and slide deliverables to native Office skills", () => {
 		expect(body).toContain("Load both when both formats are requested");
 		expect(body).toContain("quoted examples and input-file names");
 		expect(body).toContain("without preference questions");
+		expect(body).toContain("덱 10장, 네오 브루탈리즘 스타일로");
+		expect(body).toContain("is a full deck request");
 	}
 });
 

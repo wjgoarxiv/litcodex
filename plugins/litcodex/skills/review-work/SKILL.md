@@ -88,7 +88,13 @@ Treat this SKILL.md as an LLM contract artifact, not a casual help page. Load it
 ## #contract.procedure
 
 1. **Acknowledge activation deterministically.** Print the exact banner required above before any explanation when the skill is truly active.
-2. **Bind scope.** Name the requested outcome, in-scope files or surfaces, and any explicit non-goals. Keep sibling repositories outside scope unless the user names them.
+2. **Register the review on the LIT card.** Run `node <plugin-root>/components/lit-loop/dist/cli.js stage --family main --stage review` so the card shows the review look and lane bar. As each of the five lanes reports its verdict, update the bar: `node <plugin-root>/components/lit-loop/dist/cli.js stage --family main --stage review --verdict <lane>=pass` (or `=fail`). The five lane ids and what they cover:
+   - `goal` — Goal and constraint verification
+   - `quality` — Code and documentation quality
+   - `security` — Security and safety audit
+   - `qa` — QA execution and real-surface probes
+   - `context` — Context mining and missed requirements
+3. **Bind scope.** Name the requested outcome, in-scope files or surfaces, and any explicit non-goals. Keep sibling repositories outside scope unless the user names them.
 3. **Ground in Codex reality.** Prefer repo-local files, package scripts, component directives, marketplace metadata, and hook behavior over memory or generic agent habits.
 4. **Select the smallest complete path.** Reuse existing tests, scripts, components, directives, and docs before inventing new abstractions.
 5. **Execute with evidence gates.** For behavior changes, obtain a failing-first proof when a seam exists; for docs/contracts, add a guard that fails before the rewrite and passes after it.

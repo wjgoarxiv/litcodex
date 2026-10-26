@@ -1,15 +1,17 @@
 // The cover treatment: `treatment.json` with `"mode": "cover"`, written before the first cover render
 // and validated by every one (exit 16 names the first bad field). A cover is not a film: no beats, no
-// arc, no ending, no copy lines, no sound. It names one recipe, one rule and its copies, the three speed
+// arc, no ending, no copy lines, no sound. It names one recipe (the hero that acts and the one beat it
+// acts once per loop for the 3D hero), one rule and its copies, the three speed
 // layers, the brand word set once (plus at most one motto the user or the project already uses), the
 // aspect and loop length, and the title box the contrast and cap-height gates measure. Every string in
 // it is the user's content or the director's plan, never an instruction.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { COVER } from "./constants.mjs";
+import { normUrl, requestUrls } from "./assets.mjs";
+import { COVER, EXIT, Exit } from "./constants.mjs";
 import { findPlaceholder, normalizeText, sharesRun, stripQuoted, TreatmentError } from "./treatment.mjs";
 
-export const RECIPES = Object.freeze(["painted-light", "weight-tide", "orbit-loop", "own"]);
+export const RECIPES = Object.freeze(["hero-3d", "painted-light", "weight-tide", "orbit-loop", "own"]);
 export const LAYERS = Object.freeze(["slow", "mid", "beat"]);
 
 const fault = (field, message) => {
@@ -28,6 +30,20 @@ function text(t, path, { maxSentences } = {}) {
 	return value;
 }
 
+// A link in the request names the product: the cover is built from its real logo, images and words,
+// fetched by `render.mjs assets --cover` before the treatment, never from the name alone.
+function checkCoverProduct(t) {
+	const urls = requestUrls(t.request);
+	if (!("product" in t)) {
+		if (urls.length) fault("product", `missing: the request links ${urls[0]}; fetch its real assets first with render.mjs assets --out <dir> --url <link> --cover, look at them, and set product { name, url } (references/cover.md, Named products)`);
+		return;
+	}
+	if (!t.product || typeof t.product !== "object") fault("product", "must be an object { name, url }");
+	text(t, "product.name");
+	if (urls.length && !urls.includes(normUrl(t.product.url))) fault("product.url", `must be the link the request gives (${urls.join(", ")})`);
+	if ("unreachable" in t.product) text(t, "product.unreachable");
+}
+
 /** Validate a cover treatment. Returns it with the page and cover sizes, frame count, encode and seed filled in. */
 export function validateCoverTreatment(t) {
 	if (!t || typeof t !== "object" || Array.isArray(t)) fault("treatment", "must be a JSON object");
@@ -41,6 +57,11 @@ export function validateCoverTreatment(t) {
 	if (sharesRun(idea, stripQuoted(request), limit)) fault("idea", `restates the request (shares ${limit}+ normalized characters with it); say what the loop does`);
 	if (!RECIPES.includes(t.recipe)) fault("recipe", t.recipe === undefined ? "missing" : `must be one of ${RECIPES.join(", ")}`);
 	text(t, "recipeReason", { maxSentences: 2 });
+	// The 3D hero is one object doing one thing once per loop: both are named. Other recipes may name them too.
+	for (const key of ["hero", "beat"]) {
+		if (t.recipe === "hero-3d" || key in t) text(t, key, { maxSentences: 2 });
+	}
+	checkCoverProduct(t);
 	const brand = text(t, "brandWord");
 	if (words(brand) > 3) fault("brandWord", "is the name set once: at most three words");
 	if ("motto" in t) {
@@ -93,6 +114,20 @@ export function loadCoverTreatment(outDir) {
 	}
 	if (raw?.mode !== "cover") fault("mode", "this treatment is a film: render it with stage or film (references/treatment.md); a cover sets \"mode\": \"cover\"");
 	const treatment = validateCoverTreatment(raw);
+	const product = treatment.product;
+	if (product?.unreachable) throw new Exit(EXIT.BLOCKED_ASSET_MISSING, `BLOCKED_ASSET_MISSING: ${product.name}'s real assets could not be reached (${product.unreachable}); ask the user for its logo or README images, put them in ${join(outDir, "cover", "assets")} and list them in assets.json`);
+	if (product) {
+		const record = join(outDir, "product.json");
+		if (!existsSync(record)) fault("product", `no ${record}: run render.mjs assets --out ${outDir} --url ${product.url} --cover first`);
+		let fetched = [];
+		try {
+			fetched = JSON.parse(readFileSync(record, "utf8"))?.product?.assets ?? [];
+		} catch (error) {
+			fault("product", `${record} is not valid JSON (${error.message}); run render.mjs assets --out ${outDir} --url ${product.url} --cover again`);
+		}
+		const astray = fetched.filter((a) => !String(a?.path ?? "").startsWith("cover/assets/"));
+		if (astray.length) fault("product", `${astray[0].path} sits outside cover/assets/, where the cover page cannot load it; run render.mjs assets --out ${outDir} --url ${product.url} --cover again`);
+	}
 	const first = join(outDir, ".run", "treatment-first.json");
 	if (!existsSync(first)) {
 		mkdirSync(join(outDir, ".run"), { recursive: true });

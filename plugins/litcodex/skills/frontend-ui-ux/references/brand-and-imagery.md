@@ -8,7 +8,7 @@ Use authorized purpose and audience, marks and clear-space rules, licensed color
 
 | Quality | Interface expression |
 | --- | --- |
-| Precise | aligned layout, explicit labels, restrained transitions |
+| Precise | aligned layout, explicit labels, restrained transitions (a calm brief) |
 | Energetic | clear contrast, dynamic crops, quick feedback |
 | Humane | readable type, forgiving recovery, warm content |
 | Premium | restrained materials, deliberate pace, strong imagery |

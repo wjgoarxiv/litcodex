@@ -37,7 +37,7 @@ LitCodex는 `UserPromptSubmit` 훅을 설치합니다. Codex 작성창에 단독
 `<lit-loop-mode>`가 주입되고 **lit-loop**가 시작됩니다. 목표, 성공 기준, 증거는 프로젝트의
 `.litcodex/lit-loop`에 기록되며, 모든 기준에 증거가 있어야 완료됩니다.
 
-Codex의 훅과 마켓플레이스가 컴파일된 LitCodex 구성요소와 모델 정책을 거쳐 내구성 원장으로 이어지는 실제 연결입니다. 설치된 카탈로그에는 44개 스킬이 함께 제공됩니다.
+Codex의 훅과 마켓플레이스가 컴파일된 LitCodex 구성요소와 모델 정책을 거쳐 내구성 원장으로 이어지는 실제 연결입니다. 설치된 카탈로그에는 47개 스킬이 함께 제공됩니다.
 
 ```mermaid
 flowchart LR
@@ -52,13 +52,13 @@ flowchart LR
     HK --> COMP --> LEDGER
     MP --> LX
     COMP --> MODEL
-    LX --> S["44 skills"]
+    LX --> S["47 skills"]
 ```
 
 계획, 검토, 연구, 리캡, 이해, 인수인계, 로컬 지식 기능도 함께 제공합니다. Codex skill picker에서
 `autoconference`, `autoresearch`, `browser-drive`, `coding-session-audit`, `comment-checker`, `debugging`,
 `frontend-ui-ux`, `lit-commit`, `lit-crucible`, `lit-init`, `lit-korean`, `lit-fetch`, `litcodex-doctor`, `litcodex-report-bug`, `lsp`,
-`lsp-setup`, `lit-code`, `refactor`, `lit-burnoff`, `structural-search`, `lit-team`,
+`lsp-setup`, `lit-code`, `refactor`, `lit-burnoff`, `lit-schematic`, `lit-hijack`, `lit-adhd`, `structural-search`, `lit-team`,
 `visual-qa`, `wikify`를 선택할 수 있습니다. 저장소 초기 조사를 위한 `lit-init`도 번들 카탈로그에 포함됩니다.
 
 릴리스 이력은 [CHANGELOG.md](../CHANGELOG.md)에서 관리합니다. 설치기는 npm 패키지에 포함된
@@ -66,7 +66,7 @@ flowchart LR
 
 저장소에 파일이 있다는 사실만으로는 충분하지 않습니다. 패키징된 페이로드 안에서 절차와 코퍼스, 참조 경로가 모두 확인되어야 새 머신에서도 스킬이 실행됩니다.
 
-보고서·기획서·워드 출력에는 `lit-docx`, 발표자료·슬라이드 출력에는 `lit-pptx`를 사용합니다. 범위가 정해진 `lit` 요청은 해당 스킬을 읽고, 두 형식을 함께 요청하면 둘 다 읽습니다. 명시적 스킬 선택도 가능합니다. `litcodex install`이 Codex 세션 밖에서 고정된 의존성을 준비합니다. `litcodex office-runtime status` 또는 `litcodex doctor`로 상태를 확인하고, 오프라인 설치였다면 나중에 샌드박스 밖에서 `litcodex office-runtime install`을 실행합니다.
+보고서·기획서·워드 출력에는 `lit-docx`, 발표자료·슬라이드 출력에는 `lit-pptx`를 사용합니다("덱 10장, 네오 브루탈리즘 스타일로"처럼 장수만 밝힌 요청도 슬라이드 요청입니다). 범위가 정해진 `lit` 요청은 해당 스킬을 읽고, 두 형식을 함께 요청하면 둘 다 읽습니다. 명시적 스킬 선택도 가능합니다. `litcodex install`이 Codex 세션 밖에서 고정된 의존성을 준비합니다. `litcodex office-runtime status` 또는 `litcodex doctor`로 상태를 확인하고, 오프라인 설치였다면 나중에 샌드박스 밖에서 `litcodex office-runtime install`을 실행합니다.
 
 ```mermaid
 flowchart LR
@@ -220,6 +220,9 @@ Codex의 native goal과 로컬 루프 기록은 별도로 관리됩니다. nativ
 | `lit-plan` 또는 `lit plan` | **lit-plan** | 범위가 제한된 계획과 검증 체크리스트 작성 |
 | `deep-interview` 또는 `lit deep interview` | **deep-interview** | 모호한 요구를 질문으로 좁히는 계획 전용 탐색 |
 | `lit brainstorm`, `lit ideation` 또는 `lit idea` | **lit-brainstorm** | 서로 다른 선택지를 많이 낸 뒤 고를 수 있는 짧은 목록으로 좁힘, 만들지는 않음 |
+| `lit schematic` 또는 `lit-schematic` | **lit-schematic** | 실제 장비를 SVG, PDF, PNG로 그림: P&ID, PFD, 실험 장치 그림, 아이소메트릭 컷어웨이. 이런 요청을 담은 단독 `lit`도 이 스킬로 이어짐 |
+| `lit hijack` 또는 `lit-hijack` | **lit-hijack** | 다른 사람이 공개한 기법(게시물, 아티클, 저장소, PDF)을 내 스킬로 옮김: 출처와 라이선스를 먼저 적고, 원문 표현 없는 명세를 쓰고, 따로 구현한 뒤 전후 비교로 증명함 |
+| `lit adhd` 또는 `lit rewind` | **lit-adhd** | 최근 Codex 세션을 읽기 전용으로 정리: 요청, 대기, 게이지, 멈춘 작업, `go`로 실행할 다음 한 걸음. `lit continue`는 멈춘 루프를 그 단계 그대로 이어감 |
 | `litgoal` 또는 `lit goal` | **litgoal** | 완료 기준을 정하고 유지: 목표와 기준을 lit-loop와 Start Work가 향해 가는 루프 상태에 연결 |
 | `lit-recap` 또는 `lit recap` | **lit-recap** | `.litcodex` 원장을 읽기 전용으로 요약 |
 | `lit-comprehend` 또는 `comprehend` | **lit-comprehend** | 작업 트리 밖에 자체 완결형 설명 자료 생성 |

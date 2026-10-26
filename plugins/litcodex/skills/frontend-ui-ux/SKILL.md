@@ -37,6 +37,12 @@ Outcome, constraints, and authorization define scope. See `references/complete-c
 
 Follow `references/complete-contract.md`, `references/production-interview.md`, `references/motion-guide.md`, and `references/probe-and-review.md`; default direction is `references/default-editorial-pixel.json`. Always load `references/craft-floor.md` and `references/slop-register.md` once selected. Use `litfamily.design-contract/v1beta2` with `schemas/design-contract.v1beta2.json`. Lead with the user's primary information and actions; implement the interactions needed for the user's task. Inspect real 390/1440 renders, navigation, links, and visible controls. Source/tests are not visual proof; `visual-qa` owns verdicts.
 
+### Choose the design first
+
+For a new page or screen the user has the right to choose the look. Before `design-lock.mjs` runs or markup is written, follow `references/design-choice.md`: style, family and density, recommended first, by `request_user_input` or a numbered list.
+
+Then a new page or screen starts from a design lock: run `scripts/design-lock.mjs init` and follow `references/house-styles.md` (five house styles, the `kit/`, one signature moment). Density is rich unless the user asks for minimal or calm. The probe adds DS-001..008 beside `design.lock.json` and prints a LOOK rubric; judge the screenshots by eye.
+
 Mode words apply only after picker selection or a bounded lit-loop delegation. `scripts/route-mode.mjs` checks English/Korean UI objects and excludes video, slides, prose, and server work; text alone never activates this skill. Use build by default, polish for value-only edits, audit only after same-surface session work, and harden for stress cues.
 
 ## #contract.outputs

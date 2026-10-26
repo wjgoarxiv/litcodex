@@ -6,6 +6,132 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `lit-adhd` (alias `lit-rewind`), a read-only "where was I" brief, plus a per-session workflow stack, `lit continue`
+  and typed Start Work approval. `lit adhd` or `lit rewind` runs one collector over Codex session records (rollout
+  files under the Codex home, read only, within an 8 MiB budget, symlinks refused, credential shapes, environment
+  values and the home path masked) and each worktree's `.litcodex/` state, then lays out sessions, what each was
+  asked, what waits on you, progress (a gauge such as `[▉▉▉░░] 3/5` only when both numbers are real, otherwise the known facts in words), a
+  roadmap of done, now and later with dates, paused work and one next
+  step. The whole prompt `go`, `lit go`, `ㄱㄱ`, `고` or `진행` runs that step once, within 30 minutes and only in the
+  session that was briefed. A discipline started in the middle of a loop pauses it on a guarded stack under
+  `.litcodex/workflow-stack/` (the card shows `lit-loop ‖ > lit-brainstorm`), and `lit continue` closes the side
+  discipline and resumes the loop at its stage and count; an active `lit-plan` keeps its persistence gate and stays
+  put. Start Work now takes `lit approve` and `lit deny` as typed answers to a waiting boundary, on top of the
+  existing resume line; `go` never answers a boundary. No surface draws a stand-in for an unknown number: a frame
+  without a total reads `step 2` or its facts in words, with an indeterminate pulse on the card. While `lit adhd` runs
+  the desktop card turns rainbow (drifting border, hue-cycling gauges, a sparkle trail; at most three flashes a second,
+  still under reduced motion), the text HUD tints one line, and the idle card, the session start (once a day, after a
+  break) and the handoff and recap routes offer `lit adhd` quietly.
+- The `lit adhd` brief now always ends on a real next step and folds ended sessions into one table. When nothing can run
+  on `go`, the box still names what to do (answer a waiting session with its question, resume a paused workflow, take
+  the next open plan item, check on the live session, or pick up the latest one). Ended sessions become an
+  id, where, goal, ago and done table of one line per row at 120 columns, and a finished turn only counts as waiting
+  when its last words ask something. Session cards name what a session is doing when it has made no edit yet (tools used,
+  the program of the last call), and the collector now counts Codex 0.164 `exec` tool calls and `apply_patch` edits,
+  so real sessions no longer read as zero steps. The brief is Markdown that the Codex terminal draws as written (bold lines, list-item cards, a table, a boxed
+  step; no `#` headings or `>` quotes, which it prints literally),
+  session ids use the random tail of time-ordered ids so neighbours do not collide, and the rewind card draws its use
+  bars and stage words cell by cell through the rainbow.
+- Thread rows on the LIT card and the text HUD. When child agents run under the main thread, or another session of the
+  project moved in the last 15 minutes, the card lists the workflow chain parent first, a fork line, one row per child
+  agent and any other session, up to four rows and `+N more` after that; a single thread keeps its old layout. Each
+  row takes its `k/n` from the first source that really knows it (the recorded count, the Start Work run, the plan's
+  checkboxes, the goal's criteria, the thread's own `update_plan` list) and draws a gauge only when both numbers are
+  real; otherwise it says what it knows in words (`step 4`, `3 steps`, `starting`) with a moving pulse on the card.
+  A saved `lit-plan` hands its plan file to the Start Work or lit-loop frame that follows, so that frame counts the
+  plan's checkboxes. Children are read from the `SubagentStart` and `SubagentStop` hook events (new in
+  `hooks/hooks.json`, quiet, fail-open) and from the child's own tool calls; each child has its own small file under
+  `.litcodex/lane-state/<session>/` holding an id, a display name, the agent type and counts, never a prompt or a command.
+- `lit-hijack`, a skill that ports a technique someone else published into a skill you own. Each source (an X post
+  or long article, a repo pinned to a commit, a gist, a web page, a PDF, a video transcript or a saved file) is
+  captured with its author, date, retrieval time and a file hash, and a licence table decides per source whether
+  the port may credit ideas, take ideas only, needs a person's review or is off limits. Mechanism cards, a gap
+  check against the target at its base revision, and a SPEC.md that holds no source wording follow; a 12-word
+  overlap gate (Hangul included) and a shared-heading warning read every capture. `scripts/hijack.mjs check
+  --phase <name>` decides each phase, `brief` refuses while the spec gate fails, and the build runs in a child agent
+  started with `fork_context: false` (or a labelled single-context fallback), optionally in a separate checkout.
+  The run closes with a parity proof and `REPORT.md`; its ledger lives under `.litcodex/hijack/` and nothing is
+  committed. `lit hijack …`, the glued `lit-hijack`, `lit 하이재킹` and `lit 하이잭` select it, and `litresearch`,
+  `lit-plan` and Start Work each point to it for a plan that comes from a hijack spec. A repeated prompt follows
+  the same continue rules as every other mode.
+- `frontend-ui-ux` builds a new page or screen from a design lock. `scripts/design-lock.mjs init` picks one of five
+  house styles from the brief (field-notes for read-once pages, graphite for dashboards and settings; meadow,
+  computational-brutalism and neo-brutalism only when asked), writes `design.lock.json`, a token layer and a
+  token-only component sheet, and scaffolds a landing, workspace or settings starter with Pretendard and JetBrains
+  Mono reused from the skills that already ship them. Density is rich by default (tighter sections, notebook-dot
+  texture, a second accent family, up to four hue families, layered motion) and calm only when the user asks for
+  minimal, quiet or restrained. Each page names one signature moment. The probe reads the lock and adds DS-001 to
+  DS-008: tokens present, no off-palette colour, type, radius and elevation drift, leftover `{{slots}}`, and a
+  missing, buried or generic moment. A rendered run prints the 1440, 390 and 320 screenshots with a six-question
+  LOOK rubric to read by eye. CF-205 allows four hue families (one under a calm lock), SLOP-009 flags gradient text
+  only when violet, repeated or low-contrast, SLOP-010 and SLOP-015 fire from three, and a labelled SVG skips
+  SLOP-051. The default profile's section gaps and palette now match field-notes.
+  A build request in English or Korean (a landing page, a dashboard, 화면 만들어줘) reaches the skill through the
+  lit-loop route.
+- `lit-schematic`, a drawing skill for real equipment: a P&ID, PFD or BFD, an equipment layout, a journal apparatus
+  figure or an isometric cutaway. It writes the process truth and a parts list before any geometry, builds from a
+  bundled plain-Node kit (ISA-5.1 tags, routed lines with inline valves, a lathe-based isometric solid kit with
+  cut windows and callouts), gates the drawing with a QA script, and exports a millimetre-sized SVG, a PDF and a
+  600 dpi PNG. A cutaway can also become an interactive page or a looping film from the same scene. `lit schematic …`,
+  the glued `lit-schematic` and `$litcodex:lit-schematic` select it, and a bare `lit` with a P&ID, PFD, cutaway,
+  공정도 or 계통도 request now reaches it ahead of the generic lit-loop route. A request for a Word report, a deck, a
+  chart of data or a web interface that merely mentions a drawing stays with its own skill. A repeated prompt
+  follows the same continue rules as every other mode.
+- `lit-pptx` has five more tonalities, Computational Brutalism, Neo-Brutalism, Bauhaus, Riso and Newsroom, each
+  with its own pack, sheet and worked example, so the library holds thirteen looks and eighteen examples. A
+  pack can set the edge weight, a hard offset shadow and the quality-gate allowances it needs, and a hard
+  shadow passes only with a bordered edge, a palette colour and no blur (OF-120). `register: bold` is the one
+  way to the presented type ramp. JetBrains Mono 2.304 ships unmodified as the Latin face of the mono packs,
+  with Pretendard still setting Hangul, and `pptx render` previews a deck through LibreOffice with the embedded
+  fonts loaded. A request that gives only a count and a style, such as "덱 10장, 네오 브루탈리즘 스타일로",
+  routes to `lit-pptx`.
+- `lit-typographic-motion` now ends in a studio: a film is rich by default (a world of layers, labels and camera moves,
+  a layered score, on-screen events) and minimal only when the request asks for calm. Four house styles (swiss-signal,
+  tidal, terminalcore, paper) are data with their own type, palette, motion and sound bed; the style comes from the
+  request, then `motion-house.json`, then keywords and genre. A treatment carries a story and a protagonist, and
+  `render.mjs scaffold` writes the starting page, `styles` renders a gallery of all four, and `stage --round 1
+  --stills-only` draws a storyboard board before any film. The gate adds TEXT-OVERLAP, TEXT-ON-STYLE, TEXT-ZONE,
+  FLAT-FRAME, DEAD-AIR and RICH-FILL. A linked product is fetched by `assets --url` as untrusted data (exit 22 when
+  nothing is reachable). `depth: "3d"` films and the `hero-3d` README cover run three.js r170 (vendored, unminified,
+  hashes recorded) on a GPU rung with a labelled software fallback, and `blender` adds a Cycles rung found by path.
+  The score gives each film its own arrangement, key and tempo from at least six stems with a sidechain, a limiter
+  and a BS.1770 loudness target. Lit-loop holds a film turn open at Stop until `completion --out <dir>` reports it
+  complete.
+
+### Changed
+
+- `lit-pptx`, `lit-docx`, `frontend-ui-ux`, `lit-schematic`, `lit-diagram-drawer`, `readme-studio` and `lit-typographic-motion` now ask the user to choose the theme or preset first, before any scaffold or build step: `request_user_input` with the skill's own presets (recommended first) when the turn offers it, otherwise a numbered list and an ended turn, and the recommended option said in one line in a non-interactive `codex exec` run. A prompt that names the look, "you choose" or "알아서" skips it, and so does a bare `lit`, except on the `lit schematic` route.
+- `lit-diagram-drawer` now draws rich and layered by default: density near 8 of 10, an overview of 14 to 24
+  nodes, and three to five accent families, each tied to a role and named in a legend. The nine-node caps in the
+  architecture, dependency, tree and Wardley guides are lifted. The `OF-202` accent check now fails at six
+  families instead of passing three to five. A minimal diagram is still available when the request asks for one.
+- `lit-schematic` paints an isometric view in a full material palette by default (painted steel, stainless,
+  copper, brass, cast iron, concrete, glass); `palette: "grey"` is the opt-in quiet look.
+- `lit-pptx` titles and bodies now sit on one shared slide grid in every tonality: a treatment styles the title
+  zone but no longer moves it, so switching tonality leaves title and body positions unchanged (the gate checks
+  this as OF-113 and, between two decks of one source, OF-116). Four accent families are the default, OF-101
+  fails a deck at five or more, hero titles and the grid-mark and geometry decorations are on in all packs,
+  and a side-by-side points block now follows its columns instead of overlapping them.
+- `lit-scientific-visualization` asks for a light major grid, direct annotation, an inset where a region matters at
+  another scale, and a multi-panel layout where the data supports one, as a standing request; the bundled source
+  is unchanged and a minimal figure is still made on request.
+- The `lit-adhd` rainbow card and tinted HUD line now turn on for every route that runs the brief, not only the typed `lit adhd` prompt: the `rewind` collector marks the session that ran it, so a scoped `$litcodex:lit-adhd` mention, Codex loading the skill by itself and a direct collector run get the same look, and the session's next LIT activation replaces the mark.
+
+### Security
+
+- Hardened the capture CLI, the film engine and the lit-adhd brief after an independent review. `lit-hijack` capture
+  now refuses redirects and targets onto loopback, link-local (including the cloud metadata address), private, shared
+  and unspecified addresses on every hop, connects only to the addresses it just checked, caps the body while it
+  streams (after decompression), and keeps a GitHub `/tree/` path inside the clone. The film asset fetch connects to the
+  checked address and stops reading at the file limit even when the length is missing or wrong, and the pinned
+  runtime downloads gain a deadline, a size cap and a streaming sha256. The Stop-hook done check, which read files a
+  render folder can plant, now reads only bounded regular files (a named pipe or a link to a device is a not-complete
+  verdict, not a hang), and the stage scan refuses non-regular files before any read. The `lit adhd` redactor masks
+  JSON-style secrets (`"api_token": "..."`), and commit subjects, plan rows and names, branch names, goals and card
+  fields lose terminal control characters before the brief, the HUD or the card text prints them.
+
 ## [1.0.30] - 2026-10-26
 
 ### Added

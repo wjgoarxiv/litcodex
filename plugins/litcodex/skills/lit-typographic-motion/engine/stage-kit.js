@@ -488,6 +488,104 @@
 	/** #RRGGBB plus alpha as an rgba() string. */
 	const alpha = (hex, a) => `rgba(${parseHex(hex).join(", ")}, ${clamp(a)})`;
 
+	// ---------------------------------------------------------------- the house style and the shot timeline
+
+	// The renderer serves both as /lit/style.js (window.LitStyle, window.LitTimeline), written from the
+	// treatment, so the page and the gate read one timeline and one set of zones. Read lazily: the page
+	// may load style.js before or after this kit.
+	const styleData = () => {
+		if (!global.LitStyle) throw new Error("LitStage: load /lit/style.js before the style helpers");
+		return global.LitStyle;
+	};
+	const timelineData = () => {
+		if (!global.LitTimeline) throw new Error("LitStage: load /lit/style.js before the shot helpers");
+		return global.LitTimeline;
+	};
+	const tokenCache = new WeakMap();
+	/**
+	 * The style's motion tokens as functions: eases, durations, staggers, and a spring per object class
+	 * built from its damping ratio and frequency (spring.panel(t) rises 0 -> 1).
+	 */
+	function tokens() {
+		const style = styleData();
+		if (tokenCache.has(style)) return tokenCache.get(style);
+		const m = style.motion;
+		const springOf = ({ zeta, hz }) => {
+			const stiffness = (2 * Math.PI * hz) ** 2;
+			return (t, options = {}) => spring(t, { stiffness, damping: 2 * zeta * Math.sqrt(stiffness), ...options });
+		};
+		const value = Object.freeze({
+			ease: Object.freeze({ enter: cubicBezier(...m.ease.enter), move: cubicBezier(...m.ease.move), exit: cubicBezier(...m.ease.exit) }),
+			dur: Object.freeze({ ...m.dur }),
+			stagger: Object.freeze({ ...m.stagger }),
+			spring: Object.freeze(Object.fromEntries(Object.entries(m.spring).map(([k, v]) => [k, springOf(v)]))),
+			secondary: Object.freeze({ ...m.secondary }),
+			ambient: Object.freeze({ ...m.ambient }),
+			push: m.push,
+		});
+		tokenCache.set(style, value);
+		return value;
+	}
+	/**
+	 * The shot at time t: index, beat, layout, local seconds and progress, plus an entrance and an exit
+	 * on the style's eases (enter(delay, dur) rises 0 -> 1, exit(dur) rises 0 -> 1 at the shot's end).
+	 */
+	function shot(t) {
+		const beats = timelineData().beats;
+		let i = beats.findIndex((b) => t >= b.t0 && t < b.t1);
+		if (i < 0) i = t < beats[0].t0 ? 0 : beats.length - 1;
+		const b = beats[i];
+		const length = b.t1 - b.t0;
+		const tk = tokens();
+		return {
+			index: i,
+			beat: b,
+			layout: b.layout,
+			transition: b.transition,
+			local: t - b.t0,
+			length,
+			p: clamp((t - b.t0) / length),
+			enter: (delay = 0, dur = tk.dur.hero) => at(t, b.t0 + delay, dur, tk.ease.enter),
+			exit: (dur = tk.dur.exit) => at(t, b.t1 - dur, dur, tk.ease.exit),
+		};
+	}
+	/** A layout zone in pixels ({x, y, w, h}) for this film's format. */
+	function zone(layout, part = "type") {
+		const z = styleData().zones[layout];
+		if (!z) throw new Error(`LitStage.zone: unknown layout ${layout}`);
+		if (!z[part]) throw new Error(`LitStage.zone: the ${layout} layout has no ${part} zone`);
+		return { ...z[part] };
+	}
+	/** Absolutely position an element on a layout zone; returns the zone. */
+	function place(el, layout, part = "type") {
+		const z = zone(layout, part);
+		Object.assign(el.style, { position: "absolute", left: `${z.x}px`, top: `${z.y}px`, width: `${z.w}px`, height: `${z.h}px`, boxSizing: "border-box" });
+		return z;
+	}
+	/**
+	 * The Blender plate (render3d: "blender"): a full-frame <img> behind the type showing the plate
+	 * frame for t. The element is replaced on every frame change, so the renderer waits for its decode
+	 * before the capture. Returns update(t); call it from render(t).
+	 */
+	function plate({ parent, fps = 30, count, dir = "plate" } = {}) {
+		if (!parent || !(count > 0)) throw new Error("LitStage.plate: needs { parent, count } (count: the frames in plate/plate.json)");
+		let shown = -1;
+		let el = null;
+		return (t) => {
+			const i = Math.min(count - 1, Math.max(0, Math.floor(t * fps + 1e-6)));
+			if (i === shown) return i;
+			const next = document.createElement("img");
+			next.src = `${dir}/${String(i + 1).padStart(6, "0")}.png`;
+			next.alt = "";
+			Object.assign(next.style, { position: "absolute", inset: "0", width: "100%", height: "100%", objectFit: "cover" });
+			if (el) el.replaceWith(next);
+			else parent.prepend(next);
+			el = next;
+			shown = i;
+			return i;
+		};
+	}
+
 	// ---------------------------------------------------------------- contract and text
 
 	/**
@@ -511,5 +609,5 @@
 		return config;
 	}
 
-	global.LitStage = Object.freeze({ define, text, ease, cubicBezier, spring, kf, at, stagger, seq, rand, splitText, drawPath, morph, clip, maskSweep, mix, alpha, clamp, lerp, invLerp, remap });
+	global.LitStage = Object.freeze({ define, text, ease, cubicBezier, spring, kf, at, stagger, seq, rand, splitText, drawPath, morph, clip, maskSweep, mix, alpha, clamp, lerp, invLerp, remap, shot, zone, place, tokens, plate });
 })(window);

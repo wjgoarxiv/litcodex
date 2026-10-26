@@ -318,7 +318,7 @@ describe("readme content invariants", () => {
 					.slice(start, end)
 					.matchAll(/<tr>\n<td><img src="([^"]+)" width="240" alt="[^"]+" \/><\/td>\n<td>(.*?)<br \/>/g),
 			];
-			assert.equal(rows.length, 42, `${heading} has one row per user-facing skill plus the automatic checks`);
+			assert.equal(rows.length, 45, `${heading} has one row per user-facing skill plus the automatic checks`);
 			assert.deepEqual(
 				rows.map(([, src]) => src).sort(),
 				snapshots.map((name) => `${base}/${name}`),

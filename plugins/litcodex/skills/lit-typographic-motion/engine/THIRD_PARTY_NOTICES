@@ -5,6 +5,18 @@ Engine
   (https://github.com/mexicat/pdoom-video), commit ca251e3dddda422b364385eb484b5a3593a0990d,
   MIT licence, Copyright (c) 2026 Giacomo Magnanini. The full notice is in NOTICE beside this file.
 
+Vendored library (bundled, unmodified, served to stage and cover pages at /lit/three/)
+- three.js r170 (npm three@0.170.0, MIT), Copyright 2010-2024 Three.js Authors.
+  Licence: engine/vendor/three/LICENSE.
+  Source: https://registry.npmjs.org/three/-/three-0.170.0.tgz
+  Tarball sha256 4a608a355dcaba72e0e5383cdc814303f5b6060b43c238cdf6932dceb699238d.
+  Files (sha256), copied unmodified and unminified from the tarball (build/, examples/jsm/):
+    three.module.js                          ce1fa418de16a19495a9f72495580e3015d7745c296d3ce0485897f902ddedfb
+    addons/environments/RoomEnvironment.js   85869bdd22f7cf0b22e68dcefe6cb710480af0f5c901a76f7a7764fd07fc8014
+    addons/geometries/RoundedBoxGeometry.js  d20aeaf7077c459a8d952d215738d7b44fba028440bb862d84b622a34f0c80bb
+    LICENSE                                  4c40a1ef62450b857c3b2aaf294936304cd552d965fbcd9d32d4c5bcf4ba4454
+  A test recomputes these hashes; a page never fetches the library.
+
 Fonts bundled in this skill (paths relative to the skill directory)
 - Archivo, nine static instances (widths 75/100/125 x weights 400/700/900):
   fonts/archivo/Archivo-w*-wt*.ttf; licence fonts/archivo/OFL.txt (SIL Open Font License 1.1,

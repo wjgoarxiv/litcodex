@@ -12,10 +12,10 @@ import {
 } from "./skills-validation-fixtures.js";
 
 describe("plugin-root skill activation policy", () => {
-	it("freezes the 44-skill implicit and explicit-only candidate policy matrix", () => {
-		expect(skillNames).toHaveLength(44);
+	it("freezes the 47-skill implicit and explicit-only candidate policy matrix", () => {
+		expect(skillNames).toHaveLength(47);
 		expect(Object.keys(CATALOG_TRIGGER_LEXEMES).sort()).toEqual([...skillNames].sort());
-		expect([...EXPLICIT_ONLY_CANDIDATES]).toHaveLength(13);
+		expect([...EXPLICIT_ONLY_CANDIDATES]).toHaveLength(16);
 		expect([...PINNED_IMPLICIT]).toHaveLength(5);
 		for (const name of skillNames) {
 			const description = skillDescription(skillMarkdown(name)).toLowerCase();

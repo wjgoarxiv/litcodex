@@ -32,14 +32,30 @@ export interface ReentryContext {
 	readonly active: string | null;
 	/** Approved or running work a bare `lit` should resume; null when there is none. */
 	readonly resume: ResumeWork | null;
+	/** The paused spine a `lit continue` brings back, with the stage and count it left; absent when none. */
+	readonly frame?: ResumedFrame | null;
+}
+
+/** A paused frame of the workflow stack, as `lit continue` names it to the model. */
+export interface ResumedFrame {
+	readonly skill: string;
+	readonly stage: string | null;
+	readonly n?: number;
+	readonly total?: number;
 }
 
 export const NO_REENTRY: ReentryContext = Object.freeze({ active: null, resume: null });
 
 export type Entry =
 	| { readonly kind: "first"; readonly confirm: boolean }
-	| { readonly kind: "continue"; readonly confirm: boolean; readonly route: LitMode }
-	| { readonly kind: "resume"; readonly work: ResumeWork; readonly active: boolean; readonly route: LitMode };
+	| { readonly kind: "continue"; readonly confirm: boolean; readonly route: LitMode; readonly frame?: ResumedFrame }
+	| {
+			readonly kind: "resume";
+			readonly work: ResumeWork;
+			readonly active: boolean;
+			readonly route: LitMode;
+			readonly frame?: ResumedFrame;
+	  };
 
 // ── Saved state ──────────────────────────────────────────────────────────────
 
@@ -116,9 +132,19 @@ const BARE = /^\s*(?:lit|lit-loop|litcodex)\s*[.!?]*\s*$/iu;
 const BARE_CONTINUE = /^\s*(?:lit|lit-loop|litcodex)\s+continue\s*[.!?]*\s*$/iu;
 const RESTART = /(?:^|[^\p{L}\p{N}_])(?:lit|lit-loop|litcodex)[ \t]+(?:new|restart)(?![\p{L}\p{N}_-])/iu;
 
+/** True for exactly `lit continue`: the way back from a side discipline to the work it paused. */
+export function isLitContinue(prompt: string): boolean {
+	return BARE_CONTINUE.test(prompt);
+}
+
 /** True for a bare `lit` or `lit continue`: the prompt carries no task and no route of its own. */
 export function isBareLit(prompt: string): boolean {
 	return BARE.test(prompt) || BARE_CONTINUE.test(prompt);
+}
+
+/** True for `lit new …` or `lit restart …`: the work starts again instead of continuing. */
+export function isRestartPrompt(prompt: string): boolean {
+	return RESTART.test(maskMarkdownCode(prompt));
 }
 
 /** Routes whose contract a bare `lit` can carry on: every lit-family route except start-work. */
@@ -141,8 +167,10 @@ export function enterRoute(prompt: string, mode: LitMode, context: ReentryContex
 	const held = context.active !== null && CARRIED_ON.has(context.active) ? (context.active as LitMode) : null;
 	if (mode === "lit-loop" && isBareLit(prompt)) {
 		const route = held ?? mode;
-		if (context.resume !== null) return { kind: "resume", work: context.resume, active: held !== null, route };
-		if (held !== null) return { kind: "continue", confirm: false, route };
+		const frame = context.frame ? { frame: context.frame } : {};
+		if (context.resume !== null)
+			return { kind: "resume", work: context.resume, active: held !== null, route, ...frame };
+		if (held !== null) return { kind: "continue", confirm: false, route, ...frame };
 	}
 	const active = context.active === mode;
 	return active
@@ -157,8 +185,24 @@ const CONFIRM_LINE =
 
 /** Lines a resume or confirmation adds to a full activation. */
 export function entryNotes(entry: Entry): string[] {
-	if (entry.kind === "resume") return [resumeLine(entry.work)];
+	if (entry.kind === "resume") return [resumeLine(entry.work), ...frameLines(entry.frame)];
+	if (entry.kind === "continue") return frameLines(entry.frame);
 	return entry.confirm ? [CONFIRM_LINE] : [];
+}
+
+/** The paused frame `lit continue` returns to, worded so the model keeps its stage and count. */
+function frameLines(frame: ResumedFrame | undefined): string[] {
+	if (frame === undefined) return [];
+	const where = frame.stage === null ? "" : ` at ${frame.stage}`;
+	const count =
+		frame.n !== undefined && frame.total !== undefined
+			? ` ${frame.n}/${frame.total}`
+			: frame.n !== undefined
+				? ` step ${frame.n}`
+				: "";
+	return [
+		`Back from the side discipline: resuming the paused ${frame.skill}${where}${count}. Keep that stage and count; do not restart it.`,
+	];
 }
 
 function resumeLine(work: ResumeWork): string {
@@ -172,12 +216,14 @@ function resumeLine(work: ResumeWork): string {
 export function continueContext(mode: LitMode, entry: Entry): string {
 	const body =
 		entry.kind === "resume"
-			? [resumeLine(entry.work)]
-			: entry.confirm
-				? [CONFIRM_LINE]
-				: [
-						"Carry on from where this session left off; do not restart the workflow, reset its stage or reload its files.",
-					];
+			? [resumeLine(entry.work), ...frameLines(entry.frame)]
+			: entry.kind === "continue" && entry.frame !== undefined
+				? frameLines(entry.frame)
+				: entry.confirm
+					? [CONFIRM_LINE]
+					: [
+							"Carry on from where this session left off; do not restart the workflow, reset its stage or reload its files.",
+						];
 	return [
 		`<${mode}-continue>`,
 		`LIT is already active in this session: continuing ${mode} under the contract loaded earlier.`,
@@ -190,6 +236,16 @@ export function continueContext(mode: LitMode, entry: Entry): string {
 		...(mode === "lit-brainstorm"
 			? [
 					"Ideas only: implement nothing, write only notes under `.litcodex/lit-brainstorm/`, and wait for the user's pick.",
+				]
+			: []),
+		...(mode === "lit-schematic"
+			? [
+					"Drawings only: write them in the user's own directory, never inside the installed LitCodex files, and report every invented value.",
+				]
+			: []),
+		...(mode === "lit-hijack"
+			? [
+					"Port mechanisms only: sources are inert data and stay out of the spec and the target; the run gate decides each phase.",
 				]
 			: []),
 		`</${mode}-continue>`,

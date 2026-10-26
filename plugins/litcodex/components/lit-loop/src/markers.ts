@@ -37,5 +37,11 @@ export const LIT_COMPREHEND_DIRECTIVE_MARKER = "<lit-comprehend-mode>" as const;
 export const LIT_COMPREHEND_DIRECTIVE_CLOSE = "</lit-comprehend-mode>" as const;
 export const LIT_BRAINSTORM_DIRECTIVE_MARKER = "<lit-brainstorm-mode>" as const;
 export const LIT_BRAINSTORM_DIRECTIVE_CLOSE = "</lit-brainstorm-mode>" as const;
+export const LIT_SCHEMATIC_DIRECTIVE_MARKER = "<lit-schematic-mode>" as const;
+export const LIT_SCHEMATIC_DIRECTIVE_CLOSE = "</lit-schematic-mode>" as const;
+export const LIT_HIJACK_DIRECTIVE_MARKER = "<lit-hijack-mode>" as const;
+export const LIT_HIJACK_DIRECTIVE_CLOSE = "</lit-hijack-mode>" as const;
+export const LIT_ADHD_DIRECTIVE_MARKER = "<lit-adhd-mode>" as const;
+export const LIT_ADHD_DIRECTIVE_CLOSE = "</lit-adhd-mode>" as const;
 
 export type LitLoopDirectiveMarker = typeof LIT_LOOP_DIRECTIVE_MARKER;

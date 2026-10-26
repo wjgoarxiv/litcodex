@@ -23,23 +23,29 @@ Rounds share one counter with renders, 1 to 3.
     { "q": 2, "verdict": "<yes or no>", "frame": "<stills file>", "observed": "<one sentence naming a concrete visible detail in that frame>" }
   ],
   "weakestBeat": "<beat number, round 1 only>",
-  "change": "<what you changed, round 1 only>"
+  "change": "<what you changed, round 1 only>",
+  "defects": [
+    { "t": 2.5, "region": [100, 200, 300, 120], "frame": "<stills file>", "observed": "<what is visible there>", "cause": "<why>", "fix": "<what to change>" }
+  ]
 }
 ```
 
-Answer all nine questions, each with `verdict` (`yes` or `no`), the `frame` you judged it from (a file in the latest stills set; question 6 may cite `sound-cues.json`) and `observed`: at least one sentence naming something you actually saw in that frame. A bare yes or no is refused, and so is any frame that is not in the latest stills set. `look` stamps the round with the SHA-256 of the stills manifest and of every frame it lists.
+Answer all nine questions, or all ten when the treatment carries a `story` (question 10 asks about its turn), each with `verdict` (`yes` or `no`), the `frame` you judged it from (a file in the latest stills set; question 6 may cite `sound-cues.json`) and `observed`: at least one sentence naming something you actually saw in that frame. A bare yes or no is refused, and so is any frame that is not in the latest stills set. `look` stamps the round with the SHA-256 of the stills manifest and of every frame it lists.
 
 1. "A stranger would say this film is for: <…>". Write that sentence in `observed`; `verdict` is `yes` when it matches the treatment's audience and idea.
 2. Does every beat show its `onScreen` plan?
-3. Is the craft at the level `ambition` asks for: transitions, rhythm, depth, hierarchy?
+3. Is it rich enough? Put the contact sheet beside the user's reference frames (none given: a studio launch film of a product). Does each shot carry as much labelled detail, layered depth, camera movement and accent colour as they do, with one hero move leading it and the style's hand-offs between shots? A minimal film answers for its restraint instead.
 4. Is any request text, meta label, placeholder, file name or internal term on screen?
 5. Does the ending land?
-6. Does the sound follow the cuts? Answer from `sound-cues.json`: each cue's `delta` against its cut.
+6. Does the sound follow the cuts and the events? Answer from `sound-cues.json` and the stills: each cue's `delta` against its cut, and each event cue's frame should show what its `on` says.
 7. Name one thing a skilled motion designer, given only the request, would have shown that this film does not. `verdict: yes` means you can name one; name it in `observed` and revise.
 8. Is any element on screen without a job in its beat?
 9. Could every copy line be pasted unchanged into a film about a different subject? If yes, rewrite the copy from `subject.specifics`.
+10. Only with a `story`: does the turn land? Answer it on the turn shot's own still, `stills/beat-NN.png` for `story.beat` (`look` refuses any other frame). Is `story.turn` visibly happening there, to the protagonist, as the film's largest change? A turn that only a caption announces is a `no`.
 
-A `no` on 1, 2, 3, 5 or 6, a `yes` on 4, 8 or 9, or a nameable answer to 7 requires another round. On this host you answer question 1 yourself (`by: self`); where a fresh subagent is available it may answer it from the contact sheet and the beat stills alone, and the round records `by: blind`.
+`defects` is optional on a film round: at most three, worst first, each with the time `t` in seconds where it shows, the `region` `[x, y, w, h]` in frame pixels it covers, a `frame` of the latest stills set that shows it, what is `observed` there, its `cause` and its `fix`. A film fixes those seconds and renders again; a cover checks the fix with `cover --window`.
+
+A `no` on 1, 2, 3, 5, 6 or 10, a `yes` on 4, 8 or 9, or a nameable answer to 7 requires another round. On this host you answer question 1 yourself (`by: self`); where a fresh subagent is available it may answer it from the contact sheet and the beat stills alone, and the round records `by: blind`.
 
 If no image tool is reachable at all, record `{ "blocked": "no-vision-tool" }` for the round. The done-check then reports `DONE_UNVIEWED`, and the reply must say in plain words that nobody viewed the frames.
 
@@ -106,12 +112,28 @@ On the **stage path**:
 | QA-TITLE-SAFE | Copy ink inside the central 90 % of the frame; decor exempt |
 | QA-READING | Each copy run stays on screen for its reading floor (measured at 10 fps, 0.1 s tolerance); decor exempt |
 | QA-COPY | Every `copy.lines` entry appears on screen (page text or registered canvas text); a missing line exits 17 |
-| QA-DECOR | A decor run never carries a copy line; decor is at most 25 % of the visible text |
+| QA-DECOR | A decor run never carries a copy line; decor is at most 25 % of the visible text (60 % in a `rich` film, whose world fills with readouts and part labels) |
 | QA-META, QA-UNLISTED, QA-CANVAS, QA-STATE, QA-PRESENCE | WARNs the look must answer: meta labels on screen, text that is neither a copy line nor marked decor, unmeasured canvas text, samples discarded because something besides text moved, too little non-text detail |
 | QA-FONTS | Every sampled run renders in one of this product's faces (FAIL for copy, WARN for decor) |
+| TEXT-OVERLAP | With a `style`: no two visible, non-decor text runs overlap by more than 8 % of the smaller one, at the QA samples and at every second frame within 0.4 s of each cut (an outgoing and an incoming line crossing). Pseudo-element text is not judged. FAIL |
+| TEXT-ON-STYLE | With a `style`: settled copy uses the style's text colours (within 12 in RGB; a `rich` film may also use its accents), its first font family is one of the style's faces, and its size sits on a type-scale step of the format (within 4 %). Other text off the scale is a WARN |
+| TEXT-ZONE | With a `style`: settled copy sits inside its shot's `layout` type zone for the format (1.2 % of the frame side of slack); a `full` shot has no copy zone, so copy in one fails |
+| FLAT-FRAME | A run of frames whose 0.5 % to 99.5 % luminance spread is under 0.02, in any colour, longer than 1 s (the opening and the close get 1 s more). MO-D-03 sees only black; a cream frame with nothing on it is as empty. FAIL |
+| DEAD-AIR | A run of frames where under 2.5 % of the 48 px cells carry anything (a cell is busy when its luma varies, sd above 6, or its mean sits more than 16 levels off the ground) longer than 0.5 s; the opening gets 0.4 s more, the close 0.6 s more. FAIL |
+| RICH-FILL | With `register: "rich"`: at each beat midpoint at most 2 of the 12 regions (a 4 x 3 grid) may be empty (busy share under 0.15); one beat may miss, a second fails. A minimal film skips it |
 | SOUND-* | Stream present, length within 0.1 s of the video, peak at or under -0.5 dBFS, no silent opening on a generated bed |
 
-The text checks run in a separate replay Chrome: at each beat midpoint and two settled frames per beat it captures the frame, hides all text ink, captures again, and treats the difference as the ink mask. The master is never touched.
+How to fix the empty-frame and style rules, without shortening the film:
+
+| Rule | Fix |
+| --- | --- |
+| TEXT-OVERLAP | Finish the outgoing line before the incoming one starts, or move one to another zone; a cross-fade of two lines in one place fails. Decor text may sit under copy. |
+| TEXT-ON-STYLE | Take colour, face and size from `/lit/style.css` (`.lit-display`, `.lit-headline`, `.lit-body`, `.lit-label`, and the `.lit-ink`, `.lit-muted` colour classes) instead of writing them by hand. |
+| TEXT-ZONE | Place copy inside the shot's zone (`LitStyle.zones[layout].type`), or change the shot's `layout` to one whose zone holds it. |
+| FLAT-FRAME, DEAD-AIR | Give the held seconds a living subject: a drifting layer, a counter, the hero object, a slow camera move. A near-empty beat that must stay quiet is a `minimal` film's job. |
+| RICH-FILL | Fill the empty regions of the named beat with the world's parts: labelled panels, a log, counters, the product's own screens. If the film should breathe, set `register: "minimal"` honestly instead. |
+
+The text checks run in a separate replay Chrome: at each beat midpoint and two settled frames per beat it captures the frame, hides all text ink, captures again, and treats the difference as the ink mask. With a `style` it also takes every second frame within 0.4 s of each cut (keeping only each run's ink count). The master is never touched. A stills-only board round runs the same text check on the beat midpoints and the cut frames alone (`boardQA`), and reports TEXT-OVERLAP, TEXT-ON-STYLE and TEXT-ZONE per shot before anything is encoded.
 
 On the **type path** the Wave 1 rules apply unchanged (MO-C-01 to MO-C-29, MO-D-02 to MO-D-04 and the Section A/B rows), with MO-C-12 as amended (the film meets the treatment's length; a WARN says so when the reading floors force it longer) and the SOUND rules added.
 

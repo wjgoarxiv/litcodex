@@ -19,13 +19,13 @@ Read this with the craft floor in every frontend mode. The register identifies r
 | Id | Signal, gate, and repair |
 | --- | --- |
 | SLOP-008 | A heading or gradient stop in HSL 260°–310° with ≥50/255 RGB channel spread can be a reflex violet accent. Exempt a documented brand hue. MEDIUM, DET assist. |
-| SLOP-009 | Gradient fill and text clipping on one headline make decorative gradient type. Use a solid accessible ink color. MEDIUM, DET. |
-| SLOP-010 | A wide chromatic glow recurs on primary actions/headings outside focus. Remove the repeated halo. MEDIUM when recurring, DET. |
+| SLOP-009 | Gradient fill with text clipping is decorative type only when a stop is violet, the treatment repeats, or a stop falls below 4.5:1 (3:1 for large text). One legible, on-palette gradient word is allowed. MEDIUM, DET. |
+| SLOP-010 | A wide chromatic glow recurs on three or more primary actions/headings outside focus. Remove the repeated halo. MEDIUM when recurring, DET. |
 | SLOP-011 | An unanchored translucent radial blob has no information role. Check its purpose, then delete or integrate it. MEDIUM, JUDG. |
 | SLOP-012 | A repeated dot/grid ground with no adjacent data and another slop cue is decoration by reflex. Remove it or make its data referent explicit. MEDIUM, DET assist. |
 | SLOP-013 | Hide a noise texture in review; if hierarchy improves, remove the texture. LOW, JUDG. |
 | SLOP-014 | Glass blur needs a surface reason and a transparency fallback. Use an opaque surface when neither exists. LOW, JUDG. |
-| SLOP-015 | A single-side accent, inset strip, or geometric pseudo-element tab recurs on rounded cards. Delete decorative stripes; preserve alert/status and real nav tabs. MEDIUM, DET. |
+| SLOP-015 | A single-side accent, inset strip, or geometric pseudo-element tab recurs on three or more rounded cards. Delete decorative stripes; preserve alert/status and real nav tabs. MEDIUM, DET. |
 | SLOP-016 | Match only the first loaded family against the fixed overused-font list. This is a candidate for a human type-rationale review, not a bare-font verdict. MEDIUM, DET assist + JUDG. |
 | SLOP-017 | A shortlisted display serif without a stated content reason is a candidate for correction, not a universal ban. MEDIUM, JUDG. |
 | SLOP-018 | A ≥3.5× headline/subhead size ratio with subhead <14px may bury meaning. Check content importance, then rebalance. MEDIUM, JUDG. |
@@ -76,7 +76,7 @@ Read this with the craft floor in every frontend mode. The register identifies r
 | SLOP-048 | Autoplay carousel dots without controls or keyboard binding are inert decoration. Add functional controls or remove them. LOW, DET. |
 | SLOP-049 | A stock silhouette avatar used as a person placeholder needs a more honest state treatment. LOW, DET. |
 | SLOP-050 | Repeated category captions under every trust logo can be removed when the marks identify themselves. LOW, DET. |
-| SLOP-051 | An SVG of ≥200×200px, ≥8 simple primitives, ≥3 fills, ≤2 text nodes and no pattern needs visual review before simplification. MEDIUM, DET assist + JUDG. |
+| SLOP-051 | An SVG of ≥200×200px, ≥8 simple primitives, ≥3 fills, ≤2 text nodes, no pattern and no accessible name (`<title>`, or `role=img` with a label) needs visual review before simplification. MEDIUM, DET assist + JUDG. |
 | SLOP-052 | A clip polygon with ≥10 vertices and at least half its coordinates off the 25% grid, or `path()` with ≥3 curves, needs review. LOW, DET assist + JUDG. |
 | SLOP-053 | Emoji standing in for a coherent icon system is a candidate. Respect an explicit emoji policy. LOW, JUDG after detection. |
 | SLOP-054 | An image node itself scales on hover. Move the effect to its frame if the interaction remains useful. LOW, DET. |

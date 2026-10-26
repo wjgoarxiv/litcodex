@@ -42,6 +42,7 @@ import {
 import { motionRouteContext } from "./motion-route.js";
 import { continueContext, enterRoute, entryNotes, NO_REENTRY, type ReentryContext } from "./reentry.js";
 import { loadRouteContext, loadSkillInvocationContext } from "./route-context.js";
+import { classifySchematicRequest } from "./schematic-route.js";
 import {
 	isExactBareScientificVisualizationPrompt,
 	isScientificVisualizationWhitespaceNearMiss,
@@ -69,7 +70,14 @@ export interface LitPreToolUseCreateGoalInput {
 
 /** Structured engine result. The CLI maps this to stdout / exit. */
 export type HookDecision =
-	| { readonly kind: "inject"; readonly stdout: string; readonly mode: LitMode; readonly entry?: "continue" }
+	| {
+			readonly kind: "inject";
+			readonly stdout: string;
+			readonly mode: LitMode;
+			readonly entry?: "continue";
+			/** True when the film context was added, so the completion gate (motion-gate.ts) arms the turn. */
+			readonly film?: true;
+	  }
 	| { readonly kind: "noop" };
 
 export type PreToolUseCreateGoalDecision =
@@ -289,7 +297,10 @@ export function runUserPromptSubmitHook(
 	if (match === null) {
 		return { kind: "noop" };
 	}
-	const mode = modeForToken(match.token);
+	// A bare `lit` that asks for a drawing of real equipment takes the schematic route, not the generic lit-loop one.
+	const mode = modeForToken(
+		match.token === "lit" && classifySchematicRequest(input.prompt) ? "lit-schematic" : match.token,
+	);
 	// Whether this session already holds the contract comes from the session's saved state (reentry.ts), not the transcript.
 	const decision = shouldSuppressInjection(input.prompt, transcriptPath, mode.openMarker, { transcriptDedupe: false });
 	if (decision.suppress) {
@@ -299,16 +310,12 @@ export function runUserPromptSubmitHook(
 	const keeps = entry.kind === "continue" || (entry.kind === "resume" && entry.active);
 	const route = entry.kind === "first" ? mode.mode : entry.route;
 	const context = keeps ? continueContext(route, entry) : loadDirectiveForModeFailSilent(mode);
+	const film = mode.skillName === "lit-loop" ? motionRouteContext(mode.skillPath, input.prompt) : "";
 	const stdout =
 		context === ""
 			? ""
 			: formatAdditionalContextOutput(
-					[
-						context,
-						...(keeps ? [] : entryNotes(entry)),
-						mode.skillName === "lit-loop" ? motionRouteContext(mode.skillPath, input.prompt) : "",
-						skillRenameNote(match.raw),
-					]
+					[context, ...(keeps ? [] : entryNotes(entry)), film, skillRenameNote(match.raw)]
 						.filter(Boolean)
 						.join("\n"),
 					route,
@@ -316,7 +323,8 @@ export function runUserPromptSubmitHook(
 	if (stdout === "") {
 		return { kind: "noop" };
 	}
+	const filmMark = film === "" ? {} : { film: true as const };
 	return keeps
-		? { kind: "inject", stdout, mode: route, entry: "continue" }
-		: { kind: "inject", stdout, mode: mode.mode };
+		? { kind: "inject", stdout, mode: route, entry: "continue", ...filmMark }
+		: { kind: "inject", stdout, mode: mode.mode, ...filmMark };
 }

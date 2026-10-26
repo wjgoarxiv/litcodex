@@ -77,6 +77,7 @@ export function renderRunPanel(view, options) {
     const card = renderScreenCard({
         mode: status.mode ?? "lit",
         note: status.state === "complete" ? `✓ ${elapsed}` : elapsed,
+        look: status.look ?? null,
         map: status.map,
         checklist: view.checklist === null ? [] : [view.checklist],
     }, { color: options.color, width }).split("\n");

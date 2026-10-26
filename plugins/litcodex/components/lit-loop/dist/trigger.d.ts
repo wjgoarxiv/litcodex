@@ -1,5 +1,5 @@
 /** The accepted bounded lit-family tokens, longest-first (ordering is load-bearing — see below). */
-export type LitTriggerToken = "lit-comprehend" | "lit-brainstorm" | "deep-interview" | "lit-crucible" | "lit-init" | "start-work" | "review-work" | "litresearch" | "lit-recap" | "lit-loop" | "lit-plan" | "litcodex" | "litgoal" | "litwork" | "lit";
+export type LitTriggerToken = "lit-comprehend" | "lit-brainstorm" | "lit-schematic" | "lit-hijack" | "lit-adhd" | "deep-interview" | "lit-crucible" | "lit-init" | "start-work" | "review-work" | "litresearch" | "lit-recap" | "lit-loop" | "lit-plan" | "litcodex" | "litgoal" | "litwork" | "lit";
 /**
  * Frozen tuple of the accepted tokens in match-priority (longest-first) order.
  * Exported so tests and the mode router (modes.ts) can enumerate without re-deriving.

@@ -8,14 +8,20 @@
 // and NEVER throws.
 import { isAbsolute } from "node:path";
 import { Writable } from "node:stream";
+import { adhdSuggestion } from "./adhd-suggest.js";
 import { claimReloadContext, evaluateAutoHandoffStop, recordCompaction, takeReloadContext } from "./auto-handoff.js";
 import { applyAutoHandoffRoute, clearManagedCompactionWhenOff, parseAutoHandoffRoute, } from "./auto-handoff-settings.js";
 import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
-import { endLiveStep, recordLiveStepEnd, recordLiveStepStart, recordTurnStart, writeThreadPointer, } from "./live-step.js";
+import { laneScope, subagentEvent, toolLaneEvents } from "./lane-events.js";
+import { recordLaneEvent } from "./lane-state.js";
+import { detectWaitReason, endLiveStep, recordLiveStepEnd, recordLiveStepStart, recordTurnStart, writeThreadPointer, } from "./live-step.js";
+import { armMotionTurn, disarmMotionTurn, evaluateMotionStop, recordMotionTool, } from "./motion-gate.js";
 import { evaluatePlanPersistence, formatStopBlockOutput, rearmLitPlanIfSatisfied, recordLitPlanActivation, } from "./plan-persistence.js";
-import { clearActiveRoute, isBareLit, readActiveRoute, readResumeWork, recordActiveRoute } from "./reentry.js";
+import { clearActiveRoute, isBareLit, isLitContinue, readActiveRoute, readResumeWork, recordActiveRoute, } from "./reentry.js";
+import { isBoundaryAnswer, isGoPrompt, takeGo } from "./rewind-go.js";
 import { workflowCard } from "./screen-card.js";
 import { screenColor } from "./screen-status.js";
+import { applyPromptToStack, frameToResume } from "./stack-hook.js";
 import { recordWorkflowTurn, workflowStopLine, workflowTurn } from "./workflow-map.js";
 /** Hard cap on stdin to bound memory / ReDoS exposure inside the 5 s Codex hook budget. 8 MB. */
 export const MAX_STDIN_BYTES = 8_000_000;
@@ -102,13 +108,61 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
         return 0;
     }
     clearManagedCompactionWhenOff(hookCwd(parsed, repoRoot), auto.env ?? process.env);
+    // `lit approve` / `lit deny` answer a start-work boundary; the lifecycle hook owns them, so this one stays out.
+    if (isLitUserPromptSubmitInput(parsed) && isBoundaryAnswer(parsed.prompt))
+        return 0;
+    // `go` after a lit-adhd brief runs the one step the brief named, as if the user had typed that step.
+    let goNote = null;
+    if (isLitUserPromptSubmitInput(parsed) && isGoPrompt(parsed.prompt)) {
+        const scope = hookSessionScope(parsed, repoRoot);
+        const go = scope === null ? null : takeGo(scope.cwd, scope.sessionId, auto.now ?? Date.now());
+        if (go?.kind === "hint") {
+            stdout.write(withReloadContext("", go.text) ?? "");
+            return 0;
+        }
+        if (go?.kind === "run") {
+            parsed = { ...parsed, prompt: go.prompt };
+            goNote = go.note;
+        }
+    }
     const pointer = hookSessionScope(parsed, repoRoot);
-    const decision = runUserPromptSubmitHook(parsed, () => ({
-        active: pointer === null ? null : readActiveRoute(pointer.cwd, pointer.sessionId),
-        resume: pointer === null ? null : readResumeWork(pointer.cwd, pointer.sessionId),
-    }));
-    if (pointer !== null && decision.kind === "inject")
-        recordActiveRoute(pointer.cwd, pointer.sessionId, decision.mode);
+    const savedRoute = pointer === null ? null : readActiveRoute(pointer.cwd, pointer.sessionId);
+    // An active lit-plan owns the persistence gate, so `lit continue` stays inside it rather than leaving it armed.
+    const litContinue = pointer !== null &&
+        savedRoute !== "lit-plan" &&
+        isLitUserPromptSubmitInput(parsed) &&
+        isLitContinue(parsed.prompt);
+    // `lit continue` over a side discipline returns to the paused spine, at the stage and count it left.
+    const spine = litContinue ? frameToResume(pointer.cwd, pointer.sessionId) : null;
+    const decision = runUserPromptSubmitHook(parsed, () => {
+        const saved = savedRoute;
+        return {
+            active: spine !== null && saved !== null ? spine.skill : saved,
+            resume: pointer === null ? null : readResumeWork(pointer.cwd, pointer.sessionId),
+            frame: spine === null
+                ? null
+                : {
+                    skill: spine.skill ?? "work",
+                    stage: spine.stage,
+                    ...(spine.n === undefined ? {} : { n: spine.n }),
+                    ...(spine.total === undefined ? {} : { total: spine.total }),
+                },
+        };
+    });
+    // A film prompt arms the completion gate for this session; any other prompt disarms it.
+    if (pointer !== null && isLitUserPromptSubmitInput(parsed)) {
+        if (decision.kind === "inject" && decision.film === true)
+            armMotionTurn(pointer.cwd, pointer.sessionId, auto.now);
+        else
+            disarmMotionTurn(pointer.cwd, pointer.sessionId);
+    }
+    // A read-only brief never takes the saved route: the work under it keeps its contract and its place.
+    if (pointer !== null && decision.kind === "inject" && decision.mode !== "lit-adhd") {
+        recordActiveRoute(pointer.cwd, pointer.sessionId, spine?.skill ?? decision.mode);
+    }
+    if (pointer !== null && isLitUserPromptSubmitInput(parsed) && (litContinue || decision.kind === "inject")) {
+        applyPromptToStack(pointer.cwd, pointer.sessionId, parsed.prompt, { continued: litContinue, mode: decision.kind === "inject" ? decision.mode : null }, auto.now === undefined ? undefined : new Date(auto.now));
+    }
     // Only a LIT thread gets a pointer: this prompt ignites LIT, or an earlier one already did.
     if (pointer !== null && (decision.kind === "inject" || workflowTurn(pointer.cwd, pointer.sessionId) !== null)) {
         writeThreadPointer(auto.env ?? process.env, pointer.sessionId, pointer.cwd, auto.now);
@@ -129,7 +183,8 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
     const own = decision.kind === "inject"
         ? withCardOffer(withWorkflowMap(decision.stdout, parsed, decision.mode, env), pointer, auto, decision.entry === "continue")
         : "";
-    const output = withAutoHandoffReload(own, parsed, repoRoot, auto);
+    const noted = goNote === null || own === "" ? own : (withReloadContext(own, goNote) ?? own);
+    const output = withAutoHandoffReload(noted, parsed, repoRoot, auto);
     if (output !== "")
         stdout.write(output);
     return 0;
@@ -328,7 +383,18 @@ export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoR
         // A subagent's Stop carries the parent's session id; the parent's turn is still running.
         if (isSubagent(parsed))
             return 0;
-        endLiveStep(scope.cwd, scope.sessionId, auto.now);
+        const motion = await evaluateMotionStop({
+            cwd: scope.cwd,
+            sessionId: scope.sessionId,
+            ...(auto.now === undefined ? {} : { now: auto.now }),
+            ...(auto.evaluateMotion === undefined ? {} : { evaluate: auto.evaluateMotion }),
+        });
+        if (motion.action === "block") {
+            stdout.write(formatStopBlockOutput(motion.reason));
+            return 0;
+        }
+        const lastMsg = typeof record["last_assistant_message"] === "string" ? record["last_assistant_message"] : null;
+        endLiveStep(scope.cwd, scope.sessionId, auto.now, true, detectWaitReason(lastMsg));
         const env = auto.env ?? process.env;
         const line = typeof record["turn_id"] === "string"
             ? workflowStopLine(scope.cwd, scope.sessionId, record["turn_id"], {
@@ -371,6 +437,16 @@ export async function runSessionStartHookCli(stdin, stdout, stderr, repoRoot = p
         return event.exit;
     clearManagedCompactionWhenOff(hookCwd(event.parsed, repoRoot), auto.env ?? process.env);
     const record = event.parsed;
+    if (typeof record === "object" &&
+        record !== null &&
+        (record["source"] === "startup" || record["source"] === "resume")) {
+        const opened = hookSessionScope(record, repoRoot);
+        const offer = opened === null ? null : adhdSuggestion(opened.cwd, opened.sessionId);
+        if (offer !== null) {
+            stdout.write(`${JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: offer } })}\n`);
+        }
+        return 0;
+    }
     if (typeof record !== "object" || record === null || record["source"] !== "compact")
         return 0;
     const scope = hookSessionScope(record, repoRoot);
@@ -461,8 +537,39 @@ export async function runPostToolUseLiveHookCli(stdin, _stdout, _stderr, options
     if (event.exit !== null)
         return 0;
     const scope = toolEventScope(event.parsed);
+    const now = options.now ?? Date.now();
     if (scope !== null && !OWN_CARD_TOOL.test(scope.tool))
-        recordLiveStepEnd(scope.cwd, scope.sessionId, scope, options.now ?? Date.now());
+        recordLiveStepEnd(scope.cwd, scope.sessionId, scope, now);
+    recordLanes(event.parsed, toolLaneEvents, now);
+    // A shell call that ran the film renderer is noted for the completion gate (motion-gate.ts).
+    recordMotionTool(event.parsed, now);
+    return 0;
+}
+/** Fold a hook payload's lane events into the session's lane records; only a LIT thread has lanes to draw. */
+function recordLanes(parsed, read, now) {
+    try {
+        const scope = laneScope(parsed);
+        if (scope === null || workflowTurn(scope.cwd, scope.sessionId) === null)
+            return;
+        for (const laneEvent of read(parsed))
+            recordLaneEvent(scope.cwd, scope.sessionId, laneEvent, now);
+    }
+    catch {
+        // Lanes only decorate the card; a hook never fails because of them.
+    }
+}
+/**
+ * SubagentStart and SubagentStop: a child agent began or ended, so its lane row appears or leaves. Prints
+ * nothing and exits 0 on every input, including one whose payload shape is not the one probed.
+ */
+export async function runSubagentHookCli(kind, stdin, options = {}) {
+    const event = await readHookEvent(stdin, nullSink());
+    if (event.exit !== null)
+        return 0;
+    recordLanes(event.parsed, (parsed) => {
+        const laneEvent = subagentEvent(parsed, kind);
+        return laneEvent === null ? [] : [laneEvent];
+    }, options.now ?? Date.now());
     return 0;
 }
 /** Swallows the parse errors the shared reader reports; the live-step hooks stay silent. */

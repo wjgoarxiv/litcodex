@@ -16,6 +16,10 @@ const PASS = "PASS";
 const FAIL = "FAIL";
 const WARN = "WARN";
 const rule = (id, name, status, detail, extra = {}) => ({ id, name, status, detail, ...extra });
+// Empty-frame limits (seconds, shares of the frame). FLAT-FRAME: 0.5-99.5 % luminance within 0.02, any
+// colour. DEAD-AIR: under 2.5 % of the 48 px cells carry anything; the opening may build from nothing
+// 0.4 s longer, the close may fade 0.6 s longer.
+export const EMPTY_FRAME = Object.freeze({ flatSpread: 0.02, flatHoldSec: 1, flatEdgeSec: 1, deadBusy: 0.025, deadHoldSec: 0.5, deadOpenSec: 0.4, deadCloseSec: 0.6 });
 export const STAGE_NOT_APPLICABLE = Object.freeze(["MO-C-01 GLSL look pass", "MO-C-02 unless the page uses WebGL", "MO-C-14 glyph-mask method", "MO-D-02 frame-time p95"]);
 
 const readJsonl = (path) =>
@@ -101,7 +105,7 @@ export function evaluateStage(data) {
 	}
 	rules.push(rule("MO-C-09", "determinism", detStatus, detDetail));
 
-	if (manifest.webgl?.requested) rules.push(rule("MO-C-02", "WebGL tier", manifest.webgl.ok && isSoftwareRenderer(manifest.webgl.renderer) ? PASS : FAIL, `page requested WebGL: ${manifest.webgl.renderer ?? "no context"} (software rung, labelled)`));
+	if (manifest.webgl?.requested) rules.push(rule("MO-C-02", "WebGL tier", manifest.webgl.ok && (manifest.rung === "gpu" || isSoftwareRenderer(manifest.webgl.renderer)) ? PASS : FAIL, `page requested WebGL: ${manifest.webgl.renderer ?? "no context"} (${manifest.rung ?? "software"} rung, labelled)`));
 
 	const beat = 60 / (data.treatment?.sound?.tempo ?? TIMING.defaultBpm);
 	const limit = NEAR_BLACK.runFactor * TIMING.minSceneBeats * beat;
@@ -119,9 +123,11 @@ export function evaluateStage(data) {
 		}
 	}
 	rules.push(rule("MO-D-03", "near-black run cap", blackFault ? FAIL : PASS, blackFault ?? "no near-black run longer than 2x the 2-beat hold floor"));
+	rules.push(flatFrameRule(frames, fps), deadAirRule(frames, fps));
 
 	const flags = (manifest.chromeFlags ?? []).join(" ");
-	rules.push(rule("MO-A-51", "stage flag set recorded", flags === stageFlags(width, height).join(" ") ? PASS : FAIL, `chromeFlags ${flags}`));
+	rules.push(rule("MO-A-51", "stage flag set recorded", flags === stageFlags(width, height, process.platform, manifest.rung ?? "software").join(" ") ? PASS : FAIL, `chromeFlags ${flags}`));
+	if (manifest.assetUsed) rules.push(manifest.assetUsed);
 	if (data.qa?.rules) rules.push(...data.qa.rules);
 	else rules.push(rule("QA-TEXT", "DOM text QA", FAIL, "no text QA replay recorded"));
 	rules.push(...soundRules(data.sound, { mode: data.treatment?.sound?.mode ?? manifest.sound?.mode, videoDuration: probe?.videoDuration ?? manifest.durationSec }));
@@ -132,6 +138,41 @@ export function evaluateStage(data) {
 	return rules;
 }
 
+/** The longest run of frames where `flagged[f]` holds and exceeds `limit` plus its edge allowance, or null. */
+function longestRun(flagged, limit, allowance) {
+	let worst = null;
+	let start = -1;
+	for (let f = 0; f <= flagged.length; f++) {
+		if (f < flagged.length && flagged[f]) {
+			if (start < 0) start = f;
+			continue;
+		}
+		if (start < 0) continue;
+		const length = f - start;
+		if (length > limit + allowance(start === 0, f === flagged.length) && (!worst || length > worst.length)) worst = { length, from: start };
+		start = -1;
+	}
+	return worst;
+}
+
+/** FLAT-FRAME: a frame of any colour with nothing on it. MO-D-03 sees only black; a cream frame is as empty. */
+export function flatFrameRule(frames, fps) {
+	if (!frames.length || frames.some((f) => typeof f.p005 !== "number" || typeof f.p995 !== "number")) return rule("FLAT-FRAME", "no empty flat frames", "N/A", "per-frame luminance spread not recorded");
+	const worst = longestRun(frames.map((f) => f.p995 - f.p005 < EMPTY_FRAME.flatSpread), EMPTY_FRAME.flatHoldSec * fps, (open, close) => (open || close ? EMPTY_FRAME.flatEdgeSec * fps : 0));
+	return worst
+		? rule("FLAT-FRAME", "no empty flat frames", FAIL, `${(worst.length / fps).toFixed(2)} s of empty frames from ${(worst.from / fps).toFixed(2)} s (nothing but one flat colour; limit ${EMPTY_FRAME.flatHoldSec} s)`)
+		: rule("FLAT-FRAME", "no empty flat frames", PASS, `no run of empty frames longer than ${EMPTY_FRAME.flatHoldSec} s`);
+}
+
+/** DEAD-AIR: a near-empty frame, where one dot or one small object sits on the ground. */
+export function deadAirRule(frames, fps) {
+	if (!frames.length || frames.some((f) => typeof f.busy !== "number")) return rule("DEAD-AIR", "no near-empty run", "N/A", "per-frame busy share not recorded");
+	const worst = longestRun(frames.map((f) => f.busy < EMPTY_FRAME.deadBusy), EMPTY_FRAME.deadHoldSec * fps, (open, close) => (open ? EMPTY_FRAME.deadOpenSec * fps : 0) + (close ? EMPTY_FRAME.deadCloseSec * fps : 0));
+	return worst
+		? rule("DEAD-AIR", "no near-empty run", FAIL, `${(worst.length / fps).toFixed(2)} s of near-empty frames from ${(worst.from / fps).toFixed(2)} s (under ${EMPTY_FRAME.deadBusy * 100} % of the frame carries anything; limit ${EMPTY_FRAME.deadHoldSec} s)`)
+		: rule("DEAD-AIR", "no near-empty run", PASS, `no near-empty run longer than ${EMPTY_FRAME.deadHoldSec} s`);
+}
+
 export const stagePassed = (rules) => rules.every((r) => r.status !== FAIL);
 
 /** The stage render report. "QA gate: PASS|FAIL" is the line the done-check reads. */
@@ -139,7 +180,8 @@ export function renderStageReport({ manifest, rules, outputs, round, framesViewe
 	const lines = ["lit-typographic-motion — stage render report"];
 	lines.push(`outputs: ${outputs.mp4} · ${outputs.preview} (encoder: ${manifest.previewEncoder ?? "none"}) · ${outputs.poster} · ${outputs.still}`);
 	lines.push(`path: stage · format ${manifest.format} ${manifest.width}x${manifest.height} @ ${manifest.fps} fps · ${manifest.durationSec} s (treatment ${manifest.targetDurationSec} s)`);
-	lines.push(`capture: software rung ${manifest.renderer ?? "(no WebGL requested)"} · per frame p50 ${manifest.timing?.p50Ms ?? "?"} ms, p95 ${manifest.timing?.p95Ms ?? "?"} ms · master ${manifest.timing?.masterSec ?? "?"} s, determinism and text QA replays ${manifest.timing?.replaysSec ?? "?"} s, total ${manifest.timing?.totalSec ?? "?"} s`);
+	lines.push(`capture: ${manifest.rung ?? "software"} rung ${manifest.renderer ?? "(no WebGL requested)"} · per frame p50 ${manifest.timing?.p50Ms ?? "?"} ms, p95 ${manifest.timing?.p95Ms ?? "?"} ms · master ${manifest.timing?.masterSec ?? "?"} s, determinism and text QA replays ${manifest.timing?.replaysSec ?? "?"} s, total ${manifest.timing?.totalSec ?? "?"} s`);
+	if (manifest.plate) lines.push(`plate: Blender ${manifest.plate.blender}, ${manifest.plate.engine} ${manifest.plate.device}, ${manifest.plate.samples} spp, ${manifest.plate.frames} frames at ${manifest.plate.fps} fps`);
 	lines.push("");
 	const failed = rules.some((r) => r.status === "FAIL");
 	lines.push(`QA gate: ${failed ? "FAIL" : "PASS"}${stage === "stills" ? "  (stills only; nothing encoded)" : ""}${withheld ? "  (render withheld: exports moved to withheld/ as diagnostics, not deliverables)" : ""}`);

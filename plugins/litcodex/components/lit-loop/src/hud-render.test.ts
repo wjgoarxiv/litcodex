@@ -13,6 +13,7 @@ function status(overrides: Partial<CardStatus> = {}): CardStatus {
 		thread: ID,
 		state: "ready",
 		mode: null,
+		look: null,
 		ignitedAt: null,
 		map: null,
 		step: null,

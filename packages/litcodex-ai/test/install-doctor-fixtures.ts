@@ -18,10 +18,12 @@ import {
 	DIAGRAM_DRAWER_PAYLOAD_HASHES,
 	DOCX_PAYLOAD_HASHES,
 	FRONTEND_UIUX_PAYLOAD_HASHES,
+	HIJACK_PAYLOAD_HASHES,
 	HUMANIZER_PAYLOAD_HASHES,
 	MOTION_PAYLOAD_HASHES,
 	PPTX_PAYLOAD_HASHES,
 	README_STUDIO_PAYLOAD_HASHES,
+	SCHEMATIC_PAYLOAD_HASHES,
 	STRUCTURAL_SEARCH_PAYLOAD_HASHES,
 	VISUAL_QA_PAYLOAD_HASHES,
 	WIKIFY_PAYLOAD_HASHES,
@@ -47,9 +49,16 @@ export function doctorDeps(
 	handoffAvailable = true,
 	scientificVisualizationAvailable = true,
 	payloadMutation?: {
-		readonly tamper?: "handoff" | "scientific-visualization" | "uiux-visual-qa" | "humanizer" | "lit-diagram-drawer";
+		readonly tamper?:
+			| "handoff"
+			| "scientific-visualization"
+			| "uiux-visual-qa"
+			| "humanizer"
+			| "lit-diagram-drawer"
+			| "lit-schematic"
+			| "lit-hijack";
 		readonly extra?: "handoff" | "scientific-visualization" | "uiux-visual-qa";
-		readonly missing?: "lit-diagram-drawer" | "card-server";
+		readonly missing?: "lit-diagram-drawer" | "lit-schematic" | "lit-hijack" | "card-server";
 	},
 ): Parameters<typeof runDoctor>[0] {
 	const configPath = `${codexHome}/config.toml`;
@@ -111,6 +120,8 @@ export function doctorDeps(
 	const deepInterviewRoot = `${skillCatalogRoot}/deep-interview`;
 	const docxRoot = `${skillCatalogRoot}/lit-docx`;
 	const pptxRoot = `${skillCatalogRoot}/lit-pptx`;
+	const schematicRoot = `${skillCatalogRoot}/lit-schematic`;
+	const hijackRoot = `${skillCatalogRoot}/lit-hijack`;
 	const motionRoot = `${skillCatalogRoot}/lit-typographic-motion`;
 	const readmeStudioRoot = `${skillCatalogRoot}/readme-studio`;
 	const visualQaRoot = `${skillCatalogRoot}/visual-qa`;
@@ -154,7 +165,9 @@ export function doctorDeps(
 				(handoffAvailable && handoffFiles.includes(path)) ||
 				(scientificVisualizationAvailable && scientificVisualizationFiles.includes(path)) ||
 				(skillCatalogFiles.includes(path) &&
-					!(payloadMutation?.missing === "lit-diagram-drawer" && path === `${diagramDrawerRoot}/SKILL.md`)) ||
+					!(payloadMutation?.missing === "lit-diagram-drawer" && path === `${diagramDrawerRoot}/SKILL.md`) &&
+					!(payloadMutation?.missing === "lit-schematic" && path === `${schematicRoot}/SKILL.md`) &&
+					!(payloadMutation?.missing === "lit-hijack" && path === `${hijackRoot}/SKILL.md`)) ||
 				path === marketplaceManifest ||
 				path === pluginManifest ||
 				path === hooksManifest ||
@@ -196,6 +209,8 @@ export function doctorDeps(
 				if (root === diagramDrawerRoot) return Object.keys(DIAGRAM_DRAWER_PAYLOAD_HASHES);
 				if (root === docxRoot) return Object.keys(DOCX_PAYLOAD_HASHES);
 				if (root === pptxRoot) return Object.keys(PPTX_PAYLOAD_HASHES);
+				if (root === schematicRoot) return Object.keys(SCHEMATIC_PAYLOAD_HASHES);
+				if (root === hijackRoot) return Object.keys(HIJACK_PAYLOAD_HASHES);
 				if (root === motionRoot) return Object.keys(MOTION_PAYLOAD_HASHES);
 				if (root === visualQaRoot) return Object.keys(VISUAL_QA_PAYLOAD_HASHES);
 				if (root === structuralSearchRoot) return Object.keys(STRUCTURAL_SEARCH_PAYLOAD_HASHES);
@@ -214,6 +229,8 @@ export function doctorDeps(
 					path.startsWith(`${skillCatalogRoot}/lit-diagram-drawer/`) ||
 					path.startsWith(`${skillCatalogRoot}/lit-docx/`) ||
 					path.startsWith(`${skillCatalogRoot}/lit-pptx/`) ||
+					path.startsWith(`${skillCatalogRoot}/lit-schematic/`) ||
+					path.startsWith(`${skillCatalogRoot}/lit-hijack/`) ||
 					path.startsWith(`${skillCatalogRoot}/lit-typographic-motion/`) ||
 					path.startsWith(`${skillCatalogRoot}/readme-studio/`) ||
 					path.startsWith(`${skillCatalogRoot}/visual-qa/`) ||
@@ -232,6 +249,12 @@ export function doctorDeps(
 						return Buffer.from("tampered");
 					}
 					if (payloadMutation?.tamper === "lit-diagram-drawer" && relativePath === "lit-diagram-drawer/SKILL.md") {
+						return Buffer.from("tampered");
+					}
+					if (payloadMutation?.tamper === "lit-schematic" && relativePath === "lit-schematic/SKILL.md") {
+						return Buffer.from("tampered");
+					}
+					if (payloadMutation?.tamper === "lit-hijack" && relativePath === "lit-hijack/SKILL.md") {
 						return Buffer.from("tampered");
 					}
 					return readFileSync(join(REPO_ROOT, "plugins/litcodex/skills", relativePath));

@@ -210,6 +210,14 @@ start-work never publishes or edits plan files. The planning route publishes app
 `node <plugin-root>/components/start-work-continuation/dist/cli.js publish-plan --cwd <path> --slug <slug>`;
 this execution route reads the resulting file and owns lifecycle state through `init` and `transition` only.
 
+## Plans that come from a lit-hijack spec
+
+When the plan was written from a `lit-hijack` spec, give each implementer child the packet from
+`hijack.mjs brief <run>` (the spec and the target, nothing captured) through `multi_agent_v1.spawn_agent` with
+`fork_context: false`, prefer a separate checkout of the target for it (`--root`), and run
+`hijack.mjs check <run> --phase build` before ticking the last implementation row. A build-gate failure means source
+wording reached the target; rewrite that part from the spec rather than editing words around it.
+
 ## Usage
 
 ```text
@@ -242,6 +250,8 @@ its canonical realpath must equal the persisted canonical worktree.
 7. If multiple plans remain possible, ask one focused selection question.
 
 Only an exact leading `start-work`, `$start-work`, `lit start work`, or `$litcodex:start-work` activation carrying matching `--resume <boundary-id> --grant <grant-id>` may select a paused entry for this session. The dedicated `UserPromptSubmit` lifecycle hook validates the optional plan selector and final worktree, persists the matching grant, clears the pending boundary, performs that resume idempotently, and emits no competing directive output. Slash forms, discussion, copied/quoted/code text, malformed flags, and later mentions remain inert. The root `Stop` hook never resumes paused work. Do not infer resume approval from assistant text, a transcript, or a Stop payload.
+
+The typed way in is the whole prompt `lit approve` (or `lit 승인`) or `lit deny` (or `lit 거절`), case-sensitive and nothing else on the line. The same lifecycle hook reads it: `lit approve` resumes this session's own paused run with a grant for exactly its pending boundary's action and root, through the same transition as the resume line, and the stored authority and forbidden actions still decide what a grant may cover. `lit deny` changes no state; the run stays paused and you must not take or retry that action. When you pause at a boundary, tell the user the boundary id, action and root, and that they answer with `lit approve` or `lit deny`; the exact resume line stays a fallback. A `go` after a `lit-adhd` brief never answers a boundary.
 
 A brief or notes file without waves, checkboxes, and acceptance criteria is NOT decision-complete and must not be executed by start-work.
 

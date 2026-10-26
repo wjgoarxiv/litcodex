@@ -10,6 +10,15 @@ export interface ReentryContext {
     readonly active: string | null;
     /** Approved or running work a bare `lit` should resume; null when there is none. */
     readonly resume: ResumeWork | null;
+    /** The paused spine a `lit continue` brings back, with the stage and count it left; absent when none. */
+    readonly frame?: ResumedFrame | null;
+}
+/** A paused frame of the workflow stack, as `lit continue` names it to the model. */
+export interface ResumedFrame {
+    readonly skill: string;
+    readonly stage: string | null;
+    readonly n?: number;
+    readonly total?: number;
 }
 export declare const NO_REENTRY: ReentryContext;
 export type Entry = {
@@ -19,11 +28,13 @@ export type Entry = {
     readonly kind: "continue";
     readonly confirm: boolean;
     readonly route: LitMode;
+    readonly frame?: ResumedFrame;
 } | {
     readonly kind: "resume";
     readonly work: ResumeWork;
     readonly active: boolean;
     readonly route: LitMode;
+    readonly frame?: ResumedFrame;
 };
 /** The route this session last sent an activation for, or null when nothing readable is saved. */
 export declare function readActiveRoute(cwd: string, sessionId: string): string | null;
@@ -37,8 +48,12 @@ export declare function clearActiveRoute(cwd: string, sessionId: string): void;
  * or lit-loop goals that are not all complete. A finished plan resumes nothing.
  */
 export declare function readResumeWork(cwd: string, sessionId: string): ResumeWork | null;
+/** True for exactly `lit continue`: the way back from a side discipline to the work it paused. */
+export declare function isLitContinue(prompt: string): boolean;
 /** True for a bare `lit` or `lit continue`: the prompt carries no task and no route of its own. */
 export declare function isBareLit(prompt: string): boolean;
+/** True for `lit new …` or `lit restart …`: the work starts again instead of continuing. */
+export declare function isRestartPrompt(prompt: string): boolean;
 /**
  * How a matched lit-family route enters. start-work always gets its full activation: its prompt carries
  * the write grant. `lit new …` and `lit restart …` start again. A bare `lit` or `lit continue` carries on

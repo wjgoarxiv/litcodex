@@ -83,6 +83,18 @@ describe("lit-scientific-visualization canonical payload", () => {
 		expect(priorities[2]).toBeGreaterThan(priorities[1] ?? -1);
 	});
 
+	it("asks for the rich layer by default and keeps minimal for an explicit request", () => {
+		const adapter = readFileSync(`${SKILL_ROOT}SKILL.md`, "utf8");
+		expect(adapter).not.toMatch(/restraints exactly/iu);
+		for (const layer of [/annotat/iu, /inset/iu, /light grid/iu, /multi-panel|panel labels/iu]) {
+			expect(adapter).toMatch(layer);
+		}
+		expect(adapter).toMatch(/minimal figure[^.]*only when the user asks/iu);
+		expect(adapter).toMatch(/rcparams\(\)\s*\n\s*plt\.rcParams\.update\(\{[^}]*"axes\.grid": True/u);
+		expect(adapter).toMatch(/standing request/iu);
+		expect(adapter).toContain("../lit-schematic/SKILL.md");
+	});
+
 	it("keeps MIT licensing, provenance, and CP/SDS notice outside the immutable source", () => {
 		expect(readFileSync(`${SKILL_ROOT}../../vendor/licenses/045_scientific-visualization-MIT.txt`, "utf8")).toContain("MIT License");
 		const provenance = readFileSync(`${SKILL_ROOT}../../vendor/provenance/045_scientific-visualization.md`, "utf8");

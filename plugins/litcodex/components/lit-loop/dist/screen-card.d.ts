@@ -4,8 +4,11 @@ export declare const DEFAULT_CARD_WIDTH = 96;
 export interface ScreenCardInput {
     readonly mode: string;
     readonly note: string | null;
+    readonly look: string | null;
     readonly map: WorkflowMap | null;
     readonly checklist: readonly ChecklistRow[];
+    /** The paused-work row from the workflow stack; null while one frame or none is on it. */
+    readonly stack?: string | null;
 }
 export interface ScreenCardOptions {
     readonly color: boolean;

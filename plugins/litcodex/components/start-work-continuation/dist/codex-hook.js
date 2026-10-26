@@ -37,9 +37,74 @@ export function runStopHook(input, _legacyFs) {
         throw error;
     }
 }
+/**
+ * The whole prompt `lit approve` / `lit 승인` or `lit deny` / `lit 거절`, case-sensitive, at most 512 bytes.
+ * Anything around it (a quote, a code fence, a leading word) is ordinary text and answers nothing.
+ */
+export function parseBoundaryAnswer(prompt) {
+    if (prompt.length > 512)
+        return null;
+    const match = prompt.trim().match(/^lit[ \t]+(approve|승인|deny|거절)$/u);
+    if (match === null)
+        return null;
+    return match[1] === "approve" || match[1] === "승인" ? "approve" : "deny";
+}
+function answerContext(text) {
+    return JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: text } });
+}
+const NOTHING_WAITING = "The user typed a start-work boundary answer, but this session has no paused start-work run waiting at a boundary, so nothing changed. Tell the user that in one sentence.";
+/**
+ * Typed answer to the boundary a paused start-work run waits at. `lit approve` resumes the run with a grant the
+ * hook derives from this turn, through the same transition as the exact resume line, so the stored authority
+ * still decides what the grant may cover. `lit deny` changes no state: the run stays paused and the model is told
+ * not to take that action. Both answer only this session's own paused run.
+ */
+function answerBoundary(input, answer, options) {
+    try {
+        reconcileLifecycleState(input.cwd, options);
+        const inspected = inspectLifecycleState(input.cwd);
+        if (!inspected.ok || inspected.state.active_work_id === null)
+            return answerContext(NOTHING_WAITING);
+        const work = selectWorkForSession(inspected.state, input.session_id, ["paused"]);
+        const pending = work?.pending_boundary;
+        if (work === null || pending === undefined)
+            return answerContext(NOTHING_WAITING);
+        const what = `boundary ${pending.boundary_id} (action ${pending.action}, root ${pending.root}) of work ${work.work_id}`;
+        if (answer === "deny") {
+            return answerContext(`The user typed \`lit deny\` for ${what}. Do not take that action or retry it. The run stays paused; ask what to do instead or replan inside the stored authority, and resume only after a new \`lit approve\`.`);
+        }
+        const key = digest([work.work_id, pending.boundary_id, input.session_id, input.turn_id].join("\0"));
+        transitionWork(input.cwd, {
+            action: "resume",
+            expectedRevision: inspected.state.revision,
+            sessionId: input.session_id,
+            transitionId: `prompt-approve:${key}`,
+            workId: work.work_id,
+            reasonCode: "explicit_user_resume",
+            turnId: input.turn_id,
+            boundary: pending,
+            grant: {
+                grant_id: `typed-approve:${key}`,
+                authority_id: pending.authority_id,
+                boundary_id: pending.boundary_id,
+                action: pending.action,
+                root: pending.root,
+            },
+        }, options);
+        return answerContext(`The user typed \`lit approve\` for ${what}. The run is active again with a grant for exactly that action and root. Continue the plan's next open task inside it, and ask again before anything beyond it.`);
+    }
+    catch (error) {
+        if (!(error instanceof Error))
+            throw error;
+        return answerContext("The user typed a start-work boundary answer, but the lifecycle store refused it, so the run is unchanged. Tell the user in one sentence and offer to show the run's state.");
+    }
+}
 export function runUserPromptSubmitHook(input, options = {}) {
     if (!isUserPromptSubmitInput(input))
         return "";
+    const answer = parseBoundaryAnswer(input.prompt);
+    if (answer !== null)
+        return answerBoundary(input, answer, options);
     const route = parseExplicitStartWorkPrompt(input.prompt);
     if (route === null)
         return "";

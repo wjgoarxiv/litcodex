@@ -160,7 +160,8 @@ when the current authoritative request selects it.
 
 When a litwork task creates or changes a user-facing web interface, give the UI part its own plan
 criterion and load the installed sibling `../frontend-ui-ux/SKILL.md` as support without a second
-banner. Run `../frontend-ui-ux/scripts/probe.mjs` on the built page at the seven-entry RS matrix; retain JSON and
+banner. For a new page or screen, take its "Choose the design first" step (skipped when the prompt names the look), then run `../frontend-ui-ux/scripts/design-lock.mjs init` so the look is locked.
+Run `../frontend-ui-ux/scripts/probe.mjs` on the built page at the seven-entry RS matrix; retain JSON and
 screenshots. Remaining HIGH findings block done until fixed or named as a specific limitation, and
 probe exit 2 keeps the criterion BLOCKED. For a CLI or backend-only task without a user-facing web
 interface, do not load the frontend skill or run its browser probe. Classify the deliverable itself,

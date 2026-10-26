@@ -62,3 +62,46 @@ describe("redactSecrets handles short key/value credentials", () => {
 		});
 	}
 });
+
+// A secret in JSON or a quoted map puts the closing quote of the key before the colon, which the
+// `key: value` rules did not match.
+describe("redactSecrets handles JSON-style key/value credentials", () => {
+	const quoted: readonly (readonly [string, string, string])[] = [
+		["api_token", '{"api_token": "tok_Abc123SecretValue"}', "tok_Abc123SecretValue"],
+		["apiKey", '{"apiKey":"abc123XYZ456"}', "abc123XYZ456"],
+		["password with a space before the colon", '{"password" : "hunter2"}', "hunter2"],
+		["a word-shaped password", '{"password": "correct"}', "correct"],
+		["a single-quoted client secret", "{'client_secret': 'swordfish'}", "swordfish"],
+		["an access token", '{"access_token":"ya29.a0AfH6SMB"}', "ya29.a0AfH6SMB"],
+		["a refresh token", '{"refresh_token": "1//0gXyzRefresh"}', "1//0gXyzRefresh"],
+		["an escaped quote in the value", '{"password": "pa\\"ss\\"word99"}', "word99"],
+		["a numeric password", '{"password": 987654321}', "987654321"],
+		["an Authorization header member", '{"Authorization": "Bearer abc.def-ghi"}', "abc.def-ghi"],
+		["a secret key after other members", '{"user":"u","secret_key":"s3cr3tValue!","n":1}', "s3cr3tValue!"],
+		["a token with a non-word value", '{"token": "x9Z-12345"}', "x9Z-12345"],
+	];
+
+	for (const [name, text, secret] of quoted) {
+		it(`redacts ${name}`, () => {
+			const out = redactSecrets(text);
+			expect(out).not.toContain(secret);
+			expect(out).toContain(REDACTED_SECRET);
+		});
+	}
+
+	it("keeps the structure around the redacted value", () => {
+		expect(redactSecrets('{"user":"u","password" : "hunter2","n":1}')).toBe(
+			`{"user":"u","password" : "${REDACTED_SECRET}","n":1}`,
+		);
+	});
+
+	for (const text of [
+		'{"title": "Refactor the token bucket"}',
+		'{"note": "Secret: the plan is simple"}',
+		'{"token": "the plan is simple"}',
+	]) {
+		it(`preserves ordinary JSON ${JSON.stringify(text)}`, () => {
+			expect(redactSecrets(text)).toBe(text);
+		});
+	}
+});

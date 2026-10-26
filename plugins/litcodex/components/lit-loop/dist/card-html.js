@@ -16,6 +16,15 @@
 // the tool result that created it; each poll names the thread's newest card. When that is a later card,
 // this one folds into a single quiet line with its final state, stops every timer and never polls again.
 // Usage bars stay in the calm accent until 70 % (amber) and 90 % (red); pink and flame are for LIT marks.
+//
+// A side discipline started over paused work adds one row under the map: the paused frames with their stage
+// and gauge, the running frame after ▶, and the way back (`lit continue`). A gauge is drawn only when both counts are
+// real; a frame with no total gets its known facts in words and, while it runs, a moving pulse bar. The lit-adhd brief
+// alone gets the rainbow look: a drifting rainbow border and pill, hue-cycling gauges (each cell of a gauge, stage word or use bar in its own hue, even at a low fill) and a four-star sparkle trail.
+// Every motion is slow (a 9 to 14 s linear pass of a gradient or a 12 s hue turn; each 9 px star fades once in 5.6 s,
+// staggered 1.4 s apart), so no 1 s window holds more than a fraction of one luminance change, against a limit of
+// three opposing 10 % swings over a large area; nothing blinks or strobes, and under
+// prefers-reduced-motion everything stands still as a static gradient. The idle card offers `lit adhd` as the way back.
 export const CARD_HTML = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LIT</title>
@@ -92,7 +101,56 @@ kbd{font-size:12px;color:var(--acc);background:color-mix(in srgb,var(--acc) 12%,
 .lc.folded .brand{padding:0 7px 0 6px;font-size:11px;background:color-mix(in srgb,var(--dim) 24%,var(--bg));color:var(--ink);box-shadow:none;filter:grayscale(1)}
 .lc.folded .name{color:var(--dim);font-weight:600}
 .lc.folded .right{font-weight:600;letter-spacing:0;flex:0 0 auto}
-@media (prefers-reduced-motion:reduce){.lc,.lc *{animation:none!important}.brand::after,.nowpill::after,.comet{display:none}}
+.pbar{display:inline-block;position:relative;width:54px;height:6px;border-radius:3px;background:var(--faint);overflow:hidden;vertical-align:middle}
+.pbar i{position:absolute;top:0;bottom:0;width:38%;border-radius:3px;background:linear-gradient(90deg,transparent,var(--acc),transparent);animation:slidebar 1.8s ease-in-out infinite}
+@keyframes slidebar{0%{left:-40%}100%{left:104%}}
+.stk{margin:0 0 5px;overflow:hidden;text-overflow:ellipsis;font-size:12px}.stk .fr{font-weight:700}.stk kbd{font-size:11.5px}
+.thr{margin:0 0 5px;font-size:12px;overflow:hidden}.thr .row{min-height:19px;gap:7px}.thr .fr{font-weight:700}.thr kbd{font-size:11.5px}
+.thr .ld{white-space:pre}.thr .tg,.thr .tw{color:var(--dim);font-weight:700}
+.thr .running .tg,.thr .running .tw{color:var(--green)}.thr .blocked .tg,.thr .blocked .tw{color:var(--amber)}.thr .done .tg,.thr .done .tw{color:var(--green)}
+.lc.rewind{--rb:#ff2d95,#ff6337,#ffd23c,#6bdb8f,#5fd7ff,#9b6bff,#ff2d95;--rbt:rgba(255,45,149,.34),rgba(255,99,55,.3),rgba(255,210,60,.28),rgba(107,219,143,.28),rgba(95,215,255,.32),rgba(155,107,255,.34),rgba(255,45,149,.34);border:3px solid transparent;padding:9px 12px 8px;background:radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,#9b6bff 18%,transparent),transparent 55%) padding-box,linear-gradient(var(--bg),var(--bg)) padding-box,linear-gradient(115deg,var(--rb)) border-box;background-size:100% 100%,100% 100%,200% 200%;box-shadow:0 0 26px -2px #9b6bff;animation:drift 10s linear infinite,glow 10s linear infinite}
+:root.pane .lc.rewind{padding:16px 18px 14px}
+.lc.rewind.is-done,.lc.rewind.is-idle{animation:none}
+.lc.rewind .head{margin:-9px -12px 6px;padding:7px 12px;border-radius:10px 10px 0 0;background:linear-gradient(100deg,var(--rbt));background-size:200% 100%;animation:slide 8s linear infinite}
+:root.pane .lc.rewind .head{margin:-16px -18px 8px;padding:10px 18px}
+.lc.rewind.folded{padding:2px 8px;animation:drift 10s linear infinite}
+.lc.rewind.folded .head{margin:0;padding:0;background:none;animation:none}
+.lc.rewind .brand,.lc.rewind .nowpill{background:linear-gradient(100deg,var(--rb));background-size:200% 100%;animation:slide 5s linear infinite;box-shadow:0 0 14px -2px #ff2d95}
+.lc.rewind.is-done .brand{animation:none}
+.lc.rewind .name{background:linear-gradient(100deg,var(--rb));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:slide 5s linear infinite}
+@keyframes slide{from{background-position:0 0}to{background-position:200% 0}}
+@keyframes glow{0%,100%{box-shadow:0 0 26px -2px #ff2d95}17%{box-shadow:0 0 26px -2px #ff6337}33%{box-shadow:0 0 26px -2px #ffd23c}50%{box-shadow:0 0 26px -2px #5fd7ff}67%{box-shadow:0 0 26px -2px #9b6bff}83%{box-shadow:0 0 26px -2px #6bdb8f}}
+.lc.rewind .bar,.lc.rewind .pbar{animation:hue 6s linear infinite}
+.lc.rewind .mini,.lc.rewind .st.done{animation:hue 9s linear infinite}
+.lc.rewind .pbar{width:84px;height:8px;border-radius:4px}
+@keyframes hue{to{filter:hue-rotate(360deg)}}
+.lc.rewind .pbar i{background:linear-gradient(90deg,transparent,#ff2d95,#ffd23c,#6bdb8f,#5fd7ff,transparent)}
+.sparks{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:inherit}
+.sparks i{position:absolute;font-style:normal;font-size:13px;line-height:1;opacity:0;color:#fff;text-shadow:0 0 6px #ff2d95,0 0 12px #5fd7ff;animation:trail 4.2s linear infinite}
+.sparks i:nth-child(1){top:8%;animation-delay:0s}.sparks i:nth-child(2){top:30%;animation-delay:.6s}.sparks i:nth-child(3){top:52%;animation-delay:1.2s}.sparks i:nth-child(4){top:74%;animation-delay:1.8s}.sparks i:nth-child(5){top:18%;animation-delay:2.4s}.sparks i:nth-child(6){top:62%;animation-delay:3s}.sparks i:nth-child(7){top:86%;animation-delay:3.6s}
+@keyframes trail{0%{left:3%;opacity:0}12%{opacity:.95}80%{opacity:.6}100%{left:95%;opacity:0}}
+:root.light .sparks i{color:#c0186b;text-shadow:none}
+:root.light .lc.rewind{--rb:#c0186b,#bd3f0b,#9a5b00,#17783f,#006f99,#6a3fd1,#c0186b;--rbt:rgba(192,24,107,.2),rgba(189,63,11,.18),rgba(154,91,0,.16),rgba(23,120,63,.18),rgba(0,111,153,.2),rgba(106,63,209,.2),rgba(192,24,107,.2);background:radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,#6a3fd1 10%,transparent),transparent 55%) padding-box,linear-gradient(var(--bg),var(--bg)) padding-box,linear-gradient(115deg,var(--rb)) border-box;background-size:100% 100%,100% 100%,200% 200%;box-shadow:0 0 22px -4px #6a3fd1}
+@keyframes drift{from{background-position:0 0,0 0,0% 50%}to{background-position:0 0,0 0,200% 50%}}
+/* YOUR TURN: amber border, slow breathe (2.4 s period) */
+.lc.turn{border-color:var(--amber);box-shadow:0 0 18px -4px var(--amber);animation:amberbreathe 2.4s ease-in-out infinite}
+.lc.turn .brand{background:var(--amber);color:var(--pillink)}
+.lc.turn .right{color:var(--amber)}
+.lc.turn .brand::after{display:none}
+@keyframes amberbreathe{0%,100%{border-color:color-mix(in srgb,var(--amber) 40%,transparent);box-shadow:0 0 12px -4px color-mix(in srgb,var(--amber) 30%,transparent)}50%{border-color:var(--amber);box-shadow:0 0 22px -2px color-mix(in srgb,var(--amber) 70%,transparent)}}
+.lc.turn.folded{animation:none}
+/* REVIEW: segmented top and bottom borders drawn by JS in .review-lanes */
+.lc.review{border-color:color-mix(in srgb,var(--acc) 40%,transparent);animation:none}
+.lc.review .brand::after{display:none}
+.review-lanes{display:flex;gap:2px;height:3px;border-radius:2px;margin:0 -2px 6px}.review-lanes i{flex:1;border-radius:2px;transition:background .4s ease}
+/* DONE: one burst of rainbow embers, then settle */
+.lc.done{border-color:color-mix(in srgb,var(--green) 60%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--green) 8%,transparent)}
+.done-burst{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:inherit;animation:burstfade 2s ease-out forwards}
+.done-burst i{position:absolute;font-style:normal;font-size:14px;line-height:1;color:#fff;text-shadow:0 0 6px var(--green),0 0 12px var(--acc);animation:ember 1.6s ease-out forwards}
+.done-burst i:nth-child(1){top:20%;left:15%;animation-delay:0s}.done-burst i:nth-child(2){top:40%;left:50%;animation-delay:.15s}.done-burst i:nth-child(3){top:60%;left:80%;animation-delay:.3s}.done-burst i:nth-child(4){top:30%;left:70%;animation-delay:.1s}.done-burst i:nth-child(5){top:70%;left:30%;animation-delay:.25s}
+@keyframes ember{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-18px) scale(.5)}}
+@keyframes burstfade{0%{opacity:1}80%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.lc,.lc *{animation:none!important}.lc.rewind{animation:none!important;background-position:0 0,0 0,0% 50%}.brand::after,.nowpill::after,.comet,.sparks,.done-burst{display:none}.pbar i{left:31%}.lc.rewind .bar,.lc.rewind .pbar,.lc.rewind .mini,.lc.rewind .st.done,.lc.rewind .brand,.lc.rewind .nowpill{animation:none!important}.lc.turn{animation:none!important}}
 </style></head>
 <body><div id="card" class="lc is-idle" role="status" aria-live="polite"><div class="head"><span class="brand">🔥 LIT</span><span class="j">·</span><span class="name dim">starting…</span></div></div>
 <script>
@@ -101,7 +159,7 @@ var STATUS_TOOL="lit_card_status";
 var FAST=1500,SLOW=5000,IDLE=15000,MAX_BACKOFF=30000;
 var root=document.documentElement,card=document.getElementById("card");
 var status=null,thread=null,timer=null,ticker=null,failures=0,idleSince=Date.now(),bridge=null,hostMode=null;
-var opened=null,folded=false;
+var opened=null,folded=false,burstKey=null;
 var nextId=1,pending={};
 
 function el(tag,cls,text){var n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=String(text);return n;}
@@ -114,7 +172,12 @@ function lin(v){return v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4);}
 function gam(v){return v<=0.0031308?v*12.92:1.055*Math.pow(v,1/2.4)-0.055;}
 function mix(a,b,t){var x=hex(a),y=hex(b);return"#"+x.map(function(v,i){var m=gam(lin(v)+(lin(y[i])-lin(v))*t);return("0"+Math.round(Math.max(0,Math.min(1,m))*255).toString(16)).slice(-2);}).join("");}
 function token(name){return getComputedStyle(root).getPropertyValue(name)||"#ffffff";}
-function ramp(t){var f=token("--flame"),p=token("--pink"),a=token("--acc");return t<=0.5?mix(f,p,t*2):mix(p,a,(t-0.5)*2);}
+/* the rewind look draws every cell of a gauge, map or use bar in its own hue round the wheel, whatever the fill */
+var WHEEL_DARK=["#ff2d95","#ff6337","#ffd23c","#6bdb8f","#5fd7ff","#9b6bff"],WHEEL_LIGHT=["#c0186b","#bd3f0b","#9a5b00","#17783f","#006f99","#6a3fd1"];
+function rewound(){return card.classList.contains("rewind");}
+function lookIs(name){return card.classList.contains(name);}
+function wheel(t){var c=root.classList.contains("light")?WHEEL_LIGHT:WHEEL_DARK,x=Math.max(0,Math.min(1,t))*(c.length-1),i=Math.min(c.length-2,Math.floor(x));return mix(c[i],c[i+1],x-i);}
+function ramp(t){if(rewound())return wheel(t);var f=token("--flame"),p=token("--pink"),a=token("--acc");return t<=0.5?mix(f,p,t*2):mix(p,a,(t-0.5)*2);}
 
 function clock(ms){var s=Math.max(0,Math.floor(ms/1000));return Math.floor(s/60)+":"+("0"+(s%60)).slice(-2);}
 function span(ms){var s=Math.max(1,Math.round(ms/1000));if(s<60)return s+"s";var m=Math.floor(s/60);if(m<60)return s%60?m+"m "+(s%60)+"s":m+"m";return Math.floor(m/60)+"h "+(m%60)+"m";}
@@ -126,11 +189,11 @@ function bar(done,total){
  var cells=Math.min(total,10),filled=total===0?0:Math.round(done/total*cells);
  if(done>0&&filled===0)filled=1;if(done<total&&filled===cells)filled=cells-1;
  var b=el("span","bar");
- for(var i=0;i<cells;i++){var s=el("i","seg"+(i<filled?"":" off"));if(i<filled)s.style.background=mix(token("--pink"),token("--acc"),cells<=1?0:i/(cells-1));b.appendChild(s);}
+ for(var i=0;i<cells;i++){var s=el("i","seg"+(i<filled?"":" off"));if(i<filled)s.style.background=rewound()?wheel(cells<=1?0:i/(cells-1)):mix(token("--pink"),token("--acc"),cells<=1?0:i/(cells-1));b.appendChild(s);}
  return b;
 }
 function useColor(p){return p>=90?token("--red"):p>=70?token("--amber"):null;}
-function mini(p){var b=el("span","mini"),on=Math.round(p/10),fill=useColor(p)||token("--acc");for(var i=0;i<10;i++){var c=el("i");if(i<on)c.style.background=fill;b.appendChild(c);}return b;}
+function mini(p){var b=el("span","mini"),on=Math.round(p/10),warn=useColor(p),fill=warn||token("--acc");for(var i=0;i<10;i++){var c=el("i");if(i<on)c.style.background=warn||!rewound()?fill:wheel(i/9);b.appendChild(c);}return b;}
 function spinner(soft){
  var ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
  svg.setAttribute("class","spin"+(soft?" soft":""));svg.setAttribute("viewBox","0 0 16 16");svg.setAttribute("width","12");svg.setAttribute("height","12");svg.setAttribute("aria-hidden","true");
@@ -157,6 +220,8 @@ function head(s){
  if(s.state==="ready"){add(h,el("span","name dim","ready"),el("span","right dim","idle"));return h;}
  add(h,el("span","name acc",s.mode||"lit"));
  if(s.state==="complete"){add(h,el("span","right ok",doneWord(s)+" ✓"));return h;}
+ if(s.look==="turn"){var tr=el("span","right");tr.style.color="var(--amber)";tr.appendChild(el("span",null,"YOUR TURN"));h.appendChild(tr);return h;}
+ if(s.look==="review"&&s.reviewLanes){var cnt=s.reviewLanes.filter(function(l){return l==="pass"||l==="fail";}).length;var rr=el("span","right acc");rr.appendChild(el("span",null,"REVIEW "+cnt+"/5"));h.appendChild(rr);return h;}
  var r=el("span","right acc");if(!s.map)r.appendChild(el("span",null,"IGNITED"));
  if(s.working){if(s.turnStartedAt)r.appendChild(turnClock(s.turnStartedAt));r.appendChild(el("i","dot"));}
  if(r.childNodes.length)h.appendChild(r);return h;
@@ -199,6 +264,55 @@ function taskRow(s){
  }
  add(row,el("span","dim","└"),liveNode(s));return row;
 }
+/* work paused under a side discipline: paused frames, the running one after the play mark, and the way back */
+function pulse(){var b=el("span","pbar");b.setAttribute("aria-hidden","true");b.appendChild(el("i"));return b;}
+/* a gauge only when both counts are real; otherwise what is known in words, and a moving pulse on the running frame */
+function frameMark(f,running){
+ if(f.gauge)return el("span","dim",f.gauge);
+ var w=el("span","dim",f.note||"");
+ return running?add(el("span","fm"),w,pulse()):w;
+}
+function stackNode(s){
+ var k=s.stack;if(!k||!k.paused||!k.paused.length||!k.running)return null;
+ var row=el("div","row stk");add(row,el("span","dim","⏸"));
+ k.paused.forEach(function(f,i){if(i>0)row.appendChild(joiner());add(row,el("span","fr",f.name+(f.stage?" "+f.stage:"")),frameMark(f,false));});
+ add(row,el("span","acc","‖ ▶"),el("span","fr",k.running.name),frameMark(k.running,true),el("span","dim","· back"),el("kbd",null,"lit continue"));
+ return row;
+}
+/* the thread rows: frames parent first, lanes under the top frame behind a fork line, other sessions last; no placeholder, ever */
+var GLYPH={running:"●",paused:"|",blocked:"!",idle:"-",done:"✓"};
+function threadRow(t,lead){
+ var r=el("div","row tr "+t.state);
+ add(r,el("span","dim ld",lead||""),el("span","tg",GLYPH[t.state]||"●"),el("span","fr",t.name));
+ if(t.stage)r.appendChild(el("span","dim",t.stage));
+ if(t.gauge)r.appendChild(el("span","dim",t.gauge));
+ else{if(t.note)r.appendChild(el("span","dim",t.note));if(t.state==="running")r.appendChild(pulse());}
+ r.appendChild(el("span","tw",t.state));
+ if(t.session)r.appendChild(el("span","dim","· other session "+t.session));
+ return r;
+}
+function threadsNode(s){
+ var k=s.threads;if(!k||!k.chain)return null;
+ var box=el("div","thr"),last=null,under=new Array(Math.max(1,k.chain.length)).join("   ");
+ k.chain.forEach(function(t,i){
+  last=threadRow(t,i?new Array(i).join("   ")+"└─ ":"");
+  if(k.back&&i===k.chain.length-1)add(last,el("span","dim","· back"),el("kbd",null,"lit continue"));
+  box.appendChild(last);
+ });
+ if(k.laneCount>=2)box.appendChild(add(el("div","row dim"),el("span","ld",under+"┬ "+k.laneCount+" lanes in parallel")));
+ (k.lanes||[]).forEach(function(t,i){
+  var branch=k.laneCount>=2?(i===k.lanes.length-1?"└─ ":"├─ "):(k.chain.length?"└─ ":"");
+  last=threadRow(t,under+branch);box.appendChild(last);
+ });
+ (k.others||[]).forEach(function(t){last=threadRow(t,"");box.appendChild(last);});
+ if(k.more>0&&last)last.appendChild(el("span","dim","+"+k.more+" more"));
+ return box;
+}
+/* the rainbow look's sparkle trail: four small stars drifting along the top edge, one at a time */
+function sparks(){var w=el("div","sparks");w.setAttribute("aria-hidden","true");["✦","✧","✦","✧","✦","✧","✦"].forEach(function(c){w.appendChild(el("i",null,c));});return w;}
+function doneBurst(){var w=el("div","done-burst");w.setAttribute("aria-hidden","true");["✦","✧","✦","✧","✦"].forEach(function(c){w.appendChild(el("i",null,c));});return w;}
+var LANE_COLORS_D=["#5fd7ff","#b48cff","#ff6fae","#6bdb8f","#ffd75f"],LANE_RUNNING_D=["#5095af","#7e6caf","#a85c82","#569771","#a89557"],LANE_DIM_D="#3d444d",LANE_FAIL_D="#ff5f5f";
+function laneEl(states){var w=el("div","review-lanes");w.setAttribute("aria-hidden","true");(states||[]).forEach(function(st,i){var s=el("i");s.style.background=st==="pass"?LANE_COLORS_D[i]:st==="running"?LANE_RUNNING_D[i]:st==="fail"?LANE_FAIL_D:LANE_DIM_D;w.appendChild(s);});return w;}
 function useItems(s){
  var u=s.usage||{},items=[];
  [["ctx",u.ctx],["5h",u.fiveHour],["1w",u.week]].forEach(function(x){if(typeof x[1]==="number")items.push(x);});
@@ -243,8 +357,10 @@ function usageBlock(s){
 }
 function renderInline(s){
  card.appendChild(head(s));
- if(s.state==="ready"){var hint=el("div","row");add(hint,el("span","dim","no LIT skill yet"),joiner(),el("span","dim","type"),el("kbd",null,"lit <task>"),el("span","dim","to start one"));hint.style.marginTop="6px";card.appendChild(hint);return;}
+ if(s.state==="ready"){var hint=el("div","row");add(hint,el("span","dim","no LIT skill yet"),joiner(),el("span","dim","type"),el("kbd",null,"lit <task>"),el("span","dim","to start one"));hint.style.marginTop="6px";card.appendChild(hint);var back=el("div","row");add(back,el("span","dim","back from a break?"),el("kbd",null,"lit adhd"),el("span","dim","shows where you were"));card.appendChild(back);return;}
+ if(s.look==="review"&&s.reviewLanes)card.appendChild(laneEl(s.reviewLanes));
  if(s.map)card.appendChild(mapRow(s));else card.appendChild(el("div","map"));
+ var sk=threadsNode(s)||stackNode(s);if(sk)card.appendChild(sk);
  card.appendChild(taskRow(s));
  var f=foot(s);if(!f)return;card.appendChild(f);
  /* a narrow card drops the workspace, then the branch, then the last use items, rather than cut a number */
@@ -254,13 +370,15 @@ function renderInline(s){
 }
 function renderPane(s){
  card.appendChild(head(s));
+ if(s.look==="review"&&s.reviewLanes)card.appendChild(laneEl(s.reviewLanes));
  if(s.state==="ready"){
   var hero=el("div","hero"),hs=el("div","heros");add(hs,"type ",el("kbd",null,"lit <task>")," in this thread to start one");
-  var ex=el("div","examples");["lit add a --shout flag","lit plan the release note","lit-loop fix the parser"].forEach(function(t){ex.appendChild(el("kbd",null,t));});
+  var ex=el("div","examples");["lit add a --shout flag","lit plan the release note","lit-loop fix the parser","lit adhd"].forEach(function(t){ex.appendChild(el("kbd",null,t));});
   add(hero,el("div","flame","🔥"),el("div","herot","no LIT skill yet"),hs,ex);card.appendChild(hero);
  }else{
   if(s.state==="complete"){var prog=progressOf(s.map),bn=el("div","banner",doneWord(s)+" ✓");if(prog)add(bn,el("span","dim",prog.done+"/"+prog.total+" tasks"));if(s.ignitedAt)add(bn,el("span","dim","· "+span(took(s))));card.appendChild(bn);}
   if(s.map)card.appendChild(timeline(s));else{var r=el("div","row");r.style.marginTop="14px";add(r,liveNode(s));card.appendChild(r);}
+  var pk=threadsNode(s)||stackNode(s);if(pk){pk.style.marginTop="10px";card.appendChild(pk);}
  }
  var u=usageBlock(s);if(u)card.appendChild(u);
 }
@@ -269,9 +387,11 @@ function render(){
  if(folded){root.classList.toggle("pane",false);card.className="lc folded";card.textContent="";renderFolded(s);reportSize();return;}
  if(!s)return;
  var p=pane();root.classList.toggle("pane",p);
- card.className="lc"+(s.state==="complete"?" is-done":s.state==="ready"?" is-idle":"");
+ card.className="lc"+(s.state==="complete"?" is-done":s.state==="ready"?" is-idle":"")+(s.state!=="ready"?(s.look==="rewind"?" rewind":s.look==="review"?" review":s.look==="turn"?" turn":s.look==="done"?" done":""):"");
  card.textContent="";
  if(p)renderPane(s);else renderInline(s);
+ if(s.look==="rewind"&&s.state==="ignited")card.appendChild(sparks());
+ if(s.look==="done"){var key=(s.thread||"")+"/"+(s.ignitedAt||0)+"/"+(s.turnEndedAt||0);if(burstKey!==key){burstKey=key;card.appendChild(doneBurst());}}
  reportSize();
 }
 function tick(){

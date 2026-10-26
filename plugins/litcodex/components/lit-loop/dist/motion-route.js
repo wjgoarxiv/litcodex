@@ -65,6 +65,10 @@ export function typeLedCue(prompt) {
     return null;
 }
 export const FILM_SUBCOMMANDS = Object.freeze([
+    "scaffold",
+    "styles",
+    "assets --url <link>",
+    "blender [--preview|--final]",
     "stage [--stills-only]",
     "cover [--window t0,t1]",
     "film [--stills-only]",
@@ -91,7 +95,7 @@ export function motionRouteContext(litLoopSkillPath, prompt) {
         "Path rule: the type path only when the words themselves are the film (kinetic type, a lyric or quote video, a title sequence, typographic motion, or supplied words with no other subject) at 16:9. Every other film, and every 9:16 film, takes the stage path: you author the visuals in HTML, CSS, SVG or Canvas and the renderer captures them.",
         "Hand-encoded films are not the deliverable; every frame and track goes through the renderer.",
         "A README, hero or banner loop takes cover mode: references/cover.md.",
-        `Renderer: node "${renderer}" <subcommand> --out <dir>; subcommands: ${FILM_SUBCOMMANDS.join(", ")}.`,
+        `Renderer: node "${renderer}" <subcommand> --out <dir>; subcommands: ${FILM_SUBCOMMANDS.join(", ")}. A Stop check holds the turn until \`completion --out <dir>\` reports complete.`,
         ...(cue ? [`type-led cue found: ${cue}`] : []),
     ].join("\n");
 }

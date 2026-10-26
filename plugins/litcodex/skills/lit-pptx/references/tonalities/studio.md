@@ -1,7 +1,7 @@
 # Studio
 
 Studio is a magazine spread. The 12-column grid shows through as one or two column hairlines,
-titles live in a side rail or open the page at display size, splits are asymmetric, and real
+titles carry a bar in the left margin or open the page at display size, splits are asymmetric, and real
 numbers are set large on a tinted panel. A dark ochre accent marks the one thing to look at, and
 the field is near-black. It suits work that has a point of view: a portfolio, a product with a
 story, a public lecture.

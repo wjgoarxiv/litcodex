@@ -453,6 +453,9 @@ describe("the first activation keeps its content and drops its duplication", () 
 			expect(first.context, skill).toContain(`| ${skill} |`);
 			expect(first.context, skill).not.toContain(`/skills/${skill}/SKILL.md`);
 		}
+		expect(first.context).toContain("덱 N장");
+		expect(first.context).toContain("화면 만들어줘");
+		expect(first.context).toContain("scripts/design-lock.mjs");
 		expect(first.context.split(PLUGIN_ROOT).length - 1).toBeLessThanOrEqual(3);
 		expect(first.context).toContain(`${PLUGIN_ROOT}skills`);
 		expect(first.context).toContain("### Bounded task");
@@ -461,8 +464,16 @@ describe("the first activation keeps its content and drops its duplication", () 
 	});
 
 	it("is smaller than before for the same prompt", async () => {
-		const first = await fire(session(), "lit fix the bug");
-		expect(first.bytes).toBeLessThan(4_600);
+		const s = session();
+		const first = await fire(s, "lit fix the bug");
+		// The context names the checkout's absolute paths, so measure it with each path swapped for a fixed-length
+		// stand-in; otherwise the budget passes or fails by where the repository happens to be checked out.
+		const sized = first.context
+			.split(PLUGIN_ROOT)
+			.join(`/${"p".repeat(98)}/`)
+			.split(s.cwd)
+			.join(`/${"c".repeat(40)}`);
+		expect(Buffer.byteLength(sized)).toBeLessThan(4_600);
 	});
 });
 
@@ -500,5 +511,76 @@ describe("lit brainstorm follows the same re-entry rules", () => {
 		await fire(s, "lit brainstorm a name for my app");
 		await compact(s);
 		expect(isFull(await fire(s, "lit brainstorm a name for my app"), "lit-brainstorm")).toBe(true);
+	});
+});
+
+describe("lit schematic follows the same re-entry rules", () => {
+	it("sends the full activation once, then a short note that keeps it a drawing in the user's directory", async () => {
+		const s = session();
+		const first = await fire(s, "lit schematic of the reactor loop");
+		expect(isFull(first, "lit-schematic")).toBe(true);
+		const second = await fire(s, "lit draw the PFD for the absorber section");
+		expectContinue(second, "lit-schematic");
+		expect(second.context).toMatch(/never inside the installed LitCodex files/iu);
+	});
+
+	it.each([
+		"lit",
+		"lit continue",
+	])("%s after lit schematic carries on lit-schematic and never switches", async (bare) => {
+		const s = session();
+		await fire(s, "lit schematic of the reactor loop");
+		const carried = await fire(s, bare);
+		expectContinue(carried, "lit-schematic");
+		expect(carried.context).not.toContain("<lit-loop");
+		expect(carried.context).not.toMatch(/ask the user one question/iu);
+	});
+
+	it("switches to lit-plan in full, and back to lit-schematic in full, only on an explicit route", async () => {
+		const s = session();
+		await fire(s, "lit schematic of the reactor loop");
+		expect(isFull(await fire(s, "lit plan the rig upgrade"), "lit-plan")).toBe(true);
+		expect(isFull(await fire(s, "lit draw the P&ID of the rig"), "lit-schematic")).toBe(true);
+	});
+
+	it("starts again in full after a compaction", async () => {
+		const s = session();
+		await fire(s, "lit schematic of the reactor loop");
+		await compact(s);
+		expect(isFull(await fire(s, "lit schematic of the reactor loop"), "lit-schematic")).toBe(true);
+	});
+});
+
+describe("lit hijack follows the same re-entry rules", () => {
+	it("sends the full activation once, then a short note that keeps it a mechanism-only port", async () => {
+		const s = session();
+		const first = await fire(s, "lit hijack https://x.com/someone/status/1 into my skill");
+		expect(isFull(first, "lit-hijack")).toBe(true);
+		const second = await fire(s, "lit 하이재킹 이 글도 같은 스킬에");
+		expectContinue(second, "lit-hijack");
+		expect(second.context).toMatch(/Port mechanisms only/iu);
+	});
+
+	it.each(["lit", "lit continue"])("%s after lit hijack carries on lit-hijack and never switches", async (bare) => {
+		const s = session();
+		await fire(s, "lit hijack https://x.com/someone/status/1 into my skill");
+		const carried = await fire(s, bare);
+		expectContinue(carried, "lit-hijack");
+		expect(carried.context).not.toContain("<lit-loop");
+		expect(carried.context).not.toMatch(/ask the user one question/iu);
+	});
+
+	it("switches to lit-plan in full, and back to lit-hijack in full, only on an explicit route", async () => {
+		const s = session();
+		await fire(s, "lit hijack https://x.com/someone/status/1 into my skill");
+		expect(isFull(await fire(s, "lit plan the build from the spec"), "lit-plan")).toBe(true);
+		expect(isFull(await fire(s, "lit hijack another post into the same skill"), "lit-hijack")).toBe(true);
+	});
+
+	it("starts again in full after a compaction", async () => {
+		const s = session();
+		await fire(s, "lit hijack https://x.com/someone/status/1 into my skill");
+		await compact(s);
+		expect(isFull(await fire(s, "lit hijack https://x.com/someone/status/1 into my skill"), "lit-hijack")).toBe(true);
 	});
 });

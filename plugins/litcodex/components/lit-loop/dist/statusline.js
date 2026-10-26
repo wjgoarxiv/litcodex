@@ -14,6 +14,8 @@ const MAX_STDIN_BYTES = 64 * 1024;
 const STDIN_BUDGET_MS = 200;
 const DEFAULT_WIDTH = 120;
 const ACCENT = "\u001b[38;2;255;155;94m";
+const AMBER = "\u001b[38;2;255;175;60m";
+const GREEN = "\u001b[38;2;107;219;143m";
 const BOLD = "\u001b[1m";
 const DIM = "\u001b[2m";
 const RESET = "\u001b[0m";
@@ -81,7 +83,9 @@ export function statuslineText(status, options) {
     if (status === null || status.state === "ready")
         return "";
     const card = cleanStatus(status);
-    const route = `🔥 LIT · ${card.mode ?? "lit"}${card.state === "complete" ? " ✓" : ""}`;
+    const look = card.look;
+    const suffix = look === "turn" ? "  YOUR TURN" : look === "done" ? " ✓  DONE" : card.state === "complete" ? " ✓" : "";
+    const route = `🔥 LIT · ${card.mode ?? "lit"}${suffix}`;
     const parts = [card.map === null ? null : card.map.cells.map(stageText).join(" › ")];
     if (card.step !== null)
         parts.push(`⠹ ${card.step.tool} ${clock(card.now - card.step.startedAt)}`);
@@ -89,9 +93,10 @@ export function statuslineText(status, options) {
     const line = fit(rest === "" ? route : `${route}  ${rest}`, Math.max(10, options.width));
     if (!options.color)
         return line;
+    const tint = look === "turn" ? AMBER : look === "done" ? GREEN : ACCENT;
     return line.startsWith(route)
-        ? `${BOLD}${ACCENT}${route}${RESET}${DIM}${line.slice(route.length)}${RESET}`
-        : `${BOLD}${ACCENT}${line}${RESET}`;
+        ? `${BOLD}${tint}${route}${RESET}${DIM}${line.slice(route.length)}${RESET}`
+        : `${BOLD}${tint}${line}${RESET}`;
 }
 export async function statuslineCommand(_args, io) {
     try {

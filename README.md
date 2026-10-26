@@ -236,10 +236,54 @@ Every skill can be picked in the Codex skill picker or mentioned by name, such a
 | --- | --- |
 | Code | `debugging`, `refactor`, `lit-code`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`, `structural-search`, `lsp-setup`, `lit-init` |
 | Planning and teams | `deep-interview`, `lit-brainstorm`, `lit-crucible`, `litgoal`, `litwork`, `lit-team` |
-| Research and knowledge | `autoresearch`, `autoconference`, `wikify`, `lit-fetch`, `coding-session-audit`, `lit-comprehend` |
-| Screens, figures and film | `frontend-ui-ux`, `visual-qa`, `browser-drive`, `readme-studio`, `lit-diagram-drawer`, `lit-scientific-visualization`, `lit-typographic-motion` |
+| Research and knowledge | `autoresearch`, `autoconference`, `wikify`, `lit-fetch`, `coding-session-audit`, `lit-comprehend`, `lit-hijack`, `lit-adhd` |
+| Screens, figures and film | `frontend-ui-ux`, `visual-qa`, `browser-drive`, `readme-studio`, `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`, `lit-typographic-motion` |
 | Keeping LitCodex healthy | `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix` |
 | Running on their own | `rules`, `lsp` and `comment-checker`: project rules on each prompt, LSP and comment checks after edits |
+
+## What you can make
+
+Four pictures, each made by running a bundled skill's own scripts on this machine. Every figure in them is example data.
+
+### Where was I
+
+```text
+lit adhd
+```
+
+`lit-adhd` reads your recent Codex sessions and lays out what waits on you, what runs, what ended and one next step. This brief is built from fixture sessions and drawn by the Codex terminal.
+
+<p align="center"><img src="./docs/assets/gallery/adhd-brief.webp" width="720" alt="The lit adhd brief in the Codex terminal: a headline counting six sessions, one waiting and one running, a card for each session with its goal, steps and next step, a roadmap with a progress bar, a table of four ended sessions and a boxed recommended next step." /></p>
+
+### A deck
+
+```text
+lit turn the district rent survey into a ten-slide briefing, newsroom style
+```
+
+`lit-pptx` compiles Markdown into a native, editable deck with Pretendard embedded, then checks overflow, contrast and empty slides. This is the bundled newsroom example, rendered to page images.
+
+<p align="center"><img src="./docs/assets/gallery/deck-newsroom.webp" width="720" alt="Contact sheet of an eleven-slide Korean newsroom-style deck: a cover with three key figures, an agenda, line and bar charts, a survey page, a table of districts, a timeline, a sources page and a closing summary on a warm white ground with one orange series." /></p>
+
+### A page
+
+```text
+lit build a landing page for a weekly transit ridership briefing, neo-brutalism
+```
+
+`frontend-ui-ux` locks a house style first, builds on its kit and then probes the page at 320, 390, 768 and 1440 pixels. Shown at 1440 and 390 pixels.
+
+<p align="center"><img src="./docs/assets/gallery/page-landing.webp" width="720" alt="A neo-brutalism landing page for a ridership briefing service: a yellow-to-lavender hero with a large 1.28M figure and two outlined stat cards at 1440 pixels wide, beside the same hero stacked in one column at 390 pixels wide." /></p>
+
+### A P&ID
+
+```text
+lit draw a P&ID of a sodium hypochlorite dosing skid on one A3 sheet
+```
+
+`lit-schematic` draws ISA-style symbols, tagged lines, a legend and a title block, and its QA gate passed on this sheet.
+
+<p align="center"><img src="./docs/assets/gallery/pid-dosing-skid.webp" width="720" alt="P&ID of a dosing skid on an A3 sheet: a storage tank, duty and standby metering pumps with filters and check valves, a relief valve, pressure and flow instruments, a legend column on the right and a title block at the bottom." /></p>
 
 ## Let LitCodex save the handoff for you
 
@@ -387,6 +431,9 @@ your machine, so judge a piece of work by what it produced and which checks ran.
 | `lit-plan` or `lit plan` | **lit-plan** | Planning only: a bounded plan with evidence and a final done claim |
 | `deep-interview` or `lit deep interview` | **deep-interview** | Planning only: asks questions until a vague brief is clear |
 | `lit brainstorm`, `lit ideation` or `lit idea` | **lit-brainstorm** | Many different options, narrowed to a short list you pick from; nothing is built |
+| `lit schematic` or `lit-schematic` | **lit-schematic** | Draws real equipment as SVG, PDF and PNG: a P&ID, PFD, apparatus figure or isometric cutaway; a bare `lit` with such a request reaches it too |
+| `lit hijack` or `lit-hijack` | **lit-hijack** | Ports a technique someone else published (a post, article, repo or PDF) into your own skill: provenance and licence first, a spec without the source wording, a separate build, and a before and after proof; Korean 하이재킹 and 하이잭 work after `lit` |
+| `lit adhd` or `lit rewind` | **lit-adhd** | Read-only "where was I": one brief across your recent Codex sessions with what each was asked, what waits on you, progress gauges, paused work and one next step you run by saying `go`. `lit continue` brings a paused loop back at its stage |
 | `litgoal` or `lit goal` | **litgoal** | Sets and keeps the finish line: binds an objective and its criteria into the loop state that lit-loop and Start Work run toward |
 | `lit-recap` or `lit recap` | **lit-recap** | A read-only recap from the `.litcodex` ledgers |
 | `lit-comprehend` or `comprehend` | **lit-comprehend** | Builds a self-contained explainer outside the worktree |

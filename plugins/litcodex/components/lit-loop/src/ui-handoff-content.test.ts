@@ -21,6 +21,7 @@ describe("web interface hand-off from execution routes", () => {
 		for (const body of surfaces) {
 			expect(body).toContain("user-facing web interface");
 			expect(body).toContain("frontend-ui-ux/SKILL.md");
+			expect(body).toContain("design-lock.mjs");
 			expect(body).toContain("scripts/probe.mjs");
 			expect(body).toContain("RS matrix");
 			expect(body).toMatch(/HIGH.{0,160}(?:block|done)/s);

@@ -24,7 +24,7 @@ Read this in every frontend mode. These checks describe what to inspect and how 
 | CF-202 | Compare a sampled control before and after `focus()` and `:focus-visible`; a browser `outline-style:auto` passes. A custom ring needs ≥2px and ≥3:1 against its neighbors. HIGH only when focus changes nothing; a weaker visible ring is MEDIUM. |
 | CF-203 | APCA is an annotation, never a separate blocker: body Lc 75/90, other text 60/75, ≥36px display 45/60, UI floor 30. Keep the WCAG result primary. |
 | CF-204 | For text over images or gradients, sample the worst color behind the glyph area. If a cross-origin surface prevents reading it, mark the rule not verified. |
-| CF-205 | Count saturated filled emphasis surfaces ≥24×24px and group nearby hues. Exclude semantic status fills (including small status pills ≤32px) before clustering. Prefer one accent family per view. |
+| CF-205 | Count saturated filled emphasis surfaces ≥24×24px and group nearby hues. Exclude semantic status fills (including small status pills ≤32px) before clustering. A rich view may use up to four hue families when each carries a role (primary, accent-2, status, data); a calm lock allows one. More than that, or an unowned hue, is the finding. |
 | CF-206 | Treat hue angles within 15° as one semantic family. Keep meaning consistent across controls and status. |
 | CF-207 | A status needs words, a meaningful icon, or a pattern in addition to color. Confirm intent manually; color-only state is HIGH. |
 
@@ -40,7 +40,7 @@ Read this in every frontend mode. These checks describe what to inspect and how 
 | CF-306 | Review repeated groups for parent `gap` instead of margins on every child; change the owner of spacing when the pattern is real. |
 | CF-401 | A nested rounded frame expects inner radius approximately outer radius minus inset, within 1px. Exclude offset icon chips that are not concentric. |
 | CF-402 | A border and a ≤2px hard shadow tracing the same edge duplicate elevation. Delete one; a soft ambient shadow is a different case. |
-| CF-403 | A hard-offset shadow together with a ≥2px border on at least three elements signals repeated pseudo-brutalist decoration. Review its content role before softening. |
+| CF-403 | A hard-offset shadow together with a ≥2px border on at least three elements signals repeated pseudo-brutalist decoration. Review its content role before softening. A lock whose style declares `offset` elevation is that register on purpose and passes this row. |
 | CF-404 | On primary controls, inspect chromatic near-zero-offset blooms whose blur is ≥1.5× the shorter side; reduce or remove the halo. |
 | CF-405 | A photographic image may need a restrained neutral ~1px outline against the ground; test the actual edge before adding one. |
 | CF-406 | A modal scrim uses a solid or near-solid veil; avoid blur as a default backdrop treatment. |

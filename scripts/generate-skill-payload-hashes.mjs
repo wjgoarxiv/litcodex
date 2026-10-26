@@ -20,6 +20,8 @@ const FAMILIES = [
 	["DIAGRAM_DRAWER_PAYLOAD_HASHES", "lit-diagram-drawer"],
 	["DOCX_PAYLOAD_HASHES", "lit-docx"],
 	["PPTX_PAYLOAD_HASHES", "lit-pptx"],
+	["SCHEMATIC_PAYLOAD_HASHES", "lit-schematic"],
+	["HIJACK_PAYLOAD_HASHES", "lit-hijack"],
 	["MOTION_PAYLOAD_HASHES", "lit-typographic-motion"],
 	["AUTORESEARCH_PAYLOAD_HASHES", "autoresearch"],
 	["AUTOCONFERENCE_PAYLOAD_HASHES", "autoconference"],

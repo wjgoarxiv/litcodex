@@ -11,21 +11,25 @@ import { join } from "node:path";
 import { COVER, EXIT, Exit, MAX_ROUNDS } from "./constants.mjs";
 import { generatedLabels } from "./cover-assets.mjs";
 import { validateCoverTreatment } from "./cover-treatment.mjs";
+import { readBounded, readBoundedText } from "./safe-read.mjs";
 import { loadTreatment, TreatmentError } from "./treatment.mjs";
 
 export const QUESTIONS = Object.freeze([
 	"A stranger would say this film is for: <…>. Does that match the treatment's audience and idea?",
 	"Does every beat show its onScreen plan?",
-	"Is the craft at the level ambition asks for (transitions, rhythm, depth, hierarchy)?",
+	"Is it rich enough? Put the contact sheet beside the user's reference frames (none given: a studio launch film of a product). Does each shot carry as much labelled detail, layered depth, camera movement and accent colour as they do, with one hero move leading it and the style's hand-offs between shots? A minimal film answers for its restraint instead.",
 	"Is any request text, meta label, placeholder, file name or internal term on screen?",
 	"Does the ending land?",
-	"Does the sound follow the cuts (from sound-cues.json)?",
+	"Does the sound follow the cuts and the events (from sound-cues.json): does each event cue's frame show what its `on` says?",
 	"Name one thing a skilled motion designer, given only the request, would have shown that this film does not. Can you name one?",
 	"Is any element on screen without a job in its beat?",
 	"Could every copy line be pasted unchanged into a film about a different subject?",
+	"Does the turn land? Answer it on the turn shot's own still (story.beat): is story.turn visibly happening there, to the protagonist, as the film's largest change? A turn that only a caption announces is a no.",
 ]);
-// The answer that asks for another round, per question: "no" on 1, 2, 3, 5, 6; "yes" on 4, 7, 8, 9.
-const REVISE_ON = Object.freeze({ 1: "no", 2: "no", 3: "no", 4: "yes", 5: "no", 6: "no", 7: "yes", 8: "yes", 9: "yes" });
+// Questions 1-9 are asked of every film; the tenth only of a film whose treatment carries a story.
+const FILM_BASE = 9;
+// The answer that asks for another round, per question: "no" on 1, 2, 3, 5, 6, 10; "yes" on 4, 7, 8, 9.
+const REVISE_ON = Object.freeze({ 1: "no", 2: "no", 3: "no", 4: "yes", 5: "no", 6: "no", 7: "yes", 8: "yes", 9: "yes", 10: "no" });
 const COVERAGE_KINDS = new Set(["poster", "sheet", "beat", "strip"]);
 // Cover mode asks about motion, the seam and damage instead of purpose and beats (references/cover.md).
 export const COVER_QUESTIONS = Object.freeze([
@@ -49,18 +53,32 @@ const refuse = (message) => {
 export function latestStills(outDir) {
 	const path = join(outDir, "stills", "manifest.json");
 	if (!existsSync(path)) return null;
-	const text = readFileSync(path, "utf8");
+	const text = readBoundedText(path);
 	const manifest = JSON.parse(text);
 	return { manifest, sha: sha256(text), files: new Map(manifest.files.map((f) => [f.file, f])) };
 }
 
 export function readLook(outDir) {
 	const path = join(outDir, "look.json");
-	return existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : { schema: 1, rounds: [] };
+	return existsSync(path) ? JSON.parse(readBoundedText(path)) : { schema: 1, rounds: [] };
 }
 
 const bare = /^\s*(?:yes|no|y|n|ok|okay|fine|good|none|n\/a|네|아니오|예)\s*[.!]?\s*$/iu;
 const sentence = (text) => typeof text === "string" && !bare.test(text) && text.trim().length >= 20 && text.trim().split(/\s+/u).length >= 5;
+
+const readTreatmentRaw = (outDir) => {
+	try {
+		return JSON.parse(readBoundedText(join(outDir, "treatment.json")));
+	} catch {
+		return null;
+	}
+};
+
+/** The still of the story's turn beat (`beat-NN.png` for `story.beat`), or null when the treatment has no story. */
+function turnStill(outDir) {
+	const beat = readTreatmentRaw(outDir)?.story?.beat;
+	return Number.isInteger(beat) && beat >= 0 ? `beat-${String(beat + 1).padStart(2, "0")}.png` : null;
+}
 
 /** Validate an answers file against the latest stills set and append the round to look.json. */
 export function recordLook(outDir, round, answersPath) {
@@ -85,27 +103,30 @@ export function recordLook(outDir, round, answersPath) {
 	}
 	if (stills.manifest.round !== round) refuse(`the latest stills set is from round ${stills.manifest.round}; look at the stills of round ${round} (render it first)`);
 	if (stills.manifest.mode === "cover") return recordCoverLook({ outDir, round, body, stills, look });
-	if (body.defects !== undefined) refuse("defects are a cover-mode record; a film round names its weakest beat instead");
 	if (round === 1 && stills.manifest.kind !== "stills-only") refuse("round 1 is a stills round: run the render with --stills-only --round 1 first");
 	const name = (file) => String(file ?? "").replace(/^stills\//u, "");
 	const viewed = Array.isArray(body.viewed) ? body.viewed.map(name) : [];
 	const listed = [...viewed];
 	if (!Array.isArray(body.answers)) refuse("answers must be an array of { q, verdict, frame, observed }");
+	const turn = turnStill(outDir);
 	const byQ = new Map();
 	for (const answer of body.answers) {
 		const q = Number(answer?.q);
-		if (!Number.isInteger(q) || q < 1 || q > 9) refuse(`unknown question ${answer?.q}`);
+		if (!Number.isInteger(q) || q < 1 || q > QUESTIONS.length || (q > FILM_BASE && turn === null)) refuse(`unknown question ${answer?.q}${q > FILM_BASE ? " (question 10 belongs to a treatment with a story)" : ""}`);
 		if (byQ.has(q)) refuse(`question ${q} answered twice`);
 		if (answer.verdict !== "yes" && answer.verdict !== "no") refuse(`question ${q}: verdict must be "yes" or "no"`);
 		if (!sentence(answer.observed)) refuse(`question ${q}: observed must be a sentence naming a concrete visible detail, not a bare yes/no`);
 		if (q === 1 && !/for:\s*\S/iu.test(answer.observed)) refuse('question 1: observed must read "A stranger would say this film is for: <…>"');
 		const frame = name(answer.frame);
+		if (q === 10 && frame !== turn) refuse(`question 10: answer it on the turn shot's still ${turn} (story.beat in treatment.json), not ${frame || "no frame"}`);
 		if (frame === "sound-cues.json") {
 			if (q !== 6 || !existsSync(join(outDir, "sound-cues.json"))) refuse(`question ${q}: sound-cues.json is only for question 6 and must exist`);
 		} else listed.push(frame);
 		byQ.set(q, { q, verdict: answer.verdict, frame, observed: answer.observed.trim(), ...(q === 1 ? { by: answer.by === "blind" ? "blind" : "self" } : {}) });
 	}
-	for (let q = 1; q <= 9; q++) if (!byQ.has(q)) refuse(`question ${q} is not answered (${QUESTIONS[q - 1]})`);
+	const defects = recordDefects(body.defects, stills, false, readTreatmentRaw(outDir)?.durationSec ?? null);
+	listed.push(...defects.map((d) => d.frame));
+	for (let q = 1; q <= (turn === null ? FILM_BASE : QUESTIONS.length); q++) if (!byQ.has(q)) refuse(`question ${q} is not answered (${QUESTIONS[q - 1]})`);
 	const unknown = [...new Set(listed)].filter((file) => !stills.files.has(file));
 	if (unknown.length) refuse(`not in the latest stills set: ${unknown.join(", ")}`);
 	const frames = {};
@@ -120,7 +141,7 @@ export function recordLook(outDir, round, answersPath) {
 	}
 	const answers = [...byQ.values()].sort((a, b) => a.q - b.q);
 	const openItems = answers.filter((a) => a.verdict === REVISE_ON[a.q]).map((a) => `Q${a.q}: ${a.observed}`);
-	const entry = { round, at: new Date().toISOString(), kind: stills.manifest.kind, manifestSha256: stills.sha, frames, viewed: [...new Set(viewed)], answers, ...(round === 1 ? { weakestBeat: body.weakestBeat, change: body.change.trim() } : {}), needsAnotherRound: openItems.length > 0, openItems };
+	const entry = { round, at: new Date().toISOString(), kind: stills.manifest.kind, manifestSha256: stills.sha, frames, viewed: [...new Set(viewed)], answers, ...(defects.length ? { defects } : {}), ...(round === 1 ? { weakestBeat: body.weakestBeat, change: body.change.trim() } : {}), needsAnotherRound: openItems.length > 0, openItems };
 	look.rounds.push(entry);
 	writeFileSync(join(outDir, "look.json"), `${JSON.stringify(look, null, 2)}\n`);
 	return entry;
@@ -140,22 +161,25 @@ function stampFrames(outDir, stills, files) {
 }
 
 /**
- * Cover defects: at most COVER.maxDefects per round, worst first, each { t, region, frame, observed,
- * cause, fix }: the loop time in seconds where it shows, the [x, y, w, h] it covers in cover pixels,
- * and a file of the current stills set that shows it. `render.mjs cover --window` checks the fix.
+ * Defects: at most COVER.maxDefects per round, worst first, each { t, region, frame, observed, cause,
+ * fix }: the time in seconds where it shows (the loop time for a cover), the [x, y, w, h] it covers in
+ * frame pixels, and a file of the current stills set that shows it. A cover checks the fix with
+ * `render.mjs cover --window`; a film fixes those seconds and renders again. Optional on a film round.
  */
-function coverDefects(list, stills) {
+function recordDefects(list, stills, cover, treatmentDuration = null) {
 	if (list === undefined) return [];
 	if (!Array.isArray(list)) refuse("defects must be an array");
 	if (list.length > COVER.maxDefects) refuse(`at most ${COVER.maxDefects} defects per round; fix the worst first`);
-	const { width, height, durationSec } = stills.manifest;
+	const { width, height, fps, frameCount } = stills.manifest;
+	const durationSec = stills.manifest.durationSec ?? (frameCount && fps ? frameCount / fps : treatmentDuration);
+	const what = cover ? "cover" : "frame";
 	const name = (file) => String(file ?? "").replace(/^stills\//u, "");
 	return list.map((d, i) => {
 		const at = `defect ${i + 1}`;
 		if (!d || typeof d !== "object") refuse(`${at} must be an object`);
-		if (typeof d.t !== "number" || !(d.t >= 0 && d.t < durationSec)) refuse(`${at}: t must be the loop time in seconds (0 to ${durationSec}) where the defect shows`);
+		if (typeof d.t !== "number" || !(d.t >= 0) || (durationSec && d.t >= durationSec)) refuse(`${at}: t must be the ${cover ? "loop " : ""}time in seconds${durationSec ? ` (0 to ${durationSec})` : ""} where the defect shows`);
 		const r = d.region;
-		if (!Array.isArray(r) || r.length !== 4 || !r.every(Number.isInteger) || r[0] < 0 || r[1] < 0 || r[2] <= 0 || r[3] <= 0 || r[0] + r[2] > width || r[1] + r[3] > height) refuse(`${at}: region must be [x, y, w, h] in whole pixels inside the ${width}x${height} cover`);
+		if (!Array.isArray(r) || r.length !== 4 || !r.every(Number.isInteger) || r[0] < 0 || r[1] < 0 || r[2] <= 0 || r[3] <= 0 || r[0] + r[2] > width || r[1] + r[3] > height) refuse(`${at}: region must be [x, y, w, h] in whole pixels inside the ${width}x${height} ${what}`);
 		if (!stills.files.has(name(d.frame))) refuse(`${at}: frame ${JSON.stringify(d.frame)} is not in the latest stills set`);
 		if (!sentence(d.observed)) refuse(`${at}: observed must be a sentence naming what is visible there`);
 		if (![d.cause, d.fix].every((x) => typeof x === "string" && x.trim().split(/\s+/u).length >= 3)) refuse(`${at}: cause and fix must each say something concrete`);
@@ -180,7 +204,7 @@ function recordCoverLook({ outDir, round, body, stills, look }) {
 	}
 	for (let q = 1; q <= COVER_QUESTIONS.length; q++) if (!byQ.has(q)) refuse(`question ${q} is not answered (${COVER_QUESTIONS[q - 1]})`);
 	const answers = [...byQ.values()].sort((a, b) => a.q - b.q);
-	const defects = coverDefects(body.defects, stills);
+	const defects = recordDefects(body.defects, stills, true);
 	const frames = stampFrames(outDir, stills, [...viewed, ...answers.map((a) => a.frame), ...defects.map((d) => d.frame)]);
 	if (round === 1 && (typeof body.change !== "string" || body.change.trim().split(/\s+/u).length < 3)) refuse("round 1 must state the change you made (change)");
 	const openItems = answers.filter((a) => a.verdict === COVER_REVISE_ON[a.q]).map((a) => `Q${a.q}: ${a.observed}`);
@@ -220,9 +244,18 @@ const PREVIEWS = ["preview.webp", "preview.gif"];
  * downgraded[], openItems[] }.
  */
 export function evaluateDone(outDir) {
+	try {
+		return judgeDone(outDir);
+	} catch (error) {
+		// A render folder the check cannot read (a pipe, a device link, an oversize or garbled file) is a verdict, not a crash.
+		return { status: "not complete", reason: `the render state in ${outDir} could not be read (${String(error?.message ?? error).split("\n")[0]})`, downgraded: [], openItems: [] };
+	}
+}
+
+function judgeDone(outDir) {
 	const notDone = (reason) => ({ status: "not complete", reason, downgraded: [], openItems: [] });
 	try {
-		const raw = JSON.parse(readFileSync(join(outDir, "treatment.json"), "utf8"));
+		const raw = JSON.parse(readBoundedText(join(outDir, "treatment.json")));
 		if (raw?.mode === "cover") return evaluateCoverDone(outDir, raw);
 	} catch {
 		// A missing or unreadable treatment is reported by the film checks below.
@@ -237,8 +270,8 @@ export function evaluateDone(outDir) {
 		if (error instanceof TreatmentError) return notDone(`the treatment is not valid (${error.message})`);
 		throw error;
 	}
-	const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-	const report = readFileSync(reportPath, "utf8");
+	const manifest = JSON.parse(readBoundedText(manifestPath));
+	const report = readBoundedText(reportPath);
 	const rendered = statSync(manifestPath).mtimeMs;
 	if (statSync(join(outDir, "treatment.json")).mtimeMs > rendered) return notDone("the treatment changed after the last render; render again");
 	const page = join(outDir, "stage", "index.html");
@@ -251,7 +284,7 @@ export function evaluateDone(outDir) {
 	if (!passed && round < MAX_ROUNDS) return notDone(`gate FAIL at round ${round} of ${MAX_ROUNDS}: fix the named cause and render round ${round + 1}`);
 	if (withheld && (!delivered(join(outDir, "withheld")) || [...EXPORTS, ...PREVIEWS].some((n) => existsSync(join(outDir, n))))) return notDone("flash FAIL but the exports are not confined to withheld/");
 	if (!withheld && !delivered(outDir)) return notDone("an export is missing at its deliverable name");
-	const first = existsSync(join(outDir, ".run", "treatment-first.json")) ? JSON.parse(readFileSync(join(outDir, ".run", "treatment-first.json"), "utf8")) : null;
+	const first = existsSync(join(outDir, ".run", "treatment-first.json")) ? JSON.parse(readBoundedText(join(outDir, ".run", "treatment-first.json"))) : null;
 	const downgraded = downgrades(first, treatment);
 	const rounds = readLook(outDir).rounds;
 	const last = rounds.at(-1);
@@ -288,10 +321,10 @@ export function evaluateCoverDone(outDir, raw) {
 	const manifestPath = join(outDir, "manifest.json");
 	const reportPath = join(outDir, "gate-report.txt");
 	if (!existsSync(manifestPath) || !existsSync(reportPath)) return notDone("no finished cover render: manifest.json or gate-report.txt is missing");
-	const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+	const manifest = JSON.parse(readBoundedText(manifestPath));
 	if (manifest.mode !== "cover") return notDone("the last render was not a cover render; run `render.mjs cover`");
-	if (manifest.treatmentSha256 !== sha256(readFileSync(join(outDir, "treatment.json")))) return notDone("treatment.json changed after the last cover render; render again");
-	if (!/^COVER gate --strict: PASS\+TARGET$/mu.test(readFileSync(reportPath, "utf8"))) return notDone("the decoded cover did not reach every TARGET gate on the last render (gate-report.txt)");
+	if (manifest.treatmentSha256 !== sha256(readBounded(join(outDir, "treatment.json")))) return notDone("treatment.json changed after the last cover render; render again");
+	if (!/^COVER gate --strict: PASS\+TARGET$/mu.test(readBoundedText(reportPath))) return notDone("the decoded cover did not reach every TARGET gate on the last render (gate-report.txt)");
 	const rounds = readLook(outDir).rounds;
 	const last = rounds.at(-1);
 	if (last?.blocked) return { status: "DONE_UNVIEWED", reason: "every TARGET gate passed, but no image tool was reachable: nobody viewed the sheet. Say so plainly in the reply.", downgraded: [], openItems: [], labels, mode: "cover" };

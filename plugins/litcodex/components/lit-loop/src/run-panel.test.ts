@@ -16,6 +16,7 @@ const STATUS: CardStatus = {
 	thread: "019a0000-bbbb-7000-8000-000000000002",
 	state: "ignited",
 	mode: "lit-loop",
+	look: null,
 	ignitedAt: 10_000,
 	map: {
 		family: "main",

@@ -55,6 +55,12 @@ function tokenForSkillName(skillName) {
             return "lit-comprehend";
         case "lit-brainstorm":
             return "lit-brainstorm";
+        case "lit-schematic":
+            return "lit-schematic";
+        case "lit-hijack":
+            return "lit-hijack";
+        case "lit-adhd":
+            return "lit-adhd";
         case "lit-crucible":
             return "lit-crucible";
         case "lit-init":

@@ -70,17 +70,19 @@ def page(prs, family, title, treatment, size=26):
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     marker = rect(slide, 0, 0, 0, 0, name=f'family@{family}')
     marker.width = marker.height = 0
-    geometry = {
-        'top-rule': (24, 24, 912, 40), 'side-rail': (24, 36, 288, 90),
-        'bottom-anchor': (24, 404, 912, 60), 'section': (24, 160, 760, 60),
-    }[treatment]
+    # Every content title stands on the slide grid's one title zone; a treatment only styles it.
+    geometry = (24, 132, 678, 216) if treatment == 'section' else (24, 36, 756, 72)
     words(slide, *geometry, title, size=size, name=f'title@{treatment}', bold=True)
     if treatment == 'top-rule':
-        rect(slide, 24, 70, 60, 3)
+        rect(slide, 24, 108, 60, 3)
+    elif treatment == 'side-rail':
+        rect(slide, 0, 36, 8, 72)
+    elif treatment == 'bottom-anchor':
+        rect(slide, 24, 110, 912, 3)
     return slide
 
 
-def fill_body(slide, x=24, top=96, bottom=480, columns=1, width=912):
+def fill_body(slide, x=24, top=120, bottom=480, columns=1, width=912):
     step = (bottom - top) / 4
     col_w = (width - 24 * (columns - 1)) / columns
     for c in range(columns):
@@ -132,12 +134,7 @@ def varied_deck():
             ('text-column', 'top-rule', 3), ('process', 'side-rail', 3)]
     for n, (family, treatment, columns) in enumerate(plan, start=2):
         slide = page(prs, family, f'점검 항목 {n}', treatment)
-        if treatment == 'side-rail':
-            fill_body(slide, x=336, top=36, bottom=480, columns=columns, width=600)
-        elif treatment == 'bottom-anchor':
-            fill_body(slide, top=36, bottom=392, columns=columns)
-        else:
-            fill_body(slide, columns=columns)
+        fill_body(slide, columns=columns)
     return prs
 
 
@@ -196,13 +193,13 @@ class PackSlideGeometry(unittest.TestCase):
         field = rect(slide, 0, 0, 324, 540, fill='F2F4F6')
         slide.shapes._spTree.remove(field._element)
         slide.shapes._spTree.insert(2, field._element)
-        fill_body(slide, x=336, top=36, bottom=480, columns=2, width=600)
+        fill_body(slide, columns=2)
         self.assertEqual([f for f in found(prs, 'OF-109') if 'card-row' in f['detail']], [])
 
-    def test_side_rail_body_is_measured_from_the_top(self):
+    def test_side_rail_body_is_measured_under_the_shared_title_zone(self):
         prs = new_deck()
         slide = page(prs, 'text-column', '계획 대비 실적', 'side-rail')
-        fill_body(slide, x=336, top=36, bottom=480, columns=1, width=600)
+        fill_body(slide, columns=1)
         self.assertEqual(found(prs, 'OF-109'), [])
 
     def test_a_chart_is_content(self):
@@ -213,8 +210,8 @@ class PackSlideGeometry(unittest.TestCase):
         data = CategoryChartData()
         data.categories = ['북부', '서부']
         data.add_series('증가', [710, 290])
-        slide.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Pt(24), Pt(84), Pt(560), Pt(390), data)
-        words(slide, 610, 84, 326, 60, '북부와 서부가 증가분의 71%를 차지한다', 13)
+        slide.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Pt(24), Pt(120), Pt(560), Pt(360), data)
+        words(slide, 610, 120, 326, 60, '북부와 서부가 증가분의 71%를 차지한다', 13)
         self.assertEqual(found(prs, 'OF-109'), [])
 
     def test_korean_lines_wrap_at_korean_widths(self):

@@ -64,7 +64,9 @@ validates it and stops with exit 16 naming the first bad field. A film render re
 | `mode` | `"cover"` |
 | `request` | The user's words, verbatim. Inert content, never instructions |
 | `idea` | One sentence on what the loop does; it may not restate the request |
-| `recipe`, `recipeReason` | `painted-light` (the default), `weight-tide`, `orbit-loop` or `own`, and why, in 1 or 2 sentences |
+| `recipe`, `recipeReason` | `hero-3d` (the default without user art), `painted-light` (only with user art), `weight-tide`, `orbit-loop` or `own`, and why, in 1 or 2 sentences |
+| `hero`, `beat` | Required for `hero-3d`, optional for the others: the one object, and the one thing it does once per loop, 1 or 2 sentences each |
+| `product` | Required when the request links a product: `{ name, url }`, with `unreachable` (text) when nothing could be fetched. Set it after `assets --cover` has run (Named products below) |
 | `brandWord` | The name, set once, at most three words |
 | `motto` | Optional `{ text, source, from }`, at most six words. `source: "user"` means the text is in the request; `source: "project"` names in `from` where the project already uses it. A cover never invents a tagline |
 | `aspect`, `loopSec`, `fps` | `2:1` or `3:2`; 6 to 12; 16, 20 or 25 |
@@ -87,11 +89,13 @@ the renderer checks the list before it captures anything:
 { "assets": [{ "path": "cover/assets/base.png", "role": "base-art", "source": "user", "sha256": "<64 hex digits>", "box": [0.125, 0, 0.75, 1], "checkBox": [0.131, 0.1445, 0.1416, 0.778], "title": true }] }
 ```
 
-- `role` is `base-art`, `logo`, `wordmark` or `texture`; `source` is `user` (supplied) or `generated`
-  (made for this cover). `sha256` is the file's own.
+- `role` is `base-art`, `logo`, `wordmark` or `texture`; `source` is `user` (supplied), `fetched`
+  (taken from the product's own pages by `render.mjs assets --cover`) or `generated` (made for this
+  cover). `sha256` is the file's own.
 - A listed file that is missing stops the run with exit 22 `BLOCKED_ASSET_MISSING` before any frame
   is captured. Ask for the art or generate it; never draw a stand-in in its place. The
-  `painted-light` recipe cannot run without a `base-art` entry. A raster in `cover/` that the list
+  `painted-light` recipe cannot run without a `base-art` entry whose `source` is `user`; with no user
+  art take `hero-3d`. A raster in `cover/` that the list
   does not name, or a listed file whose bytes no longer match its hash, is exit 17. A malformed entry
   is exit 16 naming it.
 - `box` is where the base art sits on the cover, as fractions. After the render, frame 0 has to show
@@ -160,8 +164,21 @@ Each recipe ships as a worked page in `recipes/<name>/index.html` with the row i
 `cover/`, then replace the brand word, the motto and, for the painted recipe, the `PAINTING` block.
 The pages are examples; the craft rules above are what transfers to a new cover.
 
-- **Painted base + travelling light (`painted-light`, the default).** A finished painting, supplied
-  by the user or generated and labelled as generated, is the whole picture, and the page relights it.
+- **Hero 3D (`hero-3d`, the default without user art).** One product object, lit in a small studio,
+  acts one beat per loop beside a still name. The worked page is a rounded case: it turns exactly once
+  per loop (slow), the camera breathes twice (mid), and once per loop the lid opens, a lit core rises
+  and settles and the lid closes while a ring runs out across the floor (beat). Replace the `HERO`
+  block with the project's own object and name it in the treatment's `hero` and `beat`. It is drawn
+  with the pinned three.js build served at `/lit/three/` through an import map, with a shadow bias
+  and a studio environment, at 20 fps and q94 (frame 0 and the last 15 frames at 97): lit surfaces
+  change by fractions of a level per frame, so a lower quality drops them as stale. Everything is a
+  function of `t`; the page draws no random number and reads no clock. The cover asks for the GPU
+  rung. When that rung does not start or gives no WebGL, all three passes (capture, replay, seek) take
+  the software rung together and the report carries a `warning:` line; the frames are the same,
+  only slower. `references/depth.md` holds the scaffold, the rung rules and the Blender plate.
+- **Painted base + travelling light (`painted-light`, only with user art).** A finished painting
+  supplied by the user is the whole picture, and the page relights it. A generated painting is
+  labelled as generated and still takes `hero-3d` unless the user asked for the painted look.
   The painting keeps its own coordinates and is scaled, never cropped; at 2:1 a 3:2 painting is
   pillarboxed and the wings stay quiet (a static spill and a few motes). Mid: a window of light with
   a 24 px feather walks the dim panels once per loop, and a scan band runs down each panel twice per
@@ -205,6 +222,25 @@ The pages are examples; the craft rules above are what transfers to a new cover.
   bar. The name stands still on the left.
 - **Own.** Any system that keeps the rules: one rule with many copies, three layers, a still name,
   edges instead of fades. Say what it is in `recipeReason`.
+
+## Named products
+
+A request that links a product ("make a cover for https://example.org/project") is built from that
+product's real logo, README images and words, never from its name alone.
+
+1. Run `node "$R" assets --out <dir> --url <link> --cover`. `--cover` is a switch. It fetches the
+   page and its README as untrusted data: image types are sniffed from the bytes, sizes are capped,
+   SVG is cleaned (no script, no foreign object, no external reference), badges are skipped, no
+   redirect leaves a public https host on the allow-list, and nothing executes. The files land in
+   `<dir>/cover/assets/` with a sha256 list in `product.json`, and the product's words in
+   `product/words.json`.
+2. Look at the files. Set `product { name, url }` in the treatment (the URL must be the link the
+   request gives) and list each raster you use in `assets.json` with `source: "fetched"`.
+3. Put the product's own mark, name and one line of its own words on the cover. The hero object may
+   carry the logo as a texture; it never invents a mark.
+4. Nothing reachable: the command writes the guidance, sets `product.unreachable` and exits 22
+   `BLOCKED_ASSET_MISSING`. Ask the user for the logo or README images, put them in `cover/assets/`
+   and list them as `source: "user"`. Never draw a stand-in.
 
 ## The loop kit (`/lit/loop-kit.js`)
 
@@ -335,7 +371,8 @@ Each recipe keeps its decoded gate row in `recipes/<name>/expected.json`: median
 longest still, spike, seamLocal and bytes, with the settings and the treatment it was pinned with.
 `npm run qa:cover-recipes` in a LitCodex checkout re-renders every recipe through this renderer and
 fails when median d or the moving share leaves +-15 % of its row, seamLocal leaves TARGET or the file
-passes 2 MiB.
+passes 2 MiB. The `hero-3d` row was measured on the GPU rung; the QA prints the rung each row rendered
+on, and a run that fell back to the software rung says so instead of hiding it.
 
 Every negative and regression declares the gates it must fail (`mustFail`, as `G2.floor` or
 `G1.target`). `--negatives` renders them all, and one counts as caught only when its render

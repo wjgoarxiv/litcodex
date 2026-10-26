@@ -6,7 +6,7 @@ import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { motionRuntimeScript, prepareMotionRuntime } from "../../../../packages/litcodex-ai/src/install/motion-runtime.js";
-import { audioState, cacheDir, pickPython } from "./engine/runtime.mjs";
+import { audioState, cacheDir, fetchPinned, pickPython } from "./engine/runtime.mjs";
 import { typeTreatment, writeTreatment } from "./fixtures/treatments.mjs";
 
 const skillRoot = fileURLToPath(new URL("./", import.meta.url));
@@ -230,5 +230,51 @@ describe("blocked states that need Chrome and a pre-warmed cache", { timeout: 60
 		const video = node([RENDER, "video", "--brief", brief(dir), "--treatment", treat(dir), "--out", join(dir, "out")], env);
 		expect(video.status).toBe(12);
 		expect(video.stderr).toContain("BLOCKED_NO_FFMPEG_FOR_VIDEO");
+	});
+});
+
+describe("pinned downloads are bounded in time, size and memory", () => {
+	const sha = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
+	const body = (chunks: Uint8Array[]) => new ReadableStream<Uint8Array>({ pull(controller) { const next = chunks.shift(); if (next) controller.enqueue(next); else controller.close(); } });
+
+	it("returns the bytes when size and sha256 match the pin", async () => {
+		const payload = Buffer.from("pinned font bytes");
+		const item = { path: "fonts/x.ttf", url: "https://example.org/x.ttf", bytes: payload.length, sha256: sha(payload) };
+		const fetchImpl = async () => new Response(body([new Uint8Array(payload.subarray(0, 5)), new Uint8Array(payload.subarray(5))]), { status: 200 });
+		expect((await fetchPinned(item, undefined, { fetchImpl })).equals(payload)).toBe(true);
+	});
+	it("still rejects a sha256 mismatch", async () => {
+		const payload = Buffer.from("pinned font bytes");
+		const item = { path: "fonts/x.ttf", url: "https://example.org/x.ttf", bytes: payload.length, sha256: sha(Buffer.from("other")) };
+		await expect(fetchPinned(item, undefined, { fetchImpl: async () => new Response(new Uint8Array(payload)) })).rejects.toThrow(/sha256 mismatch/u);
+	});
+	it("stops reading once the stream passes the pinned size", async () => {
+		let pulled = 0;
+		const chunk = new Uint8Array(64 * 1024).fill(1);
+		const item = { path: "fonts/x.ttf", url: "https://example.org/x.ttf", bytes: 100 * 1024, sha256: "0".repeat(64) };
+		const fetchImpl = async () => new Response(new ReadableStream<Uint8Array>({ pull(controller) { pulled += 1; if (pulled > 500) controller.close(); else controller.enqueue(chunk); } }));
+		await expect(fetchPinned(item, undefined, { fetchImpl })).rejects.toThrow(/larger than/u);
+		expect(pulled).toBeLessThanOrEqual(4);
+	});
+	it("caps a pin that states no size", async () => {
+		let pulled = 0;
+		const chunk = new Uint8Array(1024 * 1024).fill(1);
+		const item = { path: "licenses/x.md", url: "https://example.org/x.md", sha256: "0".repeat(64) };
+		const fetchImpl = async () => new Response(new ReadableStream<Uint8Array>({ pull(controller) { pulled += 1; if (pulled > 400) controller.close(); else controller.enqueue(chunk); } }));
+		await expect(fetchPinned(item, undefined, { fetchImpl, maxBytes: 3 * 1024 * 1024 })).rejects.toThrow(/larger than/u);
+		expect(pulled).toBeLessThanOrEqual(5);
+	});
+	it("gives up on a host that accepts and then stalls", async () => {
+		const item = { path: "fonts/x.ttf", url: "https://example.org/x.ttf", bytes: 10, sha256: "0".repeat(64) };
+		let signalSeen = false;
+		const fetchImpl = async (_url: string, init: { signal?: AbortSignal }) => {
+			signalSeen = init.signal instanceof AbortSignal;
+			const stalled = new ReadableStream<Uint8Array>({
+				pull: () => new Promise((_resolve, reject) => init.signal?.addEventListener("abort", () => reject(init.signal?.reason ?? new Error("aborted")))),
+			});
+			return new Response(stalled);
+		};
+		await expect(fetchPinned(item, undefined, { fetchImpl, timeoutMs: 200 })).rejects.toThrow(/timed out|did not finish|abort/iu);
+		expect(signalSeen).toBe(true);
 	});
 });

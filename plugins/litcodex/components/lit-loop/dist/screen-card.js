@@ -5,10 +5,13 @@
 // `┃` only) unless colour is asked for; the caller asks only when `screen-status` is on and
 // NO_COLOR is unset, because only the terminal UI is known to draw the escapes. Record-derived text is
 // stripped of control characters and every row is cut to the width given.
+import { LOOKS, lookOf } from "./card-looks.js";
 import { clean, displayWidth, fit } from "./hud.js";
 import { progressBar, readChecklist, readWorkflowSignals, workflowMapCells, } from "./workflow-map.js";
+import { readStack, stackRow } from "./workflow-stack.js";
 const ACCENT = "\u001b[38;2;255;155;94m";
 const GREEN = "\u001b[38;2;107;196;109m";
+const AMBER = "\u001b[38;2;255;175;60m";
 const BOLD = "\u001b[1m";
 const DIM = "\u001b[2m";
 const RESET = "\u001b[0m";
@@ -80,13 +83,19 @@ function paint(row, color) {
 /** The card rows joined by newlines, without the leading newline the caller adds for row one. */
 export function renderScreenCard(input, options) {
     const width = Math.max(MIN_CARD_WIDTH, Math.floor(options.width ?? DEFAULT_CARD_WIDTH));
-    const bar = seg("┃ ", ACCENT);
-    const route = [seg(`🔥 LIT · ${clean(input.mode)}`, `${BOLD}${ACCENT}`)];
-    if (input.note !== null && clean(input.note) !== "")
+    const lookDef = input.look !== null ? (LOOKS[input.look] ?? null) : null;
+    const tint = input.look === "turn" ? AMBER : input.look === "review" ? ACCENT : ACCENT;
+    const bar = seg("┃ ", tint);
+    const route = [seg(`🔥 LIT · ${clean(input.mode)}`, `${BOLD}${tint}`)];
+    if (lookDef !== null)
+        route.push(seg(`  ${lookDef.label}`, `${BOLD}${tint}`));
+    else if (input.note !== null && clean(input.note) !== "")
         route.push(seg(`  ${clean(input.note)}`, DIM));
     const rows = [route];
     if (input.map !== null && input.map.cells.length > 0)
         rows.push(mapRow(input.map));
+    if (input.stack)
+        rows.push([seg(clean(input.stack), DIM)]);
     for (const item of input.checklist.slice(0, MAX_CHECKLIST))
         rows.push(checklistRow(item));
     return rows.map((row) => paint([bar, ...fitRow(row, width - displayWidth(bar.text))], options.color)).join("\n");
@@ -98,7 +107,8 @@ export function renderScreenCard(input, options) {
 export function workflowCard(repoRoot, sessionId, mode, note, options) {
     const map = workflowMapCells(mode, readWorkflowSignals(repoRoot, sessionId));
     const checklist = readChecklist(repoRoot, sessionId);
-    if (options.quietWhenEmpty === true && map === null && checklist.length === 0)
+    const stack = sessionId === null ? null : stackRow(readStack(repoRoot, sessionId));
+    if (options.quietWhenEmpty === true && map === null && checklist.length === 0 && stack === null)
         return null;
-    return renderScreenCard({ mode, note, map, checklist }, options);
+    return renderScreenCard({ mode, note, look: lookOf(mode), map, checklist, stack }, options);
 }

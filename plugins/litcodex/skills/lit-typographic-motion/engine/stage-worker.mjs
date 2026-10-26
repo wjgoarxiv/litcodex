@@ -1,9 +1,9 @@
 // Stage frame worker: decodes one captured PNG to RGBA, hashes the decoded bytes (never the PNG),
-// and computes the flash-audit cell grid and the near-black percentile, so the main thread only
-// orders frames and feeds ffmpeg while the next frame is being stepped.
+// and computes the flash-audit cell grid, the luminance band (0.5 % and 99.5 %) and the busy-cell
+// share, so the main thread only orders frames and feeds ffmpeg while the next frame is being stepped.
 import { parentPort } from "node:worker_threads";
 import { cellGrid, gridFor } from "./flash.mjs";
-import { decodePng, downscale, encodePng, luminancePercentile, rgbaSha256 } from "./image.mjs";
+import { busyShare, decodePng, downscale, encodePng, luminanceBand, rgbaSha256 } from "./image.mjs";
 import { NEAR_BLACK } from "./constants.mjs";
 
 parentPort.on("message", ({ id, png, analyze, preview }) => {
@@ -13,7 +13,10 @@ parentPort.on("message", ({ id, png, analyze, preview }) => {
 		const out = { id, width: image.width, height: image.height, sha: rgbaSha256(rgba) };
 		if (analyze) {
 			out.grid = cellGrid(rgba, image.width, image.height, gridFor(image.width, image.height));
-			out.p995 = luminancePercentile(rgba, NEAR_BLACK.percentile);
+			const band = luminanceBand(rgba, 1 - NEAR_BLACK.percentile, NEAR_BLACK.percentile);
+			out.p995 = band.high;
+			out.p005 = band.low;
+			out.busy = busyShare(rgba, image.width, image.height);
 		}
 		if (preview) out.previewPng = encodePng(preview[0], preview[1], downscale(rgba, image.width, image.height, preview[0], preview[1]), 4, 3);
 		out.rgba = rgba;

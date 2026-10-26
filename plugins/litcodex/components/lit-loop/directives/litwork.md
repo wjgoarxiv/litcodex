@@ -146,7 +146,8 @@ unit-level contract holds, not that the user-facing behavior works.
 
 When this work creates or changes a user-facing web interface, include a UI criterion in the plan
 and resolve the installed sibling `frontend-ui-ux/SKILL.md` through the host skill catalog. Load it
-as support without a second banner. Run its `scripts/probe.mjs` on the built page at the seven-entry
+as support without a second banner. For a new page or screen, take its "Choose the design first" step (skipped when the prompt names the look), then run its `scripts/design-lock.mjs init` so the
+look is locked. Run its `scripts/probe.mjs` on the built page at the seven-entry
 RS matrix and retain JSON and screenshots. Remaining HIGH findings block done until fixed or named
 as a specific limitation; probe exit 2 keeps the UI criterion BLOCKED. For a CLI or backend-only
 task without a user-facing web interface, do not load the frontend skill or run its browser probe.

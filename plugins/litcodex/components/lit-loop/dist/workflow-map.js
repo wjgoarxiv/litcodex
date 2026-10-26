@@ -96,8 +96,18 @@ export function countPlanRows(markdown) {
         next: rows.find((row) => !row.done)?.label ?? null,
     };
 }
+/** Done and total checkbox rows of a project-relative plan file; null when it cannot be read or holds none. */
+export function planProgress(repoRoot, rel) {
+    if (typeof repoRoot !== "string" || !isAbsolute(repoRoot) || rel.includes("..") || isAbsolute(rel))
+        return null;
+    const text = readText(repoRoot, join(repoRoot, rel));
+    if (text === null)
+        return null;
+    const { done, total } = countPlanRows(text);
+    return total > 0 ? { done, total } : null;
+}
 /** The counted checkbox rows in order, as start-work reads them. */
-function planRows(markdown) {
+export function planRows(markdown) {
     const lines = markdown.split(/\r?\n/);
     const visible = [];
     let fence = null;

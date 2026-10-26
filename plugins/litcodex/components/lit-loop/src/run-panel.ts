@@ -96,6 +96,7 @@ export function renderRunPanel(view: RunPanelView, options: RunPanelOptions): st
 		{
 			mode: status.mode ?? "lit",
 			note: status.state === "complete" ? `✓ ${elapsed}` : elapsed,
+			look: status.look ?? null,
 			map: status.map,
 			checklist: view.checklist === null ? [] : [view.checklist],
 		},

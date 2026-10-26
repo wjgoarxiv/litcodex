@@ -36,7 +36,10 @@ export function inspectPage(viewport, limits) {
   const background = (element) => {
     for (let node = element; node; node = node.parentElement) {
       const style = getComputedStyle(node);
-      if (style.backgroundImage !== 'none') return null;
+      // The locked canvas texture (dots or a plotting grid) sits at low alpha over a palette colour that the lock
+      // already holds above the text-contrast floor, so it does not turn the ground into an unreadable image.
+      const lockTexture = (node === document.body || node === document.documentElement) && ['', 'none'].every((none) => getComputedStyle(document.documentElement).getPropertyValue('--canvas-pattern').trim() !== none);
+      if (style.backgroundImage !== 'none' && !lockTexture) return null;
       const color = parseRgb(style.backgroundColor);
       if (color && !/rgba\([^)]*,\s*0\s*\)/.test(style.backgroundColor)) return color;
     }
@@ -95,6 +98,7 @@ export function inspectPage(viewport, limits) {
   const eyebrowCandidates = [];
   const headings = [];
   const glows = [];
+  const gradientText = [];
   const stripeScopes = [];
   const gridCandidates = [];
   const numericLabels = new Set();
@@ -237,7 +241,7 @@ export function inspectPage(viewport, limits) {
     if (element.matches('svg')) {
       const primitives = element.querySelectorAll('rect,circle,ellipse,polygon').length;
       const fills = new Set([...element.querySelectorAll('rect,circle,ellipse,polygon')].map((shape) => getComputedStyle(shape).fill).filter((fill) => fill !== 'none' && fill !== 'transparent'));
-      if (rect.width >= limits.largeSvgMinPx && rect.height >= limits.largeSvgMinPx && primitives >= limits.largeSvgMinPrimitives && fills.size >= limits.largeSvgMinFills && element.querySelectorAll('text,tspan').length <= limits.largeSvgMaxText && !element.querySelector('pattern')) unknown('SLOP-051', `assembled SVG candidate at ${selectorFor(element)} needs illustration-versus-data judgment`);
+      if (rect.width >= limits.largeSvgMinPx && rect.height >= limits.largeSvgMinPx && primitives >= limits.largeSvgMinPrimitives && fills.size >= limits.largeSvgMinFills && element.querySelectorAll('text,tspan').length <= limits.largeSvgMaxText && !element.querySelector('pattern') && !element.querySelector(':scope > title') && !(element.getAttribute('role') === 'img' && (element.getAttribute('aria-label')?.trim() || element.hasAttribute('aria-labelledby')))) unknown('SLOP-051', `assembled SVG candidate at ${selectorFor(element)} needs illustration-versus-data judgment`);
     }
     if (style.clipPath.startsWith('polygon(')) {
       const points = style.clipPath.slice(8, -1).split(',');
@@ -247,7 +251,7 @@ export function inspectPage(viewport, limits) {
     } else if (style.clipPath.startsWith('path(') && (style.clipPath.match(/[CSQTAcsqta](?=[\s\d-])/g)?.length ?? 0) >= limits.maskMinCurves) add('SLOP-052', 'LOW', element, style.clipPath, `>=${limits.maskMinCurves} curves`);
     const layoutMotion = style.transitionProperty.split(',').map((part) => part.trim()).filter((part) => /^(width|height|max-height|padding(?:-.+)?|margin(?:-.+)?|top|left)$/.test(part));
     if (layoutMotion.length && !element.closest('details,[aria-expanded],.accordion,.collapse') && !element.querySelector('[aria-expanded]')) add('CF-508', 'MEDIUM', element, layoutMotion, 'transform|opacity', 'measured', 'SLOP-026 cross-reference');
-    if ((style.backgroundClip === 'text' || style.webkitBackgroundClip === 'text') && /gradient\(/.test(style.backgroundImage)) add('SLOP-009', 'MEDIUM', element, style.backgroundImage.slice(0, 80), 'solid ink');
+    if ((style.backgroundClip === 'text' || style.webkitBackgroundClip === 'text') && /gradient\(/.test(style.backgroundImage)) gradientText.push(element);
     if (ownText && (element.matches('h1,h2,h3') || fontSize >= 20)) {
       const ink = parseRgb(style.color);
       if (ink) {
@@ -299,7 +303,21 @@ export function inspectPage(viewport, limits) {
       if (scale < limits.entranceScaleMin) add('CF-503', 'MEDIUM', element, Number(scale.toFixed(2)), limits.entranceScaleMin);
     }
   }
-  if (accents.length > limits.accentFamilyMax) add('CF-205', 'MEDIUM', null, accents.length, limits.accentFamilyMax, 'derived');
+  // Rich is the default register; a lock recorded as calm keeps the single-accent limit.
+  const accentLimit = viewport.density === 'calm' ? limits.accentFamilyCalmMax : limits.accentFamilyMax;
+  if (accents.length > accentLimit) add('CF-205', 'MEDIUM', null, accents.length, accentLimit, 'derived');
+  // One gradient headline in the palette's own hues is craft. The reflex is a violet stop, the effect repeated across the page, or a stop the text cannot be read on.
+  for (const element of gradientText) {
+    const style = getComputedStyle(element);
+    const stops = [...style.backgroundImage.matchAll(/rgba?\([^)]*\)/g)].map((match) => parseRgb(match[0])).filter(Boolean);
+    const ground = background(element);
+    const floor = Number.parseFloat(style.fontSize) >= limits.largeTextPx ? limits.gradientTextLargeStopContrast : limits.gradientTextStopContrast;
+    const weakest = ground && stops.length ? Math.min(...stops.map((stop) => { const pair = [luminance(stop), luminance(ground)].sort((a, b) => b - a); return (pair[0] + 0.05) / (pair[1] + 0.05); })) : null;
+    const reason = stops.some((stop) => { const [hue] = hueAndSaturation(stop); return hue >= limits.accentPurpleHueMin && hue <= limits.accentPurpleHueMax && Math.max(...stop) - Math.min(...stop) >= limits.accentPurpleChannelSpread; }) ? 'a violet stop'
+      : gradientText.length > limits.gradientTextMax ? `${gradientText.length} gradient-filled text elements`
+      : weakest !== null && weakest < floor ? `a stop at ${weakest.toFixed(1)}:1` : null;
+    if (reason) add('SLOP-009', 'MEDIUM', element, `${style.backgroundImage.slice(0, 60)} (${reason})`, `<= ${limits.gradientTextMax} gradient headline, palette hues, every stop >= ${floor}:1`);
+  }
   if (fonts.size > limits.typeFamilyMax) add('SLOP-019', 'MEDIUM', null, fonts.size, limits.typeFamilyMax);
   if (typeRoles.size > 7) add('CF-108', 'MEDIUM', null, typeRoles.size, 7, 'derived');
   for (const heading of headings.filter((element) => element.matches('h2,h3,h4'))) {

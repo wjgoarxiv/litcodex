@@ -147,6 +147,8 @@ describe("development workspace marketplace fallback", () => {
 					"lit-diagram-drawer",
 					"lit-docx",
 					"lit-pptx",
+					"lit-schematic",
+					"lit-hijack",
 					"lit-typographic-motion",
 					"frontend-ui-ux",
 					"lit-humanizer",

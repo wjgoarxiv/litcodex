@@ -59,6 +59,10 @@
 		const scale = scaleOf(el);
 		const fontSize = Number.parseFloat(cs.fontSize) || 16;
 		const clipText = cs.webkitBackgroundClip === "text" || cs.backgroundClip === "text";
+		// Colour and face as the text is painted (SVG text paints with its fill): the first family of
+		// the stack is what the house-style rule compares with the style's faces.
+		const color = el instanceof SVGElement ? cs.fill : cs.color;
+		const family = String(cs.fontFamily || "").split(",")[0].trim().replace(/^["']|["']$/gu, "");
 		if (mark) el.setAttribute("data-lit-qa-run", String(index));
 		return {
 			index,
@@ -68,6 +72,8 @@
 			fontSizePx: fontSize * scale,
 			weight: Number.parseInt(cs.fontWeight, 10) || 400,
 			gradient: clipText && cs.backgroundImage !== "none",
+			color,
+			family,
 			decor: el.closest('[data-lit-text="decor"]') !== null,
 			marked: el.closest("[data-lit-text]")?.dataset.litText ?? null,
 			tag: el.tagName.toLowerCase(),
@@ -102,7 +108,8 @@
 				const match = /^["'](.*)["']$/su.exec(content ?? "");
 				if (!match || !match[1].trim()) continue;
 				const r = el.getBoundingClientRect();
-				out.push(describe(el, match[1].trim(), [[r.left, r.top, r.right, r.bottom]], out.length, false));
+				// A pseudo-element run reports its element's box, so the text-over-text rule skips it.
+				out.push({ ...describe(el, match[1].trim(), [[r.left, r.top, r.right, r.bottom]], out.length, false), pseudo: true });
 			}
 		}
 		const canvases = [...document.querySelectorAll("canvas")].filter((c) => {

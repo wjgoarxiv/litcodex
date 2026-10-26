@@ -59,12 +59,13 @@ function run(treatment = stageTreatment({ durationSec: 12, beats: [[0, 4], [4, 8
 }
 const observed = (file: string, detail: string) => `In ${file} the ${detail} is clearly visible against the dark ground.`;
 function answers(extra: Record<string, unknown> = {}, verdicts: Record<number, string> = {}) {
-	const good: Record<number, string> = { 1: "yes", 2: "yes", 3: "yes", 4: "no", 5: "yes", 6: "yes", 7: "no", 8: "no", 9: "no" };
+	const good: Record<number, string> = { 1: "yes", 2: "yes", 3: "yes", 4: "no", 5: "yes", 6: "yes", 7: "no", 8: "no", 9: "no", 10: "yes" };
 	return {
 		viewed: FILES,
-		answers: Array.from({ length: 9 }, (_, i) => {
+		// Question 10 (the story's turn) is asked of a film with a story, on the turn shot's own still.
+		answers: Array.from({ length: 10 }, (_, i) => {
 			const q = i + 1;
-			const frame = q === 6 ? "sound-cues.json" : q === 1 ? "contact-sheet.png" : FILES[i % FILES.length];
+			const frame = q === 6 ? "sound-cues.json" : q === 1 ? "contact-sheet.png" : q === 10 ? "beat-02.png" : FILES[i % FILES.length];
 			return { q, verdict: verdicts[q] ?? good[q], frame, observed: q === 1 ? "A stranger would say this film is for: people walking the coast who want to see the basin fill." : observed(frame, `drawn basin in answer ${q}`) };
 		}),
 		...extra,
@@ -184,7 +185,7 @@ describe("viewed counts survive a gate re-run", { timeout: 900000 }, () => {
 		const namesOf = () => JSON.parse(readFileSync(join(out, "stills", "manifest.json"), "utf8")).files.map((f: { file: string }) => f.file);
 		const bodyFor = (names: string[], extra: Record<string, unknown> = {}) => {
 			const body = answers({ viewed: names, ...extra });
-			for (const a of body.answers) if (a.frame !== "sound-cues.json") a.frame = names[0];
+			for (const a of body.answers) if (a.frame !== "sound-cues.json") a.frame = a.q === 10 ? "beat-02.png" : names[0];
 			return body;
 		};
 		expect(cli(["stage", "--out", out, "--stills-only", "--round", "1"]).status).toBe(0);

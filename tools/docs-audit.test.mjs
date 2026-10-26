@@ -189,7 +189,7 @@ describe("docs-audit repo-derived facts", () => {
 		const korean = readFileSync(join(REPO_ROOT, "README-Ko-KR.md"), "utf8");
 		const englishRoutes = documentedRouteRows(english);
 		const koreanRoutes = documentedRouteRows(korean);
-		assert.equal(englishRoutes.length, 13, "English README declares the complete public hook route table");
+		assert.equal(englishRoutes.length, 16, "English README declares the complete public hook route table");
 		assert.deepEqual(koreanRoutes, englishRoutes, "Korean route table must have exact English route parity");
 		for (const { mode: documentedMode, forms } of englishRoutes) {
 			for (const form of forms) {

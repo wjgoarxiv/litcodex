@@ -72,12 +72,12 @@ describe("the generated bed", () => {
 	});
 	it("puts accents only where a beat's sound asks, each on its cut", () => {
 		const { cues } = buildBed({ treatment, frameCount: frames, fps: 60 });
-		const kinds = cues.cues.filter((c: { kind: string }) => c.kind !== "chord").map((c: { kind: string; beat: number }) => `${c.kind}@${c.beat}`);
+		const kinds = cues.cues.filter((c: { kind: string }) => c.kind !== "chord" && c.kind !== "event").map((c: { kind: string; beat: number }) => `${c.kind}@${c.beat}`);
 		expect(kinds).toEqual(["hit@1", "rise@2", "cadence@3"]);
 		for (const cue of cues.cues) expect(Math.abs(cue.delta)).toBeLessThanOrEqual(1 / 60);
 		const quiet = stageTreatment({ durationSec: 12, fps: 60, beats: [[0, 4], [4, 8], [8, 12]] });
 		for (const beat of quiet.beats) beat.sound = "the pad holds";
-		expect(buildBed({ treatment: quiet, frameCount: frames, fps: 60 }).cues.cues.every((c: { kind: string }) => c.kind === "chord")).toBe(true);
+		expect(buildBed({ treatment: quiet, frameCount: frames, fps: 60 }).cues.cues.every((c: { kind: string }) => c.kind === "chord" || c.kind === "event")).toBe(true);
 	});
 	it("differs between palettes, keys and tempos", () => {
 		const hashes = new Set<string>();
@@ -164,7 +164,7 @@ describe("tracks are muxed on both paths, padded to the picture", { timeout: 900
 		const result = run(["stage", "--out", out]);
 		expect(result.status, result.stderr).toBe(0);
 		expect(streams(join(out, "film.mp4")).audio).not.toBeNull();
-		expect(JSON.parse(readFileSync(join(out, "sound-cues.json"), "utf8")).palette).toBe("air");
+		expect(JSON.parse(readFileSync(join(out, "sound-cues.json"), "utf8")).palette).toBe("felt");
 		expect(readFileSync(join(out, "gate-report.txt"), "utf8")).toMatch(/SOUND-STREAM .*PASS/u);
 		const film = join(out, "film.mp4");
 		spawnSync("ffmpeg", ["-y", "-v", "error", "-i", film, "-an", "-c:v", "copy", join(out, "silent.mp4")]);
