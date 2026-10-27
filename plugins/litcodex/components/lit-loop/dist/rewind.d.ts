@@ -5,8 +5,9 @@ export declare const ACTIVE_MS: number;
 export declare const GO_WINDOW_MS: number;
 export declare const DEFAULT_SINCE_MS: number;
 export declare const DEFAULT_MAX = 12;
-export type SessionStatus = "waiting-on-user" | "active" | "ended" | "unknown";
-export type NextKind = "resume-frame" | "approve-boundary" | "continue-work" | "start-plan" | "none";
+export type SessionStatus = "waiting-on-user" | "active" | "idle" | "done" | "ended" | "unknown";
+/** `handoff` is shown, never run: a `go` over it starts nothing. */
+export type NextKind = "resume-frame" | "approve-boundary" | "continue-work" | "start-plan" | "handoff" | "none";
 export interface NextStep {
     readonly kind: NextKind;
     readonly text: string;
@@ -67,6 +68,10 @@ export interface RewindWorktree {
         readonly gauge: string | null;
     } | null;
     readonly openPlans: readonly OpenPlan[];
+    /** Plans in the window with every row ticked; they count as done. */
+    readonly finishedPlans: readonly string[];
+    /** Plan files too large to read, counted so the brief can say it left them out. */
+    readonly skippedPlans: number;
     /** Recent commits (done, dated), the step under way, and the next open plan rows. */
     readonly milestones: readonly RewindMilestone[];
     readonly paused: readonly {
@@ -125,7 +130,7 @@ export interface RewindOptions {
 export declare function parseSince(text: string): number | null;
 /** UUIDv7 ids open with a timestamp, so sessions started minutes apart share the first 8 characters; use the random tail then. */
 export declare function shortIdOf(id: string): string;
-interface OpenPlan {
+export interface OpenPlan {
     readonly name: string;
     readonly done: number;
     readonly total: number;
@@ -133,6 +138,8 @@ interface OpenPlan {
     /** When the plan file last changed; null when that cannot be read. */
     readonly changedMs: number | null;
 }
+/** The open plan `name` (a file under `.litcodex/plans`), or null when it is finished, a scaffold or missing. */
+export declare function openPlanNamed(cwd: string, name: string): OpenPlan | null;
 /**
  * The one step worth taking next, in priority order: the paused frame of this session's stack, then a boundary
  * waiting for an answer (shown, never started), then work already under way, then the single open plan.
@@ -147,16 +154,15 @@ export declare function collectRewind(options: RewindOptions): RewindResult;
  * open plan item, the latest other active session, the latest other ended one. It is shown, never recorded.
  */
 export declare function suggestionOf(sessions: readonly RewindSession[], worktrees: readonly RewindWorktree[]): string;
-/** The one-line headline: how many sessions, what waits on the person, and the one next step. */
+/** The three-line opener in plain words: done so far, doing now, next. */
 export declare function briefHeadline(result: RewindResult): string;
 /** Ended sessions, one table row each, newest first: they are history, so no card. One line per row at 120 columns. */
 export declare function endedTable(sessions: readonly RewindSession[], now: number, width?: number): string[];
 /**
  * The brief as Markdown limited to what the Codex terminal draws: bold, emoji, lists, a table and a fenced box.
- * Never `#` headings or `>` quotes, which it prints as raw marks. A headline, live session cards (waiting or
- * running) grouped by worktree with each worktree's roadmap (done ✓ with its date, now ▶, later ○), one table
+ * Never `#` headings or `>` quotes, which it prints as raw marks. A three-line opener, a card for every session
+ * that has not ended, grouped by worktree with each worktree's roadmap (done ✓ with its date, now ▶, later ○), one table
  * row for every ended session, and the one recommended next step in a box. A progress gauge appears only when
  * both counts are real; otherwise the known facts are written out in words.
  */
 export declare function renderBrief(result: RewindResult, width?: number): string;
-export {};

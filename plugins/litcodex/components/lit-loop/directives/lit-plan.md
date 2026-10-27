@@ -458,7 +458,8 @@ approval, until independently verified.
   approach), then stop and wait.
 - After approval: announce the plan path `.litcodex/plans/<slug>.md`, a
   one-paragraph summary of scope, waves, and verification, and the collision-safe next action
-  `lit start work <plan-name>`.
+  `lit start work <plan-name>`. Close by telling the user to type `go` within 30 minutes to start it:
+  saving the plan arms a one-word `go` for this session only.
 
 # Stop rules
 - Plan file exists, template filled, every todo has action + output + verification +

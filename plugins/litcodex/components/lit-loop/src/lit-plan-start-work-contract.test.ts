@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { analyzePlanProgress } from "../../start-work-continuation/src/plan-progress.js";
+import { ROUTE_HEADS } from "./route-heads.js";
 
 const read = (path: string): string => readFileSync(new URL(path, import.meta.url), "utf8");
 const directive = read("../directives/start-work.md");
@@ -43,6 +44,18 @@ describe("lit-plan to start-work contract", () => {
 		expect(planDirective).toContain("`.litcodex/start-work/state.json`");
 		expect(planDirective).toContain("`.litcodex/lit-loop/ledger.jsonl`");
 		expect(planDirective).not.toContain("brief.md");
+	});
+
+	it("tells the user a one-word `go` starts the saved plan", () => {
+		const head = ROUTE_HEADS["lit-plan"];
+		for (const [surface, text] of [
+			["route head", head],
+			["directive", planDirective],
+			["skill", planSkill],
+			["workflow", planWorkflow],
+		] as const) {
+			expect(text.replace(/\s+/g, " "), surface).toContain("type `go` within 30 minutes to start it");
+		}
 	});
 
 	it("gives every planner surface the executable checkbox grammar consumed by start-work", () => {

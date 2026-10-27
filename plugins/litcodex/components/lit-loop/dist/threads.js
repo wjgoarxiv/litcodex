@@ -1,7 +1,8 @@
 // src/threads.ts — the threads of a session as the card and the text HUD draw them.
 //
 // A thread is a frame of the session's workflow stack, a child agent (lane) running under its top frame, or
-// the top frame of another session of the same project that moved lately. Each takes its `k/n` from the
+// the top frame of another session of the same project that moved lately or whose liveness record is fresh
+// (running first, then idle; named `<skill> · <pane>` when herdr gave a pane). Each takes its `k/n` from the
 // first source that really knows it: the count the frame recorded, the start-work run it drives, the
 // checkboxes of the plan it works from, the open goal's criteria, the main thread's own `update_plan` list
 // (top frame only), and for a lane its own `update_plan`. A gauge is drawn only when both numbers are real;
@@ -95,8 +96,12 @@ export function readThreads(cwd, sessionId, now, signals) {
         const laneRows = lanes.map((lane) => laneRow(lane, now));
         const otherRows = others.map((other) => {
             const top = other.frames.at(-1);
+            const row = frameRow(top, `session-${other.id.slice(0, SHORT_SESSION)}`, frameCounts(top, cwd, null, null), false, false);
             return {
-                ...frameRow(top, `session-${other.id.slice(0, SHORT_SESSION)}`, frameCounts(top, cwd, null, null), false, false),
+                ...row,
+                // A session whose turn has closed waits for its person, so it reads idle rather than running.
+                ...(other.liveness === "idle" && row.state === "running" ? { state: "idle" } : {}),
+                ...(other.pane === null ? {} : { name: `${row.name} · ${other.pane}` }),
                 kind: "session",
                 session: other.id.slice(0, SHORT_SESSION),
             };

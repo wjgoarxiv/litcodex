@@ -12,6 +12,7 @@ import { basename, isAbsolute, join } from "node:path";
 import { lookOf, REVIEW_LANE_IDS } from "./card-looks.js";
 import { cleanDeep, cleanLines } from "./control-chars.js";
 import { codexHomeFrom, openRegularFile, plainDirs, readLiveStep, readThreadPointer, } from "./live-step.js";
+import { installedPluginVersion, loadedPluginVersion, restartChip } from "./restart-chip.js";
 import { normalizeSessionId } from "./state-paths.js";
 import { readThreads, threadLines } from "./threads.js";
 import { readWorkflowSignals, workflowMapCells, workflowMapText, workflowTurn, } from "./workflow-map.js";
@@ -422,6 +423,7 @@ export function readCardStatus(threadId, env, now = Date.now(), options = {}) {
         branch: readBranch(cwd),
         workspace,
         cardOpenedAt,
+        restart: restartChip(options.loadedVersion === undefined ? loadedPluginVersion() : options.loadedVersion, installedPluginVersion(env)),
         now,
     });
 }
@@ -441,8 +443,9 @@ export function cardStatusText(status) {
             : status.look === "review"
                 ? "  REVIEW"
                 : "";
+    const chip = status.restart ? `  ↻ ${status.restart}` : "";
     const lines = [
-        `🔥 LIT ${status.state === "complete" ? "COMPLETE ✓" : "IGNITED"} · ${status.mode ?? "lit"}${lookLabel}`,
+        `🔥 LIT ${status.state === "complete" ? "COMPLETE ✓" : "IGNITED"} · ${status.mode ?? "lit"}${lookLabel}${chip}`,
     ];
     if (status.map !== null) {
         lines.push(workflowMapText(status.map));

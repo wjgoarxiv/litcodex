@@ -91,7 +91,7 @@ Treat this SKILL.md as an LLM contract artifact, not a casual help page. Load it
 ## #contract.procedure
 
 1. **Acknowledge activation deterministically.** Print the exact banner required above before any explanation when the skill is truly active.
-2. **Bind scope.** Name the requested outcome, in-scope files or surfaces, and any explicit non-goals. Keep sibling repositories outside scope unless the user names them.
+2. **Bind scope.** Name the requested outcome, in-scope files or surfaces, and any explicit non-goals. Keep sibling repositories outside scope unless the user names them. When a todo names an absolute path outside the project, declare it on its own column-zero line, `Scope roots: <path> (<actions>)`, so start-work can grant it at init instead of pausing at the first touch. The Stop hook names any such path left undeclared, once per plan, with the exact line to paste; `/` and the bare home folder never count as a root.
 3. **Ground in Codex reality.** Prefer repo-local files, package scripts, component directives, marketplace metadata, and hook behavior over memory or generic agent habits.
 4. **Select the smallest complete path.** Reuse existing tests, scripts, components, directives, and docs before inventing new abstractions.
 5. **Execute with evidence gates.** For behavior changes, obtain a failing-first proof when a seam exists; for docs/contracts, add a guard that fails before the rewrite and passes after it.
@@ -195,7 +195,8 @@ they can press Shift+Tab and continue, or proceed with file-backed lit-plan.
 - **Planner scope only.** Prepare one Markdown plan and publish it only through the bundled
   `publish-plan` route. Write drafts under `.litcodex/drafts/*.md`. Never edit source or lifecycle
   authority state. If asked to "just do it", decline: you plan; after approval, hand the published plan
-  to execution with `lit start work <plan-name>`.
+  to execution with `lit start work <plan-name>`. Saving the plan arms a one-word `go` for this session,
+  so close by telling the user to type `go` within 30 minutes to start it.
 
 ## Objective-achievable plan contract
 

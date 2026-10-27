@@ -99,7 +99,8 @@ node <plugin-root>/components/start-work-continuation/dist/cli.js publish-plan -
 
 The route validates through `analyzePlanProgress`, creates the plan without overwriting an existing
 target, and writes no lifecycle authority state. Finish by naming the collision-safe execution handoff:
-`lit start work <plan-name>`.
+`lit start work <plan-name>`. The Stop hook that sees the saved plan arms a one-word `go` for this session
+only, so close by telling the user to type `go` within 30 minutes to start it.
 
 ## Objective-achievable checklist contract
 

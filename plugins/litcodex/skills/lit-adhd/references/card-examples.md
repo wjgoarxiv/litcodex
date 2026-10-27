@@ -41,8 +41,10 @@ A session with no edit yet shows the tools it used, and a running one shows what
 ## English
 
 ````markdown
-**🧭 4 sessions · 1 waits on you · 1 running · 1 paused · next: start work on sync.md, 3 of 5 tasks done**
-*last 7d · 1 worktree*
+**✅ Done so far:** nothing finished in this window  
+**▶ Doing now:** 1 running · 1 paused · 1 waits on you  
+**⏭ Next:** start work on sync.md, 3 of 5 tasks done
+*last 7d · 4 sessions · 1 worktree*
 
 🌿 `feat/retry` · **sync-service**
 
@@ -74,7 +76,7 @@ A session with no edit yet shows the tools it used, and a running one shows what
 | `40a1c3e5` | sync-service | Split the sync client | 29h | 3 files |
 | `50a1c3e5` | sync-service | 카드 레이아웃 정리 | 30h | · |
 
-```text
+```
 ╭─ Recommended next step ───────────────────────────────────╮
 │ start work on sync.md, 3 of 5 tasks done                  │
 │ say `go` to run it                                        │
@@ -85,8 +87,10 @@ A session with no edit yet shows the tools it used, and a running one shows what
 ## 한국어
 
 ````markdown
-**🧭 세션 4개 · 나를 기다리는 것 1 · 진행 중 1 · 멈춘 작업 1 · 다음: sync.md 작업 시작, 5개 중 3개 완료**
-*최근 7d · 작업 트리 1개*
+**✅ 지금까지 끝낸 일:** 이 기간에 끝낸 것 없음  
+**▶ 지금 하는 일:** 진행 중 1 · 멈춘 작업 1 · 나를 기다리는 것 1  
+**⏭ 다음:** sync.md 작업 시작, 5개 중 3개 완료
+*최근 7d · 세션 4개 · 작업 트리 1개*
 
 🌿 `feat/retry` · **sync-service**
 
@@ -118,7 +122,7 @@ A session with no edit yet shows the tools it used, and a running one shows what
 | `40a1c3e5` | sync-service | Split the sync client | 29h | 파일 3개 |
 | `50a1c3e5` | sync-service | 카드 레이아웃 정리 | 30h | · |
 
-```text
+```
 ╭─ 추천하는 다음 단계 ──────────────────────────────────────╮
 │ sync.md 작업 시작, 5개 중 3개 완료                        │
 │ `go`라고 입력하세요                                       │
@@ -131,7 +135,7 @@ A session with no edit yet shows the tools it used, and a running one shows what
 With `next.kind` of `none` the box still recommends a step, the collector's `suggestion`, and says
 that nothing runs on its own here:
 
-```text
+```
 ╭─ Recommended next step ───────────────────────────────────────╮
 │ answer 10a1c3e5 in sync-service: “Should the cap be 30s or    │
 │ 60s?”                                                         │
@@ -139,6 +143,18 @@ that nothing runs on its own here:
 │ to do                                                         │
 ╰───────────────────────────────────────────────────────────────╯
 ```
+
+## After a session finished its plan
+
+One session ran `sync.md` to its last row and this session is the one asking. The finished session
+gets a `✅ DONE` card, its plan is counted under "Done so far", and the step is to review it rather
+than to pick it up again:
+
+````markdown
+**✅ Done so far:** 1 plan finished · 1 session done  
+**▶ Doing now:** 1 running · nothing waits on you  
+**⏭ Next:** review what 10a1c3e5 finished in sync-service: Add retry with backoff to the sync job
+````
 
 ## What the examples do not do
 

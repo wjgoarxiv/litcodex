@@ -548,4 +548,4 @@ If LitCodex saves you from explaining the same project twice, a star helps other
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](./LICENSE). The LitCodex and LitFamily names and art are covered by the [trademark policy](./TRADEMARK.md).

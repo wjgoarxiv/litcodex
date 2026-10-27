@@ -116,4 +116,5 @@ This removes the plugin and the config LitCodex manages, and leaves your other s
 [Migration from the old package](https://github.com/wjgoarxiv/litcodex/blob/main/docs/npm-migration.md) ·
 [CHANGELOG.md](https://github.com/wjgoarxiv/litcodex/blob/main/CHANGELOG.md) ·
 [Privacy](https://github.com/wjgoarxiv/litcodex/blob/main/docs/privacy.md) ·
-[Issues](https://github.com/wjgoarxiv/litcodex/issues) · MIT license
+[Issues](https://github.com/wjgoarxiv/litcodex/issues) · MIT license ·
+[Trademark policy](https://github.com/wjgoarxiv/litcodex/blob/main/TRADEMARK.md)

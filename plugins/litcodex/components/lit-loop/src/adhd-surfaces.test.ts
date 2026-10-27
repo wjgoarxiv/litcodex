@@ -24,6 +24,7 @@ import { type CardStatus, cardStatusText, readCardStatus } from "./card-status.j
 import { runSessionStartHookCli, runUserPromptSubmitHookCli } from "./hook-cli.js";
 import { displayWidth, renderHud } from "./hud.js";
 import { briefHeadline, collectRewind, type GitRunner, renderBrief } from "./rewind.js";
+import { recordLiveness } from "./session-liveness.js";
 import { readStack, recordStackEvent, stackRow } from "./workflow-stack.js";
 
 const FIXTURES = fileURLToPath(new URL("../test/fixtures/rewind/sessions", import.meta.url));
@@ -145,7 +146,9 @@ describe("the redesigned brief", () => {
 		const brief = renderBrief(result);
 		const lines = brief.split("\n");
 		expect(briefHeadline(result)).toContain("next: start work on sync.md");
-		expect(lines[0]).toMatch(/^\*\*🧭 2 sessions · 1 waits on you · 1 running/u);
+		expect(lines[0]).toMatch(/^\*\*✅ Done so far:\*\* nothing finished in this window/u);
+		expect(lines[1]).toMatch(/^\*\*▶ Doing now:\*\* 1 running · 1 waits on you/u);
+		expect(lines[2]).toMatch(/^\*\*⏭ Next:\*\* start work on sync\.md/u);
 		expect(brief).toContain("🌿 `feat/retry` · **ws**");
 		expect(brief).toMatch(/- 🟡 \*\*WAITS ON YOU\*\* · `aaaaaaaa` · \d+h ago/u);
 		expect(brief).toMatch(/- 🟢 \*\*RUNNING\*\* · `bbbbbbbb` · \d+[mh] ago/u);
@@ -169,7 +172,7 @@ describe("the redesigned brief", () => {
 	it("draws the recommended-step box with all four sides the same width, inside a code fence", () => {
 		const s = scratch();
 		const brief = renderBrief(collect(s, fakeGit(s.workspace)));
-		const fenced = /```text\n([\s\S]*?)\n```/u.exec(brief)?.[1]?.split("\n") ?? [];
+		const fenced = /```\n(╭[\s\S]*?)\n```/u.exec(brief)?.[1]?.split("\n") ?? [];
 		expect(fenced.length).toBeGreaterThanOrEqual(4);
 		expect(new Set(fenced.map((line) => [...line].length)).size).toBe(1);
 		expect(fenced[0]).toMatch(/^╭/u);
@@ -181,7 +184,7 @@ describe("the redesigned brief", () => {
 		const result = collect(s, fakeGit(s.workspace));
 		for (let width = 36; width <= 160; width += 12) {
 			const brief = renderBrief(result, width);
-			const box = /```text\n([\s\S]*?)\n```/u.exec(brief)?.[1]?.split("\n") ?? [];
+			const box = /```\n(╭[\s\S]*?)\n```/u.exec(brief)?.[1]?.split("\n") ?? [];
 			for (const line of box) expect(displayWidth(line)).toBeLessThanOrEqual(width);
 			expect(new Set(box.map((line) => displayWidth(line))).size).toBe(1);
 		}
@@ -190,8 +193,107 @@ describe("the redesigned brief", () => {
 	it("keeps the box inside the width", () => {
 		const s = scratch();
 		const brief = renderBrief(collect(s, fakeGit(s.workspace)), 72);
-		const box = /```text\n([\s\S]*?)\n```/u.exec(brief)?.[1]?.split("\n") ?? [];
+		const box = /```\n(╭[\s\S]*?)\n```/u.exec(brief)?.[1]?.split("\n") ?? [];
 		for (const line of box) expect(displayWidth(line)).toBeLessThanOrEqual(72);
+	});
+});
+
+describe("the brief after a finished session", () => {
+	const SESSION_B = "bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb";
+
+	function finishedSession(s: Scratch): void {
+		writePlan(s.workspace, 4, 4);
+		recordStackEvent(
+			s.workspace,
+			SESSION_A,
+			{ type: "start", skill: "start-work", ref: { plan: ".litcodex/plans/sync.md" } },
+			new Date(NOW - 5 * 3_600_000),
+		);
+	}
+
+	it("opens with three lines: done so far, doing now, next", () => {
+		const s = scratch();
+		finishedSession(s);
+		const result = collectRewind({
+			env: { HOME: s.home, CODEX_HOME: s.codexHome },
+			cwd: s.workspace,
+			now: NOW,
+			git: fakeGit(s.workspace),
+			sessionId: SESSION_B,
+		});
+		expect(briefHeadline(result).split("\n")).toEqual([
+			"done so far: 1 plan finished · 1 session done",
+			"doing now: 1 running · nothing waits on you",
+			`next: ${result.suggestion}`,
+		]);
+		const lines = renderBrief(result).split("\n");
+		expect(lines[0]).toMatch(/^\*\*✅ Done so far:\*\* 1 plan finished · 1 session done {2}$/u);
+		expect(lines[1]).toMatch(/^\*\*▶ Doing now:\*\* 1 running · nothing waits on you {2}$/u);
+		expect(lines[2]).toMatch(/^\*\*⏭ Next:\*\* review what aaaaaaaa finished/u);
+	});
+
+	it("marks the finished session done, counts its plan and recommends reviewing it", () => {
+		const s = scratch();
+		finishedSession(s);
+		const result = collectRewind({
+			env: { HOME: s.home, CODEX_HOME: s.codexHome },
+			cwd: s.workspace,
+			now: NOW,
+			git: fakeGit(s.workspace),
+			sessionId: SESSION_B,
+		});
+		const a = result.sessions.find((session) => session.id === SESSION_A);
+		expect(a?.status).toBe("done");
+		expect(result.worktrees[0]?.finishedPlans).toEqual(["sync.md"]);
+		expect(result.worktrees[0]?.openPlans).toEqual([]);
+		expect(result.next.kind).toBe("none");
+		expect(result.suggestion).toMatch(/^review what aaaaaaaa finished in ws/u);
+		expect(result.suggestion).not.toMatch(/pick up|answer/u);
+		const brief = renderBrief(result);
+		expect(brief).toContain("✅ **DONE**");
+		expect(brief).toContain("plan `sync.md` finished");
+	});
+
+	it("reads a session whose turn closed as idle", () => {
+		const s = scratch();
+		recordLiveness(s.workspace, SESSION_B, "idle", {}, NOW - 60_000);
+		const result = collect(s);
+		expect(result.sessions.find((session) => session.id === SESSION_B)?.status).toBe("idle");
+		expect(renderBrief(result)).toContain("💤 **IDLE**");
+	});
+
+	it("counts an oversized plan it skipped and says so", () => {
+		const s = scratch();
+		mkdirSync(join(s.workspace, ".litcodex/plans"), { recursive: true });
+		writeFileSync(join(s.workspace, ".litcodex/plans/huge.md"), `- [ ] 1. big\n${"x".repeat(1_100_000)}\n`);
+		const result = collect(s);
+		expect(result.worktrees[0]?.skippedPlans).toBe(1);
+		expect(renderBrief(result)).toContain("1 plan too large to read");
+	});
+
+	it("holds every plan to the window, this worktree's too", () => {
+		const s = scratch();
+		writePlan(s.workspace, 1, 4);
+		const old = (NOW - 10 * 86_400_000) / 1000;
+		utimesSync(join(s.workspace, ".litcodex/plans/sync.md"), old, old);
+		expect(collect(s).worktrees[0]?.openPlans).toEqual([]);
+	});
+
+	it("falls back to this worktree's handoff `## Next`, skipping a step already done", () => {
+		const s = scratch();
+		writeFileSync(
+			join(s.workspace, "HANDOFF.md"),
+			"# Handoff\n\n## Done\n- shipped retry\n\n## Next\n\n- [x] split the client\n- write the sync docs\n\n## Notes\n- x\n",
+		);
+		const result = collect(s);
+		expect(result.next).toEqual({ kind: "handoff", text: "from the handoff: write the sync docs" });
+		expect(briefHeadline(result)).toContain("next: from the handoff: write the sync docs");
+	});
+
+	it("draws the next-step box in an untagged fence", () => {
+		const brief = renderBrief(collect(scratch()));
+		expect(brief).toMatch(/\n```\n╭─ Recommended next step/u);
+		expect(brief).not.toContain("```text");
 	});
 });
 

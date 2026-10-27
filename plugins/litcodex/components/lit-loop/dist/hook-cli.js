@@ -21,6 +21,7 @@ import { clearActiveRoute, isBareLit, isLitContinue, readActiveRoute, readResume
 import { isBoundaryAnswer, isGoPrompt, takeGo } from "./rewind-go.js";
 import { workflowCard } from "./screen-card.js";
 import { screenColor } from "./screen-status.js";
+import { recordLiveness } from "./session-liveness.js";
 import { applyPromptToStack, frameToResume } from "./stack-hook.js";
 import { recordWorkflowTurn, workflowStopLine, workflowTurn } from "./workflow-map.js";
 /** Hard cap on stdin to bound memory / ReDoS exposure inside the 5 s Codex hook budget. 8 MB. */
@@ -362,7 +363,7 @@ export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoR
         // No tool runs once Stop fires: one whose PostToolUse never came (interrupted, or denied by another hook) is over.
         // The turn itself closes only below, after the guards that can send the model back to work.
         endLiveStep(scope.cwd, scope.sessionId, auto.now, false);
-        const persistence = evaluatePlanPersistence(scope.cwd, scope.sessionId);
+        const persistence = evaluatePlanPersistence(scope.cwd, scope.sessionId, auto.now);
         if (persistence.decision === "block") {
             stdout.write(formatStopBlockOutput(persistence.reason));
             return 0;
@@ -396,6 +397,8 @@ export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoR
         const lastMsg = typeof record["last_assistant_message"] === "string" ? record["last_assistant_message"] : null;
         endLiveStep(scope.cwd, scope.sessionId, auto.now, true, detectWaitReason(lastMsg));
         const env = auto.env ?? process.env;
+        if (workflowTurn(scope.cwd, scope.sessionId) !== null)
+            recordLiveness(scope.cwd, scope.sessionId, "idle", env, auto.now);
         const line = typeof record["turn_id"] === "string"
             ? workflowStopLine(scope.cwd, scope.sessionId, record["turn_id"], {
                 stopHookActive: record["stop_hook_active"] === true,
@@ -538,8 +541,11 @@ export async function runPostToolUseLiveHookCli(stdin, _stdout, _stderr, options
         return 0;
     const scope = toolEventScope(event.parsed);
     const now = options.now ?? Date.now();
-    if (scope !== null && !OWN_CARD_TOOL.test(scope.tool))
+    if (scope !== null && !OWN_CARD_TOOL.test(scope.tool)) {
         recordLiveStepEnd(scope.cwd, scope.sessionId, scope, now);
+        if (workflowTurn(scope.cwd, scope.sessionId) !== null)
+            recordLiveness(scope.cwd, scope.sessionId, "alive", options.env ?? process.env, now);
+    }
     recordLanes(event.parsed, toolLaneEvents, now);
     // A shell call that ran the film renderer is noted for the completion gate (motion-gate.ts).
     recordMotionTool(event.parsed, now);

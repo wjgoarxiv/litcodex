@@ -9,10 +9,11 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { cardStatusText, readCardStatus } from "./card-status.js";
-import { type HudView, renderHud } from "./hud.js";
+import { displayWidth, type HudView, renderHud } from "./hud.js";
 import { type LaneEvent, recordLaneEvent } from "./lane-state.js";
 import { writeThreadPointer } from "./live-step.js";
 import { evaluatePlanPersistence, recordLitPlanActivation } from "./plan-persistence.js";
+import { recordLiveness } from "./session-liveness.js";
 import { readThreads, THREAD_ROWS, threadLines } from "./threads.js";
 import { recordWorkflowTurn, type WorkflowSignals } from "./workflow-map.js";
 import { OTHER_SESSION_MS, readStack, recordStackEvent, type StackEvent } from "./workflow-stack.js";
@@ -25,6 +26,7 @@ afterEach(() => {
 const T0 = 1_800_000_000_000;
 const SID = "019a0000-cccc-7000-8000-000000000001";
 const PLACEHOLDER = /\?\/|\/\?|\[\?+\]|\?\?/u;
+const stripAnsi = (line: string): string => line.replace(/\u001b\[[0-9;]*m/gu, "");
 
 function thread(mode = "lit-loop"): { root: string; env: NodeJS.ProcessEnv } {
 	const home = realpathSync(mkdtempSync(join(tmpdir(), "litcodex-threads-home-")));
@@ -219,6 +221,87 @@ describe("other sessions", () => {
 		stack(root, LOOP_GREEN);
 		stack(root, [{ type: "start", skill: "lit-plan" }], "019a0000-dddd-7000-8000-000000000002", T0 - 60_000);
 		expect(text(env)).not.toContain("in parallel");
+	});
+
+	const A = "019a0000-aaaa-7000-8000-00000000000a";
+	const B = "019a0000-bbbb-7000-8000-00000000000b";
+	const C = "019a0000-cccc-7000-8000-00000000000c";
+
+	it("orders running, then idle, then the rest, newest first within each", () => {
+		const { root, env } = thread();
+		stack(root, LOOP_GREEN);
+		stack(root, [{ type: "start", skill: "lit-plan" }], A, T0 - 20_000);
+		recordLiveness(root, A, "idle", {}, T0 - 10_000);
+		stack(root, [{ type: "start", skill: "litwork" }], B, T0 - 120_000);
+		recordLiveness(root, B, "alive", {}, T0 - 100_000);
+		stack(root, [{ type: "start", skill: "litresearch" }], C, T0 - 60_000);
+		recordLiveness(root, C, "alive", {}, T0 - 50_000);
+		const others = readCardStatus(SID, env, T0).threads?.others ?? [];
+		expect(others.map((row) => [row.name, row.state])).toEqual([
+			["litresearch", "running"],
+			["litwork", "running"],
+			["lit-plan", "idle"],
+		]);
+	});
+
+	it("keeps a session its liveness record still vouches for, after its stack went quiet", () => {
+		const { root, env } = thread();
+		stack(root, LOOP_GREEN);
+		stack(root, [{ type: "start", skill: "lit-plan" }], A, T0 - OTHER_SESSION_MS - 60_000);
+		recordLiveness(root, A, "idle", {}, T0 - 60_000);
+		expect(readCardStatus(SID, env, T0).threads?.others.map((row) => row.state)).toEqual(["idle"]);
+	});
+
+	it("shows a finished start-work row as done for 60 seconds, then lets it go", () => {
+		const finished = (ago: number): string[] => {
+			const { root, env } = thread();
+			stack(root, LOOP_GREEN);
+			stack(
+				root,
+				[
+					{ type: "start", skill: "start-work" },
+					{ type: "record", family: "main", stage: "work", n: 3, total: 3, done: true },
+				],
+				A,
+				T0 - ago - 1_000,
+			);
+			return (readCardStatus(SID, env, T0).threads?.others ?? []).map((row) => row.state);
+		};
+		expect(finished(59_000)).toEqual(["done"]);
+		expect(finished(61_000)).toEqual([]);
+	});
+
+	it("names a session by its herdr pane when it has one", () => {
+		const { root, env } = thread();
+		stack(root, LOOP_GREEN);
+		stack(root, [{ type: "start", skill: "lit-plan" }], A, T0 - 20_000);
+		recordLiveness(root, A, "alive", { HERDR_PANE_ID: "w2:p3" }, T0 - 10_000);
+		expect(readCardStatus(SID, env, T0).threads?.others[0]?.name).toBe("lit-plan · w2:p3");
+		expect(text(env)).toContain("lit-plan · w2:p3");
+	});
+
+	it("fits the HUD width with colour on and off", () => {
+		const { root, env } = thread();
+		stack(root, LOOP_GREEN);
+		for (const [index, sid] of [A, B, C].entries()) {
+			stack(root, [{ type: "start", skill: "lit-brainstorm" }], sid, T0 - 20_000 - index * 1_000);
+			recordLiveness(root, sid, index === 1 ? "idle" : "alive", { HERDR_PANE_ID: `pane-${"x".repeat(26)}` }, T0);
+		}
+		const status = readCardStatus(SID, env, T0, { rollout: false });
+		const view: HudView = {
+			wanted: null,
+			session: { id: SID, folder: "~/work/alpha", lastSeen: T0 },
+			status,
+			unreadable: [],
+		};
+		for (const color of [false, true]) {
+			for (const width of [60, 80, 110]) {
+				const out = renderHud(view, { width, color, now: T0 });
+				for (const line of out.split("\n")) {
+					expect(displayWidth(stripAnsi(line)), `${color} ${width}: ${line}`).toBeLessThanOrEqual(width);
+				}
+			}
+		}
 	});
 });
 

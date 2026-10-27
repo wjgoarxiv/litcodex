@@ -217,12 +217,12 @@ Codex의 native goal과 로컬 루프 기록은 별도로 관리됩니다. nativ
 | --- | --- | --- |
 | `lit` 또는 `lit-loop` | **lit-loop** | 증거 체크포인트가 있는 실행 루프 |
 | `litwork` | **litwork** | 수동 QA 증거를 포함한 결과 중심 작업 |
-| `lit-plan` 또는 `lit plan` | **lit-plan** | 범위가 제한된 계획과 검증 체크리스트 작성 |
+| `lit-plan` 또는 `lit plan` | **lit-plan** | 범위가 제한된 계획과 검증 체크리스트 작성. 계획이 저장되면 같은 세션에서 30분 안에 `go`를 입력해 바로 시작. 프로젝트 밖 경로는 `Scope roots: <경로> (<동작>)` 줄로 적고, 빠진 줄은 Stop 훅이 한 번 알려 줌 |
 | `deep-interview` 또는 `lit deep interview` | **deep-interview** | 모호한 요구를 질문으로 좁히는 계획 전용 탐색 |
 | `lit brainstorm`, `lit ideation` 또는 `lit idea` | **lit-brainstorm** | 서로 다른 선택지를 많이 낸 뒤 고를 수 있는 짧은 목록으로 좁힘, 만들지는 않음 |
 | `lit schematic` 또는 `lit-schematic` | **lit-schematic** | 실제 장비를 SVG, PDF, PNG로 그림: P&ID, PFD, 실험 장치 그림, 아이소메트릭 컷어웨이. 이런 요청을 담은 단독 `lit`도 이 스킬로 이어짐 |
 | `lit hijack` 또는 `lit-hijack` | **lit-hijack** | 다른 사람이 공개한 기법(게시물, 아티클, 저장소, PDF)을 내 스킬로 옮김: 출처와 라이선스를 먼저 적고, 원문 표현 없는 명세를 쓰고, 따로 구현한 뒤 전후 비교로 증명함 |
-| `lit adhd` 또는 `lit rewind` | **lit-adhd** | 최근 Codex 세션을 읽기 전용으로 정리: 요청, 대기, 게이지, 멈춘 작업, `go`로 실행할 다음 한 걸음. `lit continue`는 멈춘 루프를 그 단계 그대로 이어감 |
+| `lit adhd` 또는 `lit rewind` | **lit-adhd** | 최근 Codex 세션을 읽기 전용으로 정리. 지금까지 끝낸 일, 지금 하는 일, 다음 한 걸음을 세 줄로 먼저 보여 주고, 이어서 요청, 진행 중·쉬는 중·끝냄·대기 상태, 게이지, 멈춘 작업, `go`로 실행할 다음 한 걸음을 정리. 끝난 세션은 검토하도록 권하고, 할 일이 따로 없으면 이 worktree HANDOFF의 `## Next`에서 다음 걸음을 가져옴. `lit continue`는 멈춘 루프를 그 단계 그대로 이어감 |
 | `litgoal` 또는 `lit goal` | **litgoal** | 완료 기준을 정하고 유지: 목표와 기준을 lit-loop와 Start Work가 향해 가는 루프 상태에 연결 |
 | `lit-recap` 또는 `lit recap` | **lit-recap** | `.litcodex` 원장을 읽기 전용으로 요약 |
 | `lit-comprehend` 또는 `comprehend` | **lit-comprehend** | 작업 트리 밖에 자체 완결형 설명 자료 생성 |

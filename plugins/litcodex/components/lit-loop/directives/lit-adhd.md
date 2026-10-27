@@ -156,19 +156,21 @@ the Codex home yourself.
 Use the user's language. Start from the JSON's `brief` field, a finished Markdown draft; keep its structure,
 translate it, and add no `#` heading or `>` quote mark (the Codex terminal prints them literally), and copy ids, gauges, titles, dates and names from the JSON verbatim.
 
-1. Headline: one bold `**🧭 …**` line with the session count, how many wait on the user, how many run, how many are paused,
-   and the next step, then a dim line with the window.
-2. One list-item card (`- ` first line, indented continuation lines) per live session (waiting or running), grouped by worktree and branch: a coloured badge
-   (`🟡 WAITS ON YOU`, `🟢 RUNNING`), then the goal in bold (`title`), ⏳ progress, ✅ done (`done`) and ▶ next (`needs`;
+1. Opener, three bold lines: `✅ Done so far:` (finished plans, done sessions), `▶ Doing now:` (running, idle,
+   paused, what waits on the user) and `⏭ Next:` (the one next step), then a dim line with the window and session count.
+2. One list-item card (`- ` first line, indented continuation lines) per session that is not ended, grouped by worktree and branch: a coloured badge
+   (`🟡 WAITS ON YOU`, `🟢 RUNNING`, `💤 IDLE`, `✅ DONE`), then the goal in bold (`title`), ⏳ progress, ✅ done (`done`) and ▶ next (`needs`;
    for a running session what it is doing now, `now: shell “npm”`). Sessions with status `ended` get no card.
 3. Roadmap under each worktree: `worktrees[].milestones` as `✓` done with its date, `▶` now, `○` later; open plans and
-   goals with their gauges; paused frames from `worktrees[].paused` as a `now` line with the way back (`lit continue`).
+   goals with their gauges, finished plans (`finishedPlans`) as finished; paused frames from `worktrees[].paused` as a `now` line with the way back (`lit continue`).
 4. One table under a `⚪ **Ended · N**` line: id, where, goal, ago, done, one row per ended session, eight at most, then the count
    of the rest. Keep each row on one line.
 5. One recommended next step in a box: `next` when its kind is not `none`, else `suggestion`, a real step from the
    records. Say `go` for a resume-frame, continue-work or start-plan step, `lit approve` or `lit deny` for an
-   approve-boundary step (shown only; never answer it for the user). A `suggestion` says nothing runs on its own here:
-   open that session, or say what to do. Never write "no next step".
+   approve-boundary step (shown only; never answer it for the user). A `handoff` step comes from this worktree's
+   HANDOFF note and `go` does not run it. A `suggestion` says nothing runs on its own here: open that session, or say
+   what to do; a done session is offered for review, never picked up again. Never write "no next step". The box
+   sits in a plain fence with no language tag.
 
 A gauge `[▉▉▉░░] 3/5` is drawn only when both numbers are real, copied as given. An unknown total gets no gauge and no
 placeholder: write the known facts in words (`12 steps · 4m · last: apply_patch`). Never show a run of question marks
@@ -176,10 +178,11 @@ where a number would go, and never estimate a total.
 
 Finish with one `unknown:` line naming each source whose status is not `ok`
 (`sources.sessions`, `sources.git`, `sources.state`) and whether the byte budget
-ran out. Never fill an unknown from memory.
+ran out, and say once how many plan files were too large to read (`skippedPlans`). Never fill an unknown from memory.
 
 # Status words
-`waiting-on-user`, `active` (a record in the last 15 minutes), `ended`, `unknown`.
+`done` (its work or plan finished), `waiting-on-user`, `idle` (its turn closed, per its liveness record), `active` (a
+record in the last 15 minutes), `ended`, `unknown`.
 The skill's `references/status-taxonomy.md` has the English and Korean words;
 `references/card-examples.md` shows a finished brief.
 

@@ -1,4 +1,13 @@
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	realpathSync,
+	rmSync,
+	utimesSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PassThrough } from "node:stream";
@@ -10,6 +19,7 @@ import {
 	PLAN_PUBLISHER_COMMAND,
 	recordLitPlanActivation,
 } from "./plan-persistence.js";
+import { takeGo } from "./rewind-go.js";
 
 const roots: string[] = [];
 
@@ -125,6 +135,49 @@ describe("lit-plan persistence guard (pure evaluator)", () => {
 		recordLitPlanActivation(root, "sess_a", 5_000);
 		expect(evaluatePlanPersistence(root, "sess_b")).toEqual({ decision: "pass" });
 		expect(evaluatePlanPersistence(root, "sess_a").decision).toBe("block");
+	});
+});
+
+describe("a saved plan arms `go`", () => {
+	const NOW = Date.parse("2026-10-27T12:00:00.000Z");
+	const MIN = 60_000;
+	const notePath = (root: string, sid: string): string => join(root, `.litcodex/adhd/next-${sid}.json`);
+
+	it("writes a start-plan note bound to the session once the plan is saved", () => {
+		const root = workspace();
+		recordLitPlanActivation(root, "sess_plan", NOW - 10 * MIN);
+		expect(evaluatePlanPersistence(root, "sess_plan", NOW).decision).toBe("block");
+		expect(existsSync(notePath(root, "sess_plan"))).toBe(false);
+		writePlan(root, "feature.md", CHECKBOX_PLAN, NOW - MIN);
+		expect(evaluatePlanPersistence(root, "sess_plan", NOW)).toEqual({ decision: "pass" });
+		const note = JSON.parse(readFileSync(notePath(root, "sess_plan"), "utf8")) as Record<string, unknown>;
+		expect(note).toMatchObject({ sessionId: "sess_plan", kind: "start-plan", plan: "feature.md", at: NOW });
+	});
+
+	it("lets `go` in the same session start that plan, and only that session", () => {
+		const root = workspace();
+		recordLitPlanActivation(root, "sess_plan", NOW - 10 * MIN);
+		writePlan(root, "feature.md", CHECKBOX_PLAN, NOW - MIN);
+		evaluatePlanPersistence(root, "sess_plan", NOW);
+		expect(takeGo(root, "sess_other", NOW + MIN)).toBeNull();
+		expect(takeGo(root, "sess_plan", NOW + MIN)).toMatchObject({ kind: "run", prompt: "start-work feature" });
+	});
+
+	it("does nothing for a note older than thirty minutes", () => {
+		const root = workspace();
+		recordLitPlanActivation(root, "sess_plan", NOW - 10 * MIN);
+		writePlan(root, "feature.md", CHECKBOX_PLAN, NOW - MIN);
+		evaluatePlanPersistence(root, "sess_plan", NOW);
+		expect(takeGo(root, "sess_plan", NOW + 31 * MIN)?.kind).toBe("hint");
+	});
+
+	it("still starts the named plan when another plan is open too", () => {
+		const root = workspace();
+		writePlan(root, "older.md", CHECKBOX_PLAN, NOW - 60 * MIN);
+		recordLitPlanActivation(root, "sess_plan", NOW - 10 * MIN);
+		writePlan(root, "feature.md", CHECKBOX_PLAN, NOW - MIN);
+		evaluatePlanPersistence(root, "sess_plan", NOW);
+		expect(takeGo(root, "sess_plan", NOW + MIN)).toMatchObject({ kind: "run", prompt: "start-work feature" });
 	});
 });
 

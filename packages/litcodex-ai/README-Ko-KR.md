@@ -110,4 +110,5 @@ npm exec --yes --package @litfamily/litcodex@1.0.31 -- litcodex uninstall
 [기존 설치 이전](https://github.com/wjgoarxiv/litcodex/blob/main/docs/npm-migration.md) ·
 [CHANGELOG.md](https://github.com/wjgoarxiv/litcodex/blob/main/CHANGELOG.md) ·
 [개인정보](https://github.com/wjgoarxiv/litcodex/blob/main/docs/privacy.md) ·
-[이슈](https://github.com/wjgoarxiv/litcodex/issues) · MIT 라이선스
+[이슈](https://github.com/wjgoarxiv/litcodex/issues) · MIT 라이선스 ·
+[상표 정책](https://github.com/wjgoarxiv/litcodex/blob/main/TRADEMARK.md)

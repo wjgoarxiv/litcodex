@@ -531,4 +531,4 @@ npm exec --yes --package @litfamily/litcodex@1.0.31 -- litcodex uninstall
 
 ## 라이선스
 
-[MIT](./LICENSE)
+[MIT](./LICENSE). LitCodex와 LitFamily 이름과 그림은 [상표 정책](./TRADEMARK.md)을 따릅니다.

@@ -10,7 +10,7 @@ import { rmSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { clean } from "./control-chars.js";
 import { plainDirsOrMissing, readSmallJson } from "./live-step.js";
-import { ADHD_DIR, chooseNext, GO_WINDOW_MS } from "./rewind.js";
+import { ADHD_DIR, chooseNext, GO_WINDOW_MS, openPlanNamed } from "./rewind.js";
 import { normalizeSessionId } from "./state-paths.js";
 const GO_PROMPT = /^\s*(?:(?:lit\s+)?go|ㄱㄱ|고|진행)[\s.!?]*$/iu;
 const MAX_NOTE_BYTES = 8 * 1024;
@@ -66,6 +66,16 @@ export function takeGo(cwd, sessionId, now) {
     if (note.kind === "approve-boundary")
         return { kind: "hint", text: BOUNDARY };
     const fresh = chooseNext(cwd, sessionId);
+    // A note naming its plan (a saved lit-plan, or a brief) holds while that plan is open and nothing outranks it,
+    // even when a second open plan means the brief alone would name none.
+    const named = note.kind === "start-plan" && note.plan !== null ? openPlanNamed(cwd, note.plan) : null;
+    if (named !== null && (fresh.kind === "none" || fresh.kind === "handoff" || fresh.kind === "start-plan")) {
+        return {
+            kind: "run",
+            prompt: `start-work ${named.name.replace(/\.md$/u, "")}`,
+            note: `go: start work on ${named.name}, ${named.done} of ${named.total} tasks done`,
+        };
+    }
     if (fresh.kind !== note.kind || (note.kind === "start-plan" && fresh.plan !== note.plan)) {
         return { kind: "hint", text: STALE };
     }

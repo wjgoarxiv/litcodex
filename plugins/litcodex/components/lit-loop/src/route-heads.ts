@@ -88,7 +88,7 @@ const LIT_PLAN = [
 	"- Explore before asking: ground yourself with read-only tools first and ask only what exploration cannot resolve.",
 	"- Surface, then ask: present what you found, the genuine ambiguities (each with a recommended option) and the approach you intend to plan.",
 	"- Wait for the user's explicit okay before generating the plan. Never auto-transition from interview to plan generation: no plan file, gap analysis or execution before approval.",
-	'- Drafts go under `.litcodex/drafts/*.md`. Never edit source or lifecycle authority state. Asked to "just do it", decline; after approval, hand the published plan to `lit start work <plan-name>`.',
+	'- Drafts go under `.litcodex/drafts/*.md`. Never edit source or lifecycle authority state. Asked to "just do it", decline; after approval, hand the published plan to `lit start work <plan-name>`, and close by telling the user to type `go` within 30 minutes to start it.',
 	"",
 	"Required first steps: in the skill's `references/full-workflow.md`, read Phase 0 - Classify, Phase 1 - Ground, Phase 2 - Interview and the Approval gate; then open exactly one of `references/intent-clear.md` or `references/intent-unclear.md`.",
 	"Native Codex Plan Mode is a host UI mode, not a hook-controlled setting. Inside it, stay read-only and return `<proposed_plan>...</proposed_plan>`; LitCodex cannot switch modes for the user (Shift+Tab can).",

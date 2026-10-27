@@ -9,7 +9,10 @@
 // user who abandons the plan) can never be trapped in a Stop loop. Every fs failure is FAIL-OPEN.
 
 import { mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { isAbsolute, join } from "node:path";
+import { scopeRootGaps, scopeRootLine } from "./plan-scope-roots.js";
+import { writeNext } from "./rewind.js";
 import { normalizeSessionId } from "./state-paths.js";
 import { recordStackEvent } from "./workflow-stack.js";
 
@@ -29,6 +32,8 @@ interface PlanPersistenceState {
 	readonly activatedAt: number;
 	readonly blocks: number;
 	readonly satisfied: boolean;
+	/** Plan files already told about missing `Scope roots:` lines; each is told once. */
+	readonly scopeWarned?: readonly string[];
 }
 
 export type PlanPersistenceDecision =
@@ -57,12 +62,14 @@ function readState(path: string): PlanPersistenceState | null {
 		) {
 			return null;
 		}
+		const warned = record["scopeWarned"];
 		return {
 			version: STATE_VERSION,
 			sessionId: record["sessionId"],
 			activatedAt: record["activatedAt"],
 			blocks: record["blocks"],
 			satisfied: record["satisfied"],
+			...(Array.isArray(warned) ? { scopeWarned: warned.filter((name) => typeof name === "string") } : {}),
 		};
 	} catch {
 		return null;
@@ -97,6 +104,7 @@ export function rearmLitPlanIfSatisfied(repoRoot: string, sessionId: string, now
 interface NewestPlan {
 	readonly file: string;
 	readonly taskRows: number;
+	readonly body: string;
 }
 
 /** Newest `.litcodex/plans/*.md` modified at or after `since`, or null when none exists. */
@@ -121,7 +129,7 @@ function newestPlanSince(repoRoot: string, since: number): NewestPlan | null {
 	if (newest === null) return null;
 	try {
 		const body = readFileSync(join(dir, newest.file), "utf8");
-		return { file: newest.file, taskRows: body.split(/\r?\n/).filter((line) => TASK_ROW.test(line)).length };
+		return { file: newest.file, taskRows: body.split(/\r?\n/).filter((line) => TASK_ROW.test(line)).length, body };
 	} catch {
 		return null;
 	}
@@ -136,18 +144,43 @@ function blockReason(detail: string): string {
 	);
 }
 
+function scopeReason(file: string, gaps: readonly string[]): string {
+	return (
+		`The saved plan ${PLAN_PERSISTENCE_PLANS_DIR}/${file} names paths outside this project that no \`Scope roots:\` line covers, ` +
+		"so start-work would pause at the first touch of each. Add these lines at column zero near the top of the plan " +
+		`(widen \`read\` to the actions each todo needs), then end the turn:\n${gaps.map(scopeRootLine).join("\n")}\n` +
+		"This is advisory and shown once for this plan; leave the plan as it is if the run should ask instead."
+	);
+}
+
 /**
  * Decide whether the Stop for `sessionId` may end. Pass when no activation exists, when the guard is
  * already satisfied, or when the block cap is spent; otherwise block until a checkbox plan newer than
  * the activation exists. Fail-open on any fs error.
  */
-export function evaluatePlanPersistence(repoRoot: string, sessionId: string): PlanPersistenceDecision {
+export function evaluatePlanPersistence(
+	repoRoot: string,
+	sessionId: string,
+	now = Date.now(),
+): PlanPersistenceDecision {
 	const path = statePath(repoRoot, sessionId);
 	if (path === null) return PASS;
 	const state = readState(path);
 	if (state === null || state.satisfied) return PASS;
 	const newest = newestPlanSince(repoRoot, state.activatedAt);
 	if (newest !== null && newest.taskRows > 0) {
+		const warned = state.scopeWarned ?? [];
+		const gaps = warned.includes(newest.file)
+			? []
+			: scopeRootGaps(newest.body, repoRoot, process.env["HOME"] ?? homedir());
+		if (gaps.length > 0) {
+			try {
+				writeState(path, { ...state, scopeWarned: [...warned, newest.file] });
+			} catch {
+				return PASS;
+			}
+			return { decision: "block", reason: scopeReason(newest.file, gaps) };
+		}
 		try {
 			writeState(path, { ...state, satisfied: true });
 		} catch {
@@ -166,6 +199,13 @@ export function evaluatePlanPersistence(repoRoot: string, sessionId: string): Pl
 				ref: { plan: `${PLAN_PERSISTENCE_PLANS_DIR}/${newest.file}` },
 			},
 			new Date(),
+		);
+		// One `go` in this session within the go window starts the plan just saved.
+		writeNext(
+			repoRoot,
+			sessionId,
+			{ kind: "start-plan", text: `start work on ${newest.file}`, plan: newest.file },
+			now,
 		);
 		return PASS;
 	}

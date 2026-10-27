@@ -20,6 +20,7 @@ import {
 	readLiveStep,
 	readThreadPointer,
 } from "./live-step.js";
+import { installedPluginVersion, loadedPluginVersion, restartChip } from "./restart-chip.js";
 import { normalizeSessionId } from "./state-paths.js";
 import { readThreads, type ThreadView, threadLines } from "./threads.js";
 import {
@@ -79,6 +80,8 @@ export interface CardStatus {
 	readonly workspace: string | null;
 	/** When the newest card of this thread opened; an older card that sees a later time folds itself. */
 	readonly cardOpenedAt: number | null;
+	/** `restart to <v>` while a newer LitCodex is installed than the one this process loaded, else null. */
+	readonly restart?: string | null;
 	readonly now: number;
 }
 
@@ -387,7 +390,7 @@ export function readCardStatus(
 	threadId: string | null,
 	env: NodeJS.ProcessEnv,
 	now = Date.now(),
-	options: { readonly rollout?: boolean } = {},
+	options: { readonly rollout?: boolean; readonly loadedVersion?: string | null } = {},
 ): CardStatus {
 	const rollout = options.rollout !== false;
 	const cwd = resolveThreadCwd(threadId, env, rollout);
@@ -484,6 +487,10 @@ export function readCardStatus(
 		branch: readBranch(cwd),
 		workspace,
 		cardOpenedAt,
+		restart: restartChip(
+			options.loadedVersion === undefined ? loadedPluginVersion() : options.loadedVersion,
+			installedPluginVersion(env),
+		),
 		now,
 	});
 }
@@ -506,8 +513,9 @@ export function cardStatusText(status: CardStatus): string {
 				: status.look === "review"
 					? "  REVIEW"
 					: "";
+	const chip = status.restart ? `  ↻ ${status.restart}` : "";
 	const lines = [
-		`🔥 LIT ${status.state === "complete" ? "COMPLETE ✓" : "IGNITED"} · ${status.mode ?? "lit"}${lookLabel}`,
+		`🔥 LIT ${status.state === "complete" ? "COMPLETE ✓" : "IGNITED"} · ${status.mode ?? "lit"}${lookLabel}${chip}`,
 	];
 	if (status.map !== null) {
 		lines.push(workflowMapText(status.map));

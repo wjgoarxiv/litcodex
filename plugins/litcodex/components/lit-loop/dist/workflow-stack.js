@@ -15,6 +15,7 @@
 import { closeSync, fstatSync, lstatSync, mkdirSync, readdirSync, readSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { openRegularFile, plainDirs, plainDirsOrMissing, writeFileAtomic } from "./live-step.js";
+import { readSessionsLiveness } from "./session-liveness.js";
 import { normalizeSessionId } from "./state-paths.js";
 export const STACK_DIR = ".litcodex/workflow-stack";
 export const MAX_FRAMES = 3;
@@ -400,15 +401,31 @@ export function recordStackEvent(cwd, sessionId, event, now = new Date()) {
 export const OTHER_SESSION_MS = 15 * 60 * 1000;
 const MAX_OTHER_SESSIONS = 6;
 const MAX_OTHER_FILES = 24;
+/** A finished start-work run stays on other sessions' views this long, then leaves. */
+export const FINISHED_WORK_MS = 60_000;
+/** Running first, then idle, then the rest (paused, done, or silent). */
+function otherRank(other) {
+    const top = other.frames.at(-1);
+    if (other.liveness === "idle")
+        return 1;
+    if (top?.done === true || top?.status === "paused")
+        return 2;
+    return other.liveness === "alive" || other.liveness === null ? 0 : 2;
+}
 /**
- * The stacks of the project's other sessions that moved within OTHER_SESSION_MS, newest first. It only
- * reads: a link, an oversized or malformed file reads as empty, and an older session is simply dropped.
+ * The stacks of the project's other sessions that moved within OTHER_SESSION_MS, or whose liveness record is
+ * still fresh, running first, then idle, then the rest, newest first within each. A start-work run that
+ * finished leaves after FINISHED_WORK_MS. It only reads: a link, an oversized or malformed file reads as
+ * empty, and an older session is simply dropped.
  */
 export function readOtherStacks(cwd, selfId, now = Date.now()) {
     try {
         const own = normalizeSessionId(selfId);
         if (!isAbsolute(cwd) || !plainDirs(cwd, STACK_DIR))
             return [];
+        const lives = new Map(readSessionsLiveness(cwd, now)
+            .filter((record) => record.state !== "ended")
+            .map((record) => [normalizeSessionId(record.sessionId), record]));
         const found = [];
         const names = readdirSync(join(cwd, STACK_DIR))
             .filter((name) => name.endsWith(".json"))
@@ -420,10 +437,23 @@ export function readOtherStacks(cwd, selfId, now = Date.now()) {
                 continue;
             const frames = readStack(cwd, id).frames;
             const at = Math.max(0, ...frames.map((frame) => Date.parse(frame.at)));
-            if (frames.length > 0 && now - at <= OTHER_SESSION_MS)
-                found.push({ id, frames, at });
+            const live = lives.get(id);
+            const top = frames.at(-1);
+            if (top === undefined || (now - at > OTHER_SESSION_MS && live === undefined))
+                continue;
+            if (top.skill === "start-work" && top.done === true && now - at > FINISHED_WORK_MS)
+                continue;
+            found.push({
+                id,
+                frames,
+                at: Math.max(at, live?.at ?? 0),
+                liveness: live === undefined ? null : live.state,
+                pane: live?.herdrPane ?? null,
+            });
         }
-        return found.sort((a, b) => b.at - a.at || a.id.localeCompare(b.id)).slice(0, MAX_OTHER_SESSIONS);
+        return found
+            .sort((a, b) => otherRank(a) - otherRank(b) || b.at - a.at || a.id.localeCompare(b.id))
+            .slice(0, MAX_OTHER_SESSIONS);
     }
     catch {
         return [];

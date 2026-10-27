@@ -1185,6 +1185,7 @@
         "marketplace/plugins/litcodex/vendor/scientific-visualization/tests/test_style_presets.py",
         "README.md",
         "LICENSE",
+        "TRADEMARK.md",
         "node_modules/@litcodex/lit-loop/package.json",
         "node_modules/@litcodex/lit-loop/dist/loop-cli.js",
         "node_modules/@litcodex/lit-loop/dist/hook-cli.js",
@@ -2447,6 +2448,7 @@
         "README.md",
         "README-Ko-KR.md",
         "LICENSE",
+        "TRADEMARK.md",
         "readme-assets/**",
         "node_modules/@litcodex/lit-loop/**"
       ],

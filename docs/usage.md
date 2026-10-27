@@ -193,12 +193,12 @@ blocked native goal needs the documented recovery step below; a handoff does not
 | --- | --- | --- |
 | `lit` or `lit-loop` | **lit-loop** | Durable, evidence-checkpointed execution |
 | `litwork` | **litwork** | Outcome-first work with manual-QA evidence |
-| `lit-plan` or `lit plan` | **lit-plan** | Planning-only, bounded plan with evidence and a Final DoneClaim |
+| `lit-plan` or `lit plan` | **lit-plan** | Planning-only, bounded plan with evidence and a Final DoneClaim; once the plan is saved, type `go` within 30 minutes in the same session to start it. Paths outside the project go on `Scope roots: <path> (<actions>)` lines, and the Stop hook names a missing one once |
 | `deep-interview` or `lit deep interview` | **deep-interview** | Planning-only discovery for ambiguous briefs |
 | `lit brainstorm`, `lit ideation` or `lit idea` | **lit-brainstorm** | Many different options, then a short list to pick from; nothing is built |
 | `lit schematic` or `lit-schematic` | **lit-schematic** | Draw real equipment as SVG, PDF and PNG: P&ID, PFD, apparatus figure or isometric cutaway; a bare `lit` with such a request reaches it too |
 | `lit hijack` or `lit-hijack` | **lit-hijack** | Port a technique someone else published (post, article, repo, PDF) into your own skill: provenance and licence first, a spec without the source wording, a separate build, a before and after proof |
-| `lit adhd` or `lit rewind` | **lit-adhd** | Read-only brief across recent Codex sessions: asked, waiting, gauges, paused work and one next step to run with `go`; `lit continue` resumes a paused loop at its stage |
+| `lit adhd` or `lit rewind` | **lit-adhd** | Read-only brief across recent Codex sessions. It opens with three lines (done so far, doing now, next), then shows what each session asked, which are running, idle, done or waiting on you, the gauges and paused work, and one next step to run with `go`. A finished session is offered for review, and with nothing else to do the step comes from the `## Next` list of this worktree's HANDOFF note. `lit continue` resumes a paused loop at its stage |
 | `litgoal` or `lit goal` | **litgoal** | Set and keep the finish line: bind an objective and criteria into the loop state that lit-loop and Start Work run toward |
 | `lit-recap` or `lit recap` | **lit-recap** | Read-only recap from `.litcodex` ledgers |
 | `lit-comprehend` or `comprehend` | **lit-comprehend** | Build a self-contained explainer outside the worktree |
@@ -265,6 +265,8 @@ most recently: the running LIT skill, the workflow map, the next open task and t
 clock. Activity is the latest prompt, tool start or tool end the LIT hooks recorded, so the HUD follows the session
 you are working in, an older resumed one included. The header names the short session id, the project folder and
 when LIT last heard from the session. A `--session` prefix that matches several sessions says how many it matched.
+When `litcodex install` or the auto-updater has put a newer LitCodex in place than the one the session loaded, the
+title line of the card and the HUD ends with `↻ restart to <version>`; restart Codex to load it.
 
 | Flag | Effect |
 | --- | --- |
@@ -280,9 +282,13 @@ and cursor and exit 0. Output is plain text when `NO_COLOR` is set or stdout is 
 
 ## Threads on the card
 
-While child agents run under the main thread, or another session of the project moved in the last 15 minutes, the
-card and the text HUD list them under the workflow row: the chain parent first, then a `N lanes in parallel` line
-and one row per child agent, with other sessions last. At most four rows are shown and the rest are counted as
+While child agents run under the main thread, or another session of the project moved or reported in the last 15
+minutes, the card and the text HUD list them under the workflow row: the chain parent first, then a `N lanes in
+parallel` line and one row per child agent, with other sessions last: running ones first, then idle ones, then the
+rest, newest first in each group. A session whose turn has closed reads `idle`, a Start Work run another session
+finished shows `done` for a minute and then leaves, and a session started inside a herdr pane is named
+`<skill> · <pane>`. Each session's state comes from a small record under `.litcodex/liveness/`, written by the
+PostToolUse and Stop hooks. At most four rows are shown and the rest are counted as
 `+N more`. A row shows a gauge such as `[▉▉░░░] 2/5` only when both numbers are known; otherwise it says what is
 known in words (`step 4`, `3 steps`, `starting`) and the desktop card adds a moving pulse. The children come from
 the plugin's `SubagentStart` and `SubagentStop` hooks, which

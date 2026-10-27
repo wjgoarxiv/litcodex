@@ -98,15 +98,22 @@ export declare function recordStackEvent(cwd: string, sessionId: string, event: 
 };
 /** Another session of the project counts as live while its stack was written this recently. */
 export declare const OTHER_SESSION_MS: number;
+/** A finished start-work run stays on other sessions' views this long, then leaves. */
+export declare const FINISHED_WORK_MS = 60000;
 export interface OtherStack {
     readonly id: string;
     readonly frames: readonly StackFrame[];
     /** The newest time any of its frames moved. */
     readonly at: number;
+    /** What the session's liveness record says now (`ended` records are left out), or null without one. */
+    readonly liveness: "alive" | "idle" | null;
+    readonly pane: string | null;
 }
 /**
- * The stacks of the project's other sessions that moved within OTHER_SESSION_MS, newest first. It only
- * reads: a link, an oversized or malformed file reads as empty, and an older session is simply dropped.
+ * The stacks of the project's other sessions that moved within OTHER_SESSION_MS, or whose liveness record is
+ * still fresh, running first, then idle, then the rest, newest first within each. A start-work run that
+ * finished leaves after FINISHED_WORK_MS. It only reads: a link, an oversized or malformed file reads as
+ * empty, and an older session is simply dropped.
  */
 export declare function readOtherStacks(cwd: string, selfId: string, now?: number): OtherStack[];
 /** The frame a bare `lit continue` should resume: the nearest spine below a side frame, else null. */

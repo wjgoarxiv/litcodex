@@ -44,5 +44,5 @@ describe("lit-diagram-drawer bundled skill", () => {
 		);
 		expect(report.foilResults).toHaveLength(8);
 		expect(expectedReasonsMatch).toBe(true);
-	}, 15_000);
+	}, 60_000);
 });

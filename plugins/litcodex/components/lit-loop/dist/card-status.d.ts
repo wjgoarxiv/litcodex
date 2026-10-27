@@ -37,6 +37,8 @@ export interface CardStatus {
     readonly workspace: string | null;
     /** When the newest card of this thread opened; an older card that sees a later time folds itself. */
     readonly cardOpenedAt: number | null;
+    /** `restart to <v>` while a newer LitCodex is installed than the one this process loaded, else null. */
+    readonly restart?: string | null;
     readonly now: number;
 }
 /**
@@ -70,6 +72,7 @@ export declare function toolDisplayName(tool: string): string;
 /** The card for one thread. `rollout: false` keeps every Codex rollout file unread; the usage row then stays empty. */
 export declare function readCardStatus(threadId: string | null, env: NodeJS.ProcessEnv, now?: number, options?: {
     readonly rollout?: boolean;
+    readonly loadedVersion?: string | null;
 }): CardStatus;
 /** Minutes and seconds, `m:ss`. */
 export declare function clock(ms: number): string;

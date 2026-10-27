@@ -17,6 +17,6 @@ export declare function rearmLitPlanIfSatisfied(repoRoot: string, sessionId: str
  * already satisfied, or when the block cap is spent; otherwise block until a checkbox plan newer than
  * the activation exists. Fail-open on any fs error.
  */
-export declare function evaluatePlanPersistence(repoRoot: string, sessionId: string): PlanPersistenceDecision;
+export declare function evaluatePlanPersistence(repoRoot: string, sessionId: string, now?: number): PlanPersistenceDecision;
 /** Codex Stop hook output for a block decision (single line + newline). */
 export declare function formatStopBlockOutput(reason: string): string;
