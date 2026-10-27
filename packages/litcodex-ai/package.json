@@ -1,6 +1,6 @@
 {
 	"name": "@litfamily/litcodex",
-	"version": "1.0.31",
+	"version": "1.0.32",
 	"description": "Codex CLI plugin that turns a request into a goal with checks, keeps the evidence in your project and hands unfinished work to the next session.",
 	"keywords": [
 		"codex",
@@ -53,7 +53,7 @@
 		"readme-assets"
 	],
 	"dependencies": {
-		"@litcodex/lit-loop": "1.0.31"
+		"@litcodex/lit-loop": "1.0.32"
 	},
 	"bundledDependencies": [
 		"@litcodex/lit-loop"

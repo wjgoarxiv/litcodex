@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.32] - 2026-10-28
+
+### Added
+
+- After `lit-plan` saves a plan, type `go` within 30 minutes in the same session to start it. No need to copy the
+  plan name into `lit start work`.
+- A plan can name folders outside the project on `Scope roots: <path> (<actions>)` lines. Start Work allows them
+  from the start instead of stopping at the first touch, and the Stop hook points out a missing line once, with the
+  exact line to paste.
+- When a newer LitCodex has been installed than the one the session loaded, the card and the HUD end their title
+  line with `↻ restart to <version>`.
+- `TRADEMARK.md` explains how the LitCodex and LitFamily names and art may be used. The code stays MIT.
+
+### Changed
+
+- The card and the HUD say what other sessions of the project are doing: running, idle, done or waiting on you,
+  running ones first. A session in a herdr pane shows the pane name.
+- `lit adhd` opens with three lines (done so far, doing now, next). A finished session is offered for review, and
+  when nothing else waits, the next step comes from the `## Next` list of this worktree's HANDOFF note.
+
 ## [1.0.31] - 2026-10-27
 
 ### Added
