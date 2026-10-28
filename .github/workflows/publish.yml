@@ -1,0 +1,96 @@
+# Releases @litfamily/litcodex through npm trusted publishing, so each version ships with a provenance
+# statement tying the tarball to this repository and the exact commit. It is dispatched by hand on main.
+# Left at its default it runs the gates and the full publish lifecycle as a dry run, uploading nothing.
+# With stage on it uploads a staged version that stays hidden until the maintainer approves it with 2FA.
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Upload a staged version to npm (off = gates and a dry-run publish only)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: npm with staged publishing
+        run: npm install -g npm@11.21.1
+
+      - name: Install dependencies (clean, locked)
+        run: npm ci --ignore-scripts
+
+      - name: Assert CI workflow integrity
+        run: npm run check:ci
+
+      - name: Verify lock-owned Codex CLI
+        run: npm run qa:codex-host-locked
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test typecheck
+        run: npm run typecheck:tests
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Documentation and contract audit
+        run: npm run docs:audit
+
+      - name: Codex hook QA
+        run: npm run qa:codex
+
+      - name: Path-robustness QA
+        run: npm run qa:path-robustness
+
+      - name: Lit-loop smoke QA
+        run: npm run qa:loop-smoke
+
+      - name: Public page reader A/B QA
+        run: npm run qa:lit-fetch-ab
+
+      - name: Legacy-token scan
+        run: npm run scan:legacy-tokens
+
+      # The build also restores the vendored picomatch copy that npm ci removes, so the tree is clean
+      # again before release:check runs its worktree guard.
+      - name: Build
+        run: npm run build
+
+      - name: Packed install QA
+        run: npm run qa:install-smoke
+
+      - name: Pack dry-run (payload guard)
+        run: npm run pack:all
+
+      # Both runs go through prepublishOnly (release:check: clean tree, lockstep, scans, the full test
+      # suite, final payload gate) and prepack (bundles lit-loop), so the suite runs exactly once.
+      - name: Dry-run publish
+        if: ${{ !inputs.stage }}
+        working-directory: packages/litcodex-ai
+        run: npm stage publish --dry-run
+
+      - name: Stage on npm
+        if: inputs.stage
+        working-directory: packages/litcodex-ai
+        run: npm stage publish
