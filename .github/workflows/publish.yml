@@ -80,6 +80,11 @@ jobs:
       - name: Packed install QA
         run: npm run qa:install-smoke
 
+      - name: Credentialless installed doctor QA
+        env:
+          CODEX_BIN: ${{ github.workspace }}/node_modules/.bin/codex
+        run: npm run qa:uiux-installed:doctor
+
       - name: Pack dry-run (payload guard)
         run: npm run pack:all
 
