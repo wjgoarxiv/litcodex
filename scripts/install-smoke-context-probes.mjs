@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 function hashContext(value) {
@@ -209,25 +209,30 @@ export function runInstalledContextProbes({ pluginRoot, projectDir, pluginDataRo
 	if (repeat.exitCode !== 0) failures.push(`installed rules same-session repeat exited ${repeat.exitCode}`);
 	if (Buffer.byteLength(repeat.stdout) !== 0) failures.push("installed rules same-session repeat was not zero-byte");
 
-	const directiveFirst = runHook(litLoopCli, "user-prompt-submit", {
-		hook_event_name: "UserPromptSubmit",
-		prompt: "lit plan",
-		transcript_path: null,
-	});
+	// The lit-loop hook keeps the per-session route record under the cwd, so a repeat in one session gets the short
+	// continue context rather than the full directive or silence.
+	const litPlanTurn = (turn) =>
+		runHook(litLoopCli, "user-prompt-submit", {
+			hook_event_name: "UserPromptSubmit",
+			session_id: "context-session-lit-plan",
+			turn_id: `context-lit-plan-${turn}`,
+			cwd: projectDir,
+			prompt: "lit plan",
+		});
+	const directiveFirst = litPlanTurn(1);
 	const directiveContext = decodeContext(directiveFirst.stdout);
 	if (directiveFirst.exitCode !== 0) failures.push(`installed lit-plan directive exited ${directiveFirst.exitCode}`);
 	if (directiveContext === null) failures.push("installed lit-plan directive emitted no context");
-	const transcript = join(pluginDataRoot, "lit-plan-transcript.jsonl");
-	writeFileSync(transcript, directiveFirst.stdout, { mode: 0o600 });
-	const directiveRepeat = runHook(litLoopCli, "user-prompt-submit", {
-		hook_event_name: "UserPromptSubmit",
-		prompt: "lit plan",
-		transcript_path: transcript,
-	});
+	const directiveRepeat = litPlanTurn(2);
+	const repeatContext = decodeContext(directiveRepeat.stdout) ?? "";
 	if (directiveRepeat.exitCode !== 0)
-		failures.push(`installed lit-plan transcript repeat exited ${directiveRepeat.exitCode}`);
-	if (Buffer.byteLength(directiveRepeat.stdout) !== 0)
-		failures.push("installed lit-plan transcript repeat was not zero-byte");
+		failures.push(`installed lit-plan same-session repeat exited ${directiveRepeat.exitCode}`);
+	if (!repeatContext.includes("already active"))
+		failures.push("installed lit-plan same-session repeat did not continue the active mode");
+	if (Buffer.byteLength(repeatContext) > 600)
+		failures.push(
+			`installed lit-plan same-session repeat sent ${Buffer.byteLength(repeatContext)} bytes, expected at most 600`,
+		);
 
 	const noOpPayload = {
 		hook_event_name: "UserPromptSubmit",
@@ -254,7 +259,7 @@ export function runInstalledContextProbes({ pluginRoot, projectDir, pluginDataRo
 			rulesFreshIdentity: freshHashes[0]?.sha256 === freshHashes[1]?.sha256,
 			rulesSameSessionRepeatBytes: Buffer.byteLength(repeat.stdout),
 			litPlanDirective: directiveContext === null ? null : hashContext(directiveContext),
-			litPlanTranscriptRepeatBytes: Buffer.byteLength(directiveRepeat.stdout),
+			litPlanSameSessionRepeatBytes: Buffer.byteLength(repeatContext),
 			startWorkContinuationBytes: Buffer.byteLength(startWorkNoOp.stdout),
 			wikifyKnowledgeBytes: Buffer.byteLength(wikifyNoOp.stdout),
 		},

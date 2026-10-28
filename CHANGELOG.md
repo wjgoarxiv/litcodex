@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The `qa:codex` browser-drive check expects the route to name the installed `SKILL.md` by path, as routes have
   done since 1.0.26, instead of an inlined skill body.
+- The `qa:install-smoke` lit-plan probe repeats `lit plan` in one session and expects the short continue context,
+  as the hook has sent since 1.0.29, instead of silence after a transcript that already holds the directive.
 
 ## [1.0.32] - 2026-10-28
 
