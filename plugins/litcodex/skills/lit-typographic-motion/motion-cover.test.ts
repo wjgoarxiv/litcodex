@@ -229,6 +229,7 @@ describe("the decoded file (img2webp + dwebp)", () => {
 		expect(info.durations).toEqual(Array(6).fill(63));
 		expect(edges).toEqual([0, 8, 16, 24, 32, 40]);
 	});
+	// Encodes 96 noise frames up to five times and decodes the cover twice: about 2 s here, past 5 s on a loaded runner.
 	it("a cover between 2 and 3 MiB passes FLOOR and misses TARGET: --strict exits 13, plain cover-gate exits 0", (context) => {
 		if (!LIBWEBP) return context.skip("img2webp and dwebp (libwebp) not on PATH");
 		const dir = temp("motion-heavy-");
@@ -261,7 +262,7 @@ describe("the decoded file (img2webp + dwebp)", () => {
 		expect(strict.status, strict.stdout + strict.stderr).toBe(EXIT.GATE_FAIL_QA);
 		expect(strict.stdout).toMatch(/G1 pass\(floor\)/u);
 		expect(cli(["cover-gate", "--file", picked]).status).toBe(EXIT.OK);
-	});
+	}, 60_000);
 });
 
 /** A finished cover run on disk, the way the renderer writes it, without Chrome. */

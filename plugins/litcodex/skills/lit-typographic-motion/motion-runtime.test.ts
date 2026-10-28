@@ -49,6 +49,7 @@ function fakeDepsCache(): string {
 }
 
 describe("runtime states without a browser (Test 10)", () => {
+	// status launches the host's Chrome and ffmpeg to read their versions; a cold start took 10.8 s on a CI runner.
 	it("status on an empty cache names every missing item and the fix", () => {
 		const result = node([RUNTIME, "status", "--json", "--no-browser"], { XDG_CACHE_HOME: temp("motion-empty-") });
 		expect(result.status).toBe(14);
@@ -56,7 +57,7 @@ describe("runtime states without a browser (Test 10)", () => {
 		expect(report.ready).toBe(false);
 		expect(report.missing.join("\n")).toMatch(/opentype\.js[\s\S]*playwright-core[\s\S]*ws[\s\S]*receipt[\s\S]*galmuri9[\s\S]*meslo/u);
 		expect(report.prewarm).toContain("litcodex motion-runtime install");
-	});
+	}, 60_000);
 	it("a render with an unwarmed cache exits 14 and names the install command", () => {
 		const dir = temp("motion-r14-");
 		const result = node([RENDER, "film", "--brief", brief(dir), "--treatment", treat(dir), "--out", join(dir, "out")], { XDG_CACHE_HOME: temp("motion-cold-") });

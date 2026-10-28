@@ -56,6 +56,7 @@ describe("canonical bundled skill catalog", () => {
 		expect(incomplete.missingSkillIds).toEqual(["debugging", "lit-code"]);
 	});
 
+	// Re-probes the whole catalog once per readme-studio resource and went past 5 s under a full parallel suite.
 	it("requires readme-studio and its reference closure in an installed catalog", () => {
 		expect(CANONICAL_SKILL_IDS).toContain("readme-studio");
 
@@ -87,5 +88,5 @@ describe("canonical bundled skill catalog", () => {
 			).toContain(resourcePath);
 			installed.add(installedPath);
 		}
-	});
+	}, 30_000);
 });
