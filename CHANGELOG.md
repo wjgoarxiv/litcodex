@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The `qa:codex` browser-drive check expects the route to name the installed `SKILL.md` by path, as routes have
+  done since 1.0.26, instead of an inlined skill body.
+
 ## [1.0.32] - 2026-10-28
 
 ### Added

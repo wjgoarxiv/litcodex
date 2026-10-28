@@ -157,11 +157,7 @@ const cases = [
 			check(f, stdout.includes(BROWSER_DRIVE_MARKER), `stdout missing ${BROWSER_DRIVE_MARKER}`);
 			const parsed = tryParse(stdout);
 			const context = parsed?.hookSpecificOutput?.additionalContext ?? "";
-			check(
-				f,
-				context.includes('<litcodex-skill-body name="browser-drive">'),
-				"stdout missing browser-drive skill body",
-			);
+			check(f, namesBrowserDriveSkill(context), "stdout does not name the browser-drive SKILL.md");
 			check(f, stderr === "", `stderr not empty: ${stderr.slice(0, 80)}`);
 			check(f, noLegacyToken(stdout), "legacy token leaked into browser-drive stdout");
 			const shorthand = runHook('{"hook_event_name":"UserPromptSubmit","prompt":"$litcodex:browser-drive"}');
@@ -170,8 +166,8 @@ const cases = [
 			check(f, shorthand.stdout.includes(BROWSER_DRIVE_MARKER), "shorthand stdout missing browser-drive marker");
 			check(
 				f,
-				shorthandContext.includes('<litcodex-skill-body name="browser-drive">'),
-				"shorthand stdout missing browser-drive skill body",
+				namesBrowserDriveSkill(shorthandContext),
+				"shorthand stdout does not name the browser-drive SKILL.md",
 			);
 			return f;
 		},
@@ -287,6 +283,12 @@ const cases = [
 		},
 	},
 ];
+
+/** True when `context` names an existing browser-drive SKILL.md by path (routes stopped inlining bodies in 1.0.26). */
+function namesBrowserDriveSkill(context) {
+	const path = /^skill browser-drive: (.+[\\/]skills[\\/]browser-drive[\\/]SKILL\.md)$/mu.exec(context)?.[1];
+	return path !== undefined && existsSync(path);
+}
 
 function tryParse(text) {
 	try {
