@@ -228,7 +228,7 @@ it("gives validators, scenarios, hooks, and doctor no auth while only both exact
 	writeFileSync(join(root, "pack", "litcodex-ai.tgz"), "packed");
 	writeFileSync(
 		join(frontendRoot, "SKILL.md"),
-		"```bash\nprintf '\"valid\":true --input design-contract.json'\n```\n",
+		'```bash\nFRONTEND_UIUX_SKILL_FILE="<absolute path of the SKILL.md selected for this turn>"\nprintf \'"valid":true --input design-contract.json\'\n```\n',
 	);
 	writeFileSync(
 		join(visualRoot, "SKILL.md"),
@@ -273,7 +273,12 @@ it("gives validators, scenarios, hooks, and doctor no auth while only both exact
 		calls.push({ command, args, options });
 		if (command === "sh") {
 			const block = args.at(-1);
-			if (block.includes("design-contract")) return processResult({ stdout: '{"valid":true}\n' });
+			if (block.includes("design-contract")) {
+				// The documented block names its own SKILL.md; the probe must fill that in as the model would.
+				return block.includes(`FRONTEND_UIUX_SKILL_FILE="${join(frontendRoot, "SKILL.md")}"`)
+					? processResult({ stdout: '{"valid":true}\n' })
+					: processResult({ exitCode: 1, stderr: "Cannot find module scripts/validate-design-contract.mjs" });
+			}
 			if (block.includes("--now")) return processResult({ stdout: '{"verdict":"PASS"}\n' });
 			if (block.includes("image-diff")) return processResult({ stdout: '{"similarityScore": 100}\n' });
 			return processResult({ stdout: '{"controlSequencesValid": true}\n' });

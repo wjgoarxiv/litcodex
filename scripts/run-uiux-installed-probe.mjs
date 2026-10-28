@@ -39,13 +39,17 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const evidencePath = join(repoRoot, ".litcodex/evidence/task-uiux-installed-receipt.json");
 const NOW = "2026-07-25T06:00:00.000Z";
 
+// A documented block may ask for the path of the SKILL.md in use; fill it in the way the model would.
+const SKILL_FILE_PLACEHOLDER = "<absolute path of the SKILL.md selected for this turn>";
+
 function documentedBlock(skillRoot, marker) {
-	const markdown = readFileSync(join(skillRoot, "SKILL.md"), "utf8");
+	const skillFile = join(skillRoot, "SKILL.md");
+	const markdown = readFileSync(skillFile, "utf8");
 	const matches = [...markdown.matchAll(/```bash\n([\s\S]*?)\n```/g)]
 		.map((match) => match[1] ?? "")
 		.filter((block) => block.includes(marker));
 	assert(matches.length === 1, `expected one documented block for ${marker}, found ${matches.length}`);
-	return matches[0];
+	return matches[0].replaceAll(SKILL_FILE_PLACEHOLDER, skillFile);
 }
 
 async function commandTextRecordAsync(name, command, args, options, stdoutMarker, runCommand) {

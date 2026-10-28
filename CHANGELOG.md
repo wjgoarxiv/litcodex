@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as the hook has sent since 1.0.29, instead of silence after a transcript that already holds the directive.
 - Three slow tests (the 2–3 MiB motion cover, motion runtime status on an empty cache, and the readme-studio catalog
   closure) carry their own timeouts, so a slower CI runner no longer fails them at Vitest's 5 s default.
+- `qa:uiux-installed:doctor` fills in the installed `frontend-ui-ux` SKILL.md path that the skill's documented
+  validator command asks for. It had run the placeholder as written and failed on every CI run since 2026-09-30.
 
 ## [1.0.32] - 2026-10-28
 
