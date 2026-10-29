@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.33] - 2026-10-29
+
+### Added
+
+- Releases are now built and published from GitHub Actions with npm provenance. The npm page shows a green check
+  that links each version to this repository and the commit it was built from.
+
 ### Fixed
 
 - The `qa:codex` browser-drive check expects the route to name the installed `SKILL.md` by path, as routes have
