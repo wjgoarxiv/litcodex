@@ -8,5 +8,5 @@
 		"rootDir": ".",
 		"rewriteRelativeImportExtensions": true
 	},
-	"files": ["version.ts", "check-version-lockstep.ts", "release-checklist.ts"]
+	"files": ["version.ts", "check-version-lockstep.ts", "ci-run-verdict.ts", "release-checklist.ts"]
 }

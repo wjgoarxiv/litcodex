@@ -268,7 +268,8 @@ describe("#given the release checklist #when run on the aligned repo #then it ag
 		const src = readFileSync(join(HERE, "release-checklist.ts"), "utf8");
 		const lockSrc = readFileSync(join(HERE, "check-version-lockstep.ts"), "utf8");
 		const versionSrc = readFileSync(join(HERE, "version.ts"), "utf8");
-		for (const blob of [src, lockSrc, versionSrc]) {
+		const ciRunSrc = readFileSync(join(HERE, "ci-run-verdict.ts"), "utf8");
+		for (const blob of [src, lockSrc, versionSrc, ciRunSrc]) {
 			expect(/npm\s+publish/i.test(blob)).toBe(false);
 			expect(/NPM_TOKEN/.test(blob)).toBe(false);
 			expect(/NODE_AUTH_TOKEN/.test(blob)).toBe(false);
@@ -309,6 +310,99 @@ describe("#given a failing test suite #when the release checklist runs #then it 
 		expect(readFileSync(join(root, "release-evidence", "task-22-test-suite.txt"), "utf8")).toContain(
 			failureOutput.trim(),
 		);
+	});
+});
+
+describe("#given publish.yml #when release:check runs with the CI flag #then ci.yml replaces the suite", () => {
+	const passingPack = () => ({ ok: true, checkedPackages: ["fixture"], filesChecked: 1, issues: [] });
+
+	it("swaps the test-suite step for the ci-run step and never starts the suite", async () => {
+		const root = makeSandbox();
+		let suiteCalls = 0;
+		const asked: string[] = [];
+		const report = await runReleaseChecklist(
+			root,
+			{ evidenceDir: "release-evidence", publishFromCi: true },
+			{
+				runTestSuite() {
+					suiteCalls += 1;
+					return { error: null, status: 0, stdout: "", stderr: "" };
+				},
+				runFinalPackGate: passingPack,
+				async verifyCiRun(requestedRoot) {
+					asked.push(requestedRoot);
+					return { ok: true, summary: "ci.yml run 7 passed on fixture" };
+				},
+			},
+		);
+		expect(suiteCalls).toBe(0);
+		expect(asked).toEqual([root]);
+		const ids = report.steps.map((step) => step.id);
+		expect(ids).toContain("ci-run");
+		expect(ids).not.toContain("test-suite");
+		expect(ids.indexOf("ci-run")).toBe(5);
+		expect(report.steps.find((step) => step.id === "ci-run")).toEqual({
+			id: "ci-run",
+			ok: true,
+			summary: "ci.yml run 7 passed on fixture",
+			evidencePath: "release-evidence/task-22-ci-run.txt",
+		});
+		expect(readFileSync(join(root, "release-evidence", "task-22-ci-run.txt"), "utf8")).toContain("ci.yml run 7");
+	});
+
+	it.each([
+		["a refusal", async () => ({ ok: false, summary: "no successful ci.yml push run for fixture" })],
+		[
+			"a thrown check",
+			async () => {
+				throw new Error("boom");
+			},
+		],
+	] as const)("blocks the release on %s", async (_label, verifyCiRun) => {
+		const root = makeSandbox();
+		const report = await runReleaseChecklist(
+			root,
+			{ evidenceDir: "release-evidence", publishFromCi: true },
+			{
+				runTestSuite: () => ({ error: null, status: 0, stdout: "", stderr: "" }),
+				runFinalPackGate: passingPack,
+				verifyCiRun,
+			},
+		);
+		expect(report.ok).toBe(false);
+		expect(report.steps.find((step) => step.id === "ci-run")?.ok).toBe(false);
+	});
+
+	it("keeps the full test suite for a local release:check without the flag", async () => {
+		const root = makeSandbox();
+		let suiteCalls = 0;
+		let ciCalls = 0;
+		const report = await runReleaseChecklist(
+			root,
+			{ evidenceDir: "release-evidence" },
+			{
+				runTestSuite() {
+					suiteCalls += 1;
+					return { error: null, status: 1, stdout: "local suite ran\n", stderr: "" };
+				},
+				runFinalPackGate: passingPack,
+				async verifyCiRun() {
+					ciCalls += 1;
+					return { ok: true, summary: "unused" };
+				},
+			},
+		);
+		expect(suiteCalls).toBe(1);
+		expect(ciCalls).toBe(0);
+		expect(report.steps.map((step) => step.id)).not.toContain("ci-run");
+		expect(report.steps.find((step) => step.id === "test-suite")?.ok).toBe(false);
+		expect(report.ok).toBe(false);
+	});
+
+	it("reads the flag in the CLI and leaves the default checklist on the full suite", () => {
+		const src = readFileSync(join(HERE, "release-checklist.ts"), "utf8");
+		expect(src).toContain("publishFromCi: publishFromCiRequested(process.env)");
+		expect(src).toMatch(/options\?\.publishFromCi === true\s*\?\s*await stepCiRun/u);
 	});
 });
 

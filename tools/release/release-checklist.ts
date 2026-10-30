@@ -3,7 +3,8 @@
 // Runs the full preflight gate chain (clean worktree, version lockstep, legacy-token scan, docs
 // audit, tracked marketplace distribution, full test suite, final package payload gate,
 // stable-semver, manifest-is-shippable) and writes a JSON report under .litcodex/evidence/ only
-// after the worktree guard passes.
+// after the worktree guard passes. Inside publish.yml (LITCODEX_PUBLISH_FROM_CI=1) the full test
+// suite step becomes the ci-run step: ci.yml must already have passed on this exact commit.
 // HARD INVARIANTS (enforced by release-checklist.test.ts self-scan):
 //   - this source spawns NO registry-shipping command and reads NO registry credential env var;
 //   - `publishAttempted` is the compile-time literal `false` — there is no code path that flips it;
@@ -14,6 +15,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { checkVersionLockstep, ReleaseMetadataError } from "./check-version-lockstep.ts";
+import { type CiRunVerdict, checkCiRun, gitIn, publishFromCiRequested } from "./ci-run-verdict.ts";
 import { isStableSemver, VERSION } from "./version.ts";
 
 export interface ReleaseCheckStep {
@@ -33,6 +35,8 @@ export interface ReleaseChecklistReport {
 
 export interface ReleaseChecklistOptions {
 	readonly evidenceDir?: string; // default ".litcodex/evidence"
+	/** Replace the full test suite with the ci-run step (set by the CLI from LITCODEX_PUBLISH_FROM_CI). */
+	readonly publishFromCi?: boolean;
 }
 
 interface NpmScriptExecution {
@@ -45,6 +49,7 @@ interface NpmScriptExecution {
 export interface ReleaseChecklistDependencies {
 	readonly runTestSuite: (repoRoot: string) => NpmScriptExecution;
 	readonly runFinalPackGate: (repoRoot: string) => FinalPackReport;
+	readonly verifyCiRun?: (repoRoot: string) => Promise<CiRunVerdict>;
 }
 
 export function checkWorktreeClean(repoRoot: string): ReleaseCheckStep {
@@ -219,6 +224,27 @@ function stepTestSuite(
 	return { id: "test-suite", ok, summary, evidencePath };
 }
 
+async function stepCiRun(
+	repoRoot: string,
+	evidenceAbs: string,
+	evidenceDir: string,
+	verifyCiRun: (repoRoot: string) => Promise<CiRunVerdict>,
+): Promise<ReleaseCheckStep> {
+	const evidencePath = `${evidenceDir}/task-22-ci-run.txt`;
+	let verdict: CiRunVerdict;
+	try {
+		verdict = await verifyCiRun(repoRoot);
+	} catch (err) {
+		verdict = { ok: false, summary: `ci.yml run check error: ${(err as Error).message}` };
+	}
+	writeFileSync(resolve(evidenceAbs, "task-22-ci-run.txt"), `${verdict.summary}\n`);
+	return { id: "ci-run", ok: verdict.ok, summary: verdict.summary, evidencePath };
+}
+
+function verifyCiRunFromEnv(repoRoot: string): Promise<CiRunVerdict> {
+	return checkCiRun({ env: process.env, git: gitIn(repoRoot) });
+}
+
 interface FinalPackReport {
 	readonly ok: boolean;
 	readonly checkedPackages: readonly string[];
@@ -335,7 +361,9 @@ export async function runReleaseChecklist(
 		stepLegacyTokenScan(repoRoot, evidenceAbs, evidenceDir),
 		stepDocsAudit(repoRoot, evidenceAbs, evidenceDir),
 		stepMarketplaceDistTracked(repoRoot, evidenceAbs, evidenceDir),
-		stepTestSuite(repoRoot, evidenceAbs, evidenceDir, dependencies.runTestSuite),
+		options?.publishFromCi === true
+			? await stepCiRun(repoRoot, evidenceAbs, evidenceDir, dependencies.verifyCiRun ?? verifyCiRunFromEnv)
+			: stepTestSuite(repoRoot, evidenceAbs, evidenceDir, dependencies.runTestSuite),
 		stepPackPayload(repoRoot, evidenceAbs, evidenceDir, dependencies.runFinalPackGate),
 		stepStableSemver(),
 		stepShippable(repoRoot),
@@ -369,7 +397,10 @@ async function runCli(argv: readonly string[]): Promise<number> {
 	const evidenceDir = parseEvidenceDir(argv);
 	let report: ReleaseChecklistReport;
 	try {
-		report = await runReleaseChecklist(repoRoot, evidenceDir ? { evidenceDir } : undefined);
+		report = await runReleaseChecklist(repoRoot, {
+			...(evidenceDir ? { evidenceDir } : {}),
+			publishFromCi: publishFromCiRequested(process.env),
+		});
 	} catch (err) {
 		if (err instanceof ReleaseMetadataError) {
 			process.stderr.write(`[release] ${err.code}: ${err.message}\n`);

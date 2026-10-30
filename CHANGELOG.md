@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Releases are faster: the publish workflow no longer repeats the test suite and the QA lanes. Inside it,
+  `release:check` replaces its test-suite step with a `ci-run` step that asks GitHub whether CI already passed on
+  the exact commit being released, and stops the release if it did not. A local `release:check` still runs the full
+  suite.
+
 ### Fixed
 
 - Dependency alerts cleared: the audio runtime pins msgpack 1.2.3 (was 1.2.2), the Remotion cover template pins zod 4.6.6 (was 4.5.4) and the HyperFrames cover template locks @hono/node-server 2.1.5 (was 2.1.1).

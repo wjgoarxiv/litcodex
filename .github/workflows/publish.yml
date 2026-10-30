@@ -2,6 +2,8 @@
 # statement tying the tarball to this repository and the exact commit. It is dispatched by hand on main.
 # Left at its default it runs the gates and the full publish lifecycle as a dry run, uploading nothing.
 # With stage on it uploads a staged version that stays hidden until the maintainer approves it with 2FA.
+# The suite and the QA lanes do not run again here: ci.yml already ran them on the pushed commit, and
+# release:check (LITCODEX_PUBLISH_FROM_CI=1) refuses unless that ci.yml run passed on this exact commit.
 name: Publish
 
 on:
@@ -19,10 +21,14 @@ jobs:
   publish:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 15
     permissions:
       contents: read
+      actions: read
       id-token: write
+    env:
+      LITCODEX_PUBLISH_FROM_CI: "1"
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -42,32 +48,14 @@ jobs:
       - name: Assert CI workflow integrity
         run: npm run check:ci
 
-      - name: Verify lock-owned Codex CLI
-        run: npm run qa:codex-host-locked
-
       - name: Typecheck
         run: npm run typecheck
-
-      - name: Test typecheck
-        run: npm run typecheck:tests
 
       - name: Lint
         run: npm run lint
 
       - name: Documentation and contract audit
         run: npm run docs:audit
-
-      - name: Codex hook QA
-        run: npm run qa:codex
-
-      - name: Path-robustness QA
-        run: npm run qa:path-robustness
-
-      - name: Lit-loop smoke QA
-        run: npm run qa:loop-smoke
-
-      - name: Public page reader A/B QA
-        run: npm run qa:lit-fetch-ab
 
       - name: Legacy-token scan
         run: npm run scan:legacy-tokens
@@ -77,19 +65,12 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Packed install QA
-        run: npm run qa:install-smoke
-
-      - name: Credentialless installed doctor QA
-        env:
-          CODEX_BIN: ${{ github.workspace }}/node_modules/.bin/codex
-        run: npm run qa:uiux-installed:doctor
-
       - name: Pack dry-run (payload guard)
         run: npm run pack:all
 
-      # Both runs go through prepublishOnly (release:check: clean tree, lockstep, scans, the full test
-      # suite, final payload gate) and prepack (bundles lit-loop), so the suite runs exactly once.
+      # Both runs go through prepublishOnly (release:check: clean tree, lockstep, scans, the ci-run step
+      # that asks the GitHub API for a green ci.yml push run on this commit, final payload gate) and
+      # prepack (bundles lit-loop).
       - name: Dry-run publish
         if: ${{ !inputs.stage }}
         working-directory: packages/litcodex-ai

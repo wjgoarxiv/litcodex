@@ -64,9 +64,12 @@ credentialed run that fails closed when authentication is unavailable.
 
 When npm trusted publishing is configured for this repository and its workflow is verified, prefer
 that path. `.github/workflows/publish.yml` is that workflow: it is dispatched by hand on `main`, only
-its job holds `id-token: write`, and it reproduces the CI gates before running `npm stage publish`
-from `packages/litcodex-ai`, whose `prepublishOnly` runs the complete `release:check`. Left at its
-default the workflow stops at `npm stage publish --dry-run`. A staged version stays private until the
+its job holds `id-token: write`, and it runs the fast gates before running `npm stage publish` from
+`packages/litcodex-ai`, whose `prepublishOnly` runs `release:check`. The workflow sets
+`LITCODEX_PUBLISH_FROM_CI=1`, so `release:check` replaces its full test-suite step with the `ci-run`
+step: it refuses unless the checkout is the dispatched commit with no local changes and a `ci.yml`
+push run already passed on that exact commit. A local `release:check` still runs the full suite. Left
+at its default the workflow stops at `npm stage publish --dry-run`. A staged version stays private until the
 maintainer approves it on npmjs.com with two-factor authentication, which is the final user approval
 for this path. The npm trusted publisher entry names owner `wjgoarxiv`, repository `litcodex`,
 workflow `publish.yml` and no environment. This repository does not treat the presence or success of
