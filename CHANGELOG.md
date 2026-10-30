@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Dependency alerts cleared: the audio runtime pins msgpack 1.2.3 (was 1.2.2), the Remotion cover template pins zod 4.6.6 (was 4.5.4) and the HyperFrames cover template locks @hono/node-server 2.1.5 (was 2.1.1).
+
 ## [1.0.33] - 2026-10-29
 
 ### Added
