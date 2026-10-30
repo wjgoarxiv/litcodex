@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `lit adhd` no longer tells you to type `go` while other lanes of the repository are still at work (another
+  session running or waiting on you, or, inside a terminal multiplexer, another agent of the workspace): the box
+  says to wait for them, or to answer the one that waits, and `go` typed anyway starts nothing. A plan run that
+  belongs to another session is shown, never offered for `go`, and `go` continues only the run the brief named while
+  this session still owns it. The handoff step now comes from the newest HANDOFF note and skips items already marked done.
+- The plan-run state lock, once older than 30 seconds, is taken over only when the process that holds it has exited; a
+  live holder keeps it busy.
 - Dependency alerts cleared: the audio runtime pins msgpack 1.2.3 (was 1.2.2), the Remotion cover template pins zod 4.6.6 (was 4.5.4) and the HyperFrames cover template locks @hono/node-server 2.1.5 (was 2.1.1).
 
 ## [1.0.33] - 2026-10-29

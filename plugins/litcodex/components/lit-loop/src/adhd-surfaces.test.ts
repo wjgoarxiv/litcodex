@@ -145,10 +145,13 @@ describe("the redesigned brief", () => {
 		const result = collect(s, fakeGit(s.workspace));
 		const brief = renderBrief(result);
 		const lines = brief.split("\n");
-		expect(briefHeadline(result)).toContain("next: start work on sync.md");
+		// Two other sessions work in this repo, one waiting on the user: the open plan waits, and `go` is not offered.
+		expect(briefHeadline(result)).toContain(
+			"next: answer aaaaaaaa in ws: it waits on you; 1 more lane still at work",
+		);
 		expect(lines[0]).toMatch(/^\*\*✅ Done so far:\*\* nothing finished in this window/u);
 		expect(lines[1]).toMatch(/^\*\*▶ Doing now:\*\* 1 running · 1 waits on you/u);
-		expect(lines[2]).toMatch(/^\*\*⏭ Next:\*\* start work on sync\.md/u);
+		expect(lines[2]).toMatch(/^\*\*⏭ Next:\*\* answer aaaaaaaa in ws/u);
 		expect(brief).toContain("🌿 `feat/retry` · **ws**");
 		expect(brief).toMatch(/- 🟡 \*\*WAITS ON YOU\*\* · `aaaaaaaa` · \d+h ago/u);
 		expect(brief).toMatch(/- 🟢 \*\*RUNNING\*\* · `bbbbbbbb` · \d+[mh] ago/u);
@@ -165,8 +168,8 @@ describe("the redesigned brief", () => {
 		expect(order.every((index) => index >= 0)).toBe(true);
 		expect([...order].sort((a, b) => a - b)).toEqual(order);
 		expect(brief).toContain("step 2");
-		expect(brief).toContain("start work on sync.md");
-		expect(brief).toContain("say `go` to run it");
+		expect(brief).toContain("do not type `go` until they finish");
+		expect(brief).not.toContain("say `go`");
 	});
 
 	it("draws the recommended-step box with all four sides the same width, inside a code fence", () => {
@@ -285,9 +288,17 @@ describe("the brief after a finished session", () => {
 			join(s.workspace, "HANDOFF.md"),
 			"# Handoff\n\n## Done\n- shipped retry\n\n## Next\n\n- [x] split the client\n- write the sync docs\n\n## Notes\n- x\n",
 		);
-		const result = collect(s);
+		// Without other sessions at work the handoff item is the step; with them, the live signal outranks it.
+		const result = collectRewind({
+			env: { HOME: s.home, CODEX_HOME: s.codexHome },
+			cwd: s.workspace,
+			now: NOW,
+			git: () => null,
+			codexHome: join(s.base, "no-sessions"),
+		});
 		expect(result.next).toEqual({ kind: "handoff", text: "from the handoff: write the sync docs" });
 		expect(briefHeadline(result)).toContain("next: from the handoff: write the sync docs");
+		expect(collect(s).next.kind).toBe("wait-lanes");
 	});
 
 	it("draws the next-step box in an untagged fence", () => {

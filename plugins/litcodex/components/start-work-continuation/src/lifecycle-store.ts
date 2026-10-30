@@ -1357,7 +1357,7 @@ function withStateLock<T>(paths: ManagedPaths, options: StoreOptions, operation:
 
 function acquireLock(paths: ManagedPaths, nowMs: () => number): LockOwner {
 	for (let attempt = 0; attempt < LOCK_ATTEMPTS; attempt += 1) {
-		const body = JSON.stringify({ token: randomUUID(), createdAt: nowMs() });
+		const body = JSON.stringify({ token: randomUUID(), createdAt: nowMs(), pid: process.pid });
 		try {
 			const fd = openNoFollow(paths.lock, constants.O_CREAT | constants.O_EXCL | constants.O_RDWR, 0o600, "lock");
 			writeAll(fd, Buffer.from(body, "utf8"));
@@ -1390,7 +1390,8 @@ function tryRemoveStaleLock(path: string, nowMs: number): void {
 				isRecord(parsed) &&
 				typeof parsed["createdAt"] === "number" &&
 				parsed["createdAt"] <= nowMs &&
-				nowMs - parsed["createdAt"] > LOCK_STALE_MS;
+				nowMs - parsed["createdAt"] > LOCK_STALE_MS &&
+				holderGone(parsed["pid"]);
 		} catch {
 			const mtimeMs = Number(fdStat.mtimeMs);
 			stale = mtimeMs <= nowMs && nowMs - mtimeMs > LOCK_STALE_MS;
@@ -1400,6 +1401,22 @@ function tryRemoveStaleLock(path: string, nowMs: number): void {
 		if (current.dev === fdStat.dev && current.ino === fdStat.ino) unlinkSync(path);
 	} finally {
 		closeSync(fd);
+	}
+}
+
+/**
+ * An old lock is taken over only when the process that wrote it is gone. A lock without a `pid` predates that
+ * field, so its age alone decides; a `pid` that is not a positive integer, or a process that still answers
+ * (EPERM included), keeps the lock busy.
+ */
+function holderGone(pid: unknown): boolean {
+	if (pid === undefined) return true;
+	if (typeof pid !== "number" || !Number.isSafeInteger(pid) || pid <= 0) return false;
+	try {
+		process.kill(pid, 0);
+		return false;
+	} catch (error) {
+		return isCode(error, "ESRCH");
 	}
 }
 

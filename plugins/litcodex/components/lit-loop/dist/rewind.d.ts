@@ -1,3 +1,4 @@
+import { type HerdrRunner } from "./herdr-agents.js";
 export declare const ADHD_DIR = ".litcodex/adhd";
 /** A session written to in the last quarter hour is still running. */
 export declare const ACTIVE_MS: number;
@@ -6,8 +7,11 @@ export declare const GO_WINDOW_MS: number;
 export declare const DEFAULT_SINCE_MS: number;
 export declare const DEFAULT_MAX = 12;
 export type SessionStatus = "waiting-on-user" | "active" | "idle" | "done" | "ended" | "unknown";
-/** `handoff` is shown, never run: a `go` over it starts nothing. */
-export type NextKind = "resume-frame" | "approve-boundary" | "continue-work" | "start-plan" | "handoff" | "none";
+/**
+ * `handoff` is shown, never run: a `go` over it starts nothing. `other-session` is a start-work run another
+ * session owns, and `wait-lanes` holds a step back while other lanes of this repo still work; `go` runs neither.
+ */
+export type NextKind = "resume-frame" | "approve-boundary" | "continue-work" | "start-plan" | "handoff" | "other-session" | "wait-lanes" | "none";
 export interface NextStep {
     readonly kind: NextKind;
     readonly text: string;
@@ -16,6 +20,18 @@ export interface NextStep {
     readonly n?: number;
     readonly total?: number;
     readonly plan?: string;
+    /** The start-work run a `continue-work` step continues, so `go` can check it is still this one. */
+    readonly work?: string;
+    /** How many lanes a `wait-lanes` step waits for. */
+    readonly lanes?: number;
+}
+/** Other live sessions of this repo and, under herdr, its working or blocked agents, each counted once. */
+export interface RewindLanes {
+    readonly count: number;
+    /** Lanes that wait on the user: a session asking something, or a blocked agent. */
+    readonly waiting: number;
+    readonly labels: readonly string[];
+    readonly herdr: "off" | "ok" | "unknown";
 }
 export interface RewindSession {
     readonly id: string;
@@ -87,6 +103,7 @@ export interface RewindResult {
     readonly sessions: readonly RewindSession[];
     readonly worktrees: readonly RewindWorktree[];
     readonly next: NextStep;
+    readonly lanes: RewindLanes;
     /**
      * A step to recommend when `next.kind` is `none`, chosen from the records: a session that waits on the user, a
      * paused workflow, an open plan item, the latest active session, the latest ended one. Shown, never recorded.
@@ -125,6 +142,8 @@ export interface RewindOptions {
     readonly codexHome?: string | null;
     /** Overrides the whole-run read allowance in bytes (a test seam). */
     readonly budgetBytes?: number;
+    /** Overrides the `herdr agent list` call (a test seam); it runs only under `HERDR_ENV=1`. */
+    readonly herdr?: HerdrRunner;
 }
 /** `7d`, `36h`, `90m` as milliseconds; null for anything else. */
 export declare function parseSince(text: string): number | null;

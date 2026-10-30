@@ -18,7 +18,14 @@ const MAX_NOTE_BYTES = 8 * 1024;
 export function isGoPrompt(prompt) {
     return GO_PROMPT.test(prompt);
 }
-const KINDS = ["resume-frame", "approve-boundary", "continue-work", "start-plan"];
+const KINDS = [
+    "resume-frame",
+    "approve-boundary",
+    "continue-work",
+    "start-plan",
+    "other-session",
+    "wait-lanes",
+];
 function readNote(cwd, sessionId) {
     const id = normalizeSessionId(sessionId);
     if (id === null || !isAbsolute(cwd) || !plainDirsOrMissing(cwd, ADHD_DIR))
@@ -47,12 +54,15 @@ function readNote(cwd, sessionId) {
         kind: kind,
         at,
         plan: typeof fields["plan"] === "string" ? fields["plan"] : null,
+        work: typeof fields["work"] === "string" ? fields["work"] : null,
         text: typeof fields["text"] === "string" ? clean(fields["text"]) : "",
     };
 }
 const EXPIRED = "The user said `go`, but the briefed next step is older than 30 minutes, so nothing was started. Tell the user that in one sentence and offer `lit adhd` for a fresh brief; start no other work.";
 const STALE = "The user said `go`, but the briefed next step no longer holds, so nothing was started. Tell the user that in one sentence and offer `lit adhd` for a fresh brief; start no other work.";
 const BOUNDARY = "The user said `go`, but the briefed step is a start-work boundary waiting for an answer. `go` never approves it: tell the user in one sentence to answer `lit approve` or `lit deny` themselves; start nothing.";
+const LANES = "The user said `go`, but the brief offered no step for `go`: other lanes in this repository were still working, so nothing was started. Tell the user that in one sentence: wait for those lanes (or answer the one that waits on them), then ask for a fresh `lit adhd`; start no other work.";
+const ELSEWHERE = "The user said `go`, but the briefed run belongs to another session, so nothing was started. Tell the user in one sentence to continue it in that session; start no other work.";
 /**
  * What a go-word prompt means in this session. Null when the session has no note (the prompt is then an
  * ordinary one); a hint when a note existed but cannot run; otherwise the prompt to route in its place.
@@ -65,6 +75,10 @@ export function takeGo(cwd, sessionId, now) {
         return { kind: "hint", text: EXPIRED };
     if (note.kind === "approve-boundary")
         return { kind: "hint", text: BOUNDARY };
+    if (note.kind === "wait-lanes")
+        return { kind: "hint", text: LANES };
+    if (note.kind === "other-session")
+        return { kind: "hint", text: ELSEWHERE };
     const fresh = chooseNext(cwd, sessionId);
     // A note naming its plan (a saved lit-plan, or a brief) holds while that plan is open and nothing outranks it,
     // even when a second open plan means the brief alone would name none.
@@ -76,7 +90,10 @@ export function takeGo(cwd, sessionId, now) {
             note: `go: start work on ${named.name}, ${named.done} of ${named.total} tasks done`,
         };
     }
-    if (fresh.kind !== note.kind || (note.kind === "start-plan" && fresh.plan !== note.plan)) {
+    // The run the note named must still be the active one, still owned by this session.
+    if (fresh.kind !== note.kind ||
+        (note.kind === "start-plan" && fresh.plan !== note.plan) ||
+        (note.kind === "continue-work" && note.work !== null && fresh.work !== note.work)) {
         return { kind: "hint", text: STALE };
     }
     if (note.kind === "start-plan" && fresh.plan !== undefined) {

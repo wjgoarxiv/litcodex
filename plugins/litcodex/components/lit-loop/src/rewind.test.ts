@@ -241,18 +241,20 @@ describe("redaction", () => {
 describe("next step", () => {
 	it("writes the note only for a known session and removes it when nothing is left to run", () => {
 		const s = scratch();
+		// The fixture sessions run in this workspace and would be lanes that hold the plan back; read none here.
+		const alone = { codexHome: join(s.base, "no-sessions") };
 		const plans = join(s.workspace, ".litcodex/plans");
 		mkdirSync(plans, { recursive: true });
 		writeFileSync(join(plans, "ship.md"), "## Todos\n- [x] one\n- [ ] two\n- [ ] three\n");
-		const none = collectRewind(options(s));
+		const none = collectRewind(options(s, alone));
 		expect(none.next.kind).toBe("start-plan");
 		expect(() => readFileSync(join(s.workspace, ".litcodex/adhd/next-x.json"))).toThrow();
-		const written = collectRewind(options(s, { sessionId: "sess/9" }));
+		const written = collectRewind(options(s, { ...alone, sessionId: "sess/9" }));
 		expect(written.next).toMatchObject({ kind: "start-plan", plan: "ship.md" });
 		const note = JSON.parse(readFileSync(join(s.workspace, ".litcodex/adhd/next-sess-9.json"), "utf8"));
 		expect(note).toMatchObject({ kind: "start-plan", plan: "ship.md", at: NOW, sessionId: "sess-9" });
 		writeFileSync(join(plans, "ship.md"), "## Todos\n- [x] one\n- [x] two\n");
-		collectRewind(options(s, { sessionId: "sess/9" }));
+		collectRewind(options(s, { ...alone, sessionId: "sess/9" }));
 		expect(() => readFileSync(join(s.workspace, ".litcodex/adhd/next-sess-9.json"))).toThrow();
 	});
 

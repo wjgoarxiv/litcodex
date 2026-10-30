@@ -133,9 +133,10 @@ describe("the recommended step is always a real one", () => {
 			reply: "Done. Should the TTL be 30s or 60s?",
 		});
 		const result = collect(s);
-		expect(result.next.kind).toBe("none");
+		// The waiting session is a lane of this repo, so the brief holds `go` back and points at it.
+		expect(result.next).toMatchObject({ kind: "wait-lanes", text: "answer 00000001 in ws: it waits on you" });
 		expect(result.suggestion).toMatch(/^answer 00000001 in ws: “.*TTL be 30s or 60s\?”$/u);
-		expect(briefHeadline(result)).toContain(`next: ${result.suggestion}`);
+		expect(briefHeadline(result)).toContain(`next: ${result.next.text}`);
 		expect(renderBrief(result)).not.toMatch(PLACEHOLDER);
 	});
 
@@ -155,7 +156,8 @@ describe("the recommended step is always a real one", () => {
 			"# Sync\n\n## Todos\n\n- [x] split client\n- [ ] add retry\n- [ ] docs\n",
 		);
 		const withPlan = collect(s, { git: fakeGit(s.workspace) });
-		expect(withPlan.next.kind).toBe("start-plan");
+		// 00000003 still runs here, so the open plan is held back rather than offered for `go`.
+		expect(withPlan.next.kind).toBe("wait-lanes");
 		const noNext = { ...withPlan, next: { kind: "none" as const, text: "" } };
 		expect(suggestionOf(noNext.sessions, noNext.worktrees)).toBe("next in sync.md (ws): add retry");
 		recordStackEvent(s.workspace, idOf(2), { type: "start", skill: "lit-loop" }, new Date(NOW - 3 * HOUR));

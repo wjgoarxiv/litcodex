@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import {
 	appendFileSync,
 	existsSync,
@@ -269,6 +270,50 @@ describe("start-work lifecycle store", () => {
 			},
 		);
 		expect(readFileSync(staleLock, "utf8")).toBe(replacement);
+	});
+
+	it("takes over an old lock only when its holder process is gone, and stays busy while the holder lives", () => {
+		const live = workspace("active", 0);
+		const liveLock = `${statePathFor(live)}.lock`;
+		writeFileSync(liveLock, JSON.stringify({ token: "live", createdAt: 0, pid: process.pid }), "utf8");
+		expect(() =>
+			transitionWork(live, transition("pause", 0, "live-holder", "authorization_required"), {
+				nowMs: () => 40_000,
+			}),
+		).toThrow(/lock is busy/i);
+		expect(readFileSync(liveLock, "utf8")).toContain('"token":"live"');
+		expect(readLifecycleState(live)?.revision).toBe(0);
+
+		const gone = workspace("active", 0);
+		const goneLock = `${statePathFor(gone)}.lock`;
+		const deadPid = spawnSync(process.execPath, ["-e", ""]).pid;
+		writeFileSync(goneLock, JSON.stringify({ token: "gone", createdAt: 0, pid: deadPid }), "utf8");
+		expect(
+			transitionWork(gone, transition("pause", 0, "dead-holder", "authorization_required"), {
+				nowMs: () => 40_000,
+			}).changed,
+		).toBe(true);
+
+		const young = workspace("active", 0);
+		const youngLock = `${statePathFor(young)}.lock`;
+		writeFileSync(youngLock, JSON.stringify({ token: "young", createdAt: 39_000, pid: deadPid }), "utf8");
+		expect(() =>
+			transitionWork(young, transition("pause", 0, "young-holder", "authorization_required"), {
+				nowMs: () => 40_000,
+			}),
+		).toThrow(/lock is busy/i);
+	});
+
+	it("records its own process id in the lock it holds", () => {
+		const root = workspace("active", 0);
+		const lock = `${statePathFor(root)}.lock`;
+		let seen = "";
+		transitionWork(root, transition("pause", 0, "pid-body", "authorization_required"), {
+			afterStateWrite: () => {
+				seen = readFileSync(lock, "utf8");
+			},
+		});
+		expect(JSON.parse(seen)).toMatchObject({ pid: process.pid });
 	});
 
 	it("initializes fresh schema 3 state atomically with authority and an idempotent init id", () => {

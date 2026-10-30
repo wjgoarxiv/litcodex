@@ -13,6 +13,7 @@ import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync } f
 import { homedir } from "node:os";
 import { basename, isAbsolute, join, relative } from "node:path";
 import { clean, cleanDeep, cleanLines } from "./control-chars.js";
+import { type HerdrAgents, type HerdrRunner, readHerdrAgents } from "./herdr-agents.js";
 import { displayWidth, fit } from "./hud.js";
 import { codexHomeFrom, plainDirsOrMissing, readSmallJson, writeFileAtomic } from "./live-step.js";
 import { makeRedactor } from "./rewind-redact.js";
@@ -24,7 +25,7 @@ import {
 	readRollout,
 	TOTAL_BYTES,
 } from "./rewind-rollout.js";
-import { readLiveness } from "./session-liveness.js";
+import { readLiveness, readSessionsLiveness } from "./session-liveness.js";
 import { normalizeSessionId } from "./state-paths.js";
 import { countPlanRows, planProgress, planRows, readWorkflowSignals } from "./workflow-map.js";
 import {
@@ -50,8 +51,19 @@ const MAX_HANDOFF_BYTES = 16 * 1024;
 const GIT_TIMEOUT_MS = 3000;
 
 export type SessionStatus = "waiting-on-user" | "active" | "idle" | "done" | "ended" | "unknown";
-/** `handoff` is shown, never run: a `go` over it starts nothing. */
-export type NextKind = "resume-frame" | "approve-boundary" | "continue-work" | "start-plan" | "handoff" | "none";
+/**
+ * `handoff` is shown, never run: a `go` over it starts nothing. `other-session` is a start-work run another
+ * session owns, and `wait-lanes` holds a step back while other lanes of this repo still work; `go` runs neither.
+ */
+export type NextKind =
+	| "resume-frame"
+	| "approve-boundary"
+	| "continue-work"
+	| "start-plan"
+	| "handoff"
+	| "other-session"
+	| "wait-lanes"
+	| "none";
 
 export interface NextStep {
 	readonly kind: NextKind;
@@ -61,6 +73,19 @@ export interface NextStep {
 	readonly n?: number;
 	readonly total?: number;
 	readonly plan?: string;
+	/** The start-work run a `continue-work` step continues, so `go` can check it is still this one. */
+	readonly work?: string;
+	/** How many lanes a `wait-lanes` step waits for. */
+	readonly lanes?: number;
+}
+
+/** Other live sessions of this repo and, under herdr, its working or blocked agents, each counted once. */
+export interface RewindLanes {
+	readonly count: number;
+	/** Lanes that wait on the user: a session asking something, or a blocked agent. */
+	readonly waiting: number;
+	readonly labels: readonly string[];
+	readonly herdr: "off" | "ok" | "unknown";
 }
 
 export interface RewindSession {
@@ -130,6 +155,7 @@ export interface RewindResult {
 	readonly sessions: readonly RewindSession[];
 	readonly worktrees: readonly RewindWorktree[];
 	readonly next: NextStep;
+	readonly lanes: RewindLanes;
 	/**
 	 * A step to recommend when `next.kind` is `none`, chosen from the records: a session that waits on the user, a
 	 * paused workflow, an open plan item, the latest active session, the latest ended one. Shown, never recorded.
@@ -172,6 +198,8 @@ export interface RewindOptions {
 	readonly codexHome?: string | null;
 	/** Overrides the whole-run read allowance in bytes (a test seam). */
 	readonly budgetBytes?: number;
+	/** Overrides the `herdr agent list` call (a test seam); it runs only under `HERDR_ENV=1`. */
+	readonly herdr?: HerdrRunner;
 }
 
 /** `7d`, `36h`, `90m` as milliseconds; null for anything else. */
@@ -352,22 +380,29 @@ function pausedFramesOf(path: string): { session: string; frame: StackFrame }[] 
 	return out;
 }
 
-/** The first 16 KiB of this folder's HANDOFF note, or null. */
+/** The first 16 KiB of this folder's newest HANDOFF note (by change time, then name), or null. */
 function handoffText(path: string): string | null {
-	for (const name of listDir(path, ".md", 200)
-		.filter((file) => /^HANDOFF/iu.test(file))
-		.slice(0, 1)) {
+	const notes: { full: string; mtimeMs: number }[] = [];
+	for (const name of listDir(path, ".md", 200).filter((file) => /^HANDOFF/iu.test(file))) {
 		try {
 			const full = join(path, name);
 			const stat = lstatSync(full);
-			if (!stat.isFile()) continue;
-			return readFileSync(full, "utf8").slice(0, MAX_HANDOFF_BYTES);
+			if (stat.isFile()) notes.push({ full, mtimeMs: stat.mtimeMs });
 		} catch {
-			return null;
+			// An unreadable note is left out.
 		}
 	}
-	return null;
+	const newest = notes.sort((a, b) => b.mtimeMs - a.mtimeMs)[0];
+	if (newest === undefined) return null;
+	try {
+		return readFileSync(newest.full, "utf8").slice(0, MAX_HANDOFF_BYTES);
+	} catch {
+		return null;
+	}
 }
+
+/** A Next item already finished: ticked, struck through, or marked ✅, ✓, DONE or SHIPPED (those words in capitals). */
+const DONE_ITEM = /^\s*(?:[-*+]|\d+[.)])?\s*(?:\[[xX]\]|~~.*~~\s*$)|[✅✔✓]|\b(?:DONE|SHIPPED)\b/u;
 
 function handoffHeading(path: string): string | null {
 	const text = handoffText(path);
@@ -379,7 +414,7 @@ function handoffNext(path: string): string | null {
 	const text = handoffText(path);
 	const body = text === null ? undefined : /^##\s+Next\b[^\n]*\n([\s\S]*?)(?=^#{1,2}\s|(?![\s\S]))/imu.exec(text)?.[1];
 	for (const line of (body ?? "").split("\n")) {
-		if (/^\s*[-*+]\s+\[[xX]\]/u.test(line)) continue;
+		if (DONE_ITEM.test(line)) continue;
 		const item = line
 			.replace(/^\s*(?:[-*+]|\d+[.)])\s+(?:\[ \]\s+)?/u, "")
 			.replace(/\s+/gu, " ")
@@ -499,6 +534,28 @@ function pendingBoundary(cwd: string): boolean {
 		.some((work) => work["status"] === "paused" && isRecord(work["pending_boundary"]));
 }
 
+/** The start-work run under way here (active, or paused without a boundary), and whether this session owns it. */
+function workUnderWay(cwd: string, sessionId: string | null): { readonly id: string; readonly mine: boolean } | null {
+	if (!plainDirsOrMissing(cwd, ".litcodex/start-work")) return null;
+	const state = readSmallJson(join(cwd, ".litcodex/start-work/state.json"), MAX_STATE_BYTES);
+	if (!isRecord(state) || !isRecord(state["works"])) return null;
+	const activeId = state["active_work_id"];
+	const work = Object.values(state["works"])
+		.filter(isRecord)
+		.find((entry) => entry["work_id"] === activeId && (entry["status"] === "active" || entry["status"] === "paused"));
+	if (work === undefined || typeof activeId !== "string") return null;
+	const owners = Array.isArray(work["session_ids"]) ? work["session_ids"] : [];
+	const mine =
+		sessionId !== null &&
+		owners.some(
+			(owner) =>
+				typeof owner === "string" &&
+				owner.startsWith("codex:") &&
+				normalizeSessionId(owner.slice("codex:".length)) === sessionId,
+		);
+	return { id: activeId, mine };
+}
+
 /**
  * The one step worth taking next, in priority order: the paused frame of this session's stack, then a boundary
  * waiting for an answer (shown, never started), then work already under way, then the single open plan.
@@ -530,9 +587,18 @@ function chooseNextRaw(cwd: string, sessionId: string | null): NextStep {
 	const signals = readWorkflowSignals(cwd, sessionId);
 	const work = signals.work;
 	if (work !== null && work.status !== "completed" && work.done < work.total) {
+		// Another session's run is shown where it runs, never continued from here.
+		const run = workUnderWay(cwd, sessionId === null ? null : normalizeSessionId(sessionId));
+		if (run === null || !run.mine) {
+			return {
+				kind: "other-session",
+				text: `another session runs the ${work.status} start-work plan, ${work.done} of ${work.total} tasks done: continue it there`,
+			};
+		}
 		return {
 			kind: "continue-work",
 			text: `continue the ${work.status} start-work plan, ${work.done} of ${work.total} tasks done`,
+			work: run.id,
 		};
 	}
 	if (signals.goals !== null && signals.goals.done < signals.goals.total) {
@@ -566,6 +632,7 @@ export function writeNext(cwd: string, sessionId: string, next: NextStep, now: n
 	if (path === null) return;
 	try {
 		if (!plainDirsOrMissing(cwd, ADHD_DIR)) return;
+		// A handoff or nothing at all leaves no note; a held-back step leaves one so `go` can say why it waits.
 		if (next.kind === "none" || next.kind === "handoff") {
 			rmSync(path, { force: true });
 			return;
@@ -722,7 +789,14 @@ export function collectRewind(options: RewindOptions): RewindResult {
 		return { ...session, tree: owner?.path ?? null };
 	});
 
-	const next = chooseNext(options.cwd, sessionId);
+	const herdr = readHerdrAgents(env, options.herdr);
+	const lanes = lanesOf(placed, laneRootsOf(options.cwd, git), sessionId, env, herdr, now, homed);
+	const chosen = chooseNext(options.cwd, sessionId);
+	// A step `go` would only start, a handoff item or nothing at all waits while other lanes work: the live signal wins.
+	const next: NextStep =
+		lanes.count > 0 && (chosen.kind === "start-plan" || chosen.kind === "handoff" || chosen.kind === "none")
+			? { kind: "wait-lanes", text: waitText(lanes), lanes: lanes.count }
+			: chosen;
 	if (sessionId !== null) writeNext(options.cwd, sessionId, next, now);
 
 	// Commit subjects, branch names, plan rows and names, goals and paths are record text: none of it may carry a control.
@@ -732,11 +806,127 @@ export function collectRewind(options: RewindOptions): RewindResult {
 		sessions: placed,
 		worktrees,
 		next,
+		lanes: { count: lanes.count, waiting: lanes.waiting, labels: lanes.labels, herdr: herdr.state },
 		suggestion: suggestionOf(placed, worktrees),
 		scope: { sinceMs, worktrees: worktrees.length },
 		sources: { sessions: sessionsState, git: gitState, state: "ok" },
 		budget: { limit, used: limit - budget.remaining, exhausted: budget.exhausted },
 	});
+}
+
+// ── Lanes ────────────────────────────────────────────────────────────────────
+
+/** This checkout's top folder and the other worktrees of its repository; the folder alone when git cannot say. */
+function laneRootsOf(cwd: string, git: GitRunner): string[] {
+	const top = git(cwd, ["rev-parse", "--show-toplevel"])?.trim();
+	if (top === undefined || top === "") return [cwd];
+	const porcelain = git(top, ["worktree", "list", "--porcelain"]);
+	const listed =
+		porcelain === null ? [] : [...porcelain.matchAll(/^worktree (.+)$/gmu)].map((match) => match[1] ?? "");
+	return [...new Set([top, ...listed.filter((path) => isAbsolute(path))])];
+}
+
+interface Lane {
+	readonly session: string | null;
+	pane: string | null;
+	waiting: boolean;
+	readonly label: string;
+}
+
+const LANE_LABELS = 3;
+
+/**
+ * Other lanes at work in this repository, each once: a session that runs or waits on the user, a session whose
+ * liveness record says it is working, and, under herdr, a working or blocked agent of this workspace or repo.
+ * The asking session and its own pane never count.
+ */
+function lanesOf(
+	sessions: readonly RewindSession[],
+	roots: readonly string[],
+	sessionId: string | null,
+	env: NodeJS.ProcessEnv,
+	herdr: HerdrAgents,
+	now: number,
+	homed: (path: string) => string,
+): { count: number; waiting: number; labels: string[] } {
+	const inRepo = (path: string | null): boolean =>
+		path !== null && isAbsolute(homed(path)) && roots.some((root) => insideDir(homed(path), root));
+	const own = (id: string | null): boolean =>
+		id !== null && sessionId !== null && normalizeSessionId(id) === sessionId;
+	const lanes: Lane[] = [];
+	const known = new Map(sessions.map((session) => [normalizeSessionId(session.id), session.status]));
+	for (const session of sessions) {
+		if (session.current || own(session.id) || !inRepo(session.cwd)) continue;
+		if (session.status !== "active" && session.status !== "waiting-on-user") continue;
+		lanes.push({
+			session: normalizeSessionId(session.id),
+			pane: null,
+			waiting: session.status === "waiting-on-user",
+			label: `${session.shortId} in ${placeOf(session)}`,
+		});
+	}
+	for (const root of roots) {
+		for (const record of readSessionsLiveness(root, now)) {
+			const id = normalizeSessionId(record.sessionId);
+			if (record.state !== "alive" || id === null || own(id)) continue;
+			const seen = lanes.find((lane) => lane.session === id);
+			if (seen !== undefined) {
+				seen.pane ??= record.herdrPane;
+				continue;
+			}
+			// A session the records show as finished or idle is not at work, whatever its last tool call wrote.
+			const status = known.get(id);
+			if (status !== undefined && status !== "active" && status !== "waiting-on-user") continue;
+			lanes.push({
+				session: id,
+				pane: record.herdrPane,
+				waiting: false,
+				label: `${shortIdOf(id)} in ${basename(root)}`,
+			});
+		}
+	}
+	const ownPane = env["HERDR_PANE_ID"];
+	const ownWorkspace = env["HERDR_WORKSPACE_ID"];
+	for (const agent of herdr.agents) {
+		if (agent.status !== "working" && agent.status !== "blocked") continue;
+		if (agent.pane !== null && agent.pane === ownPane) continue;
+		if (own(agent.session)) continue;
+		const here =
+			(typeof ownWorkspace === "string" && ownWorkspace !== "" && agent.workspace === ownWorkspace) ||
+			inRepo(agent.cwd) ||
+			inRepo(agent.foregroundCwd);
+		if (!here) continue;
+		const id = agent.session === null ? null : normalizeSessionId(agent.session);
+		const seen = lanes.find(
+			(lane) => (id !== null && lane.session === id) || (agent.pane !== null && lane.pane === agent.pane),
+		);
+		if (seen !== undefined) {
+			seen.waiting ||= agent.status === "blocked";
+			continue;
+		}
+		lanes.push({
+			session: id,
+			pane: agent.pane,
+			waiting: agent.status === "blocked",
+			label: `${agent.agent} in pane ${agent.pane ?? "unknown"}`,
+		});
+	}
+	const ordered = [...lanes.filter((lane) => lane.waiting), ...lanes.filter((lane) => !lane.waiting)];
+	return {
+		count: lanes.length,
+		waiting: ordered.filter((lane) => lane.waiting).length,
+		labels: ordered.slice(0, LANE_LABELS).map((lane) => lane.label),
+	};
+}
+
+/** The held-back step: answer the lane that waits on the user, else wait for the lanes to finish. */
+function waitText(lanes: { count: number; waiting: number; labels: readonly string[] }): string {
+	const first = lanes.labels[0] ?? "the other lane";
+	if (lanes.waiting > 0) {
+		const rest = lanes.count - 1;
+		return `answer ${first}: it waits on you${rest > 0 ? `; ${plural(rest, "more lane")} still at work` : ""}`;
+	}
+	return `wait for ${plural(lanes.count, "lane")} to finish: ${lanes.labels.join(", ")}`;
 }
 
 // ── Suggestion ───────────────────────────────────────────────────────────────
@@ -968,7 +1158,11 @@ function nextBox(result: RewindResult, width: number): string[] {
 				? "answer `lit approve` or `lit deny` yourself"
 				: result.next.kind === "handoff"
 					? "a step from the handoff note; `go` does not run it, so say what to do"
-					: "say `go` to run it";
+					: result.next.kind === "other-session"
+						? "that run belongs to another session; `go` here does not run it"
+						: result.next.kind === "wait-lanes"
+							? "do not type `go` until they finish"
+							: "say `go` to run it";
 	const box = (text: string): string => `│ ${pad(text, inner)} │`;
 	return [
 		"```",
@@ -1029,6 +1223,7 @@ export function renderBrief(result: RewindResult, width = 96): string {
 	const unknown = Object.entries(result.sources)
 		.filter(([, state]) => state === "unknown")
 		.map(([name]) => name);
+	if (result.lanes.herdr === "unknown") unknown.push("herdr agents");
 	if (unknown.length > 0) lines.push("", `*not readable: ${unknown.join(", ")}*`);
 	const skipped = result.worktrees.reduce((sum, tree) => sum + tree.skippedPlans, 0);
 	if (skipped > 0) lines.push("", `*${skipped === 1 ? "1 plan" : `${skipped} plans`} too large to read, left out*`);
