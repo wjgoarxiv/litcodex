@@ -24,7 +24,7 @@ import { parseInstallOptions } from "../install-options.js";
 import { baseOptions } from "../install-test-helpers.js";
 import { applyInstructionFile, instructionFileState } from "./apply.js";
 import { AGENT_FILE_ID, AGENT_FILE_MAX_BYTES, globalBody, projectBody } from "./bodies.js";
-import { runAgentFileProjectCli } from "./cli.js";
+import { runAgentFileProjectCli, runInstallAgentFile } from "./cli.js";
 import { inspectInstructionBlock, removeInstructionBlock, upsertInstructionBlock } from "./managed-block.js";
 import { readAgentFileMode, writeAgentFileMode } from "./mode.js";
 
@@ -285,6 +285,41 @@ describe("installer surface", () => {
 			expect(missing).toBe(64);
 			expect(existsSync(join(dir, "no-such-repo"))).toBe(false);
 		}));
+
+	it("keeps machine-readable install output pure: --json returns the line and writes no stdout", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "litcodex-agent-file-json-"));
+		try {
+			const out: string[] = [];
+			const line = await runInstallAgentFile({
+				env: {},
+				stdout: { write: (chunk: string) => out.push(chunk) } as unknown as NodeJS.WritableStream,
+				codexHome: dir,
+				version: "1.0.33",
+				yes: false,
+				noAgentFile: false,
+				dryRun: false,
+				json: true,
+			});
+			expect(out).toEqual([]);
+			expect(line).toMatch(/^AGENT_FILE: skipped /u);
+			expect(existsSync(join(dir, "AGENTS.md"))).toBe(false);
+
+			const human: string[] = [];
+			const humanLine = await runInstallAgentFile({
+				env: {},
+				stdout: { write: (chunk: string) => human.push(chunk) } as unknown as NodeJS.WritableStream,
+				codexHome: dir,
+				version: "1.0.33",
+				yes: false,
+				noAgentFile: false,
+				dryRun: false,
+				json: false,
+			});
+			expect(human.join("")).toBe(`${humanLine}\n`);
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+	});
 
 	it("doctor reports the instruction file state without touching the real host file", () =>
 		withDir((dir) => {

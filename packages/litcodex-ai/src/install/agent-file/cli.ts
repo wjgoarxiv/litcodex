@@ -112,37 +112,33 @@ export const runInstallAgentFile = async (options: {
 	yes: boolean;
 	noAgentFile: boolean;
 	dryRun: boolean;
+	/** Machine-readable install: return the line for the JSON report, write nothing to stdout. */
+	json?: boolean;
 	prompt?: () => Promise<boolean>;
-}): Promise<void> => {
+}): Promise<string> => {
+	const say = (line: string): string => {
+		if (options.json !== true) options.stdout.write(`${line}\n`);
+		return line;
+	};
 	const path = agentFilePath(options.codexHome);
 	if (options.noAgentFile || readAgentFileMode({ env: options.env, codexHome: options.codexHome }) === "off") {
-		options.stdout.write(`AGENT_FILE: off (${path} left as it is; turn on: litcodex config agentFile on)\n`);
-		return;
+		return say(`AGENT_FILE: off (${path} left as it is; turn on: litcodex config agentFile on)`);
 	}
 	const state = instructionFileState({ path, id: AGENT_FILE_ID, version: options.version });
 	if (state === "symlink" || state === "not-file" || state === "not-utf8") {
-		options.stdout.write(`AGENT_FILE: ${state} ${path}; left as it is\n`);
-		return;
+		return say(`AGENT_FILE: ${state} ${path}; left as it is`);
 	}
-	if (options.dryRun) {
-		options.stdout.write(`${agentFileDryRunLine(options.codexHome)}\n`);
-		return;
-	}
-	if (options.yes) {
-		options.stdout.write(`${writeGlobalAgentFile(options.codexHome, options.version)}\n`);
-		return;
-	}
+	if (options.dryRun) return say(agentFileDryRunLine(options.codexHome));
+	if (options.yes) return say(writeGlobalAgentFile(options.codexHome, options.version));
 	if (options.prompt === undefined) {
-		options.stdout.write(`AGENT_FILE: skipped (add the LitFamily block to ${path}: litcodex config agentFile on)\n`);
-		return;
+		return say(`AGENT_FILE: skipped (add the LitFamily block to ${path}: litcodex config agentFile on)`);
 	}
 	const confirmed = await options.prompt();
 	if (!confirmed) {
 		writeAgentFileMode(options.codexHome, "off");
-		options.stdout.write(`AGENT_FILE: off (turn on later: litcodex config agentFile on)\n`);
-		return;
+		return say("AGENT_FILE: off (turn on later: litcodex config agentFile on)");
 	}
-	options.stdout.write(`${writeGlobalAgentFile(options.codexHome, options.version)}\n`);
+	return say(writeGlobalAgentFile(options.codexHome, options.version));
 };
 
 /** `litcodex config agentFile <on|off>`: the switch acts at once on the global file. */

@@ -402,7 +402,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 				}
 			}
 		: undefined;
-	await runInstallAgentFile({
+	const agentFileLine = await runInstallAgentFile({
 		env: io.env,
 		stdout: io.stdout,
 		codexHome: opts.codexHome,
@@ -410,6 +410,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 		yes: opts.yes,
 		noAgentFile: opts.noAgentFile,
 		dryRun: false,
+		json: opts.json,
 		...(agentPrompt === undefined ? {} : { prompt: agentPrompt }),
 	});
 
@@ -418,7 +419,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 	const motionRuntime = result.ok ? prepareMotionRuntime(opts.codexHome, [], spawnSync, io.env) : undefined;
 	if (motionRuntime) io.stderr.write(`[litcodex] ${motionRuntime.receipt}\n`);
 	if (opts.json) {
-		io.stdout.write(`${JSON.stringify(result)}\n`);
+		io.stdout.write(`${JSON.stringify({ ...result, agentFile: agentFileLine })}\n`);
 	} else if (decorate) {
 		io.stdout.write(
 			renderInstallReceipt(result, {
