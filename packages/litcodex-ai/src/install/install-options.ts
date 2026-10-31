@@ -15,6 +15,7 @@ import type { InstallOptions } from "./types.js";
 const KNOWN_FLAGS = new Set([
 	"--dry-run",
 	"--no-tui",
+	"--no-agent-file",
 	"--codex-autonomous",
 	"--force",
 	"--json",
@@ -68,6 +69,7 @@ export function parseInstallOptions(
 		force: args.includes("--force"),
 		json: args.includes("--json"),
 		yes: args.includes("--yes"),
+		noAgentFile: args.includes("--no-agent-file"),
 		profile: lead.profile,
 		leadModel: lead.id,
 		effort,

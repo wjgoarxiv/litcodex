@@ -61,6 +61,7 @@ describe("GPT-5.6 installer preflight", () => {
 			force: false,
 			json: false,
 			yes: false,
+			noAgentFile: false,
 			profile: "luna",
 			leadModel: "gpt-5.6-luna",
 			subagentModel: "gpt-5.6-luna",

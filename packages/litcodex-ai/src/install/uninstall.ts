@@ -63,6 +63,7 @@ export function uninstallPlanSteps(codexHome: string): readonly string[] {
 		`Remove the marketplace: codex plugin marketplace remove ${LITCODEX_MARKETPLACE}, then delete ${managedMarketplaceRoot(codexHome)} only if the marketplace removal succeeds`,
 		`Remove LitCodex agent roles from ${join(codexHome, "agents")} and the native default route ${join(codexHome, NATIVE_DEFAULT_AGENT_FILE)}, when they still match what LitCodex installed`,
 		`Remove the managed [agents] defaults from ${join(codexHome, "config.toml")} and LitCodex-generated profile files from ${codexHome}`,
+		`Remove the LitFamily block from ${join(codexHome, "AGENTS.md")} (your own text stays; a file the block alone created is deleted)`,
 		`If the marketplace root or config.toml is a symlink or otherwise unsafe, uninstall refuses to change anything`,
 	];
 }

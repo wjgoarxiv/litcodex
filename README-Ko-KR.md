@@ -70,6 +70,19 @@ Enter만 누르면 권장 모델과 지금 쓰는 출력 스타일이 그대로 
 실행하세요. 모든 단계를 출력하고 아무것도 쓰지 않습니다. 묻는 단계 없이 기본값으로 설치하려면 `install` 뒤에
 `--yes`를 붙이면 됩니다.
 
+설치기는 전역 `~/.codex/AGENTS.md`에 넣어 쓸 짧은 LitFamily 블록도 제공합니다. Codex가 매 세션 시작에 읽는
+파일로, 계획·핸드오프·실행 상태가 어디에 있는지, 검증 없이 푸시하거나 완료라 하지 않는다는 기본 규칙만 담습니다.
+대화형 설치에서는 한 번 묻고 예라고 하면 쓰고, `install --yes`는 묻지 않고 쓰고, `--yes` 없는 조용한 설치에서는
+나중에 추가하는 법만 알려 줍니다. `--no-agent-file`은 그 한 번만 건너뜁니다. 이후에도 선택은 언제든 바꿀 수 있습니다.
+
+```sh
+litcodex config agentFile off   # 블록을 지우고 끈 채로 둡니다
+litcodex config agentFile on    # 다시 씁니다
+```
+
+`litcodex doctor`는 `agent file:` 행으로 블록 상태를 보여 줍니다. 저장소 안에서는 `lit-init`이 프로젝트
+`AGENTS.md`를 쓰고, `litcodex agent-file project --dir <path>`로 같은 계열의 프로젝트 블록을 더할 수 있습니다.
+
 `litcodex`를 `PATH`에서 바로 부르고 싶다면 다음을 실행합니다.
 
 ```sh

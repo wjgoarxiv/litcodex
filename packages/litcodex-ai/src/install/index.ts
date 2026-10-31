@@ -23,6 +23,12 @@ import {
 	Spinner,
 	shouldDecorate,
 } from "../ui.js";
+import {
+	AGENT_FILE_QUESTION,
+	agentFileDryRunLine,
+	removeGlobalAgentFile,
+	runInstallAgentFile,
+} from "./agent-file/cli.js";
 import { codexSpawnInvocation, type ReadonlyFsLike, resolveCodexHome, type SpawnLike } from "./codex.js";
 import { doctorScopeFor, renderDoctorText, runDoctor } from "./doctor.js";
 import { exitCodeForInstallError, InstallError, toErrorJson } from "./errors.js";
@@ -297,6 +303,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 	if (opts.dryRun) {
 		// ZERO spawns, ZERO fs writes: render and return.
 		io.stdout.write(`${renderInstallPlan(plan)}\n`);
+		io.stdout.write(`${agentFileDryRunLine(opts.codexHome)}\n`);
 		return 0;
 	}
 
@@ -384,6 +391,27 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 	} finally {
 		marketplaceSource?.cleanup();
 	}
+
+	const agentPrompt = interactiveInstall(opts, io)
+		? async (): Promise<boolean> => {
+				const rl = installReadline(opts, io);
+				try {
+					return !/^\s*n/iu.test((await rl.question(AGENT_FILE_QUESTION)).trim());
+				} finally {
+					rl.close();
+				}
+			}
+		: undefined;
+	await runInstallAgentFile({
+		env: io.env,
+		stdout: io.stdout,
+		codexHome: opts.codexHome,
+		version: PACKAGE_VERSION,
+		yes: opts.yes,
+		noAgentFile: opts.noAgentFile,
+		dryRun: false,
+		...(agentPrompt === undefined ? {} : { prompt: agentPrompt }),
+	});
 
 	const officeRuntime = result.ok ? prepareOfficeRuntime(opts.codexHome, spawnSync, io.env) : undefined;
 	if (officeRuntime) io.stderr.write(`[litcodex] ${officeRuntimeNotice(officeRuntime.ready, officeRuntime.detail)}\n`);
@@ -476,12 +504,17 @@ export function runUninstallCli(args: readonly string[], io: RouteIo = defaultIo
 		},
 	});
 
+	const agentRemoval = removeGlobalAgentFile(codexHome, PACKAGE_VERSION);
+
 	if (json) {
-		io.stdout.write(`${JSON.stringify(result)}\n`);
-	} else if (result.ok) {
-		io.stdout.write("litcodex uninstall: complete\n");
+		io.stdout.write(`${JSON.stringify({ ...result, agentFile: agentRemoval })}\n`);
 	} else {
-		io.stderr.write("[litcodex] uninstall: codex plugin remove failed\n");
+		io.stdout.write(`${agentRemoval}\n`);
+		if (result.ok) {
+			io.stdout.write("litcodex uninstall: complete\n");
+		} else {
+			io.stderr.write("[litcodex] uninstall: codex plugin remove failed\n");
+		}
 	}
 	return result.ok ? 0 : 3;
 }

@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The installer can keep a short LitFamily block in your global `~/.codex/AGENTS.md`, the file Codex
+  reads at the start of every session. An interactive install asks once and writes it on a yes;
+  `install --yes` writes it without asking, a quiet install without `--yes` only tells you how to add
+  it later, and `--no-agent-file` skips it for that run. `litcodex config agentFile on|off` writes or
+  removes it afterwards, `litcodex doctor` reports it as its `agent file:` row, and
+  `litcodex agent-file project --dir <path>` adds the matching project block to a repo's `AGENTS.md`.
+
 ### Changed
 
 - Releases are faster: the publish workflow no longer repeats the test suite and the QA lanes. Inside it,

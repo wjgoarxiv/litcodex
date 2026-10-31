@@ -14,7 +14,9 @@ npm exec --yes --package @litfamily/litcodex@1.0.33 -- litcodex install
 
 설치기는 Codex 안에 LitCodex 자리를 만듭니다. 플러그인과 훅, 에이전트를 등록하고,
 `~/.codex/config.toml`에서는 자기가 관리하는 항목만 고칩니다. 설치 중에 세 가지를 묻습니다. 어떤 모델이
-작업을 이끌지, 어떤 모델이 거들지, 답변을 어떤 스타일로 받을지입니다. 새로 설치하면 이끄는 쪽(리드)은
+작업을 이끌지, 어떤 모델이 거들지, 답변을 어떤 스타일로 받을지입니다. 설치 자체가 끝나면 한 가지를 더 묻습니다.
+전역 `~/.codex/AGENTS.md`에 짧은 LitFamily 블록을 넣을지입니다. 예라고 하면 쓰고, 아니오라면 파일을 그대로 두고
+꺼짐으로 기억하고, `install --yes`는 예로 답하고, `--no-agent-file`은 건너뜁니다. 새로 설치하면 이끄는 쪽(리드)은
 `gpt-6-astra`/`xhigh`, 일반 헬퍼는 `gpt-6-luna`/`max`로 시작하고, 지원되는 다른 모델과 추론 수준으로 바꿔도 됩니다.
 
 필요한 것은 npm 패키지에 다 들어 있어서 저장소를 복제할 일도, GitHub에 로그인할 일도 없습니다.
@@ -77,7 +79,7 @@ Windows에서 돌 수 없어서 `BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME`으로
 
 대화형으로 실행하면 설치기가 세 가지를 묻습니다. 어떤 모델이 이끌지, 어떤 모델이 거들지, 답변을 어떤 스타일로 받을지입니다.
 그때마다 Enter를 누르면 첫 번째 선택지가 골라집니다. 권장 모델과 현재 출력 스타일입니다. 이어서 설치기가 쓰려는 경로를 상자로 보여 주고, Enter를 한 번 더 누르기 전까지는
-아무것도 쓰지 않습니다.
+아무것도 쓰지 않습니다. 설치가 끝나면 한 가지를 더 묻습니다. 전역 `~/.codex/AGENTS.md`에 짧은 LitFamily 블록을 넣을지입니다.
 
 <p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-questions-dark.webp" /><img src="./assets/screens/screen-install-questions-light.webp" width="688" alt="터미널 창에서 litcodex install을 실행한 화면입니다. &quot;Choose the LEAD model (plans and reviews).&quot;에는 gpt-6-astra · xhigh가 recommended lead로 나오고 목록은 39. gpt-5.6-luna · xhigh까지 40줄입니다. &quot;Choose the HELPER model (spawned/delegated agents).&quot;에는 gpt-6-luna · max가 recommended helper로 나오고, &quot;Choose an output style for LitCodex responses.&quot;에는 선택지 다섯 개가 있습니다. MODEL ROUTE 상자에는 Provider openai, Lead gpt-6-astra · xhigh, Helpers gpt-6-luna · max가 보이고, 마지막에 &quot;Enter to continue · Ctrl-C to abort (nothing written yet)&quot;가 나옵니다." /></picture><br /><sub>임시 홈에서 실제 litcodex install을 실행하고 질문마다 Enter로 답해 캡처했습니다. 시작 배너는 뺐고, 모델 목록은 각각 마흔 줄인데 처음 두 줄과 마지막 줄만 남겼고, 경로 줄도 뺐습니다. …는 뺀 자리입니다.</sub></p>
 

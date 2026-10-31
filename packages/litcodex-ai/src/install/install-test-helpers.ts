@@ -31,6 +31,7 @@ export function baseOptions(over: Partial<InstallOptions> = {}): InstallOptions 
 		force: false,
 		json: false,
 		yes: false,
+		noAgentFile: false,
 		profile: "luna",
 		leadModel: "gpt-5.6-luna",
 		effort: "max",

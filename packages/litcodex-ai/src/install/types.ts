@@ -11,6 +11,7 @@ export interface InstallOptions {
 	readonly force: boolean;
 	readonly json: boolean;
 	readonly yes: boolean;
+	readonly noAgentFile: boolean;
 	readonly profile: import("../config-migration/gpt56-policy.js").Gpt56Profile;
 	/** Explicit lead model id (e.g. "gpt-5.6-sol", "gpt-5.6", "gpt-5.6-luna"). */
 	readonly leadModel: string;
@@ -105,6 +106,8 @@ export interface DoctorReport {
 	readonly skillCatalogComplete: boolean;
 	readonly missingSkillIds: readonly string[];
 	readonly missingSkillResourcePaths: readonly string[];
+	/** `off` when the stored switch is off, else the global AGENTS.md section state. */
+	readonly agentFile: string;
 	readonly handoffInstalled: boolean;
 	readonly scientificVisualizationInstalled: boolean;
 	readonly capabilities: import("./host-capabilities.js").HostCapabilities;

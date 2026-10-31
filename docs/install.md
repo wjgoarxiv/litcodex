@@ -14,7 +14,10 @@ npm exec --yes --package @litfamily/litcodex@1.0.33 -- litcodex install
 
 The installer sets LitCodex up inside Codex. It registers the plugin, its hooks and its agents, and
 it changes only the keys it manages in `~/.codex/config.toml`. Along the way it asks three questions:
-which model leads, which model helps, and which output style you like. On a fresh install the lead is
+which model leads, which model helps, and which output style you like. Once the install itself is done,
+it asks one more: whether to add the short LitFamily block to the global `~/.codex/AGENTS.md` — yes writes
+it, no leaves the file alone and remembers off, `install --yes` answers yes, and `--no-agent-file` skips it.
+On a fresh install the lead is
 `gpt-6-astra` at `xhigh` and ordinary helpers use `gpt-6-luna` at `max`. Pick another supported model
 and effort if you prefer.
 
@@ -79,7 +82,8 @@ from Codex CLI 0.162; other Codex versions may word or place hook lines a little
 
 Run interactively, the installer asks three questions: which model leads, which model helps, and which output style
 you like. Pressing Enter keeps the first choice each time: the recommended models and your current output style. A box then lists the route the installer is about to write,
-and nothing is written until you press Enter once more.
+and nothing is written until you press Enter once more. After the install finishes, it asks one more question —
+whether to add the short LitFamily block to the global `~/.codex/AGENTS.md`.
 
 <p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-questions-dark.webp" /><img src="./assets/screens/screen-install-questions-light.webp" width="688" alt="A terminal window running litcodex install. It asks &quot;Choose the LEAD model (plans and reviews).&quot; with gpt-6-astra · xhigh as recommended lead and 40 rows ending at 39. gpt-5.6-luna · xhigh, &quot;Choose the HELPER model (spawned/delegated agents).&quot; with gpt-6-luna · max as recommended helper, and &quot;Choose an output style for LitCodex responses.&quot; with five options. A MODEL ROUTE box shows Provider openai, Lead gpt-6-astra · xhigh and Helpers gpt-6-luna · max, then &quot;Enter to continue · Ctrl-C to abort (nothing written yet)&quot;." /></picture><br /><sub>Captured from a real litcodex install in a temporary home, answered with Enter at each question. The start banner is cut, the 40 model rows of each list are cut to the first two and the last, and the route box leaves out its path line; each … marks a cut.</sub></p>
 

@@ -73,6 +73,21 @@ agent roles, and it changes only the keys it manages in `~/.codex/config.toml`. 
 To see the plan first, run `npm exec --yes --package @litfamily/litcodex@1.0.33 -- litcodex --dry-run install`;
 it prints every step and writes nothing. To keep the defaults without any questions, add `--yes` after `install`.
 
+The installer also offers a short LitFamily block for your global `~/.codex/AGENTS.md`, the file
+Codex reads at the start of every session. It only sets the ground rules — where plans, handoffs and
+run state live, and that nothing is pushed or called done without the checks. An interactive install
+asks once and writes it on a yes; `install --yes` writes it without asking; a quiet install without
+`--yes` only tells you how to add it later; `--no-agent-file` skips it for that run. The switch stays
+yours afterwards:
+
+```sh
+litcodex config agentFile off   # remove the block and keep it off
+litcodex config agentFile on    # write it back
+```
+
+`litcodex doctor` reports the block as its `agent file:` row. In a repo, `lit-init` already writes project
+`AGENTS.md` files; `litcodex agent-file project --dir <path>` adds the matching project block to one.
+
 If you would rather have `litcodex` on your `PATH`:
 
 ```sh

@@ -260,6 +260,11 @@ function classifyInvocation(first, tail) {
 		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "screen-status" };
 		return { ok: ["on", "off", "status", "on|off|status"].includes(sub), shown: `screen-status ${sub}` };
 	}
+	if (first === "agent-file") {
+		const sub = tail.find((t) => !t.startsWith("-"));
+		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "agent-file" };
+		return { ok: sub === "project", shown: `agent-file ${sub}` };
+	}
 	const TOP = ["install", "doctor", "uninstall", "hud", "statusline", "run"];
 	return { ok: TOP.includes(first), shown: first };
 }

@@ -14,6 +14,7 @@ export function renderDoctorText(report: DoctorReport): string {
 		`  plugin:       ${yn(report.pluginInstalled)}`,
 		`  hook:         ${yn(report.hooksWired)}`,
 		`  managed config: ${yn(report.configManaged)}`,
+		`  agent file:  ${report.agentFile}`,
 		`  config:       ${report.effectiveConfig.state} (${report.effectiveConfig.detail})`,
 		`  agent config: ${report.agentRouting.desiredConfig}`,
 		`  agent TOMLs:  ${report.agentRouting.installedTomls}`,

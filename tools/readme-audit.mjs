@@ -17,7 +17,7 @@ import { matchToken } from "./scan-legacy-tokens.mjs";
 const DEFAULT_CONTRACT_PATH = fileURLToPath(new URL("./readme-contract.json", import.meta.url));
 
 // Top-level CLI routes (M03/M12 runCli surface). Loop subcommands are validated separately.
-// Mirrors packages/litcodex-ai/src/cli.ts ROUTES keys (install/doctor/uninstall/config/loop/hud/screen-status/statusline/run/hook)
+// Mirrors packages/litcodex-ai/src/cli.ts ROUTES keys (install/doctor/uninstall/agent-file/config/loop/hud/screen-status/statusline/run/hook)
 // plus the position-independent --help/--version. `config` and `hook` are sub-routed below.
 export const TOP_LEVEL_ROUTES = Object.freeze([
 	"install",
@@ -25,6 +25,7 @@ export const TOP_LEVEL_ROUTES = Object.freeze([
 	"office-runtime",
 	"motion-runtime",
 	"uninstall",
+	"agent-file",
 	"config",
 	"loop",
 	"hud",
@@ -48,10 +49,10 @@ export const LOOP_SUBCOMMANDS = Object.freeze([
 	"doctor",
 ]);
 
-// Sub-routes for the two two-token top-level routes (cli.ts: `config migrate`, `hook
-// user-prompt-submit|stop|session-start|post-compact`). A `config`/`hook` invocation is only routable
-// with the matching sub-token.
-export const CONFIG_SUBCOMMANDS = Object.freeze(["migrate"]);
+// Sub-routes for the two-token top-level routes (cli.ts: `config migrate|agentFile on|off`,
+// `hook user-prompt-submit|stop|session-start|post-compact`). A `config`/`hook` invocation is only
+// routable with the matching sub-token.
+export const CONFIG_SUBCOMMANDS = Object.freeze(["migrate", "agentFile"]);
 export const HOOK_SUBCOMMANDS = Object.freeze(["user-prompt-submit", "stop", "session-start", "post-compact"]);
 export const OFFICE_RUNTIME_SUBCOMMANDS = Object.freeze(["install", "status"]);
 export const MOTION_RUNTIME_SUBCOMMANDS = Object.freeze(["install", "status"]);

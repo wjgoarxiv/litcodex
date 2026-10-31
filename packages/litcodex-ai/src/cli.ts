@@ -13,6 +13,7 @@ import {
 } from "./cli-model-route.js";
 import { acceptedModelIds, FALLBACK_CATALOG } from "./config-migration/catalog.js";
 import { runConfigMigrateCli } from "./config-migration/cli.js";
+import { runAgentFileProjectCli, runConfigAgentFileCli } from "./install/agent-file/cli.js";
 import { resolveCodexHome } from "./install/codex.js";
 import { renderDryRunPlan, runDoctorCli, runInstallCli, runUninstallCli } from "./install/index.js";
 import { managedMarketplaceRoot } from "./install/marketplace.js";
@@ -66,6 +67,7 @@ function renderInstallDryRun(rest: readonly string[]): string {
 		force: rest.includes("--force"),
 		json: rest.includes("--json"),
 		yes: rest.includes("--yes"),
+		noAgentFile: rest.includes("--no-agent-file"),
 		profile: readModelChoice(rest),
 		leadModel: readLeadModelChoice(rest),
 		effort: readEffortChoice(rest),
@@ -88,6 +90,16 @@ const ROUTES: Readonly<Record<string, RouteHandler>> = {
 	install: (rest, dryRun) => (dryRun ? ok(renderInstallDryRun(rest)) : ok("litcodex install\n")),
 	doctor: () => ok("litcodex doctor\n"),
 	uninstall: () => ok("litcodex uninstall\n"),
+	"agent-file": (rest) => {
+		if (rest[0] === "--help" || rest[0] === "-h" || rest[0] === "project") {
+			return ok("litcodex agent-file project [--dir <path>]\n");
+		}
+		return {
+			stdout: "",
+			stderr: "Usage: litcodex agent-file project [--dir <path>]\n",
+			exitCode: 64,
+		};
+	},
 	"office-runtime": (rest) =>
 		rest[0] === "install" || rest[0] === "status"
 			? ok(`litcodex office-runtime ${rest[0]}\n`)
@@ -122,6 +134,9 @@ function configRouteHandler(rest: readonly string[]): DispatchResult {
 	if (rest[0] === "migrate") {
 		return ok("");
 	}
+	if (rest[0] === "agentFile" && rest.length === 2 && (rest[1] === "on" || rest[1] === "off")) {
+		return ok("");
+	}
 	const sub = rest[0] ?? "<none>";
 	return {
 		stdout: "",
@@ -145,6 +160,8 @@ function renderHelp(): string {
 		"  Typographic-motion engine adapted from mexicat/pdoom-video (MIT, Giacomo Magnanini), commit `ca251e3`.",
 		"  litcodex uninstall                       Remove LitCodex from Codex",
 		"  litcodex config migrate                  Migrate Codex config for LitCodex",
+		"  litcodex config agentFile on|off        Add or remove the LitFamily block in the global AGENTS.md",
+		"  litcodex agent-file project [--dir <path>] Add the LitFamily block to a repo AGENTS.md",
 		"  litcodex loop <sub>                      Run a Lit-Loop subcommand",
 		"  litcodex hud [--session <id>] [--once]   Watch the LIT card live from a second terminal window",
 		"  litcodex screen-status on|off|status     Colour the LIT card; terminal `codex` only (off by default)",
@@ -161,6 +178,7 @@ function renderHelp(): string {
 		`  --subagent-model <${modelIds}> Select the helper route (default: ${FALLBACK_CATALOG.roles["default"]?.model ?? FALLBACK_CATALOG.current.model})`,
 		"  --subagent-effort <low|medium|high|xhigh|max|ultra> Select helper effort (catalog validated)",
 		"  --yes                                    Keep defaults; never prompt",
+		"  --no-agent-file                        Skip the global AGENTS.md block for this run",
 		"  --reconfigure                           Explicitly apply the choice to the root model/effort",
 		"  --no-auto-update                        Skip the foreground update barrier for this command",
 		"",
@@ -282,6 +300,35 @@ export async function runCli(rawArgv: readonly string[]): Promise<number> {
 			const passthrough = dryRun ? [...rest.slice(2), "--dry-run"] : rest.slice(2);
 			if (!passthrough.includes("--session-start")) writeCliBanner(passthrough);
 			return runConfigMigrateCli(passthrough);
+		}
+
+		if (head === "config" && rest[1] === "agentFile") {
+			if (dryRun) {
+				return writeDryRun(`litcodex config agentFile ${rest[2] ?? ""}`.trimEnd(), [
+					`${rest[2] === "off" ? "Remove" : "Write"} the LitFamily block in the global AGENTS.md (dry run: writes no file)`,
+				]);
+			}
+			return runConfigAgentFileCli(rest.slice(2), {
+				env: process.env,
+				out: process.stdout,
+				err: process.stderr,
+				codexHome: resolveCodexHome(process.env),
+				version: manifest.version,
+			});
+		}
+
+		if (head === "agent-file") {
+			if (dryRun) {
+				return writeDryRun("litcodex agent-file project", [
+					"Write the LitFamily project block into <dir>/AGENTS.md (no backup; a mistyped --dir is never created)",
+				]);
+			}
+			return runAgentFileProjectCli(rest.slice(1), {
+				cwd: process.cwd(),
+				out: process.stdout,
+				err: process.stderr,
+				version: manifest.version,
+			});
 		}
 
 		if (head === "install") {

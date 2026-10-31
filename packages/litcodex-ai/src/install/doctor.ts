@@ -10,6 +10,10 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { EXPLICIT_GPT56_SOL_MODEL, GPT56_MODELS } from "../config-migration/gpt56-policy.js";
 import { isNewer } from "../update-check.js";
+import { instructionFileState } from "./agent-file/apply.js";
+import { AGENT_FILE_ID } from "./agent-file/bodies.js";
+import { agentFilePath } from "./agent-file/cli.js";
+import { readAgentFileMode } from "./agent-file/mode.js";
 import { inspectAgentRouting, routingReport } from "./agent-routing.js";
 import { detectAuthMode } from "./auth-mode.js";
 import { inspectAutoHandoff } from "./auto-handoff-doctor.js";
@@ -92,6 +96,11 @@ const POST_INSTALL_CAPABILITY = {
 
 export function runDoctor(deps: DoctorDeps): DoctorReport {
 	const postInstall = deps.scope === "post-install";
+	const agentHome = resolveCodexHome(deps.env);
+	const agentFile =
+		readAgentFileMode({ env: deps.env, codexHome: agentHome }) === "off"
+			? "off"
+			: instructionFileState({ path: agentFilePath(agentHome), id: AGENT_FILE_ID, version: PACKAGE_VERSION });
 	const codexBin = findCodexBinary(deps.env, deps.fs);
 	const codexBinaryFound = codexBin !== null;
 	const issues: string[] = [];
@@ -115,6 +124,7 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 		return {
 			ok: false,
 			...(postInstall ? { scope: "post-install" as const } : {}),
+			agentFile,
 			marketplaceRegistered: false,
 			pluginInstalled: false,
 			hooksWired: false,
@@ -176,6 +186,13 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 
 	const effectiveConfig = inspectEffectiveConfig(deps.fs, join(codexHome, "config.toml"));
 	const configManaged = effectiveConfig.state !== "unavailable";
+	if (agentFile === "malformed") {
+		issues.push(
+			`LitFamily block in ${agentFilePath(codexHome)} is malformed; remove the broken markers, then run \`litcodex install --yes\`.`,
+		);
+	} else if (agentFile === "symlink" || agentFile === "not-file" || agentFile === "not-utf8") {
+		warnings.push(`Global AGENTS.md is ${agentFile}; the LitFamily block was left as it is.`);
+	}
 	if (effectiveConfig.state === "unavailable") {
 		issues.push(`Codex config unavailable: ${effectiveConfig.detail}.`);
 	}
@@ -236,6 +253,7 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 	return {
 		ok: issues.length === 0,
 		...(postInstall ? { scope: "post-install" as const } : {}),
+		agentFile,
 		marketplaceRegistered,
 		pluginInstalled,
 		hooksWired,
