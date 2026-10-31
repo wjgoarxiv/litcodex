@@ -792,9 +792,15 @@ export function collectRewind(options: RewindOptions): RewindResult {
 	const herdr = readHerdrAgents(env, options.herdr);
 	const lanes = lanesOf(placed, laneRootsOf(options.cwd, git), sessionId, env, herdr, now, homed);
 	const chosen = chooseNext(options.cwd, sessionId);
-	// A step `go` would only start, a handoff item or nothing at all waits while other lanes work: the live signal wins.
+	// While another lane works, no step that would resume or start work here is offered: only a
+	// boundary approval, which stays the user's call either way. The live signal wins.
 	const next: NextStep =
-		lanes.count > 0 && (chosen.kind === "start-plan" || chosen.kind === "handoff" || chosen.kind === "none")
+		lanes.count > 0 &&
+		(chosen.kind === "resume-frame" ||
+			chosen.kind === "continue-work" ||
+			chosen.kind === "start-plan" ||
+			chosen.kind === "handoff" ||
+			chosen.kind === "none")
 			? { kind: "wait-lanes", text: waitText(lanes), lanes: lanes.count }
 			: chosen;
 	if (sessionId !== null) writeNext(options.cwd, sessionId, next, now);

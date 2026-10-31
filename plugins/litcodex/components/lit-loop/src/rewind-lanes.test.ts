@@ -21,6 +21,7 @@ import { readHerdrAgents } from "./herdr-agents.js";
 import { chooseNext, collectRewind, renderBrief, writeNext } from "./rewind.js";
 import { takeGo } from "./rewind-go.js";
 import { recordLiveness } from "./session-liveness.js";
+import { recordStackEvent } from "./workflow-stack.js";
 
 const FIXTURES = fileURLToPath(new URL("../test/fixtures/rewind/sessions", import.meta.url));
 const NOW = Date.parse("2026-10-25T12:00:00.000Z");
@@ -289,6 +290,70 @@ describe("S4: the handoff note", () => {
 			herdr: herdrList([agent("w1:p2", "working", { workspace_id: "w1" })]),
 		});
 		expect(result.next.kind).toBe("wait-lanes");
+	});
+});
+
+describe("S6: this session's own resume and run hold while lanes work", () => {
+	function withPausedSpine(cwd: string): void {
+		recordStackEvent(cwd, ME, { type: "start", skill: "lit-loop" }, new Date(NOW - 2 * MIN));
+		recordStackEvent(
+			cwd,
+			ME,
+			{ type: "record", family: "loop", stage: "RED", n: 1, total: 4 },
+			new Date(NOW - 2 * MIN),
+		);
+		recordStackEvent(cwd, ME, { type: "start", skill: "lit-brainstorm" }, new Date(NOW - MIN));
+	}
+
+	function withLaneAtWork(s: Scratch) {
+		return {
+			env: { HOME: s.home, CODEX_HOME: s.codexHome, ...HERDR_ENV },
+			herdr: herdrList([agent("w1:p2", "working", { workspace_id: "w1" })]),
+		};
+	}
+
+	it("holds this session's own paused frame while another lane works", () => {
+		const s = scratch();
+		withPausedSpine(s.workspace);
+		expect(chooseNext(s.workspace, ME).kind).toBe("resume-frame");
+		const held = collect(s, withLaneAtWork(s));
+		expect(held.next).toMatchObject({ kind: "wait-lanes", lanes: 1 });
+		expect(renderBrief(held)).not.toMatch(/lit continue/u);
+	});
+
+	it("holds this session's own run while another lane works", () => {
+		const s = scratch();
+		withPlan(s.workspace);
+		withWork(s.workspace, [`codex:${ME}`]);
+		expect(chooseNext(s.workspace, ME).kind).toBe("continue-work");
+		const held = collect(s, withLaneAtWork(s));
+		expect(held.next).toMatchObject({ kind: "wait-lanes", lanes: 1 });
+		expect(renderBrief(held)).not.toContain("say `go`");
+	});
+
+	it("still offers this session's own resume when no lane works", () => {
+		const s = scratch();
+		withPausedSpine(s.workspace);
+		const idle = collect(s, {
+			env: { HOME: s.home, CODEX_HOME: s.codexHome },
+			herdr: herdrList([]),
+		});
+		expect(idle.next.kind).toBe("resume-frame");
+		expect(renderBrief(idle)).toMatch(/lit continue/u);
+	});
+
+	it("still offers a pending approval while lanes work", () => {
+		const s = scratch();
+		mkdirSync(join(s.workspace, ".litcodex/start-work"), { recursive: true });
+		writeFileSync(
+			join(s.workspace, ".litcodex/start-work/state.json"),
+			JSON.stringify({
+				active_work_id: "w1",
+				works: { w1: { work_id: "w1", status: "paused", pending_boundary: { boundary_id: "b1" } } },
+			}),
+		);
+		const result = collect(s, withLaneAtWork(s));
+		expect(result.next.kind).toBe("approve-boundary");
 	});
 });
 

@@ -125,7 +125,8 @@ describe("collectRewind on fixtures", () => {
 		expect(a?.gauge).toBeNull();
 		const tree = result.worktrees.find((t) => t.path.endsWith("ws"));
 		expect(tree?.paused.map((p) => p.label)).toEqual(["lit-loop RED [▉▉░░░] 2/5"]);
-		expect(result.next.kind).toBe("resume-frame");
+		// SESSION_B is live, so its lane holds this session's own resume.
+		expect(result.next.kind).toBe("wait-lanes");
 	});
 
 	it("skips a subagent session and tolerates a first line larger than the head window", () => {
@@ -262,7 +263,8 @@ describe("next step", () => {
 		const s = scratch();
 		recordStackEvent(s.workspace, "sess-1", { type: "start", skill: "lit-loop" }, new Date(NOW - 5000));
 		recordStackEvent(s.workspace, "sess-1", { type: "start", skill: "lit-brainstorm" }, new Date(NOW - 4000));
-		expect(collectRewind(options(s, { sessionId: "sess-1" })).next.kind).toBe("resume-frame");
+		// The copied fixture sessions leave a live lane, which holds sess-1's own resume.
+		expect(collectRewind(options(s, { sessionId: "sess-1" })).next.kind).toBe("wait-lanes");
 		const state = join(s.workspace, ".litcodex/start-work");
 		mkdirSync(state, { recursive: true });
 		writeFileSync(
