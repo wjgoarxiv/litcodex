@@ -83,7 +83,7 @@ describe("doctor — agentsInstalled probe", () => {
 				[codexBin, sentinelPath],
 				"model_context_window = 372000\nmodel_auto_compact_token_limit = 334800\n",
 				undefined,
-				"1.0.33",
+				"1.0.34",
 				"0.145.0",
 			),
 		);
@@ -255,7 +255,7 @@ describe("doctor — agentsInstalled probe", () => {
 					[codexBin, sentinelPath],
 					"model_context_window = 372000\nmodel_auto_compact_token_limit = 334800\n",
 					undefined,
-					"1.0.33",
+					"1.0.34",
 					"0.145.0",
 				);
 				return runDoctor({ ...deps, env: { ...deps.env, LITCODEX_AUTO_UPDATE_STATE_ROOT: stateRoot } });
@@ -274,13 +274,13 @@ describe("doctor — agentsInstalled probe", () => {
 		});
 
 		it("also stops warning when the target equals the installed version", () => {
-			const report = doctorWithReceipt({ ...staleReceipt, currentVersion: "1.0.18", latestVersion: "1.0.33" });
+			const report = doctorWithReceipt({ ...staleReceipt, currentVersion: "1.0.18", latestVersion: "1.0.34" });
 			expect(report.issues).toEqual([]);
 			expect(report.autoUpdate?.status).toBe("resolved");
 		});
 
 		it("keeps warning when the receipt targets a version newer than the installed one", () => {
-			const report = doctorWithReceipt({ ...staleReceipt, currentVersion: "1.0.33", latestVersion: "999.0.0" });
+			const report = doctorWithReceipt({ ...staleReceipt, currentVersion: "1.0.34", latestVersion: "999.0.0" });
 			expect(report.ok).toBe(false);
 			expect(report.autoUpdate?.status).toBe("unknown-state");
 			expect(report.issues).toContainEqual(expect.stringContaining("installation state is unknown"));

@@ -41,7 +41,7 @@ LIT · codex
 <p align="center"><img src="./assets/clay-icon.png" width="160" alt="LitCodex 클레이 마크" /></p>
 
 <p align="center">
-<a href="../README-Ko-KR.md#설치"><img src="./assets/readme/badge-version.svg" alt="1.0.33" /></a>
+<a href="../README-Ko-KR.md#설치"><img src="./assets/readme/badge-version.svg" alt="1.0.34" /></a>
 <a href="../LICENSE"><img src="./assets/readme/badge-license.svg" alt="MIT license" /></a>
 </p>
 

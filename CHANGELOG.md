@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.34] - 2026-10-31
+
 ### Added
 
 - The installer can keep a short LitFamily block in your global `~/.codex/AGENTS.md`, the file Codex
