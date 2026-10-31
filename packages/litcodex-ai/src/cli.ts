@@ -13,7 +13,7 @@ import {
 } from "./cli-model-route.js";
 import { acceptedModelIds, FALLBACK_CATALOG } from "./config-migration/catalog.js";
 import { runConfigMigrateCli } from "./config-migration/cli.js";
-import { runAgentFileProjectCli, runConfigAgentFileCli } from "./install/agent-file/cli.js";
+import { runAgentFileProjectCli, runConfigAgentFileCli, runConfigAttributionCli } from "./install/agent-file/cli.js";
 import { resolveCodexHome } from "./install/codex.js";
 import { renderDryRunPlan, runDoctorCli, runInstallCli, runUninstallCli } from "./install/index.js";
 import { managedMarketplaceRoot } from "./install/marketplace.js";
@@ -137,6 +137,9 @@ function configRouteHandler(rest: readonly string[]): DispatchResult {
 	if (rest[0] === "agentFile" && rest.length === 2 && (rest[1] === "on" || rest[1] === "off")) {
 		return ok("");
 	}
+	if (rest[0] === "attribution" && rest.length === 2 && (rest[1] === "keep" || rest[1] === "off")) {
+		return ok("");
+	}
 	const sub = rest[0] ?? "<none>";
 	return {
 		stdout: "",
@@ -161,6 +164,7 @@ function renderHelp(): string {
 		"  litcodex uninstall                       Remove LitCodex from Codex",
 		"  litcodex config migrate                  Migrate Codex config for LitCodex",
 		"  litcodex config agentFile on|off        Add or remove the LitFamily block in the global AGENTS.md",
+		"  litcodex config attribution keep|off    Ask the model not to add AI attribution to commits and PRs (a request, not a guarantee)",
 		"  litcodex agent-file project [--dir <path>] Add the LitFamily block to a repo AGENTS.md",
 		"  litcodex loop <sub>                      Run a Lit-Loop subcommand",
 		"  litcodex hud [--session <id>] [--once]   Watch the LIT card live from a second terminal window",
@@ -309,6 +313,21 @@ export async function runCli(rawArgv: readonly string[]): Promise<number> {
 				]);
 			}
 			return runConfigAgentFileCli(rest.slice(2), {
+				env: process.env,
+				out: process.stdout,
+				err: process.stderr,
+				codexHome: resolveCodexHome(process.env),
+				version: manifest.version,
+			});
+		}
+
+		if (head === "config" && rest[1] === "attribution") {
+			if (dryRun) {
+				return writeDryRun(`litcodex config attribution ${rest[2] ?? ""}`.trimEnd(), [
+					`${rest[2] === "off" ? "Add" : "Remove"} the attribution request line in the LitFamily block of the global AGENTS.md (dry run: writes no file)`,
+				]);
+			}
+			return runConfigAttributionCli(rest.slice(2), {
 				env: process.env,
 				out: process.stdout,
 				err: process.stderr,

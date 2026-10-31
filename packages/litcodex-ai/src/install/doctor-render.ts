@@ -15,6 +15,7 @@ export function renderDoctorText(report: DoctorReport): string {
 		`  hook:         ${yn(report.hooksWired)}`,
 		`  managed config: ${yn(report.configManaged)}`,
 		`  agent file:  ${report.agentFile}`,
+		`  attribution: ${report.attribution}`,
 		`  config:       ${report.effectiveConfig.state} (${report.effectiveConfig.detail})`,
 		`  agent config: ${report.agentRouting.desiredConfig}`,
 		`  agent TOMLs:  ${report.agentRouting.installedTomls}`,

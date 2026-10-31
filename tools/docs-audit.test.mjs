@@ -98,6 +98,8 @@ describe("docs-audit command surface (pure)", () => {
 			"litcodex config migrate",
 			"litcodex config agentFile on",
 			"litcodex config agentFile off",
+			"litcodex config attribution off",
+			"litcodex config attribution keep",
 			"litcodex agent-file project --dir <path>",
 			"litcodex hook user-prompt-submit",
 			"litcodex motion-runtime install",

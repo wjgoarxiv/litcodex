@@ -49,10 +49,10 @@ export const LOOP_SUBCOMMANDS = Object.freeze([
 	"doctor",
 ]);
 
-// Sub-routes for the two-token top-level routes (cli.ts: `config migrate|agentFile on|off`,
+// Sub-routes for the two-token top-level routes (cli.ts: `config migrate|agentFile on|off|attribution keep|off`,
 // `hook user-prompt-submit|stop|session-start|post-compact`). A `config`/`hook` invocation is only
 // routable with the matching sub-token.
-export const CONFIG_SUBCOMMANDS = Object.freeze(["migrate", "agentFile"]);
+export const CONFIG_SUBCOMMANDS = Object.freeze(["migrate", "agentFile", "attribution"]);
 export const HOOK_SUBCOMMANDS = Object.freeze(["user-prompt-submit", "stop", "session-start", "post-compact"]);
 export const OFFICE_RUNTIME_SUBCOMMANDS = Object.freeze(["install", "status"]);
 export const MOTION_RUNTIME_SUBCOMMANDS = Object.freeze(["install", "status"]);

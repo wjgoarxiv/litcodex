@@ -2,6 +2,8 @@
 // The global text is read on every session start, so it stays short and points at the
 // project's own docs for everything else. Both name only LitCodex and its host.
 
+import { ATTRIBUTION_LINE, type AttributionMode } from "./attribution.js";
+
 /** Marker id for the LitCodex section. */
 export const AGENT_FILE_ID = "litcodex" as const;
 
@@ -14,7 +16,7 @@ export type AgentFileMode = (typeof AGENT_FILE_MODES)[number];
 export const AGENT_FILE_MAX_BYTES = 1200 as const;
 
 /** The section for the global `$CODEX_HOME/AGENTS.md`. */
-export const globalBody = (): string =>
+export const globalBody = (options: { attribution?: AttributionMode } = {}): string =>
 	[
 		"## LitFamily · LitCodex",
 		"",
@@ -27,6 +29,7 @@ export const globalBody = (): string =>
 		"- Never push, publish, tag or bump a version without the user's explicit yes for that action.",
 		"- Call work done only after its tests pass and the changed surface was checked for real.",
 		"- In a new repo, `lit-init` writes a short project `AGENTS.md` with these conventions.",
+		...(options.attribution === "off" ? [ATTRIBUTION_LINE] : []),
 		"- Turn this block off with `litcodex config agentFile off`.",
 		"",
 	].join("\n");

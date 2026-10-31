@@ -11,6 +11,7 @@ import { join } from "node:path";
 import { EXPLICIT_GPT56_SOL_MODEL, GPT56_MODELS } from "../config-migration/gpt56-policy.js";
 import { isNewer } from "../update-check.js";
 import { instructionFileState } from "./agent-file/apply.js";
+import { readAttributionMode } from "./agent-file/attribution.js";
 import { AGENT_FILE_ID } from "./agent-file/bodies.js";
 import { agentFilePath } from "./agent-file/cli.js";
 import { readAgentFileMode } from "./agent-file/mode.js";
@@ -101,6 +102,7 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 		readAgentFileMode({ env: deps.env, codexHome: agentHome }) === "off"
 			? "off"
 			: instructionFileState({ path: agentFilePath(agentHome), id: AGENT_FILE_ID, version: PACKAGE_VERSION });
+	const attribution = readAttributionMode({ env: deps.env, codexHome: agentHome });
 	const codexBin = findCodexBinary(deps.env, deps.fs);
 	const codexBinaryFound = codexBin !== null;
 	const issues: string[] = [];
@@ -125,6 +127,7 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 			ok: false,
 			...(postInstall ? { scope: "post-install" as const } : {}),
 			agentFile,
+			attribution,
 			marketplaceRegistered: false,
 			pluginInstalled: false,
 			hooksWired: false,
@@ -254,6 +257,7 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 		ok: issues.length === 0,
 		...(postInstall ? { scope: "post-install" as const } : {}),
 		agentFile,
+		attribution,
 		marketplaceRegistered,
 		pluginInstalled,
 		hooksWired,

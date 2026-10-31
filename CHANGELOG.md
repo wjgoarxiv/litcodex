@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   it later, and `--no-agent-file` skips it for that run. `litcodex config agentFile on|off` writes or
   removes it afterwards, `litcodex doctor` reports it as its `agent file:` row, and
   `litcodex agent-file project --dir <path>` adds the matching project block to a repo's `AGENTS.md`.
+- Codex adds its own `Co-authored-by` trailer and pull request line from an account setting in your
+  ChatGPT settings, not from `config.toml`, so LitCodex cannot turn it off. What it can do is ask the model:
+  `litcodex config attribution off` adds one line to the LitFamily block in your global `AGENTS.md` asking not to
+  add AI attribution to commits or pull requests, and `litcodex config attribution keep` takes it out. The line is a
+  request, not a guarantee, and `config.toml` is never written. The default is `keep`; an interactive install asks
+  once (default no), `install --yes` changes nothing, `litcodex doctor` shows `attribution: keep|off`, and
+  `uninstall` returns it to `keep`.
 
 ### Changed
 

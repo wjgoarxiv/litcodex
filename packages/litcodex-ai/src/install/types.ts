@@ -108,6 +108,8 @@ export interface DoctorReport {
 	readonly missingSkillResourcePaths: readonly string[];
 	/** `off` when the stored switch is off, else the global AGENTS.md section state. */
 	readonly agentFile: string;
+	/** `keep` or `off`: whether the block asks the model not to add AI attribution. */
+	readonly attribution: string;
 	readonly handoffInstalled: boolean;
 	readonly scientificVisualizationInstalled: boolean;
 	readonly capabilities: import("./host-capabilities.js").HostCapabilities;

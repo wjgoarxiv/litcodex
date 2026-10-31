@@ -80,7 +80,20 @@ litcodex config agentFile off   # 블록을 지우고 끈 채로 둡니다
 litcodex config agentFile on    # 다시 씁니다
 ```
 
-`litcodex doctor`는 `agent file:` 행으로 블록 상태를 보여 줍니다. 저장소 안에서는 `lit-init`이 프로젝트
+Codex가 붙이는 `Co-authored-by` trailer와 pull request 문구는 `config.toml`이 아니라 ChatGPT 설정의 계정 단위
+설정으로 정해집니다(Codex는 계정의 Git 항목을
+[개발자 설정](https://learn.chatgpt.com/docs/developer-settings)에서 설명합니다). 그래서 LitCodex가 여기서 끌 수는 없고,
+모델에게 부탁할 수만 있습니다. `litcodex config attribution off`는 커밋이나 pull request에 `Co-Authored-By` 줄 같은
+AI 표기를 넣지 말라는 한 줄을 블록에 더하고, `litcodex config attribution keep`은 그 줄을 다시 뺍니다. 이 줄은 부탁이지
+보장이 아니며 `config.toml`은 건드리지 않습니다. 기본값은 `keep`입니다. 대화형 설치는 한 번 묻고(기본 아니오),
+`install --yes`는 아무것도 바꾸지 않고, `uninstall`은 `keep`으로 되돌립니다.
+
+```sh
+litcodex config attribution off    # 부탁 한 줄을 블록에 더합니다
+litcodex config attribution keep   # 다시 뺍니다
+```
+
+`litcodex doctor`는 `agent file:` 행으로 블록 상태를, `attribution:` 행으로 이 선택을 보여 줍니다. 저장소 안에서는 `lit-init`이 프로젝트
 `AGENTS.md`를 쓰고, `litcodex agent-file project --dir <path>`로 같은 계열의 프로젝트 블록을 더할 수 있습니다.
 
 `litcodex`를 `PATH`에서 바로 부르고 싶다면 다음을 실행합니다.

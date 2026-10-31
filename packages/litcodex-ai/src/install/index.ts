@@ -23,8 +23,10 @@ import {
 	Spinner,
 	shouldDecorate,
 } from "../ui.js";
+import { clearAttributionMode } from "./agent-file/attribution.js";
 import {
 	AGENT_FILE_QUESTION,
+	ATTRIBUTION_QUESTION,
 	agentFileDryRunLine,
 	removeGlobalAgentFile,
 	runInstallAgentFile,
@@ -402,6 +404,16 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 				}
 			}
 		: undefined;
+	const attributionPrompt = agentPrompt
+		? async (): Promise<boolean> => {
+				const rl = installReadline(opts, io);
+				try {
+					return /^\s*y/iu.test((await rl.question(ATTRIBUTION_QUESTION)).trim());
+				} finally {
+					rl.close();
+				}
+			}
+		: undefined;
 	const agentFileLine = await runInstallAgentFile({
 		env: io.env,
 		stdout: io.stdout,
@@ -412,6 +424,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 		dryRun: false,
 		json: opts.json,
 		...(agentPrompt === undefined ? {} : { prompt: agentPrompt }),
+		...(attributionPrompt === undefined ? {} : { attributionPrompt }),
 	});
 
 	const officeRuntime = result.ok ? prepareOfficeRuntime(opts.codexHome, spawnSync, io.env) : undefined;
@@ -506,6 +519,7 @@ export function runUninstallCli(args: readonly string[], io: RouteIo = defaultIo
 	});
 
 	const agentRemoval = removeGlobalAgentFile(codexHome, PACKAGE_VERSION);
+	clearAttributionMode(codexHome);
 
 	if (json) {
 		io.stdout.write(`${JSON.stringify({ ...result, agentFile: agentRemoval })}\n`);

@@ -85,7 +85,21 @@ litcodex config agentFile off   # remove the block and keep it off
 litcodex config agentFile on    # write it back
 ```
 
-`litcodex doctor` reports the block as its `agent file:` row. In a repo, `lit-init` already writes project
+Codex adds its own `Co-authored-by` trailer and pull request line from an account setting in your ChatGPT
+settings (Codex describes the account's Git section in its
+[developer settings](https://learn.chatgpt.com/docs/developer-settings)), not from `config.toml`, so LitCodex
+cannot switch it off from here. What it can do is ask the model. `litcodex config attribution off` adds one line
+to the block — do not add `Co-Authored-By` lines or other AI attribution to commits or pull requests — and
+`litcodex config attribution keep` takes it out again. That line is a request, not a guarantee, and `config.toml` is
+never touched. The default is `keep`: an interactive install asks once (default no), `install --yes` changes
+nothing, and `uninstall` returns it to `keep`.
+
+```sh
+litcodex config attribution off    # add the request line to the block
+litcodex config attribution keep   # take it out
+```
+
+`litcodex doctor` reports the block as its `agent file:` row and the choice as `attribution:`. In a repo, `lit-init` already writes project
 `AGENTS.md` files; `litcodex agent-file project --dir <path>` adds the matching project block to one.
 
 If you would rather have `litcodex` on your `PATH`:
