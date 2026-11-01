@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `lit-typographic-motion` stage films can carry keyed overlay clips: frames cut out of green-screen footage
+  (8-bit RGBA PNG with real transparency) go in `stage/clips/<dir>/`, a `stage/clips/clips.json` names each clip
+  (`id`, `dir`, `count`, `fps`), and the page shows one with `LitStage.keyedClip({ parent, id, box })` and
+  `show(t, { start, from, to, loop, hold })`, the frame being a function of film time alone. Declared frames are
+  checked against their own caps (12 clips, 360 frames a clip and 1500 in all, 40 MB a clip and 128 MB in all,
+  720 px on the long side, up to 30 fps) and are not counted as a flipbook; a frame folder that is not declared is
+  still refused with exit 17, a README cover takes no clips, and the flash audit and the determinism replay run on
+  the final pixels as before. `manifest.json` and the gate report list each clip.
+
 ## [1.0.34] - 2026-10-31
 
 ### Added

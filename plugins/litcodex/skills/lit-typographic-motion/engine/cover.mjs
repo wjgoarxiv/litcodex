@@ -115,7 +115,7 @@ function prepare(outDir) {
 	}
 	const coverDir = join(outDir, COVER_DIR);
 	if (!existsSync(join(coverDir, "index.html"))) throw new Exit(EXIT.STAGE_CONTRACT_ERROR, `STAGE_CONTRACT_ERROR: no cover/index.html in ${outDir}; write the cover page first (references/cover.md)`);
-	const scan = scanStage(coverDir);
+	const scan = scanStage(coverDir, { clips: false });
 	const { assets } = checkAssets({ outDir, treatment, files: scan.files, coverDir: COVER_DIR });
 	const runtime = resolveRuntime();
 	if (!runtime.deps.ready) throw new Exit(EXIT.BLOCKED_DEPS_NOT_PREWARMED, `BLOCKED_DEPS_NOT_PREWARMED: ${runtime.deps.missing.join("; ")}. Run \`${INSTALL_COMMAND}\` outside the sandboxed session, then rerun.`);

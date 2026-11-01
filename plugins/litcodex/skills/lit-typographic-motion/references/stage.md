@@ -11,6 +11,7 @@ Load this file after `treatment.json` says `path: stage`, together with `referen
     index.html          the film (start from `scaffold`)
     assets/             a named product's real files (`assets`, treatment.md)
     scene.py, plate/    the Blender rung only (depth.md)
+    clips/              declared keyed clips: clips.json and one folder of frames per clip (Clips)
     *.svg *.png *.jpg *.webp *.js *.css *.wav   your own local assets
 ```
 
@@ -19,7 +20,7 @@ Assets are your own work: SVG you draw, small rasters you make as textures or st
 - `<video>`, `<audio>`, `<iframe>`, `<object>`, `<embed>`, `<frame>` (exit 17);
 - `new Audio()`, `AudioContext`, `OfflineAudioContext`, workers and service workers (exit 17);
 - `WebSocket`, `WebTransport`, `RTCPeerConnection`, `EventSource`, any absolute or protocol-relative URL other than an XML namespace, and preconnect or prefetch links (exit 19);
-- more than 24 raster images or 8 MB of rasters, 10 or more rasters of one size (a flipbook), and any animated GIF, APNG or WebP (exit 17). Rasters are textures and stills, never a frame sequence;
+- more than 24 raster images or 8 MB of rasters, 10 or more rasters of one size (a flipbook), and any animated GIF, APNG or WebP (exit 17). Rasters are textures and stills, never a frame sequence. The one frame sequence a page may carry is a declared keyed clip (Clips);
 - any file type outside html, js, mjs, css, svg, png, jpg, webp, gif, wav, woff, woff2, ttf, otf and json, a `node_modules` folder, and links that leave `stage/` (exit 17).
 
 The page loads these product routes (the scaffold writes them):
@@ -31,7 +32,7 @@ The page loads these product routes (the scaffold writes them):
 <script src="/lit/stage-kit.js"></script>
 ```
 
-`/lit/style.css` and `/lit/style.js` carry the treatment's house style and shot timeline (`studio.md`, The page).
+`/lit/style.css` and `/lit/style.js` carry the treatment's house style and shot timeline (`studio.md`, The page). A page with declared keyed clips also loads `<script src="/lit/clips.js"></script>` after the kit (Clips).
 
 `/lit/fonts.css` declares this product's verified faces with `font-display: block`: `"Archivo"` (weights 400, 700, 900; `font-stretch` 75 %, 100 %, 125 %), `"Pretendard"` (400, 700) for Hangul, `"VT323"`, `"Galmuri9"`, `"MesloLGS NF"` and `"JetBrains Mono"` (variable `wght` 100 to 800, a fixed advance, so weight motion never reflows). Name only these families; any other face is a system fallback the text check reports.
 
@@ -144,6 +145,29 @@ LitStage.clip.wipe(panel, LitStage.at(t, 5, 0.5, "snap"), "up");
 document.body.style.background = LitStage.mix(palette.dusk, palette.night, LitStage.at(t, 8, 3));
 ```
 
+## Clips
+
+Real keyed footage (a reaction clip, a spinning loop shot on green screen) joins the film as a layer inside the page. The footage is keyed outside the renderer into one 8-bit RGBA PNG per frame, the frames are declared, and the page picks the frame from film time. A declared clip is not counted as a flipbook or against the raster limits; every other raster keeps them. Nothing is encoded by hand: the frames are captured with the page, so the flash audit, the determinism replay and the text checks run on the final pixels like any other film.
+
+1. Put each clip's frames in `stage/clips/<dir>/` as `frame_0001.png`, `frame_0002.png` and so on, with no gaps and no other image in the folder.
+2. Declare them in `stage/clips/clips.json`:
+
+   ```json
+   { "clips": [ { "id": "boom", "dir": "01-vine-boom", "count": 122, "fps": 30 } ] }
+   ```
+
+   `id` is the name the page uses (letters, digits, `-`, `_`), `dir` is a folder directly under `clips/`, `count` is the number of frames and `fps` is the clip's own rate, 1 to 30. A clip used twice is declared once.
+3. The page loads `<script src="/lit/clips.js"></script>` after the kit, registers each use once with `LitStage.keyedClip({ parent, id, box })` and calls the returned `show(t, opts)` from `render(t)`. `parent` is the element the clip sits in; `box` is its place in pixels, with the frame fitted inside it. `show` returns the clip's wrapper element, or `null` while it is hidden; scale, fade or move that wrapper from `t` like any other layer.
+
+```js
+const boom = LitStage.keyedClip({ parent: layer, id: "boom", box: { x: 1200, y: 300, w: 520, h: 511 } });
+LitStage.define({ width: 1920, height: 1080, fps: 30, duration: 4, render(t) { boom(t, { start: 2.1 }); } });
+```
+
+The frame shown is `floor((t - start) * fps) + 1`, counted from `from`, so a cue is plain arithmetic: a clip whose own sound begins at frame 85 and must land on a cue at 0.12 s has `start = 0.12 - 84 / 30`. Options: `start` (film seconds, default 0), `from` and `to` (the frame range, default the whole clip), `loop` (wrap by frame index) and `hold` (keep the last frame). Before `start`, and past `to` without `loop` or `hold`, the clip is hidden. The existing `LitStage.clip` helpers (circle, inset, wipe, polygon) are CSS masks and are unchanged.
+
+The scan refuses, with exit 17 and the clip named: more than 12 clips, more than 360 frames in a clip or 1500 in all, more than 40 MB in a clip or 128 MB in all, a frame whose long side is above 720 px (a clip is an overlay, not the film), a frame rate above 30, frames of mixed sizes, a missing or extra frame, a frame that is not an 8-bit RGBA PNG or has no transparent pixel in its first, middle and last frame (an opaque video is not keyed), an animated image and a duplicate `id`. A folder that is not declared, or any frame sequence beside a declared clip, is a flipbook as before. A README cover takes no clips. Keep clips clear of copy: the text checks read DOM text, so a clip laid over a line is yours to catch on the stills. `manifest.json` and `gate-report.txt` list each clip.
+
 ## Craft on the stage
 
 Build the film beat by beat from the treatment: each beat's `onScreen` is a drawing you make, its `motion` is a curve you choose, and its `sound` is a moment the cut lands on. Draw the subject with SVG, Canvas or CSS shapes in layers (a far layer, the subject, a near layer) and move them at different rates for depth. Change the transition from beat to beat: a match cut on a shape that carries over, a mask wipe, a morph from one form to the next, a push, a hard cut on the pulse. Give type a clear hierarchy (one line leads, the rest support) and let it enter with its own ease rather than a shared fade. Every beat should show something the previous one did not.
@@ -180,7 +204,7 @@ The gate checks the flash audit on the master and the looping preview (the audit
 | 13 | A gate rule failed | Fix the named cause and render the next round |
 | 14 / 15 | Runtime or fonts not pre-warmed / pin mismatch | `litcodex motion-runtime install` outside the sandbox |
 | 16 | Treatment invalid (field named) | Fix that field |
-| 17 | Stage contract (element, API, asset, size, define) | Remove or redraw the named thing |
+| 17 | Stage contract (element, API, asset, clip, size, define) | Remove or redraw the named thing |
 | 18 | Nondeterministic frame (frame and region named) | Replace the leaking source with `t` or `LitStage.rand` |
 | 19 | Network request or connection | Make the asset local |
 | 20 | Sound invalid | See the sound plan in the treatment |

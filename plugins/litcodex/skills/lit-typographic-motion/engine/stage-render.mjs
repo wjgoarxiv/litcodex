@@ -304,6 +304,7 @@ export async function runStage({ outDir, treatment, round, stillsOnly, log = () 
 			chromeFlags: stageFlags(width, height, process.platform, ctx.rung),
 			rung: ctx.rung,
 			renderer: report.webgl?.renderer ?? null,
+			clips: scan.clips.map((c) => ({ id: c.id, frames: c.count, fps: c.fps, width: c.width, height: c.height, bytes: c.bytes })),
 			plate: scan.plate ? { blender: scan.plate.blender, engine: scan.plate.engine, device: scan.plate.device, samples: scan.plate.samples, fps: scan.plate.fps, frames: scan.plate.frames.length } : null,
 			notices: ctx.notices,
 			assetUsed: assetUsed(treatment, scan.files),

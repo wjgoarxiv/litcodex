@@ -181,6 +181,7 @@ export function renderStageReport({ manifest, rules, outputs, round, framesViewe
 	lines.push(`outputs: ${outputs.mp4} · ${outputs.preview} (encoder: ${manifest.previewEncoder ?? "none"}) · ${outputs.poster} · ${outputs.still}`);
 	lines.push(`path: stage · format ${manifest.format} ${manifest.width}x${manifest.height} @ ${manifest.fps} fps · ${manifest.durationSec} s (treatment ${manifest.targetDurationSec} s)`);
 	lines.push(`capture: ${manifest.rung ?? "software"} rung ${manifest.renderer ?? "(no WebGL requested)"} · per frame p50 ${manifest.timing?.p50Ms ?? "?"} ms, p95 ${manifest.timing?.p95Ms ?? "?"} ms · master ${manifest.timing?.masterSec ?? "?"} s, determinism and text QA replays ${manifest.timing?.replaysSec ?? "?"} s, total ${manifest.timing?.totalSec ?? "?"} s`);
+	if (manifest.clips?.length) lines.push(`clips: ${manifest.clips.map((c) => `${c.id} ${c.frames} frames at ${c.fps} fps`).join(", ")} (keyed overlays, chosen from film time)`);
 	if (manifest.plate) lines.push(`plate: Blender ${manifest.plate.blender}, ${manifest.plate.engine} ${manifest.plate.device}, ${manifest.plate.samples} spp, ${manifest.plate.frames} frames at ${manifest.plate.fps} fps`);
 	lines.push("");
 	const failed = rules.some((r) => r.status === "FAIL");

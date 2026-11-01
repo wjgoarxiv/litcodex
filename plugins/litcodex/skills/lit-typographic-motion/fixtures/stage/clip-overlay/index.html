@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/stage-kit.js"></script>
+<script src="/lit/clips.js"></script>
+<style>
+	html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+	#layer { position: absolute; inset: 0; }
+</style>
+</head>
+<body>
+<div id="layer"></div>
+<script>
+	// One keyed clip cued so that film time 2.0 s lands on its fifth frame; it is hidden before the cue
+	// and after its eighth frame. The frame shown is a function of t alone.
+	const show = LitStage.keyedClip({ parent: document.getElementById("layer"), id: "swatch", box: { x: 600, y: 300, w: 400, h: 300 } });
+	LitStage.define({ width: 1920, height: 1080, fps: 30, duration: 4, render(t) { show(t, { start: 2.0 - 4 / 30 }); } });
+</script>
+</body>
+</html>
