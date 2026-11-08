@@ -2,17 +2,17 @@
 
 - **Advisory server id:** `typescript` — `typescript-language-server --stdio`
 - **Extensions:** `.ts .tsx .js .jsx .mjs .cjs .mts .cts`
-- **Install hint:** `npm install -g typescript-language-server typescript`
+- **Install hint:** `npm install -g typescript-language-server typescript@6`
 
 ## Install
 
-- **macOS:** `npm install -g typescript-language-server typescript`
-- **Linux:** `npm install -g typescript-language-server typescript`
-- **Windows:** `npm install -g typescript-language-server typescript` (PowerShell or cmd)
+- **macOS:** `npm install -g typescript-language-server typescript@6`
+- **Linux:** `npm install -g typescript-language-server typescript@6`
+- **Windows:** `npm install -g typescript-language-server typescript@6` (PowerShell or cmd)
 
 `typescript-language-server` is only a thin wrapper — it needs the `typescript`
 package (`tsserver`) present too, either globally or in the project's
-`node_modules`. Always install both.
+`node_modules`. Always install both. TypeScript 7 ships no lib/tsserver.js, which typescript-language-server loads.
 
 Confirm it resolves:
 

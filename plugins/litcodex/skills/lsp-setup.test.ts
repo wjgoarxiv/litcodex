@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -139,5 +139,23 @@ describe("verify-lsp spawns a Windows language server without a shell", () => {
 		expect(shellFreeCommand("clangd", [], { env, platform: "win32", exists: (file) => file === exe })).toEqual({ command: exe, args: [] });
 		expect(() => shellFreeCommand("typescript-language-server", ["--stdio"], { env, platform: "win32", exists: (file) => file === shim, read: () => "@echo off\r\n" })).toThrow(/not an npm shim/u);
 		expect(shellFreeCommand("gopls", [], { platform: "darwin" })).toEqual({ command: "gopls", args: [] });
+	});
+});
+
+const TYPESCRIPT_INSTALL_HINT =
+	"npm install -g typescript-language-server typescript@6 (TypeScript 7 ships no lib/tsserver.js, which typescript-language-server loads)";
+
+describe("typescript install hint stays on typescript@6", () => {
+	it("pins the server table because TypeScript 7 ships no lib/tsserver.js", async () => {
+		const { LANGUAGES } = await import("./lsp-setup/scripts/lsp-server-table.ts");
+		const entry = LANGUAGES.find((language) => language.serverId === "typescript");
+		expect(entry?.installHint).toBe(TYPESCRIPT_INSTALL_HINT);
+	});
+
+	it("pins the typescript reference install commands and states the reason once", () => {
+		const readme = readFileSync(join(SKILL_DIR, "references", "typescript", "README.md"), "utf8");
+		const commands = [...readme.matchAll(/`npm install -g typescript-language-server typescript(@6)?`/g)];
+		expect(commands.map((match) => match[1] ?? "")).toEqual(["@6", "@6", "@6", "@6"]);
+		expect(readme.match(/TypeScript 7 ships no lib\/tsserver\.js, which typescript-language-server loads/g)).toHaveLength(1);
 	});
 });

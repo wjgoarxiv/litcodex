@@ -17,7 +17,8 @@ export const LANGUAGES: readonly LanguageServer[] = [
 		serverId: "typescript",
 		command: ["typescript-language-server", "--stdio"],
 		extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"],
-		installHint: "npm install -g typescript-language-server typescript",
+		installHint:
+			"npm install -g typescript-language-server typescript@6 (TypeScript 7 ships no lib/tsserver.js, which typescript-language-server loads)",
 	},
 	{
 		language: "python",

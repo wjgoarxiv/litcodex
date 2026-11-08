@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- TypeScript language-server install hints pin `typescript@6`. TypeScript 7 ships no `lib/tsserver.js`, which typescript-language-server loads.
+
 ## [1.0.35] - 2026-11-01
 
 ### Added
