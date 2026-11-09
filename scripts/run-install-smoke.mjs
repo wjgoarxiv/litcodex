@@ -23,8 +23,8 @@ const evidenceDir = join(repoRoot, ".litcodex/evidence");
 const litcodexBin = join(repoRoot, "packages/litcodex-ai/bin/litcodex.js");
 const modelCatalogSrc = join(repoRoot, "packages/litcodex-ai/model-catalog.json");
 const packageVersion = JSON.parse(readFileSync(join(repoRoot, "packages/litcodex-ai/package.json"), "utf8")).version;
-const fakeCodexVersion = process.env.LIT_QA_CODEX_VERSION ?? "0.144.0";
-const expectedConcurrencyStatus = ["0.144.0", "0.144.1"].includes(fakeCodexVersion) ? "hard" : "advisory";
+const fakeCodexVersion = process.env.LIT_QA_CODEX_VERSION ?? "0.163.0";
+const expectedConcurrencyStatus = ["0.144.0", "0.144.1", "0.163.0"].includes(fakeCodexVersion) ? "hard" : "advisory";
 
 export { run, sandboxEnv } from "./install-smoke-runtime.mjs";
 

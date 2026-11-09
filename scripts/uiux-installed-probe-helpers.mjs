@@ -118,7 +118,7 @@ export class ProbeTerminalError extends Error {
 	}
 }
 
-const LOCKED_CODEX_VERSION = "0.144.0";
+const LOCKED_CODEX_VERSION = "0.163.0";
 const LOCKED_CODEX_PACKAGE = "@openai/codex";
 const LOCKED_CODEX_BIN = "bin/codex.js";
 
@@ -269,8 +269,8 @@ export function verifyLockedCodex({
 	if (version.spawnError?.code === "ENOENT" || version.spawnError?.code === "EACCES") {
 		throw new ProbeTerminalError("BLOCKED_HOST_UNAVAILABLE", "codex-version", "lock-owned Codex disappeared");
 	}
-	if (version.exitCode !== 0 || version.stdout.trim() !== "codex-cli 0.144.0") {
-		throw new ProbeTerminalError("FAIL_HOST_MALFORMED", "codex-version", "locked Codex version is not 0.144.0", {
+	if (version.exitCode !== 0 || version.stdout.trim() !== "codex-cli 0.163.0") {
+		throw new ProbeTerminalError("FAIL_HOST_MALFORMED", "codex-version", "locked Codex version is not 0.163.0", {
 			exitCode: version.exitCode,
 			stdoutSha256: createHash("sha256").update(version.stdout).digest("hex"),
 		});
@@ -284,7 +284,7 @@ export function verifyLockedCodex({
 	}
 	return {
 		status: "PASS",
-		version: "0.144.0",
+		version: "0.163.0",
 		exitCode: version.exitCode,
 		stdoutBytes: Buffer.byteLength(version.stdout),
 		stdoutSha256: createHash("sha256").update(version.stdout).digest("hex"),
@@ -322,8 +322,8 @@ export async function verifyLockedCodexAsync({
 	if (version.spawnError?.code === "ENOENT" || version.spawnError?.code === "EACCES") {
 		throw new ProbeTerminalError("BLOCKED_HOST_UNAVAILABLE", "codex-version", "lock-owned Codex disappeared");
 	}
-	if (version.outputLimitExceeded || version.exitCode !== 0 || version.stdout.trim() !== "codex-cli 0.144.0") {
-		throw new ProbeTerminalError("FAIL_HOST_MALFORMED", "codex-version", "locked Codex version is not 0.144.0", {
+	if (version.outputLimitExceeded || version.exitCode !== 0 || version.stdout.trim() !== "codex-cli 0.163.0") {
+		throw new ProbeTerminalError("FAIL_HOST_MALFORMED", "codex-version", "locked Codex version is not 0.163.0", {
 			exitCode: version.exitCode,
 			stdout: version.stdout,
 		});
@@ -337,7 +337,7 @@ export async function verifyLockedCodexAsync({
 	}
 	return {
 		status: "PASS",
-		version: "0.144.0",
+		version: "0.163.0",
 		exitCode: version.exitCode,
 		stdoutBytes: Buffer.byteLength(version.stdout),
 		stdoutSha256: createHash("sha256").update(version.stdout).digest("hex"),

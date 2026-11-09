@@ -950,7 +950,7 @@ it("blocks when the lock-owned executable disappears after version preflight", (
 				runCommand: (command, args) => {
 					assert.equal(command, "/repo/node_modules/.bin/codex");
 					assert.deepEqual(args, ["--version"]);
-					return { exitCode: 0, stdout: "codex-cli 0.144.0\n", stderr: "", durationMs: 1 };
+					return { exitCode: 0, stdout: "codex-cli 0.163.0\n", stderr: "", durationMs: 1 };
 				},
 			}),
 		(error) => error.status === "BLOCKED_HOST_UNAVAILABLE" && error.phase === "codex-preflight-after",

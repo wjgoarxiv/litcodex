@@ -4,7 +4,7 @@
   "nodeMatrix": [22],
   "permissions": { "contents": "read" },
   "lockedHost": {
-    "version": "0.144.0",
+    "version": "0.163.0",
     "bin": "${{ github.workspace }}/node_modules/.bin/codex",
     "verifyRun": "npm run qa:codex-host-locked",
     "doctorRun": "npm run qa:uiux-installed:doctor"

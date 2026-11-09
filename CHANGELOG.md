@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The tested and locked Codex host moves from 0.144.0 to `@openai/codex` 0.163.0. The installer still treats
+  0.144.0 and 0.144.1 as tested hosts and now counts 0.163.0 as one too; other stable hosts from 0.144.0 on keep
+  the probe-gated advisory path.
+- Development toolchain: TypeScript 7.0.2, Vitest 5.0.5, `@types/node` 26.6.5 and Biome 2.6.2; CI uses
+  `actions/checkout` 7.0.1 and `actions/setup-node` 7.1.0.
+
 ## [1.0.36] - 2026-11-09
 
 ### Fixed

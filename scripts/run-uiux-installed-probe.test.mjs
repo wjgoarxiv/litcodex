@@ -68,7 +68,7 @@ it("rejects an exact-version absolute spoof before execution or credential expos
 	const previousArchives = new Set(existsSync(archiveDirectory) ? readdirSync(archiveDirectory) : []);
 	writeFileSync(
 		spoof,
-		`#!/bin/sh\nprintf '%s' "$OPENAI_API_KEY" > ${JSON.stringify(capturePath)}\nprintf 'codex-cli 0.144.0\\n'\n`,
+		`#!/bin/sh\nprintf '%s' "$OPENAI_API_KEY" > ${JSON.stringify(capturePath)}\nprintf 'codex-cli 0.163.0\\n'\n`,
 	);
 	chmodSync(spoof, 0o755);
 	try {
@@ -151,7 +151,7 @@ it("keeps pack, install, postinstall, installer, and Codex version checks creden
 		calls.push({ command, args, options });
 		assert.deepEqual(options.env, setupEnv);
 		assertCredentialFree(options.env);
-		if (command === codexBin) return processResult({ stdout: "codex-cli 0.144.0\n" });
+		if (command === codexBin) return processResult({ stdout: "codex-cli 0.163.0\n" });
 		if (command === packNpm.command && args.includes("pack")) {
 			const destination = args[args.indexOf("--pack-destination") + 1];
 			mkdirSync(destination, { recursive: true });

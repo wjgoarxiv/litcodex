@@ -51,7 +51,7 @@ function writeFakeCodex(path) {
 const { join } = require("node:path");
 const args = process.argv.slice(2);
 if (args.includes("--version")) {
-  process.stdout.write("codex-cli 0.144.0\\n");
+  process.stdout.write("codex-cli 0.163.0\\n");
 } else if (args[0] === "debug" && args[1] === "models") {
   process.stdout.write(JSON.stringify({ models: [
     { slug: "gpt-5.6-sol", context_window: 372000 },

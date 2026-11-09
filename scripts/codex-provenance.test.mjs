@@ -22,22 +22,22 @@ function fixture() {
 	mkdirSync(join(packageRoot, "bin"), { recursive: true });
 	writeFileSync(
 		join(root, "package.json"),
-		`${JSON.stringify({ devDependencies: { "@openai/codex": "0.144.0" } })}\n`,
+		`${JSON.stringify({ devDependencies: { "@openai/codex": "0.163.0" } })}\n`,
 	);
 	writeFileSync(
 		join(root, "package-lock.json"),
 		`${JSON.stringify({
 			packages: {
-				"": { devDependencies: { "@openai/codex": "0.144.0" } },
-				"node_modules/@openai/codex": { version: "0.144.0", bin: { codex: "bin/codex.js" } },
+				"": { devDependencies: { "@openai/codex": "0.163.0" } },
+				"node_modules/@openai/codex": { version: "0.163.0", bin: { codex: "bin/codex.js" } },
 			},
 		})}\n`,
 	);
 	writeFileSync(
 		join(packageRoot, "package.json"),
-		`${JSON.stringify({ name: "@openai/codex", version: "0.144.0", bin: { codex: "bin/codex.js" } })}\n`,
+		`${JSON.stringify({ name: "@openai/codex", version: "0.163.0", bin: { codex: "bin/codex.js" } })}\n`,
 	);
-	writeFileSync(packageBin, "#!/bin/sh\nprintf 'codex-cli 0.144.0\\n'\n");
+	writeFileSync(packageBin, "#!/bin/sh\nprintf 'codex-cli 0.163.0\\n'\n");
 	chmodSync(packageBin, 0o755);
 	symlinkSync("../@openai/codex/bin/codex.js", publicBin);
 	return { root, packageRoot, packageBin, publicBin };
@@ -59,7 +59,7 @@ it("accepts only the exact canonical public path and captures its package-owned 
 	const paths = fixture();
 	const identity = capture(paths);
 	assert.equal(identity.codexBin, paths.publicBin);
-	assert.equal(identity.packageVersion, "0.144.0");
+	assert.equal(identity.packageVersion, "0.163.0");
 	assert.doesNotThrow(() => helpers.assertRepositoryCodexIdentity(identity));
 
 	const alias = join(paths.root, "codex-alias");
@@ -100,7 +100,7 @@ it("rejects package manifest and lock metadata that do not pin the expected bin 
 	const manifestDrift = fixture();
 	writeFileSync(
 		join(manifestDrift.packageRoot, "package.json"),
-		`${JSON.stringify({ name: "@openai/codex", version: "0.144.1", bin: { codex: "bin/codex.js" } })}\n`,
+		`${JSON.stringify({ name: "@openai/codex", version: "0.163.1", bin: { codex: "bin/codex.js" } })}\n`,
 	);
 	assert.throws(() => capture(manifestDrift), /package contract/u);
 
@@ -109,8 +109,8 @@ it("rejects package manifest and lock metadata that do not pin the expected bin 
 		join(lockDrift.root, "package-lock.json"),
 		`${JSON.stringify({
 			packages: {
-				"": { devDependencies: { "@openai/codex": "0.144.0" } },
-				"node_modules/@openai/codex": { version: "0.144.0", bin: { codex: "bin/not-codex.js" } },
+				"": { devDependencies: { "@openai/codex": "0.163.0" } },
+				"node_modules/@openai/codex": { version: "0.163.0", bin: { codex: "bin/not-codex.js" } },
 			},
 		})}\n`,
 	);

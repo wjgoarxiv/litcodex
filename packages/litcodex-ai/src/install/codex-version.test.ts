@@ -14,6 +14,11 @@ describe("Codex CLI version classification", () => {
 		});
 	});
 
+	it("recognizes the locked 0.163.0 host as tested", () => {
+		expect(classifyCodexVersion("codex-cli 0.163.0\n")).toEqual({ kind: "tested", version: "0.163.0" });
+		expect(classifyCodexVersion("codex-cli 0.163.1\n")).toEqual({ kind: "newer-stable", version: "0.163.1" });
+	});
+
 	it("keeps unsupported stable versions separate from malformed output", () => {
 		expect(classifyCodexVersion("codex-cli 0.143.9\r\n")).toEqual({ kind: "too-old", version: "0.143.9" });
 		expect(classifyCodexVersion("codex-cli 0.145.0\r\n")).toEqual({ kind: "newer-stable", version: "0.145.0" });

@@ -113,7 +113,7 @@ const CANONICAL_MANIFEST = {
 	nodeMatrix: [20, 22],
 	permissions: { contents: "read" },
 	lockedHost: {
-		version: "0.144.0",
+		version: "0.163.0",
 		bin: LOCKED_CODEX_BIN,
 		verifyRun: "npm run qa:codex-host-locked",
 		doctorRun: "npm run qa:uiux-installed:doctor",

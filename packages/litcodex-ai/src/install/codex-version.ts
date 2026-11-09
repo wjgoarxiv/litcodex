@@ -1,4 +1,4 @@
-const TESTED_CODEX_VERSIONS = ["0.144.0", "0.144.1"] as const;
+const TESTED_CODEX_VERSIONS = ["0.144.0", "0.144.1", "0.163.0"] as const;
 const MINIMUM_SUPPORTED = { major: 0, minor: 144, patch: 0 } as const;
 const VERSION_PATTERN = /^[ \t]*codex-cli[ \t]+(\d+)\.(\d+)\.(\d+)(-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?(?=\s|$)/u;
 

@@ -54,7 +54,7 @@ bin metadata. Ordinary developer `npm pack` intentionally skips `prepublishOnly`
 source build and package-payload checks; it is not evidence that a dirty tree is publishable.
 
 The ordinary CI installed-host lane is credentialless: the exact root
-`@openai/codex@0.144.0` development dependency supplies `node_modules/.bin/codex`, CI verifies that
+`@openai/codex@0.163.0` development dependency supplies `node_modules/.bin/codex`, CI verifies that
 version and passes its absolute path as `CODEX_BIN`, and the doctor-scope probe drives the packed,
 globally installed `litcodex` public install and doctor commands in an isolated home. This evidence
 does not claim authenticated model execution. Full model-host evidence is a separate local or

@@ -463,7 +463,7 @@ export function readOtherStacks(cwd, selfId, now = Date.now()) {
 /** The frame a bare `lit continue` should resume: the nearest spine below a side frame, else null. */
 export function pausedSpine(stack) {
     const top = stack.frames.at(-1);
-    if (!top || top.role !== "side")
+    if (top?.role !== "side")
         return null;
     const spine = stack.frames[lastIndexWhere(stack.frames, (frame) => frame.role === "spine")];
     return spine && spine.status === "paused" ? spine : null;

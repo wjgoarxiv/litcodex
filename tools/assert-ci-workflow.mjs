@@ -73,7 +73,7 @@ export function loadCiGateManifest(manifestPath) {
 		fail("permissions");
 	}
 	if (
-		parsed.lockedHost?.version !== "0.144.0" ||
+		parsed.lockedHost?.version !== "0.163.0" ||
 		parsed.lockedHost.bin !== LOCKED_CODEX_BIN ||
 		parsed.lockedHost.verifyRun !== "npm run qa:codex-host-locked" ||
 		parsed.lockedHost.doctorRun !== "npm run qa:uiux-installed:doctor"

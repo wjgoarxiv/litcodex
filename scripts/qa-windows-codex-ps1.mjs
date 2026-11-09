@@ -27,7 +27,7 @@ if (process.platform !== "win32") {
 			`$argumentList = @($args | ForEach-Object { [string]$_ })
 Add-Content -LiteralPath $env:LITCODEX_WINDOWS_QA_LOG -Value ($argumentList -join " ")
 if ($argumentList -contains "--version") {
-  [Console]::WriteLine("codex-cli 0.144.0")
+  [Console]::WriteLine("codex-cli 0.163.0")
   exit 0
 }
 if ($argumentList.Count -ge 2 -and $argumentList[0] -eq "debug" -and $argumentList[1] -eq "models") {
