@@ -46,14 +46,15 @@ describe("plugin-root skills (discoverability + brand hygiene)", () => {
 		).toBeGreaterThanOrEqual(TOP_LEVEL_SKILL_WORD_FLOOR);
 	});
 
-	it.each(
-		skillNames,
-	)("skill '%s': SKILL.md frontmatter name matches dir, has description, no legacy token", (name) => {
-		const md = readFileSync(`${SKILLS_DIR}${name}/SKILL.md`, "utf8");
-		expect(md).toMatch(new RegExp(`^name:\\s*${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "m"));
-		expect(md).toMatch(/^description:/m);
-		expect(legacyHits(md)).toEqual([]);
-	});
+	it.each(skillNames)(
+		"skill '%s': SKILL.md frontmatter name matches dir, has description, no legacy token",
+		(name) => {
+			const md = readFileSync(`${SKILLS_DIR}${name}/SKILL.md`, "utf8");
+			expect(md).toMatch(new RegExp(`^name:\\s*${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "m"));
+			expect(md).toMatch(/^description:/m);
+			expect(legacyHits(md)).toEqual([]);
+		},
+	);
 
 	it.each(skillNames)("skill '%s': requires one canonical first-line probe", (name) => {
 		const md = readFileSync(`${SKILLS_DIR}${name}/SKILL.md`, "utf8");

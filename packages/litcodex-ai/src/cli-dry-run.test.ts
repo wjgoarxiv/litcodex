@@ -164,14 +164,12 @@ describe("--dry-run applies nothing on state-changing routes", () => {
 		expect(existsSync(join(box.project, ".litcodex"))).toBe(false);
 	});
 
-	it.each([
-		["user-prompt-submit"],
-		["stop"],
-		["session-start"],
-		["post-compact"],
-	])("hook %s under --dry-run runs no hook", (hook) => {
-		expectNothingApplied(sandbox(), ["--dry-run", "hook", hook], '{"prompt":"lit add a test"}');
-	});
+	it.each([["user-prompt-submit"], ["stop"], ["session-start"], ["post-compact"]])(
+		"hook %s under --dry-run runs no hook",
+		(hook) => {
+			expectNothingApplied(sandbox(), ["--dry-run", "hook", hook], '{"prompt":"lit add a test"}');
+		},
+	);
 
 	it("read-only routes still run under --dry-run", () => {
 		const box = sandbox();
@@ -205,12 +203,12 @@ describe("state-changing routes refuse options --help does not list", () => {
 		expectRefused(args, option);
 	});
 
-	it.each([
-		[["uninstall", "--dry-run=yes"]],
-		[["office-runtime", "install", "--dry-run=1"]],
-	])("%j: --dry-run only takes true or false", (args) => {
-		expectRefused(args, "--dry-run=");
-	});
+	it.each([[["uninstall", "--dry-run=yes"]], [["office-runtime", "install", "--dry-run=1"]]])(
+		"%j: --dry-run only takes true or false",
+		(args) => {
+			expectRefused(args, "--dry-run=");
+		},
+	);
 
 	it.each([
 		[

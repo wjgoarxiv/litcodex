@@ -231,20 +231,21 @@ describe("evaluateMotionStop", () => {
 		});
 	});
 
-	it.each([
-		10, 11, 12, 14, 15, 21, 22,
-	])("a blocked exit %i goes straight to the notice without judging the folder", async (code) => {
-		const root = armedWithRun(code);
-		const decision = await evaluateMotionStop({
-			cwd: root,
-			sessionId: SESSION,
-			evaluate: () => {
-				throw new Error("must not be called");
-			},
-		});
-		expect(decision).toMatchObject({ action: "block", why: "not-done-notice" });
-		expect(decision.action === "block" ? decision.reason : "").toContain(`exit ${code}`);
-	});
+	it.each([10, 11, 12, 14, 15, 21, 22])(
+		"a blocked exit %i goes straight to the notice without judging the folder",
+		async (code) => {
+			const root = armedWithRun(code);
+			const decision = await evaluateMotionStop({
+				cwd: root,
+				sessionId: SESSION,
+				evaluate: () => {
+					throw new Error("must not be called");
+				},
+			});
+			expect(decision).toMatchObject({ action: "block", why: "not-done-notice" });
+			expect(decision.action === "block" ? decision.reason : "").toContain(`exit ${code}`);
+		},
+	);
 
 	it("a finished film with a downgrade, a label or an open look item blocks once so the reply says so", async () => {
 		const root = armedWithRun();

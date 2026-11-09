@@ -226,23 +226,17 @@ describe("the switch: off by default, percent chosen by the user", () => {
 		expect(state.warnings.join(" ")).toContain("has no percent");
 	});
 
-	it.each([
-		"0",
-		"100",
-		"abc",
-		"5.5",
-		"-3",
-		"60%",
-		"1e1",
-		"007",
-	])("treats percent %j as invalid: off, with a warning", (raw) => {
-		const state = resolveAutoHandoff(
-			{ LITCODEX_AUTO_HANDOFF: "1", LITCODEX_AUTO_HANDOFF_PERCENT: raw },
-			{ enabled: true, percent: 40 },
-		);
-		expect(state.active).toBe(false);
-		expect(state.warnings.join(" ")).toContain("LITCODEX_AUTO_HANDOFF_PERCENT");
-	});
+	it.each(["0", "100", "abc", "5.5", "-3", "60%", "1e1", "007"])(
+		"treats percent %j as invalid: off, with a warning",
+		(raw) => {
+			const state = resolveAutoHandoff(
+				{ LITCODEX_AUTO_HANDOFF: "1", LITCODEX_AUTO_HANDOFF_PERCENT: raw },
+				{ enabled: true, percent: 40 },
+			);
+			expect(state.active).toBe(false);
+			expect(state.warnings.join(" ")).toContain("LITCODEX_AUTO_HANDOFF_PERCENT");
+		},
+	);
 
 	it("lets the environment switch it off over a stored on", () => {
 		const state = resolveAutoHandoff({ LITCODEX_AUTO_HANDOFF: "0" }, { enabled: true, percent: 50 });

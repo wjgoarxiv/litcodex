@@ -60,35 +60,36 @@ describe("materializeManagedMarketplace", () => {
 		}
 	}
 
-	it.each(
-		Object.entries(SKILL_RENAMES).filter(([oldId]) => oldId !== "lit-korean"),
-	)("migrates installed %s to %s on same-version install/update", (oldId, newId) => {
-		// Given: a previously managed marketplace plus unrelated user skills.
-		const paths = fixture("0.4.8");
-		const sourceSkill = join(paths.sourceRoot, "plugins", "litcodex", "skills", newId);
-		const oldSkill = join(paths.targetRoot, "plugins", "litcodex", "skills", oldId);
-		materializeManagedMarketplace(paths);
-		mkdirSync(oldSkill, { recursive: true });
-		writeFileSync(join(oldSkill, "SKILL.md"), `name: ${oldId}\n`);
-		mkdirSync(sourceSkill, { recursive: true });
-		const body = readFileSync(
-			new URL(`../../../../plugins/litcodex/skills/${newId}/SKILL.md`, import.meta.url),
-			"utf8",
-		);
-		writeFileSync(join(sourceSkill, "SKILL.md"), body);
-		const userSkill = join(paths.targetRoot, "..", "user-owned-skill.md");
-		writeFileSync(userSkill, "preserve user content");
-		// When: the unchanged-version package is installed again.
-		const result = materializeManagedMarketplace(paths);
-		// Then: the manifest and hashed tree replace the entire managed copy.
-		expect(result).toEqual({ changed: true, version: "0.4.8" });
-		expect(existsSync(oldSkill)).toBe(false);
-		expect(readFileSync(join(paths.targetRoot, "plugins", "litcodex", "skills", newId, "SKILL.md"), "utf8")).toBe(
-			body,
-		);
-		expect(readFileSync(userSkill, "utf8")).toBe("preserve user content");
-		expect(materializeManagedMarketplace(paths).changed).toBe(false);
-	});
+	it.each(Object.entries(SKILL_RENAMES).filter(([oldId]) => oldId !== "lit-korean"))(
+		"migrates installed %s to %s on same-version install/update",
+		(oldId, newId) => {
+			// Given: a previously managed marketplace plus unrelated user skills.
+			const paths = fixture("0.4.8");
+			const sourceSkill = join(paths.sourceRoot, "plugins", "litcodex", "skills", newId);
+			const oldSkill = join(paths.targetRoot, "plugins", "litcodex", "skills", oldId);
+			materializeManagedMarketplace(paths);
+			mkdirSync(oldSkill, { recursive: true });
+			writeFileSync(join(oldSkill, "SKILL.md"), `name: ${oldId}\n`);
+			mkdirSync(sourceSkill, { recursive: true });
+			const body = readFileSync(
+				new URL(`../../../../plugins/litcodex/skills/${newId}/SKILL.md`, import.meta.url),
+				"utf8",
+			);
+			writeFileSync(join(sourceSkill, "SKILL.md"), body);
+			const userSkill = join(paths.targetRoot, "..", "user-owned-skill.md");
+			writeFileSync(userSkill, "preserve user content");
+			// When: the unchanged-version package is installed again.
+			const result = materializeManagedMarketplace(paths);
+			// Then: the manifest and hashed tree replace the entire managed copy.
+			expect(result).toEqual({ changed: true, version: "0.4.8" });
+			expect(existsSync(oldSkill)).toBe(false);
+			expect(readFileSync(join(paths.targetRoot, "plugins", "litcodex", "skills", newId, "SKILL.md"), "utf8")).toBe(
+				body,
+			);
+			expect(readFileSync(userSkill, "utf8")).toBe("preserve user content");
+			expect(materializeManagedMarketplace(paths).changed).toBe(false);
+		},
+	);
 
 	it("removes an unchanged legacy skill while installing its replacement", () => {
 		const paths = fixture("0.4.8");
@@ -262,42 +263,39 @@ describe("materializeManagedMarketplace", () => {
 		expect(readFileSync(outsideSentinel)).toEqual(outsideBytes);
 	});
 
-	it.each([
-		"home-link",
-		"parent-link",
-		"root-link",
-		"foreign-directory",
-		"foreign-file",
-	])("refuses %s before replacing a foreign marketplace path", (kind) => {
-		const paths = fixture("0.3.44");
-		const home = dirname(dirname(paths.targetRoot));
-		const outside = join(dirname(home), "outside");
-		mkdirSync(outside);
-		let sentinel = join(outside, "keep.txt");
-		if (kind === "home-link") {
-			mkdirSync(join(outside, "marketplaces", "litcodex"), { recursive: true });
-			sentinel = join(outside, "marketplaces", "litcodex", "keep.txt");
-			symlinkSync(outside, home);
-		} else if (kind === "parent-link") {
-			mkdirSync(home);
-			mkdirSync(join(outside, "litcodex"));
-			sentinel = join(outside, "litcodex", "keep.txt");
-			symlinkSync(outside, dirname(paths.targetRoot));
-		} else {
-			mkdirSync(dirname(paths.targetRoot), { recursive: true });
-			if (kind === "root-link") symlinkSync(outside, paths.targetRoot);
-			else if (kind === "foreign-file") {
-				writeFileSync(paths.targetRoot, "user-owned");
-				sentinel = paths.targetRoot;
+	it.each(["home-link", "parent-link", "root-link", "foreign-directory", "foreign-file"])(
+		"refuses %s before replacing a foreign marketplace path",
+		(kind) => {
+			const paths = fixture("0.3.44");
+			const home = dirname(dirname(paths.targetRoot));
+			const outside = join(dirname(home), "outside");
+			mkdirSync(outside);
+			let sentinel = join(outside, "keep.txt");
+			if (kind === "home-link") {
+				mkdirSync(join(outside, "marketplaces", "litcodex"), { recursive: true });
+				sentinel = join(outside, "marketplaces", "litcodex", "keep.txt");
+				symlinkSync(outside, home);
+			} else if (kind === "parent-link") {
+				mkdirSync(home);
+				mkdirSync(join(outside, "litcodex"));
+				sentinel = join(outside, "litcodex", "keep.txt");
+				symlinkSync(outside, dirname(paths.targetRoot));
 			} else {
-				mkdirSync(paths.targetRoot);
-				sentinel = join(paths.targetRoot, "keep.txt");
+				mkdirSync(dirname(paths.targetRoot), { recursive: true });
+				if (kind === "root-link") symlinkSync(outside, paths.targetRoot);
+				else if (kind === "foreign-file") {
+					writeFileSync(paths.targetRoot, "user-owned");
+					sentinel = paths.targetRoot;
+				} else {
+					mkdirSync(paths.targetRoot);
+					sentinel = join(paths.targetRoot, "keep.txt");
+				}
 			}
-		}
-		writeFileSync(sentinel, "user-owned");
-		expect(() => materializeManagedMarketplace(paths)).toThrow(/unsafe|ownership/i);
-		expect(readFileSync(sentinel, "utf8")).toBe("user-owned");
-	});
+			writeFileSync(sentinel, "user-owned");
+			expect(() => materializeManagedMarketplace(paths)).toThrow(/unsafe|ownership/i);
+			expect(readFileSync(sentinel, "utf8")).toBe("user-owned");
+		},
+	);
 
 	it("refuses a marketplace folder whose own manifest names another marketplace", () => {
 		const paths = fixture("0.3.44");

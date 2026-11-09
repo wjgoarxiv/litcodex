@@ -46,19 +46,13 @@ describe("strict stable semver", () => {
 		expect(isNewer("9007199254740993.0.0", "9007199254740992.999999999999999999.999999999999999999")).toBe(true);
 	});
 
-	it.each([
-		"1.2.3-beta.1",
-		"1.2.3+build",
-		"1.2.3x",
-		"01.2.3",
-		"1.02.3",
-		"v1.2.3",
-		"1.2",
-		"",
-	])("rejects non-stable or non-canonical version %j", (version) => {
-		expect(isNewer(version, "1.0.0")).toBe(false);
-		expect(isNewer("2.0.0", version)).toBe(false);
-	});
+	it.each(["1.2.3-beta.1", "1.2.3+build", "1.2.3x", "01.2.3", "1.02.3", "v1.2.3", "1.2", ""])(
+		"rejects non-stable or non-canonical version %j",
+		(version) => {
+			expect(isNewer(version, "1.0.0")).toBe(false);
+			expect(isNewer("2.0.0", version)).toBe(false);
+		},
+	);
 });
 
 describe("management-command gating", () => {
@@ -195,8 +189,9 @@ describe("cached notice and refresh reservation", () => {
 		expect(chunks.join("")).toContain("@litfamily/litcodex@9.9.9");
 		expect(spawns).toHaveLength(1);
 		expect(spawns[0]?.options).toMatchObject({ detached: true, stdio: "ignore" });
-		expect((spawns[0]?.options["env"] as NodeJS.ProcessEnv)["NPM_TOKEN"]).toBeUndefined();
-		expect((spawns[0]?.options["env"] as NodeJS.ProcessEnv)["SAFE_VALUE"]).toBeUndefined();
+		const spawnEnv = spawns[0]?.options["env"] as NodeJS.ProcessEnv;
+		expect(spawnEnv["NPM_TOKEN"]).toBeUndefined();
+		expect(spawnEnv["SAFE_VALUE"]).toBeUndefined();
 		expect(child.unref).toHaveBeenCalledOnce();
 		expect(() => child.emit("error", new Error("late spawn error"))).not.toThrow();
 		const cache = readUpdateCache(cachePath, NOW);

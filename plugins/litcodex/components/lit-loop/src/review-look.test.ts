@@ -111,17 +111,17 @@ const statusOf = (s: Scratch): CardStatus => readCardStatus(THREAD, s.env, NOW +
 // ── Route: the typed prompt (hook sets mode) ──
 
 describe("route: the typed prompt (UserPromptSubmit hook)", () => {
-	it.each([
-		"review-work what changed",
-		"$review-work check the diff",
-	])("%j turns the card to the review look", async (text) => {
-		const s = scratch();
-		const out = await prompt(s, text);
-		expect(out).toContain("review-work");
-		const status = statusOf(s);
-		expect(status.mode).toBe("review-work");
-		expect(status.look).toBe("review");
-	});
+	it.each(["review-work what changed", "$review-work check the diff"])(
+		"%j turns the card to the review look",
+		async (text) => {
+			const s = scratch();
+			const out = await prompt(s, text);
+			expect(out).toContain("review-work");
+			const status = statusOf(s);
+			expect(status.mode).toBe("review-work");
+			expect(status.look).toBe("review");
+		},
+	);
 });
 
 // ── Route: scoped `$litcodex:review-work` (hook is silent, model calls stageCommand) ──

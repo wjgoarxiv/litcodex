@@ -67,15 +67,16 @@ describe("negation-cluster block and warn tiers", () => {
 		]);
 	});
 
-	it.each(
-		cases.positive.map((item) => [item.id, item.expect, item.text]),
-	)("gives positive %s the %s tier", (_id, tier, text) => {
-		const hits = negationClusterFindings(text ?? "");
-		expect(hits.length).toBeGreaterThan(0);
-		for (const hit of hits) expect(hit.rule).toBe("negation-cluster");
-		const top = hits.some((hit) => hit.severity === "block") ? "block" : "warn";
-		expect(top).toBe(tier);
-	});
+	it.each(cases.positive.map((item) => [item.id, item.expect, item.text]))(
+		"gives positive %s the %s tier",
+		(_id, tier, text) => {
+			const hits = negationClusterFindings(text ?? "");
+			expect(hits.length).toBeGreaterThan(0);
+			for (const hit of hits) expect(hit.rule).toBe("negation-cluster");
+			const top = hits.some((hit) => hit.severity === "block") ? "block" : "warn";
+			expect(top).toBe(tier);
+		},
+	);
 
 	it.each(cases.negative.map((item) => [item.id, item.text]))("stays quiet on negative %s", (_id, text) => {
 		expect(negationClusterFindings(text)).toEqual([]);

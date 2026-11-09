@@ -487,17 +487,17 @@ describe("lit brainstorm follows the same re-entry rules", () => {
 		expect(second.context).toMatch(/implement nothing/iu);
 	});
 
-	it.each([
-		"lit",
-		"lit continue",
-	])("%s after lit brainstorm carries on lit-brainstorm and never switches", async (bare) => {
-		const s = session();
-		await fire(s, "lit brainstorm a name for my app");
-		const carried = await fire(s, bare);
-		expectContinue(carried, "lit-brainstorm");
-		expect(carried.context).not.toContain("<lit-loop");
-		expect(carried.context).not.toMatch(/ask the user one question/iu);
-	});
+	it.each(["lit", "lit continue"])(
+		"%s after lit brainstorm carries on lit-brainstorm and never switches",
+		async (bare) => {
+			const s = session();
+			await fire(s, "lit brainstorm a name for my app");
+			const carried = await fire(s, bare);
+			expectContinue(carried, "lit-brainstorm");
+			expect(carried.context).not.toContain("<lit-loop");
+			expect(carried.context).not.toMatch(/ask the user one question/iu);
+		},
+	);
 
 	it("switches to lit-plan in full, and back to lit-brainstorm in full, only on an explicit route", async () => {
 		const s = session();
@@ -524,17 +524,17 @@ describe("lit schematic follows the same re-entry rules", () => {
 		expect(second.context).toMatch(/never inside the installed LitCodex files/iu);
 	});
 
-	it.each([
-		"lit",
-		"lit continue",
-	])("%s after lit schematic carries on lit-schematic and never switches", async (bare) => {
-		const s = session();
-		await fire(s, "lit schematic of the reactor loop");
-		const carried = await fire(s, bare);
-		expectContinue(carried, "lit-schematic");
-		expect(carried.context).not.toContain("<lit-loop");
-		expect(carried.context).not.toMatch(/ask the user one question/iu);
-	});
+	it.each(["lit", "lit continue"])(
+		"%s after lit schematic carries on lit-schematic and never switches",
+		async (bare) => {
+			const s = session();
+			await fire(s, "lit schematic of the reactor loop");
+			const carried = await fire(s, bare);
+			expectContinue(carried, "lit-schematic");
+			expect(carried.context).not.toContain("<lit-loop");
+			expect(carried.context).not.toMatch(/ask the user one question/iu);
+		},
+	);
 
 	it("switches to lit-plan in full, and back to lit-schematic in full, only on an explicit route", async () => {
 		const s = session();

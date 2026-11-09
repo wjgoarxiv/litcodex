@@ -118,22 +118,21 @@ describe("provider cache receipt measurement", () => {
 			snapshot: { inputTokens: Number.MAX_SAFE_INTEGER + 1, cachedInputTokens: 550 },
 			reason: "numeric-overflow",
 		},
-	] as const)("#given $name #when measured #then it returns typed invalid status", ({
-		baseline,
-		snapshot,
-		reason,
-	}) => {
-		// given / when
-		const measurement = measureProviderCacheReceipts({ baseline, snapshots: [snapshot] });
+	] as const)(
+		"#given $name #when measured #then it returns typed invalid status",
+		({ baseline, snapshot, reason }) => {
+			// given / when
+			const measurement = measureProviderCacheReceipts({ baseline, snapshots: [snapshot] });
 
-		// then
-		expect(measurement).toEqual({
-			status: "invalid",
-			source: "turn.completed.usage",
-			receipts: 0,
-			reason,
-		});
-	});
+			// then
+			expect(measurement).toEqual({
+				status: "invalid",
+				source: "turn.completed.usage",
+				receipts: 0,
+				reason,
+			});
+		},
+	);
 
 	it("#given no authoritative cached input fields #when measured #then it returns unavailable instead of guessing", () => {
 		// given / when

@@ -83,15 +83,14 @@ describe("one-release skill rename aliases", () => {
 		if (decision.kind === "inject") expect(decision.mode).toBe("lit-humanizer");
 	});
 
-	it.each([
-		"/lit-korean",
-		"/text-naturalization",
-		"/korean-ai-slop-remover",
-	])("routes the former prose alias %s to lit-humanizer", (prompt) => {
-		const decision = runUserPromptSubmitHook({ hook_event_name: "UserPromptSubmit", prompt });
-		expect(decision.kind).toBe("inject");
-		if (decision.kind === "inject") expect(decision.mode).toBe("lit-humanizer");
-	});
+	it.each(["/lit-korean", "/text-naturalization", "/korean-ai-slop-remover"])(
+		"routes the former prose alias %s to lit-humanizer",
+		(prompt) => {
+			const decision = runUserPromptSubmitHook({ hook_event_name: "UserPromptSubmit", prompt });
+			expect(decision.kind).toBe("inject");
+			if (decision.kind === "inject") expect(decision.mode).toBe("lit-humanizer");
+		},
+	);
 
 	it("preserves the earlier bounded route ahead of a later scoped alias", () => {
 		// Given / When: the user first selects the planning route.

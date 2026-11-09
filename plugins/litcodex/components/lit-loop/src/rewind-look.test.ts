@@ -132,18 +132,14 @@ function expectLook(s: Scratch): void {
 }
 
 describe("route: the typed prompt (UserPromptSubmit hook)", () => {
-	it.each([
-		"lit adhd",
-		"lit rewind",
-		"lit-adhd",
-		"lit-rewind",
-		"$lit-adhd where was I",
-		"LIT ADHD",
-	])("%j turns the card and the HUD line to the rewind look", async (text) => {
-		const s = scratch();
-		expect(await prompt(s, text)).toContain("LIT IGNITED · lit-adhd");
-		expectLook(s);
-	});
+	it.each(["lit adhd", "lit rewind", "lit-adhd", "lit-rewind", "$lit-adhd where was I", "LIT ADHD"])(
+		"%j turns the card and the HUD line to the rewind look",
+		async (text) => {
+			const s = scratch();
+			expect(await prompt(s, text)).toContain("LIT IGNITED · lit-adhd");
+			expectLook(s);
+		},
+	);
 });
 
 describe("route: a scoped `$litcodex:lit-adhd` mention (native skill load, the hook injects nothing)", () => {

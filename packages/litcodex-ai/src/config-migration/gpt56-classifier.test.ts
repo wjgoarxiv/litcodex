@@ -57,9 +57,12 @@ describe("GPT-5.6 exact classifier contract", () => {
 		],
 		["5.60 boundary", { model: "gpt-5.60" }, "custom", "gpt-5.60", false, false],
 		["provider-qualified custom", { model: "custom/gpt-5.6-sol" }, "custom", "custom/gpt-5.6-sol", false, false],
-	] as const)("classifies %s without changing apply behavior", (_name, current, expectedClass, original, apply, managed) => {
-		expect(decide(current)).toMatchObject({ class: expectedClass, originalDispatchId: original, apply, managed });
-	});
+	] as const)(
+		"classifies %s without changing apply behavior",
+		(_name, current, expectedClass, original, apply, managed) => {
+			expect(decide(current)).toMatchObject({ class: expectedClass, originalDispatchId: original, apply, managed });
+		},
+	);
 
 	it("keeps exact managed legacy apply behavior under explicit reconfigure", () => {
 		const current = FALLBACK_CATALOG.managedProfiles[0]?.match ?? {};

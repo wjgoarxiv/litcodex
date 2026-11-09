@@ -186,14 +186,15 @@ describe("runUserPromptSubmitHookCli no-op branches #given/#when/#then", () => {
 		expect(r.stderr()).toBe("");
 	});
 
-	it.each(
-		LITRESEARCH_INERT_PAYLOADS,
-	)("does not activate on research text in inert JSON or transcript fields: %#", async (payload) => {
-		const r = await run(JSON.stringify(payload));
-		expect(r).toMatchObject({ code: 0 });
-		expect(r.stdout()).toBe("");
-		expect(r.stderr()).toBe("");
-	});
+	it.each(LITRESEARCH_INERT_PAYLOADS)(
+		"does not activate on research text in inert JSON or transcript fields: %#",
+		async (payload) => {
+			const r = await run(JSON.stringify(payload));
+			expect(r).toMatchObject({ code: 0 });
+			expect(r.stdout()).toBe("");
+			expect(r.stderr()).toBe("");
+		},
+	);
 });
 
 describe("public litcodex hook user-prompt-submit litresearch route", () => {
@@ -208,21 +209,23 @@ describe("public litcodex hook user-prompt-submit litresearch route", () => {
 		}
 	});
 
-	it.each(
-		LITRESEARCH_NOOP_PROMPTS,
-	)("writes exactly zero stdout bytes for slash near misses and path occurrences: %s", (prompt) => {
-		expect(runPublicHook({ hook_event_name: "UserPromptSubmit", prompt })).toEqual({
-			status: 0,
-			stdout: "",
-			stderr: "",
-		});
-	});
+	it.each(LITRESEARCH_NOOP_PROMPTS)(
+		"writes exactly zero stdout bytes for slash near misses and path occurrences: %s",
+		(prompt) => {
+			expect(runPublicHook({ hook_event_name: "UserPromptSubmit", prompt })).toEqual({
+				status: 0,
+				stdout: "",
+				stderr: "",
+			});
+		},
+	);
 
-	it.each(
-		LITRESEARCH_INERT_PAYLOADS,
-	)("writes exactly zero stdout bytes for inert payload occurrences: %#", (payload) => {
-		expect(runPublicHook(payload)).toEqual({ status: 0, stdout: "", stderr: "" });
-	});
+	it.each(LITRESEARCH_INERT_PAYLOADS)(
+		"writes exactly zero stdout bytes for inert payload occurrences: %#",
+		(payload) => {
+			expect(runPublicHook(payload)).toEqual({ status: 0, stdout: "", stderr: "" });
+		},
+	);
 });
 
 describe("runUserPromptSubmitHookCli malformed input #given/#when/#then", () => {

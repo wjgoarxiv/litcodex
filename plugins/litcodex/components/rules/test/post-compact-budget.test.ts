@@ -69,28 +69,27 @@ describe("post-compact context budget", () => {
 		});
 	});
 
-	it.each([
-		"openai/gpt-5.6-sol",
-		"openai.gpt-5.6-terra",
-	])("#given provider-qualified existing form %s #when resolved #then retains terminal-slug behavior", (model) => {
-		const slug = model.endsWith("terra") ? "gpt-5.6-terra" : "gpt-5.6-sol";
-		expect(resolveModelMetadata(model, `{"models":[{"slug":"${slug}","context_window":372000}]}`)).toEqual({
-			state: "available",
-			metadata: { slug, contextWindow: 372_000 },
-		});
-	});
+	it.each(["openai/gpt-5.6-sol", "openai.gpt-5.6-terra"])(
+		"#given provider-qualified existing form %s #when resolved #then retains terminal-slug behavior",
+		(model) => {
+			const slug = model.endsWith("terra") ? "gpt-5.6-terra" : "gpt-5.6-sol";
+			expect(resolveModelMetadata(model, `{"models":[{"slug":"${slug}","context_window":372000}]}`)).toEqual({
+				state: "available",
+				metadata: { slug, contextWindow: 372_000 },
+			});
+		},
+	);
 
-	it.each([
-		"gpt-6.1-sol",
-		"gpt-6-sol",
-		"openai/gpt-6.1-sol",
-	])("#given GPT-6 Sol form %s #when resolved #then its terminal slug is managed", (model) => {
-		const slug = model.endsWith("gpt-6.1-sol") ? "gpt-6.1-sol" : "gpt-6-sol";
-		expect(resolveModelMetadata(model, `{"models":[{"slug":"${slug}","context_window":372000}]}`)).toEqual({
-			state: "available",
-			metadata: { slug, contextWindow: 372_000 },
-		});
-	});
+	it.each(["gpt-6.1-sol", "gpt-6-sol", "openai/gpt-6.1-sol"])(
+		"#given GPT-6 Sol form %s #when resolved #then its terminal slug is managed",
+		(model) => {
+			const slug = model.endsWith("gpt-6.1-sol") ? "gpt-6.1-sol" : "gpt-6-sol";
+			expect(resolveModelMetadata(model, `{"models":[{"slug":"${slug}","context_window":372000}]}`)).toEqual({
+				state: "available",
+				metadata: { slug, contextWindow: 372_000 },
+			});
+		},
+	);
 
 	it("#given build-owned rules dist #when the focused suite starts #then generated metadata runtime enrolls the alias", () => {
 		const built = readFileSync(new URL("../dist/model-metadata.js", import.meta.url), "utf8");
@@ -184,50 +183,46 @@ describe("post-compact context budget", () => {
 		expect(budget.maxRuleChars).toBeLessThanOrEqual(budget.maxResultChars);
 	});
 
-	it.each([
-		"gpt-5.6",
-		"gpt-5.6-sol",
-		"gpt-5.6-terra",
-		"openai/gpt-5.6-sol",
-	])("#given %s without authoritative metadata #when resolving post-compact budget #then uses only the minimum guide", (model) => {
-		// given
-		const transcriptPath = writeCompactedTranscript("A".repeat(100_000));
+	it.each(["gpt-5.6", "gpt-5.6-sol", "gpt-5.6-terra", "openai/gpt-5.6-sol"])(
+		"#given %s without authoritative metadata #when resolving post-compact budget #then uses only the minimum guide",
+		(model) => {
+			// given
+			const transcriptPath = writeCompactedTranscript("A".repeat(100_000));
 
-		// when
-		const budget = withPostCompactBudget(CONFIG, { model, transcriptPath, modelMetadata: null });
+			// when
+			const budget = withPostCompactBudget(CONFIG, { model, transcriptPath, modelMetadata: null });
 
-		// then
-		expect(budget.maxResultChars).toBe(500);
-		expect(budget.maxRuleChars).toBe(500);
-	});
+			// then
+			expect(budget.maxResultChars).toBe(500);
+			expect(budget.maxRuleChars).toBe(500);
+		},
+	);
 
-	it.each([
-		"gpt-5.6",
-		"gpt-5.6-sol",
-		"gpt-5.6-terra",
-		"openai/gpt-5.6-terra",
-	])("#given %s with structured 372K metadata #when resolving post-compact budget #then avoids the legacy fallback", (model) => {
-		// given
-		const transcriptPath = writeCompactedTranscript("A".repeat(700_000));
+	it.each(["gpt-5.6", "gpt-5.6-sol", "gpt-5.6-terra", "openai/gpt-5.6-terra"])(
+		"#given %s with structured 372K metadata #when resolving post-compact budget #then avoids the legacy fallback",
+		(model) => {
+			// given
+			const transcriptPath = writeCompactedTranscript("A".repeat(700_000));
 
-		// when
-		const budget = withPostCompactBudget(CONFIG, {
-			model,
-			transcriptPath,
-			modelMetadata: {
-				slug: model.endsWith("gpt-5.6-terra")
-					? "gpt-5.6-terra"
-					: model.endsWith("gpt-5.6-sol")
-						? "gpt-5.6-sol"
-						: "gpt-5.6",
-				contextWindow: 372_000,
-			},
-		});
+			// when
+			const budget = withPostCompactBudget(CONFIG, {
+				model,
+				transcriptPath,
+				modelMetadata: {
+					slug: model.endsWith("gpt-5.6-terra")
+						? "gpt-5.6-terra"
+						: model.endsWith("gpt-5.6-sol")
+							? "gpt-5.6-sol"
+							: "gpt-5.6",
+					contextWindow: 372_000,
+				},
+			});
 
-		// then
-		expect(budget.maxResultChars).toBe(CONFIG.postCompactMaxResultChars);
-		expect(budget.maxRuleChars).toBe(CONFIG.postCompactMaxRuleChars);
-	});
+			// then
+			expect(budget.maxResultChars).toBe(CONFIG.postCompactMaxResultChars);
+			expect(budget.maxRuleChars).toBe(CONFIG.postCompactMaxRuleChars);
+		},
+	);
 });
 
 function writeCompactedTranscript(retainedText: string): string {

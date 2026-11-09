@@ -108,20 +108,18 @@ describe("Gate D explicit prompt resume", () => {
 		).toEqual(["UserPromptSubmit:user-prompt-submit", "Stop:stop"]);
 	});
 
-	it.each([
-		"start-work",
-		"$start-work",
-		"lit start work",
-		"$litcodex:start-work",
-	])("resumes one paused work for exact leading Codex route %s and remains stdout-silent", (prefix) => {
-		const root = workspace("paused");
-		const prompt = `${prefix} plan --resume boundary-1 --grant grant-1`;
-		const input = userPrompt(root, "t1", prompt);
-		expect(runUserPromptSubmitHook(input)).toBe("");
-		expect(readLifecycleState(root)?.works["w1"]?.status).toBe("active");
-		expect(runUserPromptSubmitHook(input)).toBe("");
-		expect(events(root).filter((event) => event["kind"] === "start_work_resumed")).toHaveLength(1);
-	});
+	it.each(["start-work", "$start-work", "lit start work", "$litcodex:start-work"])(
+		"resumes one paused work for exact leading Codex route %s and remains stdout-silent",
+		(prefix) => {
+			const root = workspace("paused");
+			const prompt = `${prefix} plan --resume boundary-1 --grant grant-1`;
+			const input = userPrompt(root, "t1", prompt);
+			expect(runUserPromptSubmitHook(input)).toBe("");
+			expect(readLifecycleState(root)?.works["w1"]?.status).toBe("active");
+			expect(runUserPromptSubmitHook(input)).toBe("");
+			expect(events(root).filter((event) => event["kind"] === "start_work_resumed")).toHaveLength(1);
+		},
+	);
 
 	it.each([
 		"/start-work plan",

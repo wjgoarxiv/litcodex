@@ -538,14 +538,14 @@ describe("#given published surfaces #when scanned #then they are LitCodex-native
 });
 
 describe("#given a publish-intent surface #when audited #then docs match the guarded manual release script", () => {
-	it.each([
-		"docs/release/provenance.md",
-		"docs/release/publish-checklist.md",
-	])("%s derives the current release version from the installer manifest", (path) => {
-		const doc = read(path);
-		expect(doc).toContain(`VERSION="$(node -p 'require("./packages/litcodex-ai/package.json").version')"`);
-		expect(doc).not.toMatch(/VERSION=\d+\.\d+\.\d+/);
-	});
+	it.each(["docs/release/provenance.md", "docs/release/publish-checklist.md"])(
+		"%s derives the current release version from the installer manifest",
+		(path) => {
+			const doc = read(path);
+			expect(doc).toContain(`VERSION="$(node -p 'require("./packages/litcodex-ai/package.json").version')"`);
+			expect(doc).not.toMatch(/VERSION=\d+\.\d+\.\d+/);
+		},
+	);
 
 	const versionExpression = ["$", "{VERSION}"].join("");
 	const requiredBootstrapOrder = [
@@ -602,22 +602,22 @@ describe("#given a publish-intent surface #when audited #then docs match the gua
 		expect(doc).toMatch(/worktree-clean/);
 	});
 
-	it.each([
-		"docs/release/publish-checklist.md",
-		"docs/release/provenance.md",
-	])("keeps the fresh bootstrap and release gates ordered in %s", (rel) => {
-		const section = freshBootstrapSection(read(rel));
-		let cursor = -1;
-		for (const command of requiredBootstrapOrder) {
-			const next = section.indexOf(command, cursor + 1);
-			expect(next, `${command} must appear after the preceding gate in ${rel}`).toBeGreaterThan(cursor);
-			cursor = next;
-		}
-		expect(section).toMatch(/must print nothing|must be empty/i);
-		expect(section).toMatch(/removes.*tracked.*picomatch/is);
-		expect(section).toMatch(/build.*restores.*deterministically/is);
-		expect(section).toMatch(/release:check.*does not.*build.*before.*worktree/is);
-	});
+	it.each(["docs/release/publish-checklist.md", "docs/release/provenance.md"])(
+		"keeps the fresh bootstrap and release gates ordered in %s",
+		(rel) => {
+			const section = freshBootstrapSection(read(rel));
+			let cursor = -1;
+			for (const command of requiredBootstrapOrder) {
+				const next = section.indexOf(command, cursor + 1);
+				expect(next, `${command} must appear after the preceding gate in ${rel}`).toBeGreaterThan(cursor);
+				cursor = next;
+			}
+			expect(section).toMatch(/must print nothing|must be empty/i);
+			expect(section).toMatch(/removes.*tracked.*picomatch/is);
+			expect(section).toMatch(/build.*restores.*deterministically/is);
+			expect(section).toMatch(/release:check.*does not.*build.*before.*worktree/is);
+		},
+	);
 
 	it("documents the unreleased schema-3 lifecycle, CLI hooks, resume grammar, and payload", () => {
 		const docs = [

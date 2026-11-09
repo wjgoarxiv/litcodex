@@ -311,51 +311,51 @@ describe("run #given/#when/#then", () => {
 		expect(out).not.toContain("all goals complete");
 	});
 
-	it.each([
-		"failed",
-		"blocked",
-	] as const)("--retry-failed retries a %s goal and records its prior status and next attempt", async (status) => {
-		await run(["create", "--brief", "- Add login"]);
-		const started = JSON.parse((await run(["run", "--json"])).out);
-		await run(["checkpoint", "--goal-id", started.goal.id, "--status", status, "--evidence", `${status} proof`]);
+	it.each(["failed", "blocked"] as const)(
+		"--retry-failed retries a %s goal and records its prior status and next attempt",
+		async (status) => {
+			await run(["create", "--brief", "- Add login"]);
+			const started = JSON.parse((await run(["run", "--json"])).out);
+			await run(["checkpoint", "--goal-id", started.goal.id, "--status", status, "--evidence", `${status} proof`]);
 
-		const { code, out } = await run(["run", "--retry-failed", "--json"]);
-		const env = JSON.parse(out);
-		expect(code).toBe(0);
-		expect(env.state).toBe("runnable");
-		expect(env.goal.status).toBe("in_progress");
-		expect(env.goal.attempt).toBe(2);
-		const retryReceipt = readLedgerLines().find((entry) => entry.kind === "goal_retried");
-		expect(retryReceipt).toMatchObject({ fromStatus: status, attempt: 2 });
-	});
+			const { code, out } = await run(["run", "--retry-failed", "--json"]);
+			const env = JSON.parse(out);
+			expect(code).toBe(0);
+			expect(env.state).toBe("runnable");
+			expect(env.goal.status).toBe("in_progress");
+			expect(env.goal.attempt).toBe(2);
+			const retryReceipt = readLedgerLines().find((entry) => entry.kind === "goal_retried");
+			expect(retryReceipt).toMatchObject({ fromStatus: status, attempt: 2 });
+		},
+	);
 
-	it.each([
-		"failed",
-		"blocked",
-	] as const)("checkpoint JSON does not claim unobserved native state is active for %s durable goals", async (status) => {
-		await run(["create", "--brief", "- Add login"]);
-		const started = JSON.parse((await run(["run", "--json"])).out);
-		const checkpoint = JSON.parse(
-			(
-				await run([
-					"checkpoint",
-					"--goal-id",
-					started.goal.id,
-					"--status",
-					status,
-					"--evidence",
-					`${status} proof`,
-					"--json",
-				])
-			).out,
-		);
-		expect(checkpoint.codexGoal).toMatchObject({
-			status: "unobserved",
-			requestedStatus: null,
-			observed: false,
-			mutationPerformed: false,
-		});
-	});
+	it.each(["failed", "blocked"] as const)(
+		"checkpoint JSON does not claim unobserved native state is active for %s durable goals",
+		async (status) => {
+			await run(["create", "--brief", "- Add login"]);
+			const started = JSON.parse((await run(["run", "--json"])).out);
+			const checkpoint = JSON.parse(
+				(
+					await run([
+						"checkpoint",
+						"--goal-id",
+						started.goal.id,
+						"--status",
+						status,
+						"--evidence",
+						`${status} proof`,
+						"--json",
+					])
+				).out,
+			);
+			expect(checkpoint.codexGoal).toMatchObject({
+				status: "unobserved",
+				requestedStatus: null,
+				observed: false,
+				mutationPerformed: false,
+			});
+		},
+	);
 
 	it("returns done only after every goal is complete", async () => {
 		await run(["create", "--brief", "- Add login"]);

@@ -123,23 +123,18 @@ describe("evidencePath #given/#when/#then", () => {
 		expect(evidencePath(ABS_ROOT, "shot.png")).toBe(join(litLoopEvidenceDir(ABS_ROOT), "shot.png"));
 	});
 
-	it.each([
-		"../x",
-		"../../bin/x",
-		"a/b",
-		"a\\b",
-		"..",
-		"",
-		".",
-	])("rejects an escaping evidence name %j before any fs op", (name) => {
-		try {
-			evidencePath(ABS_ROOT, name);
-			throw new Error("should have thrown");
-		} catch (err) {
-			expect(err).toBeInstanceOf(LitLoopStateError);
-			expect((err as LitLoopStateError).code).toBe("LIT_LOOP_EVIDENCE_NAME_UNSAFE");
-		}
-	});
+	it.each(["../x", "../../bin/x", "a/b", "a\\b", "..", "", "."])(
+		"rejects an escaping evidence name %j before any fs op",
+		(name) => {
+			try {
+				evidencePath(ABS_ROOT, name);
+				throw new Error("should have thrown");
+			} catch (err) {
+				expect(err).toBeInstanceOf(LitLoopStateError);
+				expect((err as LitLoopStateError).code).toBe("LIT_LOOP_EVIDENCE_NAME_UNSAFE");
+			}
+		},
+	);
 });
 
 describe("repoRelative #given/#when/#then", () => {

@@ -68,13 +68,12 @@ const FORBIDDEN_CONTEXT = [
 ];
 
 describe("film-request classifier (ported trigger, exclusions i-v)", () => {
-	it.each([
-		...noCopyRequests,
-		...typeLedRequests.map(([p]) => p),
-		...wave1Positives,
-	])("routes to motion: %s", (prompt) => {
-		expect(classifyFilmRequest(prompt)).not.toBeNull();
-	});
+	it.each([...noCopyRequests, ...typeLedRequests.map(([p]) => p), ...wave1Positives])(
+		"routes to motion: %s",
+		(prompt) => {
+			expect(classifyFilmRequest(prompt)).not.toBeNull();
+		},
+	);
 	it.each(negatives)("does not route: %s (%s)", (prompt) => {
 		expect(classifyFilmRequest(prompt)).toBeNull();
 	});

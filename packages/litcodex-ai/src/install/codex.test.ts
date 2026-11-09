@@ -63,19 +63,19 @@ describe("Windows-shaped Codex discovery", () => {
 		});
 	});
 
-	it.each([
-		".cmd",
-		".bat",
-	])("prepares a Windows codex%s invocation with shell disabled and Node-quoted argv", (extension) => {
-		const command = `C:\\Program Files\\Codex\\codex${extension}`;
+	it.each([".cmd", ".bat"])(
+		"prepares a Windows codex%s invocation with shell disabled and Node-quoted argv",
+		(extension) => {
+			const command = `C:\\Program Files\\Codex\\codex${extension}`;
 
-		expect(
-			codexSpawnInvocation(command, ["--version"], { ComSpec: "C:\\Windows\\System32\\cmd.exe" }, "win32"),
-		).toEqual({
-			command: "C:\\Windows\\System32\\cmd.exe",
-			args: ["/d", "/s", "/c", command, "--version"],
-			shell: false,
-			windowsVerbatimArguments: false,
-		});
-	});
+			expect(
+				codexSpawnInvocation(command, ["--version"], { ComSpec: "C:\\Windows\\System32\\cmd.exe" }, "win32"),
+			).toEqual({
+				command: "C:\\Windows\\System32\\cmd.exe",
+				args: ["/d", "/s", "/c", command, "--version"],
+				shell: false,
+				windowsVerbatimArguments: false,
+			});
+		},
+	);
 });

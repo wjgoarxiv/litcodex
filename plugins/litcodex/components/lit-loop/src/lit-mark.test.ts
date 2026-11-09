@@ -82,24 +82,24 @@ describe("canonical Ignition B LIT mark", () => {
 		expect(banner.at(-1)).toBe(" ".repeat(44));
 		expect(microLine("lit-loop")).toBe(`${fixture.micro[2]?.text}  litcodex · lit-loop`);
 	});
-	it.each([
-		"codex",
-		"custom product / 한글 ▄█ ▓",
-	])("lockup preserves the mark field and arbitrary label %s", (label) => {
-		const rows = lockup(label);
-		expect(rows).toHaveLength(10);
-		expect(rows.map((row) => row.slice(0, 22))).toEqual(standard);
-		expect(rows[5]?.slice(28)).toBe(`  ${label}`);
-		for (const mode of ["truecolor", "256"] as const) {
-			const actual = colorize(rows, { mode });
-			expect(actual).toEqual(
-				fixture.standard.map(
-					(row, index) => `${expectedRow(row, mode)}${" ".repeat(6)}${index === 5 ? `  ${label}` : ""}`,
-				),
-			);
-			expect(actual.map(stripAnsi)).toEqual(rows);
-		}
-	});
+	it.each(["codex", "custom product / 한글 ▄█ ▓"])(
+		"lockup preserves the mark field and arbitrary label %s",
+		(label) => {
+			const rows = lockup(label);
+			expect(rows).toHaveLength(10);
+			expect(rows.map((row) => row.slice(0, 22))).toEqual(standard);
+			expect(rows[5]?.slice(28)).toBe(`  ${label}`);
+			for (const mode of ["truecolor", "256"] as const) {
+				const actual = colorize(rows, { mode });
+				expect(actual).toEqual(
+					fixture.standard.map(
+						(row, index) => `${expectedRow(row, mode)}${" ".repeat(6)}${index === 5 ? `  ${label}` : ""}`,
+					),
+				);
+				expect(actual.map(stripAnsi)).toEqual(rows);
+			}
+		},
+	);
 	it("none mode preserves every byte and never emits escapes", () => {
 		for (const rows of [standard, banner, micro, lockup("codex"), ["█▓ custom"]]) {
 			expect(colorize(rows, { mode: "none" })).toEqual(rows);
@@ -142,15 +142,13 @@ describe("canonical Ignition B LIT mark", () => {
 			expect(message).toBe(PREVIOUS_PLAIN_ACTIVATION);
 		}
 	});
-	it.each([
-		{ NO_COLOR: "" },
-		{ NO_COLOR: "1" },
-		{ CI: "1" },
-		{ TERM: "dumb" },
-	])("keeps the activation mark escape-free for the existing plain opt-out %j", (env) => {
-		const message = activationMessage("lit-loop", { LANG: "en_US.UTF-8", ...env });
-		expect(message).not.toContain("\x1b");
-	});
+	it.each([{ NO_COLOR: "" }, { NO_COLOR: "1" }, { CI: "1" }, { TERM: "dumb" }])(
+		"keeps the activation mark escape-free for the existing plain opt-out %j",
+		(env) => {
+			const message = activationMessage("lit-loop", { LANG: "en_US.UTF-8", ...env });
+			expect(message).not.toContain("\x1b");
+		},
+	);
 	it("SessionStart and component hooks use their canonical status messages", () => {
 		const { hooks } = JSON.parse(readFileSync(new URL("../../../hooks/hooks.json", import.meta.url), "utf8")) as {
 			hooks: Record<string, { hooks: { statusMessage: string; command: string }[] }[]>;

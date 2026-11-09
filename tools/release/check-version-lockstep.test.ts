@@ -192,21 +192,21 @@ describe("#given the real repo #when the lockstep guard runs #then every manifes
 });
 
 describe("#given a drifted manifest #when the guard runs #then it reports VERSION_MISMATCH", () => {
-	it.each([
-		"canonical contract installer version",
-		"canonical contract shared version",
-	])("lockstep catches stale %s", (label) => {
-		const root = makeAlignedRepo();
-		const path = join(root, "docs/spec/litcodex-contract.md");
-		const row = label.includes("installer") ? "| Installer npm package |" : "| Version (all";
-		const text = readFileSync(path, "utf8")
-			.split("\n")
-			.map((line) => (line.startsWith(row) ? line.replace(VERSION, "0.1.0") : line))
-			.join("\n");
-		writeFileSync(path, text);
-		const report = checkVersionLockstep(root);
-		expect(report.mismatches.some((m) => m.label === label && m.code === "VERSION_MISMATCH")).toBe(true);
-	});
+	it.each(["canonical contract installer version", "canonical contract shared version"])(
+		"lockstep catches stale %s",
+		(label) => {
+			const root = makeAlignedRepo();
+			const path = join(root, "docs/spec/litcodex-contract.md");
+			const row = label.includes("installer") ? "| Installer npm package |" : "| Version (all";
+			const text = readFileSync(path, "utf8")
+				.split("\n")
+				.map((line) => (line.startsWith(row) ? line.replace(VERSION, "0.1.0") : line))
+				.join("\n");
+			writeFileSync(path, text);
+			const report = checkVersionLockstep(root);
+			expect(report.mismatches.some((m) => m.label === label && m.code === "VERSION_MISMATCH")).toBe(true);
+		},
+	);
 
 	it("lockstep catches installer drift", () => {
 		const root = makeAlignedRepo();

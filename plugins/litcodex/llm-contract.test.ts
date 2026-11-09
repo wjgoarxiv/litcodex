@@ -540,14 +540,15 @@ describe("LLM-facing skill contracts", () => {
 		expect(positiveHookSkillActivationClaims(description)).toEqual([]);
 	});
 
-	it.each(
-		skillDocs().filter((doc) => !USER_PROMPT_SUBMIT_SKILL_IDS.has(basename(dirname(doc.path)))),
-	)("$label has no positive hook-owned skill activation declaration", (doc) => {
-		expect(
-			positiveHookSkillActivationClaims(doc.text),
-			`${doc.label} is picker-only; activation belongs to Codex skill discovery, not UserPromptSubmit`,
-		).toEqual([]);
-	});
+	it.each(skillDocs().filter((doc) => !USER_PROMPT_SUBMIT_SKILL_IDS.has(basename(dirname(doc.path)))))(
+		"$label has no positive hook-owned skill activation declaration",
+		(doc) => {
+			expect(
+				positiveHookSkillActivationClaims(doc.text),
+				`${doc.label} is picker-only; activation belongs to Codex skill discovery, not UserPromptSubmit`,
+			).toEqual([]);
+		},
+	);
 });
 
 describe("LLM-facing directive contracts", () => {

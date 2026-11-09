@@ -14,12 +14,12 @@ vi.mock("node:path", async () => {
 import { runLoopDoctor } from "./loop-doctor.js";
 
 describe("loop-doctor Windows absolute roots", () => {
-	it.each([
-		String.raw`C:\repo`,
-		String.raw`\\server\share`,
-	])("accepts a Windows-shaped absolute root (%s) through the platform path API", async (repoRoot) => {
-		const report = await runLoopDoctor({ repoRoot });
-		expect(report.stateDir).not.toBe("");
-		expect(report.checks.some((check) => check.detail === "invalid repoRoot (not absolute)")).toBe(false);
-	});
+	it.each([String.raw`C:\repo`, String.raw`\\server\share`])(
+		"accepts a Windows-shaped absolute root (%s) through the platform path API",
+		async (repoRoot) => {
+			const report = await runLoopDoctor({ repoRoot });
+			expect(report.stateDir).not.toBe("");
+			expect(report.checks.some((check) => check.detail === "invalid repoRoot (not absolute)")).toBe(false);
+		},
+	);
 });

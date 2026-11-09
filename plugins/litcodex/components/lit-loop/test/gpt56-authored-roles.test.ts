@@ -25,31 +25,32 @@ describe("authored model role audit", () => {
 		expect(roleFiles).toEqual(catalogRoleFiles);
 	});
 
-	it.each(
-		Object.entries(modelCatalog.roles),
-	)("keeps the %s TOML route aligned with the model catalog", (role, route) => {
-		// given
-		const body = readFileSync(join(agentsDir, `litcodex-${role}.toml`), "utf8");
+	it.each(Object.entries(modelCatalog.roles))(
+		"keeps the %s TOML route aligned with the model catalog",
+		(role, route) => {
+			// given
+			const body = readFileSync(join(agentsDir, `litcodex-${role}.toml`), "utf8");
 
-		// when
-		const header = body.split('developer_instructions = """', 1)[0] ?? "";
+			// when
+			const header = body.split('developer_instructions = """', 1)[0] ?? "";
 
-		// then
-		expect(header).toContain(`model = "${route.model}"`);
-		expect(header).toContain(`model_reasoning_effort = "${route.model_reasoning_effort}"`);
-	});
+			// then
+			expect(header).toContain(`model = "${route.model}"`);
+			expect(header).toContain(`model_reasoning_effort = "${route.model_reasoning_effort}"`);
+		},
+	);
 
-	it.each([
-		"litcodex-explorer",
-		"litcodex-librarian",
-	])("#given research role %s #when audited #then it does not force a service tier", (role) => {
-		// given
-		const body = readFileSync(join(agentsDir, `${role}.toml`), "utf8");
+	it.each(["litcodex-explorer", "litcodex-librarian"])(
+		"#given research role %s #when audited #then it does not force a service tier",
+		(role) => {
+			// given
+			const body = readFileSync(join(agentsDir, `${role}.toml`), "utf8");
 
-		// when
-		const header = body.split('developer_instructions = """', 1)[0] ?? "";
+			// when
+			const header = body.split('developer_instructions = """', 1)[0] ?? "";
 
-		// then
-		expect(header).not.toMatch(/^service_tier\s*=/m);
-	});
+			// then
+			expect(header).not.toMatch(/^service_tier\s*=/m);
+		},
+	);
 });

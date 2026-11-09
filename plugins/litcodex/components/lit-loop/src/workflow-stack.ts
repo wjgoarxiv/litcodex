@@ -553,7 +553,7 @@ export function readOtherStacks(cwd: string, selfId: string, now: number = Date.
 /** The frame a bare `lit continue` should resume: the nearest spine below a side frame, else null. */
 export function pausedSpine(stack: WorkflowStack): StackFrame | null {
 	const top = stack.frames.at(-1);
-	if (!top || top.role !== "side") return null;
+	if (top?.role !== "side") return null;
 	const spine = stack.frames[lastIndexWhere(stack.frames, (frame) => frame.role === "spine")];
 	return spine && spine.status === "paused" ? spine : null;
 }
