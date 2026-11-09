@@ -14,7 +14,7 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
-describe.sequential("lit-fetch DNS binding", () => {
+describe("lit-fetch DNS binding", () => {
 	it.each([
 		"http://[fe90::1]/",
 		"http://[ff02::1]/",
