@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.37] - 2026-11-10
+
 ### Changed
 
 - The tested and locked Codex host moves from 0.144.0 to `@openai/codex` 0.163.0. The installer still treats
