@@ -6,16 +6,18 @@ import type { AuthorityBoundary, AuthorityGrant, WorkReasonCode, WorkTransitionA
 import {
 	initializeWork,
 	isBoundedLifecycleText,
+	LifecycleStoreError,
 	START_WORK_MAX_DISPLAY_BYTES,
 	START_WORK_MAX_STDIN_BYTES,
 	transitionWork,
 } from "./lifecycle-store.js";
 import { analyzePlanProgress } from "./plan-progress.js";
 import { PlanPublisherError, publishPlan } from "./plan-publisher.js";
+import { runPreToolUseHook } from "./pre-tool-hook.js";
 import { diagnoseLifecycle } from "./work-state-reader.js";
 
 const USAGE =
-	"Usage: litcodex-start-work-continuation init | analyze-plan | publish-plan --cwd <path> --slug <slug> | hook <stop|user-prompt-submit> | transition <pause|cancel|complete> | doctor --cwd <path> --json\n";
+	"Usage: litcodex-start-work-continuation init | analyze-plan | publish-plan --cwd <path> --slug <slug> | hook <stop|user-prompt-submit|pre-tool-use> | transition <pause|cancel|complete> | doctor --cwd <path> --json\n";
 
 const command = process.argv[2];
 const subcommand = process.argv[3];
@@ -27,7 +29,10 @@ if (command === "init" && subcommand === undefined) {
 	await runAnalyzePlanCli();
 } else if (publishPlanArgs !== null) {
 	await runPublishPlanCli(publishPlanArgs);
-} else if (command === "hook" && (subcommand === "stop" || subcommand === "user-prompt-submit")) {
+} else if (
+	command === "hook" &&
+	(subcommand === "stop" || subcommand === "user-prompt-submit" || subcommand === "pre-tool-use")
+) {
 	await runHookCli(subcommand);
 } else if (command === "hook" && subcommand === "subagent-stop") {
 	process.exitCode = 0;
@@ -45,12 +50,22 @@ if (command === "init" && subcommand === undefined) {
 	process.exitCode = 1;
 }
 
-async function runHookCli(kind: "stop" | "user-prompt-submit"): Promise<void> {
+async function runHookCli(kind: "stop" | "user-prompt-submit" | "pre-tool-use"): Promise<void> {
 	const raw = await readStdin();
 	if (raw === null || raw.trim().length === 0) return;
 	const parsed = parseJson(raw);
 	if (parsed === undefined) return;
-	const output = kind === "stop" ? runStopHook(parsed) : runUserPromptSubmitHook(parsed);
+	let output = "";
+	if (kind === "pre-tool-use") {
+		// The guard fails open for the hook process; the lifecycle store's own checks stay authoritative.
+		try {
+			output = runPreToolUseHook(parsed);
+		} catch {
+			output = "";
+		}
+	} else {
+		output = kind === "stop" ? runStopHook(parsed) : runUserPromptSubmitHook(parsed);
+	}
 	if (output.length > 0) processStdout.write(output);
 }
 
@@ -84,9 +99,19 @@ async function runTransitionCli(action: WorkTransitionAction): Promise<void> {
 		const work = result.state.works[result.event.workId];
 		if (work === undefined) return fail("STATE_INVALID", "active work disappeared");
 		processStdout.write(
-			`${JSON.stringify({ ok: true, changed: result.changed, revision: result.state.revision, status: work.status, kind: result.event.kind })}\n`,
+			`${JSON.stringify({
+				ok: true,
+				changed: result.changed,
+				revision: result.state.revision,
+				status: work.status,
+				kind: result.event.kind,
+				...(result.outcome === undefined ? {} : { outcome: result.outcome }),
+				parked: work.parked_boundaries?.length ?? 0,
+			})}\n`,
 		);
 	} catch (error) {
+		// The store's own code reaches the model, so a protected, denied or full queue stays distinguishable.
+		if (error instanceof LifecycleStoreError) return fail(error.code, error.message);
 		return fail("TRANSITION_FAILED", error instanceof Error ? error.message : "transition failed");
 	}
 }

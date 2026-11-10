@@ -55,7 +55,8 @@ describe("Gate D terminal lifecycle and replay bounds", () => {
 		const root = initRoot(["one.md"]);
 		initializeWork(root, initRequest(root, "init-1", "w1", "one.md", 0));
 		let revision = 1;
-		for (let index = 0; index < START_WORK_MAX_HISTORY_EVENTS + 4; index += 1) {
+		// Each round adds one grant and two events; stay under the 64-grant limit while overflowing the history.
+		for (let index = 0; index < START_WORK_MAX_HISTORY_EVENTS / 2 + 4; index += 1) {
 			const boundary = { ...boundaryFor(root, `boundary-${index}`), action: `deploy-${index}` };
 			transitionWork(root, {
 				action: "pause",
@@ -179,11 +180,12 @@ describe("Gate D strict authority and boundary ownership", () => {
 		expect(migrated.state.works["w1"]?.authority).toEqual(storedAuthority(root));
 	});
 
-	it("stores one matching pending boundary and requires a matching persisted grant to resume", () => {
+	it("parks one matching boundary and requires a matching persisted grant to resume", () => {
 		const root = initialized(rootWithPlan());
 		const boundary = boundaryFor(root, "credential-boundary");
 		const paused = transitionWork(root, pauseRequest(root, 1, "pause-1", boundary));
-		expect(paused.state.works["w1"]?.pending_boundary).toEqual(boundary);
+		expect(paused.state.works["w1"]?.status).toBe("active");
+		expect(paused.state.works["w1"]?.parked_boundaries).toMatchObject([boundary]);
 		expect(() =>
 			transitionWork(root, {
 				...resumeRequest(boundary, 2, "resume-bad", grantFor(boundary, "grant-bad")),
@@ -195,16 +197,16 @@ describe("Gate D strict authority and boundary ownership", () => {
 				action: "complete",
 				expectedRevision: 2,
 				sessionId: "s1",
-				transitionId: "paused-complete",
+				transitionId: "parked-complete",
 				workId: "w1",
 				reasonCode: "completed",
 			}),
-		).toThrow(/paused/i);
+		).toThrow(/remaining/i);
 
 		const request = resumeRequest(boundary, 2, "resume-1", grantFor(boundary, "grant-1"));
 		const resumed = transitionWork(root, request);
 		const replay = transitionWork(root, request);
-		expect(resumed.state.works["w1"]?.pending_boundary).toBeUndefined();
+		expect(resumed.state.works["w1"]?.parked_boundaries).toBeUndefined();
 		expect(resumed.state.works["w1"]?.authority_grants).toContainEqual(grantFor(boundary, "grant-1"));
 		expect(replay.changed).toBe(false);
 	});
@@ -251,22 +253,25 @@ describe("Gate D stop, route, transcript, and diagnostics", () => {
 			`lit start work one --worktree ${root} --resume route-boundary --grant grant-1`,
 		]) {
 			expect(runUserPromptSubmitHook(promptInput(root, malformed))).toBe("");
-			expect(readLifecycleState(root)?.works["w1"]?.status).toBe("paused");
+			expect(readLifecycleState(root)?.works["w1"]?.parked_boundaries).toHaveLength(1);
 		}
 
 		const prompt = `$litcodex:start-work one --resume route-boundary --grant grant-1 --worktree ${root}`;
 		expect(runUserPromptSubmitHook(promptInput(root, prompt))).toBe("");
 		expect(readLifecycleState(root)?.works["w1"]?.status).toBe("active");
+		expect(readLifecycleState(root)?.works["w1"]?.parked_boundaries).toBeUndefined();
 		expect(runUserPromptSubmitHook(promptInput(root, prompt))).toBe("");
 		expect(readLifecycleState(root)?.revision).toBe(3);
 	});
 
-	it("embeds validated authority and pending-boundary fields in continuation context", () => {
+	it("embeds validated authority and parked-step fields in continuation context", () => {
 		const root = initialized(rootWithPlan());
 		const output = JSON.parse(runStopHook(stopInput(root, "turn-context"))) as { reason: string };
 		expect(output.reason).toContain('"authority":{"authority_id":"authority-1"');
 		expect(output.reason).toContain('"forbidden_actions":["publish"]');
-		expect(output.reason).toContain('"pendingBoundary":null');
+		expect(output.reason).toContain('"parkedBoundaries":[]');
+		expect(output.reason).toContain('"deniedBoundaries":[]');
+		expect(output.reason).not.toContain("pendingBoundary");
 	});
 
 	it("fails silent for symlinked, malformed, and oversized transcript inputs", () => {
@@ -312,7 +317,7 @@ describe("Gate D stop, route, transcript, and diagnostics", () => {
 		expect(readFileSync(statePath, "utf8")).toBe(before);
 	});
 
-	it("doctor exposes revision, retained history, state, active work, and pending boundary", () => {
+	it("doctor exposes revision, retained history, state, active work, and parked steps", () => {
 		const root = initialized(rootWithPlan());
 		const boundary = boundaryFor(root, "doctor-boundary");
 		transitionWork(root, pauseRequest(root, 1, "pause-doctor", boundary));
@@ -321,8 +326,8 @@ describe("Gate D stop, route, transcript, and diagnostics", () => {
 			revision: 2,
 			state: "valid",
 			history: { retained: 2, floorRevision: 1 },
-			active: { workId: "w1", status: "paused" },
-			pendingBoundary: boundary,
+			active: { workId: "w1", status: "active" },
+			parkedBoundaries: [boundary],
 		});
 	});
 });

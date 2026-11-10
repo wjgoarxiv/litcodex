@@ -53,6 +53,9 @@ export const WIKIFY_KNOWLEDGE_COMPONENT_DIR = "wikify-knowledge" as const;
 export const RULES_APPLY_PATCH_MATCHER = "^apply_patch$" as const;
 export const HUMANIZER_EDIT_MATCHER =
 	"^(Bash|apply_patch|write|Write|edit|Edit|multi_edit|multiedit|MultiEdit|mcp__filesystem__write_file|mcp__filesystem__edit_file)$" as const;
+/** The start-work guard watches the same tool set as the humanizer guard; a marketplace test pins them equal. */
+export const START_WORK_GUARD_MATCHER =
+	"^(Bash|apply_patch|write|Write|edit|Edit|multi_edit|multiedit|MultiEdit|mcp__filesystem__write_file|mcp__filesystem__edit_file)$" as const;
 export const HUMANIZER_POST_MATCHER =
 	"^(Bash|apply_patch|write|Write|edit|Edit|multi_edit|multiedit|MultiEdit|mcp__filesystem__write_file|mcp__filesystem__edit_file)$" as const;
 export const WIKIFY_KNOWLEDGE_CREATE_GOAL_MATCHER = "^create_goal$" as const;
@@ -285,6 +288,14 @@ export const EXPECTED_HOOKS: readonly ExpectedHook[] = Object.freeze([
 		subcommand: "post-tool-use",
 		statusMessage: WIKIFY_KNOWLEDGE_CREATE_GOAL_STATUS_MESSAGE,
 		matcher: WIKIFY_KNOWLEDGE_CREATE_GOAL_MATCHER,
+	}),
+	// Appended last in the PreToolUse array of hooks.json, so the older groups keep their indices and trust keys.
+	Object.freeze({
+		component: START_WORK_CONTINUATION_COMPONENT_DIR,
+		event: "PreToolUse",
+		subcommand: "pre-tool-use",
+		statusMessage: activationStatusMessage(START_WORK_CONTINUATION_COMPONENT_DIR),
+		matcher: START_WORK_GUARD_MATCHER,
 	}),
 ]);
 

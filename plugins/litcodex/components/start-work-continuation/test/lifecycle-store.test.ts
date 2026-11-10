@@ -57,13 +57,14 @@ describe("start-work lifecycle store", () => {
 		expect(first.changed).toBe(true);
 		expect(first.state.revision).toBe(8);
 		expect(first.event).toMatchObject({
-			kind: "start_work_paused",
+			kind: "start_work_boundary_parked",
 			workId: "w1",
 			transitionId: "pause-1",
 			revision: 8,
 			fromWorkStatus: "active",
-			toWorkStatus: "paused",
+			toWorkStatus: "active",
 		});
+		expect(first.outcome).toBe("parked");
 		expect(replay.changed).toBe(false);
 		expect(readLifecycleState(root)?.revision).toBe(8);
 		expect(ledger(root)).toHaveLength(1);
@@ -102,7 +103,7 @@ describe("start-work lifecycle store", () => {
 				},
 			),
 		).toThrow("fault-after-state");
-		expect(readLifecycleState(root)?.works["w1"]?.status).toBe("paused");
+		expect(readLifecycleState(root)?.works["w1"]?.parked_boundaries).toHaveLength(1);
 		expect(ledger(root)).toEqual([]);
 
 		const replay = transitionWork(root, {
@@ -117,7 +118,7 @@ describe("start-work lifecycle store", () => {
 
 		expect(replay.changed).toBe(false);
 		expect(ledger(root)).toHaveLength(1);
-		expect(ledger(root)[0]).toMatchObject({ kind: "start_work_paused", transitionId: "interrupted" });
+		expect(ledger(root)[0]).toMatchObject({ kind: "start_work_boundary_parked", transitionId: "interrupted" });
 	});
 
 	it("tolerates malformed and duplicate ledger fragments during state-first recovery", () => {

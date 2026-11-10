@@ -442,7 +442,7 @@ Codex 목표 도구로 이어지는 점선은 도구가 있을 때 에이전트�
 | `lit brainstorm`, `lit ideation` 또는 `lit idea` | **lit-brainstorm** | 서로 다른 선택지를 많이 낸 뒤 고를 수 있는 짧은 목록으로 좁힘, 만들지는 않음 |
 | `lit schematic` 또는 `lit-schematic` | **lit-schematic** | 실제 장비를 SVG, PDF, PNG로 그림: P&ID, PFD, 실험 장치 그림, 아이소메트릭 컷어웨이. 이런 요청을 담은 단독 `lit`도 이 스킬로 이어짐 |
 | `lit hijack` 또는 `lit-hijack` | **lit-hijack** | 다른 사람이 공개한 기법(게시물, 아티클, 저장소, PDF)을 내 스킬로 옮김: 출처와 라이선스를 먼저 적고, 원문 표현 없는 명세를 쓰고, 따로 구현한 뒤 전후 비교로 증명함. `lit` 뒤에 하이재킹, 하이잭도 가능 |
-| `lit adhd` 또는 `lit rewind` | **lit-adhd** | 읽기 전용 "나 어디까지 했지": 최근 Codex 세션 전체를 한 번에 정리함. 각 세션의 요청, 나를 기다리는 것, 진행 게이지, 멈춘 작업, 다음 한 걸음(`go`라고 입력하면 실행). `lit continue`는 멈춘 루프를 그 단계 그대로 되살림 |
+| `lit adhd` 또는 `lit rewind` | **lit-adhd** | 읽기 전용 "나 어디까지 했지"를 KPI 보드로 보여 줌. 지금 할 일 하나와 입력할 말(`go`면 실행), 끝낸 마일스톤과 남은 마일스톤(10칸 막대), 나를 기다리는 세션·커밋 안 된 변경·멈춘 계획 같은 알림 최대 5개. `lit adhd 자세히`는 세션별 목록을 덧붙임. `lit continue`는 멈춘 루프를 그 단계 그대로 되살림 |
 | `litgoal` 또는 `lit goal` | **litgoal** | 완료 기준을 정하고 유지: 목표와 기준을 lit-loop와 Start Work가 향해 가는 루프 상태에 연결 |
 | `lit-recap` 또는 `lit recap` | **lit-recap** | `.litcodex` 원장을 읽기 전용으로 요약 |
 | `lit-comprehend` 또는 `comprehend` | **lit-comprehend** | 작업 트리 밖에 자체 완결형 설명 자료 생성 |

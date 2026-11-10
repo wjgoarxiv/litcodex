@@ -26,9 +26,15 @@ export type ContinuationState = {
 	readonly worktreePath: string | null;
 	readonly authority: AuthorityEnvelope;
 	readonly authorityGrants: readonly AuthorityGrant[];
-	readonly pendingBoundary: AuthorityBoundary | null;
+	/** Steps waiting on the user's optional `lit approve`; the run keeps going meanwhile. */
+	readonly parkedBoundaries: readonly ParkedStep[];
+	/** Steps the user refused with `lit deny` for the rest of this run. */
+	readonly deniedBoundaries: readonly DeniedStep[];
 	readonly checklist: PlanChecklist;
 };
+
+export type ParkedStep = { readonly id: string; readonly action: string; readonly root: string };
+export type DeniedStep = { readonly action: string; readonly root: string };
 
 export function parsePlanChecklist(markdown: string): PlanChecklist {
 	const { remaining, total, nextTaskLabel } = analyzePlanProgress(markdown);
@@ -65,7 +71,12 @@ export function readContinuationState(
 		worktreePath: work.worktree_path,
 		authority: work.authority,
 		authorityGrants: work.authority_grants ?? [],
-		pendingBoundary: work.pending_boundary ?? null,
+		parkedBoundaries: (work.parked_boundaries ?? []).map((entry) => ({
+			id: entry.boundary_id,
+			action: entry.action,
+			root: entry.root,
+		})),
+		deniedBoundaries: (work.denied_boundaries ?? []).map((entry) => ({ action: entry.action, root: entry.root })),
 		checklist,
 	};
 }
@@ -79,7 +90,7 @@ export type LifecycleDiagnostic =
 			readonly state: "valid";
 			readonly history: { readonly retained: number; readonly floorRevision: number };
 			readonly active: { readonly workId: string; readonly status: string } | null;
-			readonly pendingBoundary: AuthorityBoundary | null;
+			readonly parkedBoundaries: readonly AuthorityBoundary[];
 	  }
 	| { readonly ok: false; readonly code: string; readonly message: string };
 
@@ -103,9 +114,14 @@ export function diagnoseLifecycle(cwd: string): LifecycleDiagnostic {
 						workId: inspected.state.active_work_id,
 						status: inspected.state.works[inspected.state.active_work_id]?.status ?? "invalid",
 					},
-		pendingBoundary:
+		parkedBoundaries:
 			inspected.state.active_work_id === null
-				? null
-				: (inspected.state.works[inspected.state.active_work_id]?.pending_boundary ?? null),
+				? []
+				: (inspected.state.works[inspected.state.active_work_id]?.parked_boundaries ?? []).map((entry) => ({
+						boundary_id: entry.boundary_id,
+						authority_id: entry.authority_id,
+						action: entry.action,
+						root: entry.root,
+					})),
 	};
 }

@@ -68,6 +68,26 @@ function withPlan(cwd: string): void {
 	writeFileSync(join(cwd, ".litcodex/plans/ship.md"), "## Todos\n- [x] one\n- [ ] two\n");
 }
 
+/** A run an older version left paused at one boundary. */
+function withLegacyPausedWork(cwd: string, owners: readonly string[]): void {
+	mkdirSync(join(cwd, ".litcodex/start-work"), { recursive: true });
+	writeFileSync(
+		join(cwd, ".litcodex/start-work/state.json"),
+		JSON.stringify({
+			active_work_id: "w1",
+			works: {
+				w1: {
+					work_id: "w1",
+					status: "paused",
+					active_plan: ".litcodex/plans/ship.md",
+					session_ids: owners,
+					pending_boundary: { boundary_id: "b1" },
+				},
+			},
+		}),
+	);
+}
+
 function withWork(cwd: string, owners: readonly string[], workId = "w1"): void {
 	mkdirSync(join(cwd, ".litcodex/start-work"), { recursive: true });
 	writeFileSync(
@@ -233,19 +253,15 @@ describe("S2: go only for a run this session owns", () => {
 });
 
 describe("S3: the go line only on a step go executes", () => {
-	it("never says go on an approval, handoff, other-session or lane step", () => {
+	it("never says go on a parked, handoff, other-session or lane step", () => {
 		const s = scratch();
-		mkdirSync(join(s.workspace, ".litcodex/start-work"), { recursive: true });
-		writeFileSync(
-			join(s.workspace, ".litcodex/start-work/state.json"),
-			JSON.stringify({
-				active_work_id: "w1",
-				works: { w1: { work_id: "w1", status: "paused", pending_boundary: { boundary_id: "b1" } } },
-			}),
-		);
+		withPlan(s.workspace);
+		withLegacyPausedWork(s.workspace, ["codex:sess-other"]);
 		const result = collect(s);
-		expect(result.next.kind).toBe("approve-boundary");
-		expect(renderBrief(result)).not.toMatch(/`go`/u);
+		// An older version's pause reads as a running work with one parked step, shown where it runs.
+		expect(result.next.kind).toBe("other-session");
+		expect(result.next.text).toContain("1 parked (optional `lit approve`; `lit cancel` ends the run)");
+		expect(renderBrief(result)).not.toMatch(/say `go`/u);
 	});
 });
 
@@ -342,18 +358,14 @@ describe("S6: this session's own resume and run hold while lanes work", () => {
 		expect(renderBrief(idle)).toMatch(/lit continue/u);
 	});
 
-	it("still offers a pending approval while lanes work", () => {
+	it("holds a run with a parked step like any running work while lanes work", () => {
 		const s = scratch();
-		mkdirSync(join(s.workspace, ".litcodex/start-work"), { recursive: true });
-		writeFileSync(
-			join(s.workspace, ".litcodex/start-work/state.json"),
-			JSON.stringify({
-				active_work_id: "w1",
-				works: { w1: { work_id: "w1", status: "paused", pending_boundary: { boundary_id: "b1" } } },
-			}),
-		);
+		withPlan(s.workspace);
+		withLegacyPausedWork(s.workspace, [`codex:${ME}`]);
+		expect(chooseNext(s.workspace, ME)).toMatchObject({ kind: "continue-work" });
+		expect(chooseNext(s.workspace, ME).text).toContain("1 parked");
 		const result = collect(s, withLaneAtWork(s));
-		expect(result.next.kind).toBe("approve-boundary");
+		expect(result.next.kind).toBe("wait-lanes");
 	});
 });
 

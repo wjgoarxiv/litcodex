@@ -90,6 +90,8 @@
     { "prompt": "lit adhd", "token": "lit-adhd", "note": "natural-lit-adhd" },
     { "prompt": "LIT ADHD what is going on", "token": "lit-adhd", "note": "natural-lit-adhd-uppercase" },
     { "prompt": "lit rewind", "token": "lit-adhd", "note": "natural-lit-rewind-alias" },
+    { "prompt": "lit adhd detail", "token": "lit-adhd", "note": "natural-lit-adhd-detail" },
+    { "prompt": "lit adhd 자세히", "token": "lit-adhd", "note": "natural-lit-adhd-detail-ko" },
     { "prompt": "lit-adhd", "token": "lit-adhd", "note": "bare-lit-adhd" },
     { "prompt": "lit-rewind --here", "token": "lit-adhd", "note": "bare-lit-rewind-alias" },
     { "prompt": "$litcodex:lit-adhd lit", "token": "lit-adhd", "note": "scoped-mention-lit-adhd" },

@@ -44,6 +44,8 @@ export const LIT_LOOP_LEDGER_EVENT_KINDS = [
 	"start_work_resumed",
 	"start_work_cancelled",
 	"start_work_completed",
+	"start_work_boundary_parked",
+	"start_work_boundary_denied",
 ] as const;
 export type LitLoopLedgerEventKind = (typeof LIT_LOOP_LEDGER_EVENT_KINDS)[number];
 

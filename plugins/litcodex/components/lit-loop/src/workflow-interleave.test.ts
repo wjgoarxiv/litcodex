@@ -153,10 +153,10 @@ describe("lit-loop, an interjected discipline and lit continue", () => {
 		expect(go.context).not.toContain("start-work");
 	});
 
-	it("leaves lit approve and lit deny to the start-work hook", async () => {
+	it("leaves lit approve, lit deny and lit cancel to the start-work hook", async () => {
 		const s = session();
 		await fire(s, "lit fix the bug");
-		for (const answer of ["lit approve", "lit deny", "lit 승인", "lit 거절"]) {
+		for (const answer of ["lit approve", "lit deny", "lit cancel", "lit 승인", "lit 거절", "lit 취소"]) {
 			const fired = await fire(s, answer);
 			expect(fired.stdout).toBe("");
 			expect(fired.code).toBe(0);

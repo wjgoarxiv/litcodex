@@ -1,11 +1,12 @@
-// `lit approve` and `lit deny` as typed answers to the boundary a paused start-work run waits at. The exact
-// `start-work … --resume … --grant …` line stays the other way in; these tests pin the typed one.
+// `lit approve` and `lit deny` as typed, optional answers to the steps a start-work run has parked. The fixture is
+// a state an older version wrote while paused at one boundary; it now reads as an active run with that step parked.
+// The exact `start-work … --resume … --grant …` line stays the other way in; these tests pin the typed one.
 
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { parseBoundaryAnswer, runUserPromptSubmitHook } from "../src/codex-hook.js";
+import { parseTypedRunCommand, runUserPromptSubmitHook } from "../src/codex-hook.js";
 import { readLifecycleState } from "../src/lifecycle-store.js";
 
 const roots: string[] = [];
@@ -72,7 +73,7 @@ const contextOf = (out: string): string =>
 	(JSON.parse(out) as { hookSpecificOutput: { hookEventName: string; additionalContext: string } }).hookSpecificOutput
 		.additionalContext;
 
-describe("parseBoundaryAnswer", () => {
+describe("parseTypedRunCommand", () => {
 	it.each([
 		["lit approve", "approve"],
 		["lit 승인", "approve"],
@@ -80,7 +81,7 @@ describe("parseBoundaryAnswer", () => {
 		["lit deny", "deny"],
 		["lit 거절", "deny"],
 	] as const)("%j is %s", (text, answer) => {
-		expect(parseBoundaryAnswer(text)).toBe(answer);
+		expect(parseTypedRunCommand(text)).toBe(answer);
 	});
 
 	it.each([
@@ -94,22 +95,22 @@ describe("parseBoundaryAnswer", () => {
 		`lit approve${" ".repeat(600)}`,
 		"lit denying",
 	])("%j answers nothing", (text) => {
-		expect(parseBoundaryAnswer(text)).toBeNull();
+		expect(parseTypedRunCommand(text)).toBeNull();
 	});
 });
 
 describe("lit approve", () => {
-	it("resumes the paused run with a grant for exactly the pending boundary and says so", () => {
+	it("grants exactly the parked step and says so", () => {
 		const root = workspace("paused");
 		const out = runUserPromptSubmitHook(prompt(root, "lit approve"));
 		const text = contextOf(out);
 		expect(JSON.parse(out).hookSpecificOutput.hookEventName).toBe("UserPromptSubmit");
-		expect(text).toContain("boundary-1");
-		expect(text).toContain("action edit");
-		expect(text).toMatch(/active again/u);
+		expect(text).toContain(`edit ${realpathSync(root)}`);
+		expect(text).toMatch(/now holds a grant/u);
 		const work = readLifecycleState(root)?.works["w1"];
 		expect(work?.status).toBe("active");
 		expect(work?.pending_boundary).toBeUndefined();
+		expect(work?.parked_boundaries).toBeUndefined();
 		expect(work?.authority_grants?.[0]).toMatchObject({
 			authority_id: "authority-1",
 			boundary_id: "boundary-1",
@@ -121,12 +122,12 @@ describe("lit approve", () => {
 	it("takes the Korean word and replays the same turn without a second grant", () => {
 		const root = workspace("paused");
 		const first = runUserPromptSubmitHook(prompt(root, "lit 승인"));
-		expect(contextOf(first)).toMatch(/active again/u);
+		expect(contextOf(first)).toMatch(/now holds a grant/u);
 		runUserPromptSubmitHook(prompt(root, "lit 승인"));
 		expect(readLifecycleState(root)?.works["w1"]?.authority_grants).toHaveLength(1);
 	});
 
-	it("changes nothing when no run waits, or the run is another session's", () => {
+	it("changes nothing when nothing is parked, or the run is another session's", () => {
 		const running = workspace("active");
 		expect(contextOf(runUserPromptSubmitHook(prompt(running, "lit approve")))).toMatch(/nothing changed/u);
 		expect(readLifecycleState(running)?.works["w1"]?.status).toBe("active");
@@ -134,7 +135,7 @@ describe("lit approve", () => {
 		expect(contextOf(runUserPromptSubmitHook(prompt(waiting, "lit approve", "other-session")))).toMatch(
 			/nothing changed/u,
 		);
-		expect(readLifecycleState(waiting)?.works["w1"]?.status).toBe("paused");
+		expect(readLifecycleState(waiting)?.works["w1"]?.parked_boundaries).toHaveLength(1);
 	});
 
 	it("keeps the forbidden-action denial: a typed approve cannot grant a forbidden boundary", () => {
@@ -143,26 +144,28 @@ describe("lit approve", () => {
 		const text = readFileSync(path, "utf8").replaceAll('"action": "edit"', '"action": "publish"');
 		writeFileSync(path, text, "utf8");
 		const answer = contextOf(runUserPromptSubmitHook(prompt(root, "lit approve")));
-		expect(answer).not.toMatch(/active again/u);
-		expect(readLifecycleState(root)?.works["w1"]?.status).not.toBe("active");
+		expect(answer).not.toMatch(/now holds a grant/u);
+		expect(readLifecycleState(root)?.works["w1"]?.authority_grants ?? []).toEqual([]);
 	});
 });
 
 describe("lit deny", () => {
-	it("leaves the run paused and tells the model not to take the action", () => {
+	it("refuses the parked steps and the run stays active", () => {
 		const root = workspace("paused");
 		const text = contextOf(runUserPromptSubmitHook(prompt(root, "lit deny")));
-		expect(text).toContain("Do not take that action");
-		expect(text).toContain("boundary-1");
+		expect(text).toContain("refused for the rest of this run");
+		expect(text).toContain(`edit ${realpathSync(root)}`);
 		const work = readLifecycleState(root)?.works["w1"];
-		expect(work?.status).toBe("paused");
-		expect(work?.pending_boundary).toMatchObject({ boundary_id: "boundary-1" });
+		expect(work?.status).toBe("active");
+		expect(work?.parked_boundaries).toBeUndefined();
+		expect(work?.denied_boundaries).toMatchObject([{ boundary_id: "boundary-1" }]);
 	});
 
-	it("a later approve still works after a deny", () => {
+	it("after a deny nothing is left for a later approve", () => {
 		const root = workspace("paused");
 		runUserPromptSubmitHook(prompt(root, "lit deny", "s1", "t1"));
-		expect(contextOf(runUserPromptSubmitHook(prompt(root, "lit approve", "s1", "t2")))).toMatch(/active again/u);
+		expect(contextOf(runUserPromptSubmitHook(prompt(root, "lit approve", "s1", "t2")))).toMatch(/nothing changed/u);
+		expect(readLifecycleState(root)?.works["w1"]?.authority_grants ?? []).toEqual([]);
 	});
 });
 

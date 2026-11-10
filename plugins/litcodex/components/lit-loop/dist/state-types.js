@@ -27,6 +27,8 @@ export const LIT_LOOP_LEDGER_EVENT_KINDS = [
     "start_work_resumed",
     "start_work_cancelled",
     "start_work_completed",
+    "start_work_boundary_parked",
+    "start_work_boundary_denied",
 ];
 // ── Id regexes (A3 Part D / S08-addendum §B.1.2) ─────────────────────────────
 /** Goal-id: uppercase `G`, exactly 3 digits, optional non-empty lowercase-slug. `G001-` invalid. */

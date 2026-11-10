@@ -109,7 +109,8 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
         return 0;
     }
     clearManagedCompactionWhenOff(hookCwd(parsed, repoRoot), auto.env ?? process.env);
-    // `lit approve` / `lit deny` answer a start-work boundary; the lifecycle hook owns them, so this one stays out.
+    // `lit approve` / `lit deny` settle parked start-work steps and `lit cancel` ends the run; the lifecycle hook
+    // owns all three, so this one stays out.
     if (isLitUserPromptSubmitInput(parsed) && isBoundaryAnswer(parsed.prompt))
         return 0;
     // `go` after a lit-adhd brief runs the one step the brief named, as if the user had typed that step.

@@ -1,4 +1,13 @@
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
+import {
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	realpathSync,
+	rmSync,
+	symlinkSync,
+	utimesSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PassThrough } from "node:stream";
@@ -168,6 +177,19 @@ describe("workflow map", () => {
 		writePlan(root);
 		writeWork(root, "paused");
 		expect(workflowMapLine(root, "s9", "lit-humanizer")).toBe("🧭 ✓ › 📝 ✓ › 🔨 PAUSED ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·");
+	});
+
+	it("reads an older version's pause at a boundary as running work, never PAUSED", () => {
+		const root = repo();
+		writePlan(root);
+		writeWork(root, "paused");
+		const path = join(root, ".litcodex/start-work/state.json");
+		const state = JSON.parse(readFileSync(path, "utf8")) as { works: Record<string, Record<string, unknown>> };
+		const work = state.works["w1"];
+		if (work === undefined) throw new Error("fixture has no w1");
+		work["pending_boundary"] = { boundary_id: "b1" };
+		writeFileSync(path, JSON.stringify(state));
+		expect(workflowMapLine(root, "s9", "lit-humanizer")).toBe("🧭 ✓ › 📝 ✓ › 🔨 WORK ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·");
 	});
 
 	it("draws no map for an outside skill when nothing is saved", () => {

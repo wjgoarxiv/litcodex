@@ -60,7 +60,8 @@ function readNote(cwd, sessionId) {
 }
 const EXPIRED = "The user said `go`, but the briefed next step is older than 30 minutes, so nothing was started. Tell the user that in one sentence and offer `lit adhd` for a fresh brief; start no other work.";
 const STALE = "The user said `go`, but the briefed next step no longer holds, so nothing was started. Tell the user that in one sentence and offer `lit adhd` for a fresh brief; start no other work.";
-const BOUNDARY = "The user said `go`, but the briefed step is a start-work boundary waiting for an answer. `go` never approves it: tell the user in one sentence to answer `lit approve` or `lit deny` themselves; start nothing.";
+// Kept so a note an older version wrote inside its 30-minute window still answers.
+const BOUNDARY = "The user said `go`, but the briefed step was a start-work waiting on parked steps, and `go` never approves them. Tell the user in one sentence that `lit approve` (optional) allows the parked steps and `lit cancel` ends the run; start nothing.";
 const LANES = "The user said `go`, but the brief offered no step for `go`: other lanes in this repository were still working, so nothing was started. Tell the user that in one sentence: wait for those lanes (or answer the one that waits on them), then ask for a fresh `lit adhd`; start no other work.";
 const ELSEWHERE = "The user said `go`, but the briefed run belongs to another session, so nothing was started. Tell the user in one sentence to continue it in that session; start no other work.";
 /**
@@ -101,10 +102,11 @@ export function takeGo(cwd, sessionId, now) {
     }
     return { kind: "run", prompt: "lit continue", note: `go: ${fresh.text}` };
 }
-const BOUNDARY_ANSWER = /^lit[ \t]+(?:approve|승인|deny|거절)$/u;
+const BOUNDARY_ANSWER = /^lit[ \t]+(?:approve|승인|deny|거절|cancel|취소)$/u;
 /**
- * True for the whole prompt `lit approve`, `lit deny`, `lit 승인` or `lit 거절`. The start-work lifecycle hook
- * owns these words; this hook stays silent for them so a bare `lit` never starts a loop on top of an answer.
+ * True for the whole prompt `lit approve`, `lit deny`, `lit cancel`, `lit 승인`, `lit 거절` or `lit 취소`. The
+ * start-work lifecycle hook owns these words; this hook stays silent for them so a bare `lit` never starts a loop
+ * on top of an answer or a cancel.
  */
 export function isBoundaryAnswer(prompt) {
     return prompt.length <= 512 && BOUNDARY_ANSWER.test(prompt.trim());

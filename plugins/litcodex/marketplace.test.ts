@@ -21,6 +21,7 @@ import {
 	EXPECTED_HOOKS,
 	FORBIDDEN_COMPONENT_BARE_CLI_SEGMENT,
 	HOOKS_JSON_RELPATH,
+	HUMANIZER_EDIT_MATCHER,
 	LIT_LOOP_COMPONENT_DIR,
 	LIT_LOOP_HOOK_COMMAND,
 	LIT_LOOP_HOOK_EVENT,
@@ -32,6 +33,7 @@ import {
 	PLUGIN_NAME,
 	resolveLitLoopComponentPath,
 	resolveUserPromptSubmitHook,
+	START_WORK_GUARD_MATCHER,
 } from "./src/metadata.js";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -355,6 +357,32 @@ describe("#given the aggregate hooks.json #when validated #then the command + st
 				{ component: "lit-loop", event, subcommand, statusMessage: "🔥 LIT · live step" },
 			]);
 		}
+	});
+
+	it("registers the start-work guard once, appended after the live-step group", () => {
+		const hooks = JSON.parse(readFileSync(join(REPO_ROOT, "plugins", "litcodex", "hooks", "hooks.json"), "utf8")) as {
+			hooks: Record<string, { matcher?: string; hooks: MutableHandler[] }[]>;
+		};
+		const groups = hooks.hooks["PreToolUse"] ?? [];
+		const command = `node "\${PLUGIN_ROOT}/components/start-work-continuation/dist/cli.js" hook pre-tool-use`;
+		const at = groups.findIndex((group) => group.hooks.some((h) => h.command === command));
+		// Codex keys hook trust on the group index, so the four older groups must keep indices 0-3.
+		expect(at).toBe(groups.length - 1);
+		expect(at).toBe(4);
+		expect(groups.slice(0, 4).map((group) => group.hooks[0]?.command.split(" hook ")[1])).toEqual([
+			"pre-tool-use",
+			"pre-tool-use",
+			"pre-tool-use-humanizer",
+			"pre-tool-use-live",
+		]);
+		expect(groups[at]?.matcher).toBe(START_WORK_GUARD_MATCHER);
+		expect(groups[at]?.hooks).toEqual([
+			{ type: "command", command, timeout: 5, statusMessage: "🔥 LIT IGNITED · start-work-continuation 🔥" },
+		]);
+	});
+
+	it("guards the same edit tools with the start-work guard as with the humanizer guard", () => {
+		expect(START_WORK_GUARD_MATCHER).toBe(HUMANIZER_EDIT_MATCHER);
 	});
 
 	it("registers the child-agent lane pair, quietly labelled, one handler per event", () => {

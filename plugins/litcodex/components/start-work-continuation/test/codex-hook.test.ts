@@ -14,7 +14,7 @@ const PLAN_PATH = join(WORKSPACE, ".litcodex", "plans", "plan.md");
 const LEDGER_PATH = join(WORKSPACE, ".litcodex", "lit-loop", "ledger.jsonl");
 
 describe("start-work Stop hook", () => {
-	it("#given active hook metadata #when continuation hooks are inspected #then only explicit resume and root Stop are registered", () => {
+	it("#given active hook metadata #when continuation hooks are inspected #then explicit resume, root Stop and the path guard are registered", () => {
 		// given
 		const hooksPath = fileURLToPath(new URL("../../../hooks/hooks.json", import.meta.url));
 		const manifest = JSON.parse(readFileSync(hooksPath, "utf8")) as { hooks: Record<string, unknown> };
@@ -25,8 +25,9 @@ describe("start-work Stop hook", () => {
 		).map((hook) => hook.event);
 
 		// then
-		expect(continuationEvents).toEqual(["UserPromptSubmit", "Stop"]);
+		expect(continuationEvents).toEqual(["UserPromptSubmit", "Stop", "PreToolUse"]);
 		expect(manifest.hooks["UserPromptSubmit"]).toBeDefined();
+		expect(JSON.stringify(manifest.hooks["PreToolUse"])).toContain("start-work-continuation/dist/cli.js");
 		expect(manifest.hooks["Stop"]).toBeDefined();
 		// The only child-agent hook is the lit-loop lane recorder; start-work-continuation never resumes on a child's stop.
 		const subagentStops = JSON.stringify(manifest.hooks["SubagentStop"] ?? []);
@@ -276,7 +277,7 @@ describe("start-work Stop hook", () => {
 		expect(output).toBe("");
 	});
 
-	it("#given paused work #when hook runs repeatedly #then every root Stop stays quiet", () => {
+	it("#given legacy paused work #when hook runs repeatedly #then it continues with its parked step listed, once per turn", () => {
 		// given
 		const fs = createMemoryFs({
 			[WORK_STATE_PATH]: createWorkStateJson({ sessionIds: ["codex:sess_abc"], status: "paused" }),
@@ -290,8 +291,13 @@ describe("start-work Stop hook", () => {
 		// when
 		const outputs = [runStopHook(input, fs), runStopHook(input, fs), runStopHook(input, fs)];
 
-		// then
-		expect(outputs).toEqual(["", "", ""]);
+		// then: an old pause now reads as an active run with that step parked; a repeat of the same turn replays
+		// the same continuation instead of issuing another.
+		expect(outputs[0]).toContain('"decision":"block"');
+		expect(outputs[0]).toContain("parkedBoundaries");
+		expect(outputs[0]).toContain("fixture-boundary");
+		expect(outputs[1]).toBe(outputs[0]);
+		expect(outputs[2]).toBe(outputs[0]);
 	});
 
 	it("#given malformed work-state JSON #when hook runs #then returns empty output", () => {

@@ -6,6 +6,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `lit cancel` (or `lit 취소`), typed as the whole prompt, ends the project's Start Work run from any Codex
+  session in the project, including subfolders and linked worktrees. The session that owned the run is told
+  on its next prompt.
+
+### Changed
+
+- A step outside the plan's grants is parked instead of pausing the run. The run keeps going, up to 16 parked
+  steps, and `lit approve` / `lit deny` (both optional) settle all of them at once. Reads of the session's own
+  Codex records, `AGENTS.md` and skills no longer need a boundary.
+- A step whose action is commit, push, publish, tag, release, version bump, destructive git or a host-config
+  write is never parked or granted by `lit approve`; the run leaves that task for you.
+- The lit-adhd board counts parked steps on the running work's line instead of showing an approval to answer.
+
+### Security
+
+- Secrets (`.env*` except examples, SSH keys, `*.pem`, `~/.ssh`, `~/.aws`, `~/.gnupg`) and Codex settings and
+  credentials are refused outright during a run, by the lifecycle store and by a new PreToolUse hook that
+  Codex asks you to approve once. Only literal paths are checked; a script or a folder-wide search can still
+  reach such a file.
+
+### Note
+
+- A run paused by an older version becomes active with that step parked. Once a project has recorded a parked
+  or denied step, an older LitCodex reports that project's Start Work state as invalid (its last 64 lifecycle
+  events are kept), so end runs with `lit cancel` before going back, and expect to move the state file aside
+  yourself after a downgrade.
+
 ## [1.0.37] - 2026-11-10
 
 ### Changed

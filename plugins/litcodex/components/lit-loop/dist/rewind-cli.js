@@ -1,7 +1,9 @@
 // src/rewind-cli.ts — `cli.js rewind` and `cli.js stage`, the two commands the lit-adhd skill and a running
-// loop call. `rewind` prints the cross-session brief data (JSON for the model, text for a person) and writes
+// loop call. `rewind` prints the KPI board (`--lang en|ko`; the per-session detail list under it on `--detail`;
+// JSON with the ready board text and its structured fields on `--json`) and writes
 // the next-step note and the session's rewind look; `stage` records the stage and k/n of the work on top of the session's stack.
 import { collectRewind, DEFAULT_MAX, DEFAULT_SINCE_MS, parseSince, renderBrief } from "./rewind.js";
+import { renderBoard } from "./rewind-board.js";
 import { markRewindLook } from "./rewind-look.js";
 import { resolveLoopScope } from "./state-paths.js";
 import { frameLabel, normalizeStage, recordStackEvent } from "./workflow-stack.js";
@@ -26,6 +28,11 @@ export function rewindCommand(argv, io) {
         io.stderr.write("[lit-adhd] --since takes a number and d, h or m, for example 7d\n");
         return 2;
     }
+    const lang = flagValue(argv, "--lang") ?? "en";
+    if (lang !== "en" && lang !== "ko") {
+        io.stderr.write("[lit-adhd] --lang takes en or ko\n");
+        return 2;
+    }
     const max = intFlag(argv, "--max") ?? DEFAULT_MAX;
     const width = intFlag(argv, "--width") ?? 96;
     const sessionId = resolveLoopScope({ argv, env })?.sessionId ?? null;
@@ -41,8 +48,15 @@ export function rewindCommand(argv, io) {
     // Whichever route ran the brief, the session that ran it gets the rewind look.
     if (sessionId !== null)
         markRewindLook(cwd, sessionId, env, io.now);
-    const brief = renderBrief(result, width);
-    io.stdout.write(argv.includes("--json") ? `${JSON.stringify({ ok: true, ...result, brief })}\n` : `${brief}\n`);
+    // The KPI board is the default; the per-session detail list appears under it only on `--detail`.
+    const board = renderBoard(result.kpi, lang);
+    const detail = argv.includes("--detail") ? renderBrief(result, width) : null;
+    if (argv.includes("--json")) {
+        io.stdout.write(`${JSON.stringify({ ok: true, ...result, board, ...(detail === null ? {} : { detail }) })}\n`);
+    }
+    else {
+        io.stdout.write(detail === null ? `${board}\n` : `${board}\n\n${detail}\n`);
+    }
     return 0;
 }
 /** Record the stage and counts of the top frame: `stage --family loop --stage RED --n 2 --total 5`. */

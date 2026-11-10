@@ -92,6 +92,6 @@ describe("lit-adhd is reachable from its own repo surfaces", () => {
 		expect(flat(skill)).toMatch(/lit approve/u);
 		expect(startWorkSkill).toContain("lit approve");
 		expect(startWorkSkill).toContain("lit deny");
-		expect(flat(startWorkSkill)).toMatch(/`go` after a `lit-adhd` brief never answers a boundary/u);
+		expect(flat(startWorkSkill)).toMatch(/`go` after a `lit-adhd` brief never approves a parked step/u);
 	});
 });

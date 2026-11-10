@@ -55,7 +55,7 @@ describe("goal-id regex #given/#when/#then", () => {
 });
 
 describe("ledger event kinds #given/#when/#then", () => {
-	it("includes the six canonical start-work lifecycle kinds", () => {
+	it("includes the eight canonical start-work lifecycle kinds", () => {
 		expect([...LIT_LOOP_LEDGER_EVENT_KINDS].sort()).toEqual(
 			[
 				"criteria_revised",
@@ -71,6 +71,8 @@ describe("ledger event kinds #given/#when/#then", () => {
 				"goal_started",
 				"plan_created",
 				"state_recovered",
+				"start_work_boundary_denied",
+				"start_work_boundary_parked",
 				"start_work_cancelled",
 				"start_work_completed",
 				"start_work_continuation_issued",
@@ -79,7 +81,7 @@ describe("ledger event kinds #given/#when/#then", () => {
 				"start_work_resumed",
 			].sort(),
 		);
-		expect(LIT_LOOP_LEDGER_EVENT_KINDS.length).toBe(19);
+		expect(LIT_LOOP_LEDGER_EVENT_KINDS.length).toBe(21);
 	});
 
 	it("validator accepts members and rejects non-members", () => {

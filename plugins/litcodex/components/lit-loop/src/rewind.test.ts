@@ -259,7 +259,7 @@ describe("next step", () => {
 		expect(() => readFileSync(join(s.workspace, ".litcodex/adhd/next-sess-9.json"))).toThrow();
 	});
 
-	it("puts a paused spine first and a boundary answer ahead of running work", () => {
+	it("puts a paused spine first and never makes an old boundary a step to answer", () => {
 		const s = scratch();
 		recordStackEvent(s.workspace, "sess-1", { type: "start", skill: "lit-loop" }, new Date(NOW - 5000));
 		recordStackEvent(s.workspace, "sess-1", { type: "start", skill: "lit-brainstorm" }, new Date(NOW - 4000));
@@ -274,7 +274,8 @@ describe("next step", () => {
 				works: { w1: { work_id: "w1", status: "paused", pending_boundary: { boundary_id: "b1" } } },
 			}),
 		);
-		expect(collectRewind(options(s, { sessionId: "sess-2" })).next.kind).toBe("approve-boundary");
+		// An older version's pause at a boundary reads as a running work with one parked step: never a waiting step.
+		expect(collectRewind(options(s, { sessionId: "sess-2" })).next.kind).not.toBe("approve-boundary");
 	});
 
 	it("keeps the go window at thirty minutes", () => {

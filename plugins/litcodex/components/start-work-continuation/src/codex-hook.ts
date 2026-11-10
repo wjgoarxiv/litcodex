@@ -3,12 +3,24 @@ import { closeSync, constants, fstatSync, openSync, readSync, realpathSync } fro
 import { basename, isAbsolute } from "node:path";
 
 import { START_WORK_CONTINUATION_DIRECTIVE } from "./directive.js";
-import type { StoreOptions, WorkStateEntry } from "./lifecycle-store.js";
+import { findLifecycleRoot } from "./lifecycle-root.js";
+import type {
+	AuthorityBoundary,
+	CancelNotice,
+	ParkedBoundary,
+	StoreOptions,
+	WorkStateEntry,
+} from "./lifecycle-store.js";
 import {
 	advanceStopLease,
+	cancelWorkFromUserPrompt,
+	denyParkedBoundaries,
+	dropVanishedParkedBoundary,
 	inspectLifecycleState,
+	LifecycleStoreError,
 	reconcileLifecycleState,
 	selectWorkForSession,
+	takeCancelNotice,
 	transitionWork,
 } from "./lifecycle-store.js";
 import type {
@@ -48,114 +60,237 @@ export function runStopHook(input: unknown, _legacyFs?: ReadonlyFileSystem): str
 	}
 }
 
-export type BoundaryAnswer = "approve" | "deny";
+export type TypedRunCommand = "approve" | "deny" | "cancel";
 
 /**
- * The whole prompt `lit approve` / `lit 승인` or `lit deny` / `lit 거절`, case-sensitive, at most 512 bytes.
- * Anything around it (a quote, a code fence, a leading word) is ordinary text and answers nothing.
+ * The whole prompt `lit approve` / `lit 승인`, `lit deny` / `lit 거절` or `lit cancel` / `lit 취소`, case-sensitive,
+ * at most 512 characters. Anything around it (a quote, a code fence, a leading word) is ordinary text.
  */
-export function parseBoundaryAnswer(prompt: string): BoundaryAnswer | null {
+export function parseTypedRunCommand(prompt: string): TypedRunCommand | null {
 	if (prompt.length > 512) return null;
-	const match = prompt.trim().match(/^lit[ \t]+(approve|승인|deny|거절)$/u);
+	const match = prompt.trim().match(/^lit[ \t]+(approve|승인|deny|거절|cancel|취소)$/u);
 	if (match === null) return null;
-	return match[1] === "approve" || match[1] === "승인" ? "approve" : "deny";
+	if (match[1] === "approve" || match[1] === "승인") return "approve";
+	return match[1] === "deny" || match[1] === "거절" ? "deny" : "cancel";
 }
 
 function answerContext(text: string): string {
 	return JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: text } });
 }
 
-const NOTHING_WAITING =
-	"The user typed a start-work boundary answer, but this session has no paused start-work run waiting at a boundary, so nothing changed. Tell the user that in one sentence.";
+const nothingParked = (word: string): string =>
+	`The user typed \`lit ${word}\`, but this session's start-work has no parked step, so nothing changed. Tell the user that in one sentence.`;
+
+const REFUSED =
+	"The user typed a start-work boundary answer, but the lifecycle store refused it, so the run is unchanged. Tell the user in one sentence and offer to show the run's state.";
+
+export function cancelNoticeText(notice: CancelNotice): string {
+	return `Before this prompt, the user ended start-work ${inert(notice.work_id)} (${inert(notice.plan_name)}) by typing \`lit cancel\` in another Codex session. That run is over: none of its tasks or parked steps are pending any more, so do not pick its plan back up. Handle this prompt as a new request.`;
+}
+
+/** `lit cancel` ends the project's run, whichever of the project's Codex sessions typed it. */
+function answerCancel(root: string, input: UserPromptSubmitInput, options: StoreOptions): string {
+	try {
+		const result = cancelWorkFromUserPrompt(root, { sessionId: input.session_id, turnId: input.turn_id }, options);
+		if (result.outcome === "nothing") {
+			return "The user typed `lit cancel`, but this project has no start-work in progress, so nothing changed. Tell the user that in one sentence.";
+		}
+		const other =
+			result.outcome === "cancelled" && result.otherSession
+				? " That run belonged to another Codex session, which hears about it when its user next types there."
+				: "";
+		return `The user typed \`lit cancel\`, and the lifecycle store ended start-work ${inert(result.workId)} (${inert(result.plan)}); its status is now abandoned.${other} Confirm the cancellation to the user in one sentence. Do not run any task of that plan.`;
+	} catch (error) {
+		if (!(error instanceof Error)) throw error;
+		const code = error instanceof LifecycleStoreError ? error.code : "STATE_UNREADABLE";
+		if (code === "LOCK_BUSY") {
+			return "The user typed `lit cancel`, but another LitCodex process held the start-work state lock, so the run is unchanged. Ask the user to type `lit cancel` once more, and do nothing else meanwhile.";
+		}
+		return `BLOCKED: the user typed \`lit cancel\`, but the lifecycle store refused it (${code}), so the run is unchanged. Tell the user in one sentence and offer to show \`litcodex-start-work-continuation doctor\` output.`;
+	}
+}
 
 /**
- * Typed answer to the boundary a paused start-work run waits at. `lit approve` resumes the run with a grant the
- * hook derives from this turn, through the same transition as the exact resume line, so the stored authority
- * still decides what the grant may cover. `lit deny` changes no state: the run stays paused and the model is told
- * not to take that action. Both answer only this session's own paused run.
+ * Typed answer to this session's parked steps. `lit approve` grants each parked step through the same resume
+ * transition as the exact resume line, so the stored authority still decides what a grant may cover; release-class
+ * and protected steps are never granted. `lit deny` refuses them all for the rest of the run. Both are optional:
+ * the run keeps going either way.
  */
-function answerBoundary(input: UserPromptSubmitInput, answer: BoundaryAnswer, options: StoreOptions): string {
+function answerParked(input: UserPromptSubmitInput, answer: "approve" | "deny", options: StoreOptions): string {
 	try {
 		reconcileLifecycleState(input.cwd, options);
 		const inspected = inspectLifecycleState(input.cwd);
-		if (!inspected.ok || inspected.state.active_work_id === null) return answerContext(NOTHING_WAITING);
-		const work = selectWorkForSession(inspected.state, input.session_id, ["paused"]);
-		const pending = work?.pending_boundary;
-		if (work === null || pending === undefined) return answerContext(NOTHING_WAITING);
-		const what = `boundary ${pending.boundary_id} (action ${pending.action}, root ${pending.root}) of work ${work.work_id}`;
+		if (!inspected.ok || inspected.state.active_work_id === null) return nothingParked(answer);
+		const work = selectWorkForSession(inspected.state, input.session_id, ["active"]);
+		const parked = work?.parked_boundaries ?? [];
+		if (work === null || parked.length === 0) return nothingParked(answer);
 		if (answer === "deny") {
-			return answerContext(
-				`The user typed \`lit deny\` for ${what}. Do not take that action or retry it. The run stays paused; ask what to do instead or replan inside the stored authority, and resume only after a new \`lit approve\`.`,
+			const result = denyParkedBoundaries(
+				input.cwd,
+				{ sessionId: input.session_id, turnId: input.turn_id },
+				options,
 			);
+			if (result.outcome === "nothing") return nothingParked(answer);
+			return `The user typed \`lit deny\`, so these parked steps of start-work ${inert(result.workId)} are refused for the rest of this run: ${listOf(result.boundaries)}. Continue with the plan without them; when a task cannot be finished without one, leave its box unchecked and name it on a \`BLOCKED:\` line in your final message.`;
 		}
-		const key = digest([work.work_id, pending.boundary_id, input.session_id, input.turn_id].join("\0"));
-		transitionWork(
-			input.cwd,
-			{
-				action: "resume",
-				expectedRevision: inspected.state.revision,
-				sessionId: input.session_id,
-				transitionId: `prompt-approve:${key}`,
-				workId: work.work_id,
-				reasonCode: "explicit_user_resume",
-				turnId: input.turn_id,
-				boundary: pending,
-				grant: {
-					grant_id: `typed-approve:${key}`,
-					authority_id: pending.authority_id,
-					boundary_id: pending.boundary_id,
-					action: pending.action,
-					root: pending.root,
-				},
-			},
-			options,
-		);
-		return answerContext(
-			`The user typed \`lit approve\` for ${what}. The run is active again with a grant for exactly that action and root. Continue the plan's next open task inside it, and ask again before anything beyond it.`,
-		);
+		return approveParked(input, work, parked, options);
 	} catch (error) {
 		if (!(error instanceof Error)) throw error;
-		return answerContext(
-			"The user typed a start-work boundary answer, but the lifecycle store refused it, so the run is unchanged. Tell the user in one sentence and offer to show the run's state.",
-		);
+		return REFUSED;
 	}
+}
+
+function approveParked(
+	input: UserPromptSubmitInput,
+	work: WorkStateEntry,
+	parked: readonly ParkedBoundary[],
+	options: StoreOptions,
+): string {
+	const granted: AuthorityBoundary[] = [];
+	const gone: AuthorityBoundary[] = [];
+	const remaining: Array<{ readonly boundary: AuthorityBoundary; readonly reason: string }> = [];
+	let stopped: string | null = null;
+	for (const entry of parked) {
+		const boundary = {
+			boundary_id: entry.boundary_id,
+			authority_id: entry.authority_id,
+			action: entry.action,
+			root: entry.root,
+		};
+		if (stopped !== null) {
+			remaining.push({ boundary, reason: stopped });
+			continue;
+		}
+		const key = digest([work.work_id, entry.boundary_id, input.session_id, input.turn_id].join("\0"));
+		try {
+			const inspected = inspectLifecycleState(input.cwd);
+			if (!inspected.ok) throw new LifecycleStoreError(inspected.code, inspected.message);
+			transitionWork(
+				input.cwd,
+				{
+					action: "resume",
+					expectedRevision: inspected.state.revision,
+					sessionId: input.session_id,
+					transitionId: `prompt-approve:${key}`,
+					workId: work.work_id,
+					reasonCode: "explicit_user_resume",
+					turnId: input.turn_id,
+					boundary,
+					grant: {
+						grant_id: `typed-approve:${key}`,
+						authority_id: entry.authority_id,
+						boundary_id: entry.boundary_id,
+						action: entry.action,
+						root: entry.root,
+					},
+				},
+				options,
+			);
+			granted.push(boundary);
+		} catch (error) {
+			if (!(error instanceof Error)) throw error;
+			const code = error instanceof LifecycleStoreError ? error.code : "STATE_UNREADABLE";
+			if (
+				code === "BOUNDARY_INVALID" &&
+				dropVanishedParkedBoundary(input.cwd, input.session_id, entry.boundary_id, options)
+			) {
+				gone.push(boundary);
+				continue;
+			}
+			const reason = reasonFor(code);
+			remaining.push({ boundary, reason });
+			if (code === "GRANT_LIMIT" || code === "LOCK_BUSY") stopped = reason;
+		}
+	}
+	const goneText = gone.length === 0 ? "" : ` Dropped because the path no longer exists: ${listOf(gone)}.`;
+	const remainingText =
+		remaining.length === 0
+			? ""
+			: ` Still parked, not granted: ${remaining.map((item) => `${stepOf(item.boundary)} (${item.reason})`).join("; ")}.`;
+	if (granted.length === 0) {
+		return `${REFUSED}${goneText}${remainingText}`;
+	}
+	return `The user typed \`lit approve\`, so start-work ${inert(work.work_id)} now holds a grant for each of these parked steps, for exactly its action and root: ${listOf(granted)}.${goneText}${remainingText} Run the granted steps now, then continue with the plan.`;
+}
+
+function reasonFor(code: string): string {
+	if (code === "BOUNDARY_MISMATCH") return "a release-class or forbidden action the user does outside the run";
+	if (code === "BOUNDARY_PROTECTED") return "a protected path";
+	if (code === "GRANT_LIMIT") return "the run already holds 64 grants";
+	if (code === "LOCK_BUSY") return "the state lock was busy";
+	return `refused with ${code}`;
+}
+
+function stepOf(boundary: AuthorityBoundary): string {
+	return `${inert(boundary.action)} ${inert(boundary.root).slice(0, 120)}`;
+}
+
+function listOf(boundaries: readonly AuthorityBoundary[]): string {
+	return boundaries.map(stepOf).join("; ");
+}
+
+/** Control characters become spaces so a stored label cannot break the line it is quoted in. */
+function inert(text: string): string {
+	return text.replace(/\p{Cc}/gu, " ");
 }
 
 export function runUserPromptSubmitHook(input: unknown, options: StoreOptions = {}): string {
 	if (!isUserPromptSubmitInput(input)) return "";
-	const answer = parseBoundaryAnswer(input.prompt);
-	if (answer !== null) return answerBoundary(input, answer, options);
+	const root = findLifecycleRoot(input.cwd, { wantSession: input.session_id });
+	let note: string | null = null;
+	try {
+		const lifted = takeCancelNotice(root, input.session_id, options);
+		if (lifted !== null) note = cancelNoticeText(lifted);
+	} catch (error) {
+		if (!(error instanceof Error)) throw error;
+	}
+	const withNote = (text: string): string => answerContext(note === null ? text : `${note} ${text}`);
+	const command = parseTypedRunCommand(input.prompt);
+	if (command === "cancel") return withNote(answerCancel(root, input, options));
+	if (command !== null) return withNote(answerParked(input, command, options));
+	resumeFromExactRoute(input, options);
+	// Codex accepts a zero-byte successful UserPromptSubmit hook. The lit-loop handler owns the
+	// additionalContext directive for this same prompt; this lifecycle handler must not steal it.
+	return note === null ? "" : answerContext(note);
+}
+
+/** The exact `start-work … --resume <boundary> --grant <grant>` line grants one parked step. */
+function resumeFromExactRoute(input: UserPromptSubmitInput, options: StoreOptions): void {
 	const route = parseExplicitStartWorkPrompt(input.prompt);
-	if (route === null) return "";
+	if (route === null || route.resumeBoundaryId === null || route.grantId === null) return;
 	try {
 		reconcileLifecycleState(input.cwd, options);
 		const inspected = inspectLifecycleState(input.cwd);
-		if (!inspected.ok || inspected.state.active_work_id === null) return "";
-		if (route.resumeBoundaryId === null || route.grantId === null) return "";
+		if (!inspected.ok || inspected.state.active_work_id === null) return;
 		const transitionId = `prompt-resume:${digest(
 			[inspected.state.active_work_id, route.resumeBoundaryId, route.grantId, input.session_id, input.turn_id].join(
 				"\0",
 			),
 		)}`;
-		const paused = selectWorkForSession(inspected.state, input.session_id, ["paused"]);
+		const active = selectWorkForSession(inspected.state, input.session_id, ["active"]);
+		const entry = active?.parked_boundaries?.find((item) => item.boundary_id === route.resumeBoundaryId);
 		const selected =
-			paused ??
-			matchingResumeReplay(inspected.state.works[inspected.state.active_work_id], input.session_id, transitionId);
+			entry === undefined
+				? matchingResumeReplay(
+						inspected.state.works[inspected.state.active_work_id],
+						input.session_id,
+						transitionId,
+					)
+				: active;
 		if (
 			selected === null ||
 			!selectorMatches(route.selector, selected) ||
 			!worktreeMatches(route.worktreePath, selected)
 		) {
-			return "";
+			return;
 		}
 		const pending =
-			selected.pending_boundary ??
+			entry ??
 			(selected.last_transition?.kind === "start_work_resumed" ? selected.last_transition.boundary : undefined);
-		if (pending === undefined || pending.boundary_id !== route.resumeBoundaryId) return "";
-		const grant = {
-			grant_id: route.grantId,
-			authority_id: pending.authority_id,
+		if (pending === undefined || pending.boundary_id !== route.resumeBoundaryId) return;
+		const boundary = {
 			boundary_id: pending.boundary_id,
+			authority_id: pending.authority_id,
 			action: pending.action,
 			root: pending.root,
 		};
@@ -169,17 +304,20 @@ export function runUserPromptSubmitHook(input: unknown, options: StoreOptions = 
 				workId: selected.work_id,
 				reasonCode: "explicit_user_resume",
 				turnId: input.turn_id,
-				boundary: pending,
-				grant,
+				boundary,
+				grant: {
+					grant_id: route.grantId,
+					authority_id: boundary.authority_id,
+					boundary_id: boundary.boundary_id,
+					action: boundary.action,
+					root: boundary.root,
+				},
 			},
 			options,
 		);
 	} catch (error) {
 		if (!(error instanceof Error)) throw error;
 	}
-	// Codex accepts a zero-byte successful UserPromptSubmit hook. The lit-loop handler owns the
-	// additionalContext directive for this same prompt; this lifecycle handler must not steal it.
-	return "";
 }
 
 function block(reason: string): string {
@@ -199,7 +337,8 @@ function renderDirective(state: NonNullable<ReturnType<typeof readContinuationSt
 		worktreePath: state.worktreePath,
 		authority: state.authority,
 		authorityGrants: state.authorityGrants,
-		pendingBoundary: state.pendingBoundary,
+		parkedBoundaries: state.parkedBoundaries,
+		deniedBoundaries: state.deniedBoundaries,
 		ledgerPath: state.ledgerPath,
 		sessionId: `codex:${sessionId}`,
 	};

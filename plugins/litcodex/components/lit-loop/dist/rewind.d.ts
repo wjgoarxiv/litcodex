@@ -1,4 +1,5 @@
 import { type HerdrRunner } from "./herdr-agents.js";
+import { type RewindBoard } from "./rewind-board.js";
 export declare const ADHD_DIR = ".litcodex/adhd";
 /** A session written to in the last quarter hour is still running. */
 export declare const ACTIVE_MS: number;
@@ -31,6 +32,8 @@ export interface RewindLanes {
     /** Lanes that wait on the user: a session asking something, or a blocked agent. */
     readonly waiting: number;
     readonly labels: readonly string[];
+    /** The folder each labelled lane works in, in the same order, for words that name no session id. */
+    readonly places: readonly string[];
     readonly herdr: "off" | "ok" | "unknown";
 }
 export interface RewindSession {
@@ -109,6 +112,8 @@ export interface RewindResult {
      * paused workflow, an open plan item, the latest active session, the latest ended one. Shown, never recorded.
      */
     readonly suggestion: string;
+    /** The KPI board's buckets, counts, bars, milestones and reminders; `renderBoard` writes it in words. */
+    readonly kpi: RewindBoard;
     /** The window read, so the brief can say how far back it looked. */
     readonly scope: {
         readonly sinceMs: number;
@@ -157,11 +162,13 @@ export interface OpenPlan {
     /** When the plan file last changed; null when that cannot be read. */
     readonly changedMs: number | null;
 }
+/** A plan's first `#` heading, else its file name without the date prefix and extension, in words. */
+export declare function planTitle(text: string, file: string): string;
 /** The open plan `name` (a file under `.litcodex/plans`), or null when it is finished, a scaffold or missing. */
 export declare function openPlanNamed(cwd: string, name: string): OpenPlan | null;
 /**
- * The one step worth taking next, in priority order: the paused frame of this session's stack, then a boundary
- * waiting for an answer (shown, never started), then work already under way, then the single open plan.
+ * The one step worth taking next, in priority order: the paused frame of this session's stack, then work already
+ * under way (with its parked steps counted, never waited on), then the single open plan.
  */
 export declare function chooseNext(cwd: string, sessionId: string | null): NextStep;
 /** Save the briefed step for `go`, or remove a stale one when there is nothing to run. Never throws. */

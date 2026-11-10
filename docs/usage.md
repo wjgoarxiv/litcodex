@@ -198,13 +198,13 @@ blocked native goal needs the documented recovery step below; a handoff does not
 | `lit brainstorm`, `lit ideation` or `lit idea` | **lit-brainstorm** | Many different options, then a short list to pick from; nothing is built |
 | `lit schematic` or `lit-schematic` | **lit-schematic** | Draw real equipment as SVG, PDF and PNG: P&ID, PFD, apparatus figure or isometric cutaway; a bare `lit` with such a request reaches it too |
 | `lit hijack` or `lit-hijack` | **lit-hijack** | Port a technique someone else published (post, article, repo, PDF) into your own skill: provenance and licence first, a spec without the source wording, a separate build, a before and after proof |
-| `lit adhd` or `lit rewind` | **lit-adhd** | Read-only brief across recent Codex sessions. It opens with three lines (done so far, doing now, next), then shows what each session asked, which are running, idle, done or waiting on you, the gauges and paused work, and one next step to run with `go`. A finished session is offered for review, and with nothing else to do the step comes from the `## Next` list of this worktree's HANDOFF note. `lit continue` resumes a paused loop at its stage |
+| `lit adhd` or `lit rewind` | **lit-adhd** | Read-only KPI board across recent Codex sessions, in six sections: do this now (one plain action, one reason and what to type), at a glance (done, in progress, waiting on you and left, with an overall bar), milestones (one row per plan with its bar), done lately, still to do, and up to five reminders shaped `thing → what to do`. `lit adhd detail` adds the per-session list: what each session asked, which are running, idle, done or waiting on you, the gauges and paused work. A finished session is offered for review, and with nothing else to do the step comes from the `## Next` list of this worktree's HANDOFF note. `lit continue` resumes a paused loop at its stage |
 | `litgoal` or `lit goal` | **litgoal** | Set and keep the finish line: bind an objective and criteria into the loop state that lit-loop and Start Work run toward |
 | `lit-recap` or `lit recap` | **lit-recap** | Read-only recap from `.litcodex` ledgers |
 | `lit-comprehend` or `comprehend` | **lit-comprehend** | Build a self-contained explainer outside the worktree |
 | `review-work` or `lit review` | **review-work** | Read-only plan review before Start Work and work review after it; auto-picked from what exists, or forced with `lit review plan` or `lit review work` |
 | `litresearch`, `/litresearch`, or `lit research` | **litresearch** | Research journal separating facts, hypotheses, sources, and uncertainty |
-| `lit start work <plan-name>` | **Start Work** | Execute an approved plan with durable evidence |
+| `lit start work <plan-name>` | **Start Work** | Execute an approved plan with durable evidence. Type `lit cancel` (`lit 취소`) to end a run from any window. |
 | exact bare `handoff` | **lit-handoff** | Create or refresh a secret-safe continuation packet |
 | exact bare `lit-scientific-visualization` | **lit-scientific-visualization** | Load the publication plotting adapter through the hook |
 

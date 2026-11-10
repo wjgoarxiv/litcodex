@@ -59,7 +59,7 @@ describe("start-work continuation CLI", () => {
 		if (invalidResult.error !== undefined) throw invalidResult.error;
 		expect(invalidResult.status).toBe(1);
 		expect(invalidResult.stdout).toBe("");
-		expect(invalidResult.stderr).toContain("hook <stop|user-prompt-submit>");
+		expect(invalidResult.stderr).toContain("hook <stop|user-prompt-submit|pre-tool-use>");
 		expect(invalidResult.stderr).toContain("init");
 		expect(invalidResult.stderr).toContain("analyze-plan");
 		expect(invalidResult.stderr).toContain("publish-plan --cwd <path> --slug <slug>");
@@ -159,7 +159,38 @@ describe("start-work continuation CLI", () => {
 			encoding: "utf8",
 		});
 		expect(valid.status).toBe(0);
-		expect(JSON.parse(valid.stdout)).toMatchObject({ ok: true, revision: 1, status: "paused" });
+		expect(JSON.parse(valid.stdout)).toMatchObject({
+			ok: true,
+			revision: 1,
+			status: "active",
+			outcome: "parked",
+			parked: 1,
+			kind: "start_work_boundary_parked",
+		});
+	});
+
+	it("passes the store's own error code to stderr instead of one generic code", () => {
+		const cwd = createWorkspace(["codex:s1"], "active", 3);
+		writeFileSync(join(cwd, ".env"), "TOKEN=x\n", "utf8");
+		const result = spawnSync(execPath, [CLI_PATH, "transition", "pause"], {
+			input: JSON.stringify({
+				cwd,
+				session_id: "s1",
+				expected_revision: 0,
+				transition_id: "cli-protected",
+				work_id: "w1",
+				reason_code: "authorization_required",
+				boundary: {
+					boundary_id: "boundary-env",
+					authority_id: "approval-cli",
+					action: "read",
+					root: join(realpathSync(cwd), ".env"),
+				},
+			}),
+			encoding: "utf8",
+		});
+		expect(result.status).toBe(2);
+		expect(JSON.parse(result.stderr)).toMatchObject({ ok: false, error: { code: "BOUNDARY_PROTECTED" } });
 	});
 
 	it("rejects direct generic CLI resume without reading or applying an arbitrary grant", () => {
@@ -509,6 +540,8 @@ describe("start-work continuation CLI", () => {
 			revision: 1,
 			status: "active",
 			kind: "start_work_initialized",
+			outcome: "authorized",
+			parked: 0,
 		});
 	});
 
@@ -556,7 +589,7 @@ describe("start-work continuation CLI", () => {
 			state: "valid",
 			history: { retained: 0, floorRevision: 0 },
 			active: { workId: "w1", status: "active" },
-			pendingBoundary: null,
+			parkedBoundaries: [],
 		});
 
 		writeFileSync(

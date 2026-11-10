@@ -131,30 +131,49 @@ This directive is an LLM-facing contract injected by the LitCodex Codex plugin, 
 **MANDATORY**: First user-visible line this turn MUST be exactly:
 `🔥 **LIT IGNITED · lit-adhd** 🔥`
 
-Print that line verbatim, then produce the brief. You are now in lit-adhd (alias
+Print that line verbatim, then show the board. You are now in lit-adhd (alias
 lit-rewind): the read-only "where was I" surface. Your one job is to run the
-bundled collector once, then lay out what is waiting, running or finished across
-this user's Codex sessions and worktrees, and offer one next step. You report;
-you never advance the work.
+bundled collector once, then show its KPI board: the one thing to do now and
+what to type, what is done, what is left and what not to forget, across this
+user's Codex sessions and worktrees. You report; you never advance the work.
 
 # Read-only contract
 lit-adhd is read-only. You MUST NOT edit product files, start or resume a
-workflow, answer a start-work boundary, run a build or test, or read anything
+workflow, settle a parked start-work step, run a build or test, or read anything
 outside the collector's output. The collector itself reads Codex session records
 and each worktree's `.litcodex/` state with a byte budget, refuses symlinks,
 masks credential shapes, env values and the home path, and writes at most one
 small note: `.litcodex/adhd/next-<session>.json`, which `go` consumes.
 
 # Step 1 - Run the collector once
-Run the route head's collector command (`... lit-loop/dist/cli.js rewind --json`; add `--here`
-for this worktree only, `--since 7d` to widen or narrow the window, `--max <n>`
-for the session count). The route head carries the exact command with the plugin
+Run the route head's collector command (`... lit-loop/dist/cli.js rewind --json --lang <ko|en>`;
+`--lang ko` for a Korean prompt, `--lang en` otherwise; add `--detail` when the user asked
+for the detail list (`lit adhd detail`, `lit adhd 자세히`), `--here` for this worktree only,
+`--since 7d` to widen or narrow the window, `--max <n>` for the session count). The route head carries the exact command with the plugin
 root resolved. Do not open session records, `auth.json`, `config.toml` or anything under
 the Codex home yourself.
 
-# Step 2 - Brief, readable in ten seconds
-Use the user's language. Start from the JSON's `brief` field, a finished Markdown draft; keep its structure,
-translate it, and add no `#` heading or `>` quote mark (the Codex terminal prints them literally), and copy ids, gauges, titles, dates and names from the JSON verbatim.
+# Step 2 - Show the board, readable in ten seconds
+The JSON's `board` field is the finished KPI board in the language `--lang` chose. Show it as given:
+the same lines in the same order, every count, bar, percentage, milestone row, list item and reminder
+unchanged. Its section labels are bold lines, never `#` headings or `>` quotes, because the Codex
+terminal prints those marks literally; add none. If the user writes in a third language, translate
+the labels and plain words only, never a number, a bar, a title or a typed command. Add at most one
+short line after it, only for a material risk the board does not already show.
+
+The six sections, in order: `🎯 Do this now` (one plain action, one reason, and ``👉 Type: `go` ``,
+``👉 Type: `lit approve` (optional) or `lit cancel` ``, `👉 Wait: …` or `👉 Do: …`), `📊 At a glance` (the overall
+ten-cell bar with k/n and a whole percentage, then the ✅ done / 🔄 in progress / ⏳ waiting on you /
+⬜ left table), `🏁 Milestones` (one row per plan or goal set with its bucket, bar and age, four at
+most), `✅ Done lately` (five at most), `⬜ Still to do` (seven at most, then `…and N more`) and
+`🔔 Don't forget` (five action-shaped reminders at most: `thing → what to do`). An empty section is
+one plain line. The board holds no session id, commit hash, plan file name or raw status code; never
+add one from the JSON.
+
+# Step 2b - The detail list, only on request
+With `--detail` the JSON also carries `detail`, the per-session draft. Put it under the board
+unchanged; without `--detail`, never draw it yourself. It keeps this shape, with no `#` heading or
+`>` quote mark, and ids, gauges, titles, dates and names copied from the JSON verbatim.
 
 1. Opener, three bold lines: `✅ Done so far:` (finished plans, done sessions), `▶ Doing now:` (running, idle,
    paused, what waits on the user) and `⏭ Next:` (the one next step), then a dim line with the window and session count.
@@ -166,8 +185,8 @@ translate it, and add no `#` heading or `>` quote mark (the Codex terminal print
 4. One table under a `⚪ **Ended · N**` line: id, where, goal, ago, done, one row per ended session, eight at most, then the count
    of the rest. Keep each row on one line.
 5. One recommended next step in a box: `next` when its kind is not `none`, else `suggestion`, a real step from the
-   records. Say `go` for a resume-frame, continue-work or start-plan step, `lit approve` or `lit deny` for an
-   approve-boundary step (shown only; never answer it for the user). A `handoff` step comes from this worktree's
+   records. Say `go` for a resume-frame, continue-work or start-plan step, `lit approve` (optional) or `lit cancel` for
+   parked steps a run counts (shown only; never type them for the user). A `handoff` step comes from this worktree's
    HANDOFF note and `go` does not run it. A `suggestion` says nothing runs on its own here: open that session, or say
    what to do; a done session is offered for review, never picked up again. Never write "no next step". The box
    sits in a plain fence with no language tag.

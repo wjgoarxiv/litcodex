@@ -1,7 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
 import { closeSync, constants, fstatSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, readSync, realpathSync, renameSync, unlinkSync, writeSync, } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { isHostOwnedRead } from "./host-reads.js";
 import { analyzePlanProgress } from "./plan-progress.js";
+import { protectedReason } from "./protected-paths.js";
 export const START_WORK_STATE_MAX_BYTES = 1_000_000;
 export const START_WORK_PLAN_MAX_BYTES = 1_000_000;
 export const START_WORK_LEDGER_TAIL_BYTES = 2_000_000;
@@ -13,6 +15,30 @@ export const START_WORK_MAX_AUTHORITY_BYTES = 64_000;
 export const START_WORK_MAX_INIT_BYTES = 256_000;
 const MAX_AUTHORITY_ITEMS = 64;
 const MAX_AUTHORITY_GRANTS = 64;
+export const MAX_PARKED_BOUNDARIES = 16;
+export const MAX_DENIED_BOUNDARIES = 64;
+export const MAX_CANCEL_NOTICES = 16;
+/**
+ * Release-class actions are never parked and never granted, whatever the plan's `forbidden_actions` lists: a typed
+ * `lit approve` settles every parked step at once, so these stay with the user outside the run.
+ */
+const RELEASE_CLASS_ACTIONS = new Set([
+    "commit",
+    "push",
+    "publish",
+    "tag",
+    "release",
+    "version-bump",
+    "vcs-destructive",
+    "git-commit",
+    "git-push",
+    "git-tag",
+    "git-reset",
+    "git-rebase",
+    "force-push",
+    "host-config",
+    "host-config-write",
+]);
 const LOCK_ATTEMPTS = 8;
 const LOCK_STALE_MS = 30_000;
 const O_NOFOLLOW = typeof constants.O_NOFOLLOW === "number" ? constants.O_NOFOLLOW : 0;
@@ -156,108 +182,316 @@ export function transitionWork(cwd, request, options = {}) {
     return withStateLock(paths, options, () => {
         const loaded = loadState(paths);
         reconcileAllLastTransitions(paths, loaded.state, options);
-        const existing = findCanonicalEvent(paths, loaded.state, request.transitionId, options);
-        if (existing !== undefined) {
-            if (!requestMatchesEvent(request, existing)) {
-                throw new LifecycleStoreError("TRANSITION_ID_CONFLICT", "transition id has a conflicting canonical event");
-            }
-            ensureLedgerEvent(paths, existing, options);
-            return { changed: false, state: loaded.state, event: existing };
+        return applyTransitionLocked(paths, loaded, request, options);
+    });
+}
+/** The body of a model-callable transition, run while the state lock is held. */
+function applyTransitionLocked(paths, loaded, request, options) {
+    const env = options.env ?? process.env;
+    const existing = findCanonicalEvent(paths, loaded.state, request.transitionId, options);
+    if (existing !== undefined) {
+        if (!requestMatchesEvent(request, existing)) {
+            throw new LifecycleStoreError("TRANSITION_ID_CONFLICT", "transition id has a conflicting canonical event");
         }
-        assertReplayAvailable(loaded.state, request.expectedRevision);
-        const migrationAuthority = request.authority === undefined ? undefined : normalizeAuthority(paths, request.authority);
-        const state = normalizeStateForMutation(paths, loaded, migrationAuthority);
-        const work = state.works[request.workId];
-        if (work === undefined ||
-            work.work_id !== request.workId ||
-            !work.session_ids.includes(`codex:${request.sessionId}`) ||
-            state.active_work_id !== request.workId) {
-            throw new LifecycleStoreError("WORK_SELECTION_INVALID", "workId did not select the active matching work");
+        ensureLedgerEvent(paths, existing, options);
+        return { changed: false, state: loaded.state, event: existing };
+    }
+    assertReplayAvailable(loaded.state, request.expectedRevision);
+    const migrationAuthority = request.authority === undefined ? undefined : normalizeAuthority(paths, request.authority);
+    const state = normalizeStateForMutation(paths, loaded, migrationAuthority);
+    const work = state.works[request.workId];
+    if (work === undefined ||
+        work.work_id !== request.workId ||
+        !work.session_ids.includes(`codex:${request.sessionId}`) ||
+        state.active_work_id !== request.workId) {
+        throw new LifecycleStoreError("WORK_SELECTION_INVALID", "workId did not select the active matching work");
+    }
+    const authority = work.authority;
+    if (authority === undefined) {
+        throw new LifecycleStoreError("AUTHORITY_INVALID", "nonterminal work lacks authority");
+    }
+    const boundary = request.boundary === undefined ? undefined : normalizeBoundary(request.boundary, authority);
+    const parked = work.parked_boundaries ?? [];
+    if (boundary !== undefined && (request.action === "pause" || request.action === "resume")) {
+        if (isReleaseClass(boundary.action)) {
+            throw new LifecycleStoreError("BOUNDARY_MISMATCH", "boundary action is permanently forbidden");
         }
-        const authority = work.authority;
-        if (authority === undefined) {
-            throw new LifecycleStoreError("AUTHORITY_INVALID", "nonterminal work lacks authority");
+        const reason = protectedReason(boundary.root, accessKindOf(boundary.action), env);
+        if (reason !== null) {
+            throw new LifecycleStoreError("BOUNDARY_PROTECTED", `${boundary.root} is protected for this run (${reason}); a start-work never opens or changes secrets or host settings, and this is not an approval prompt`);
         }
-        const boundary = request.boundary === undefined ? undefined : normalizeBoundary(request.boundary, authority);
-        if (request.action === "pause" &&
-            work.status === "paused" &&
-            boundary !== undefined &&
-            work.pending_boundary !== undefined &&
-            boundariesEquivalent(boundary, work.pending_boundary)) {
+    }
+    if (request.action === "pause" && work.status === "active" && boundary !== undefined) {
+        if (authorityAuthorizesBoundary(authority, boundary) ||
+            work.authority_grants?.some((grant) => grantAuthorizesBoundary(grant, boundary)) === true ||
+            (isReadAction(boundary.action) && isHostOwnedRead(boundary.root, request.sessionId, env))) {
             const prior = work.last_transition;
-            if (prior === undefined || prior.kind !== "start_work_paused") {
-                throw new LifecycleStoreError("BOUNDARY_STATE_INVALID", "pending boundary lacks its pause event");
+            if (prior === undefined) {
+                throw new LifecycleStoreError("BOUNDARY_STATE_INVALID", "authorized work lacks its canonical event");
             }
             ensureLedgerEvent(paths, prior, options);
-            return { changed: false, state, event: prior };
+            return { changed: false, state, event: prior, outcome: "authorized" };
         }
-        if (request.action === "pause" && work.status === "active" && boundary !== undefined) {
-            if (authorityAuthorizesBoundary(authority, boundary)) {
-                const prior = work.last_transition;
-                if (prior === undefined) {
-                    throw new LifecycleStoreError("BOUNDARY_STATE_INVALID", "authorized work lacks its canonical event");
-                }
-                ensureLedgerEvent(paths, prior, options);
-                return { changed: false, state, event: prior };
+        if ((work.denied_boundaries ?? []).some((denied) => denied.action === boundary.action && isWithin(denied.root, boundary.root))) {
+            throw new LifecycleStoreError("BOUNDARY_DENIED", "the user denied this step for this run; carry on without it");
+        }
+        const same = parked.find((entry) => entry.action === boundary.action && entry.root === boundary.root);
+        if (same !== undefined) {
+            const prior = state.transition_history?.[same.transition_id] ?? work.last_transition;
+            if (prior === undefined) {
+                throw new LifecycleStoreError("BOUNDARY_STATE_INVALID", "parked boundary lacks its canonical event");
             }
-            const consumed = work.authority_grants?.find((grant) => grantAuthorizesBoundary(grant, boundary));
-            if (consumed !== undefined) {
-                const prior = work.last_transition;
-                if (prior === undefined) {
-                    throw new LifecycleStoreError("BOUNDARY_STATE_INVALID", "authorized work lacks its canonical event");
-                }
-                ensureLedgerEvent(paths, prior, options);
-                return { changed: false, state, event: prior };
+            return { changed: false, state, event: prior, outcome: "already_parked" };
+        }
+    }
+    if (state.revision !== request.expectedRevision) {
+        throw new LifecycleStoreError("REVISION_CONFLICT", "expected revision does not match current revision");
+    }
+    const plan = canonicalPlan(paths, work.active_plan, false);
+    // Fresh init enforces the planner contract; persisted work retains legacy progress compatibility.
+    if (plan.progress.total === 0)
+        throw new LifecycleStoreError("PLAN_EMPTY", "start-work plan has no executable checkbox");
+    const target = targetStatus(request.action, work.status, request.reasonCode);
+    if (request.action === "complete" && plan.progress.remaining !== 0) {
+        throw new LifecycleStoreError("PLAN_INCOMPLETE", "complete requires zero remaining executable checkboxes");
+    }
+    const grant = request.grant === undefined ? undefined : normalizeGrant(request.grant, authority, boundary);
+    if (request.action === "pause" && boundary === undefined) {
+        throw new LifecycleStoreError("BOUNDARY_REQUIRED", "pause requires an explicit authority boundary");
+    }
+    if (request.action === "pause" && parked.length >= MAX_PARKED_BOUNDARIES) {
+        throw new LifecycleStoreError("PARKED_LIMIT", "16 steps are already parked; finish what the plan allows, list the rest on BLOCKED: lines in your final message and end the turn; the user decides with lit approve or lit cancel");
+    }
+    let resumed;
+    if (request.action === "resume") {
+        if (boundary === undefined || grant === undefined) {
+            throw new LifecycleStoreError("GRANT_REQUIRED", "resume requires matching boundary and grant");
+        }
+        if (work.status === "active") {
+            resumed = parked.find((entry) => entry.boundary_id === boundary.boundary_id && boundariesEquivalent(boundaryFields(entry), boundary));
+            if (resumed === undefined) {
+                throw new LifecycleStoreError("BOUNDARY_MISMATCH", "resume boundary does not name a parked step");
             }
         }
-        if (state.revision !== request.expectedRevision) {
-            throw new LifecycleStoreError("REVISION_CONFLICT", "expected revision does not match current revision");
-        }
-        const plan = canonicalPlan(paths, work.active_plan, false);
-        // Fresh init enforces the planner contract; persisted work retains legacy progress compatibility.
-        if (plan.progress.total === 0)
-            throw new LifecycleStoreError("PLAN_EMPTY", "start-work plan has no executable checkbox");
-        const target = targetStatus(request.action, work.status, request.reasonCode);
-        if (request.action === "complete" && plan.progress.remaining !== 0) {
-            throw new LifecycleStoreError("PLAN_INCOMPLETE", "complete requires zero remaining executable checkboxes");
-        }
-        const grant = request.grant === undefined ? undefined : normalizeGrant(request.grant, authority, boundary);
-        if (request.action === "pause" && boundary === undefined) {
-            throw new LifecycleStoreError("BOUNDARY_REQUIRED", "pause requires an explicit authority boundary");
-        }
-        if (request.action === "resume") {
-            if (boundary === undefined || grant === undefined) {
-                throw new LifecycleStoreError("GRANT_REQUIRED", "resume requires matching boundary and grant");
-            }
-            const pending = work.pending_boundary ?? (loaded.sourceSchema === 2 ? boundary : undefined);
+        else {
+            const pending = loaded.sourceSchema === 2 ? boundary : undefined;
             if (pending === undefined || !boundariesEquivalent(boundary, pending)) {
                 throw new LifecycleStoreError("BOUNDARY_MISMATCH", "resume boundary does not match pending boundary");
             }
-            const conflictingGrant = work.authority_grants?.find((item) => item.grant_id === grant.grant_id && !grantMatchesBoundary(item, boundary));
-            if (conflictingGrant !== undefined) {
-                throw new LifecycleStoreError("GRANT_CONFLICT", "grant id is already bound to a different boundary");
-            }
         }
-        const event = transitionEvent(state, work, request, target, plan, options.now?.() ?? new Date().toISOString(), boundary, grant);
-        const grants = request.action === "resume" && grant !== undefined
-            ? [...(work.authority_grants ?? []).filter((item) => item.grant_id !== grant.grant_id), grant].slice(-MAX_AUTHORITY_GRANTS)
-            : work.authority_grants;
-        const updatedWork = {
-            ...work,
-            status: target,
-            ...(request.action === "pause" && boundary !== undefined ? { pending_boundary: boundary } : {}),
-            ...(request.action === "resume" && grants !== undefined ? { authority_grants: grants } : {}),
-            last_transition: event,
+        const conflictingGrant = work.authority_grants?.find((item) => item.grant_id === grant.grant_id && !grantMatchesBoundary(item, boundary));
+        if (conflictingGrant !== undefined) {
+            throw new LifecycleStoreError("GRANT_CONFLICT", "grant id is already bound to a different boundary");
+        }
+        const held = work.authority_grants ?? [];
+        if (!held.some((item) => item.grant_id === grant.grant_id) && held.length >= MAX_AUTHORITY_GRANTS) {
+            throw new LifecycleStoreError("GRANT_LIMIT", `this run already holds ${MAX_AUTHORITY_GRANTS} grants, so no further step can be granted`);
+        }
+    }
+    const event = transitionEvent(state, work, request, target, plan.relativePath, plan.progress.progressToken, options.now?.() ?? new Date().toISOString(), boundary, grant);
+    const grants = request.action === "resume" && grant !== undefined
+        ? [...(work.authority_grants ?? []).filter((item) => item.grant_id !== grant.grant_id), grant].slice(-MAX_AUTHORITY_GRANTS)
+        : work.authority_grants;
+    const nextParked = request.action === "pause" && boundary !== undefined
+        ? [
+            ...parked,
+            {
+                ...boundary,
+                parked_at: event.at,
+                session_id: event.sessionId,
+                transition_id: event.transitionId,
+            },
+        ]
+        : resumed !== undefined
+            ? parked.filter((entry) => entry !== resumed)
+            : parked;
+    const updatedWork = {
+        ...work,
+        status: target,
+        ...(request.action === "resume" && grants !== undefined ? { authority_grants: grants } : {}),
+        last_transition: event,
+    };
+    const terminal = target === "abandoned" || target === "completed";
+    const nextWork = withParked(omitPendingBoundary(updatedWork), terminal ? [] : nextParked);
+    const history = appendHistory(state, event);
+    const nextState = compactTerminalWorks({
+        ...state,
+        schema_version: 3,
+        revision: event.revision,
+        active_work_id: terminal ? null : request.workId,
+        works: { ...state.works, [request.workId]: nextWork },
+        transition_history: history.events,
+        history_floor_revision: history.floorRevision,
+    });
+    validateStateConsistency(nextState);
+    writeStateAtomic(paths, nextState, false);
+    options.afterStateWrite?.();
+    ensureLedgerEvent(paths, event, options);
+    return {
+        changed: true,
+        state: nextState,
+        event,
+        ...(request.action === "pause" ? { outcome: "parked" } : {}),
+    };
+}
+/**
+ * The typed `lit cancel`: ends the project's nonterminal run whichever Codex session of the project typed it. It
+ * checks neither session membership nor an expected revision and never reads the plan, so a deleted or emptied
+ * plan cannot keep a user from ending the run. Every other session of the run is left a notice for its next prompt.
+ */
+export function cancelWorkFromUserPrompt(cwd, request, options = {}) {
+    if (!isBoundedLifecycleText(cwd) ||
+        !isBoundedLifecycleText(request.sessionId) ||
+        !isBoundedLifecycleText(request.turnId)) {
+        throw new LifecycleStoreError("CANCEL_INPUT_INVALID", "cancel input is malformed or oversized");
+    }
+    const paths = managedPaths(cwd, true);
+    if (!pathExists(paths.state))
+        return { outcome: "nothing" };
+    return withStateLock(paths, options, () => {
+        const loaded = loadState(paths);
+        reconcileAllLastTransitions(paths, loaded.state, options);
+        const activeId = loaded.state.active_work_id;
+        const current = activeId === null ? undefined : loaded.state.works[activeId];
+        if (activeId === null || current === undefined || !isNonterminal(current.status))
+            return { outcome: "nothing" };
+        const transitionId = `prompt-cancel:${digest([activeId, request.sessionId, request.turnId].join("\0")).slice(0, 32)}`;
+        const existing = findCanonicalEvent(paths, loaded.state, transitionId, options);
+        if (existing !== undefined) {
+            ensureLedgerEvent(paths, existing, options);
+            return { outcome: "replay", workId: activeId, plan: current.plan_name };
+        }
+        const state = normalizeStateForMutation(paths, loaded, undefined, activeId);
+        const work = state.works[activeId];
+        if (work === undefined)
+            throw new LifecycleStoreError("STATE_INVALID", "active work disappeared");
+        const typer = `codex:${request.sessionId}`;
+        const at = options.now?.() ?? new Date().toISOString();
+        const event = {
+            kind: "start_work_cancelled",
+            at,
+            workId: activeId,
+            transitionId,
+            revision: state.revision + 1,
+            fromWorkStatus: work.status,
+            toWorkStatus: "abandoned",
+            plan: work.active_plan,
+            sessionId: typer,
+            reasonCode: "user_cancelled",
+            turnId: request.turnId,
         };
-        const nextWork = request.action === "resume" || terminalAction(request.action) ? omitPendingBoundary(updatedWork) : updatedWork;
-        const terminal = target === "abandoned" || target === "completed";
+        const nextWork = withParked(omitPendingBoundary({ ...work, status: "abandoned", last_transition: event }), []);
+        const notices = { ...(state.cancel_notices ?? {}) };
+        for (const owner of work.session_ids) {
+            if (!owner.startsWith("codex:") || owner === typer)
+                continue;
+            delete notices[owner];
+            notices[owner] = { work_id: activeId, plan_name: work.plan_name, by_session_id: typer, at };
+        }
+        const kept = Object.entries(notices).slice(-MAX_CANCEL_NOTICES);
         const history = appendHistory(state, event);
         const nextState = compactTerminalWorks({
             ...state,
             schema_version: 3,
             revision: event.revision,
-            active_work_id: terminal ? null : request.workId,
-            works: { ...state.works, [request.workId]: nextWork },
+            active_work_id: null,
+            works: { ...state.works, [activeId]: nextWork },
+            transition_history: history.events,
+            history_floor_revision: history.floorRevision,
+            ...(kept.length === 0 && state.cancel_notices === undefined
+                ? {}
+                : { cancel_notices: Object.fromEntries(kept) }),
+        });
+        validateStateConsistency(nextState);
+        writeStateAtomic(paths, nextState, false);
+        options.afterStateWrite?.();
+        ensureLedgerEvent(paths, event, options);
+        return {
+            outcome: "cancelled",
+            workId: activeId,
+            plan: work.plan_name,
+            otherSession: !work.session_ids.includes(typer),
+        };
+    });
+}
+/**
+ * Remove and return this session's cancel notice. It is bookkeeping, not a lifecycle step: no event is recorded and
+ * the revision does not move, so a lane still holding the old revision is not turned away.
+ */
+export function takeCancelNotice(cwd, sessionId, options = {}) {
+    const key = `codex:${sessionId}`;
+    const peek = inspectLifecycleState(cwd);
+    if (!peek.ok || peek.state.cancel_notices?.[key] === undefined)
+        return null;
+    const paths = managedPaths(cwd, true);
+    return withStateLock(paths, options, () => {
+        const loaded = loadState(paths);
+        const notice = loaded.state.cancel_notices?.[key];
+        if (loaded.sourceSchema !== 3 || notice === undefined)
+            return null;
+        const notices = { ...loaded.state.cancel_notices };
+        delete notices[key];
+        const nextState = { ...loaded.state, cancel_notices: notices };
+        validateStateConsistency(nextState);
+        writeStateAtomic(paths, nextState, false);
+        options.afterStateWrite?.();
+        return notice;
+    });
+}
+/** The typed `lit deny`: every parked step of this session's run moves to the refused list for the rest of the run. */
+export function denyParkedBoundaries(cwd, request, options = {}) {
+    if (!isBoundedLifecycleText(cwd) ||
+        !isBoundedLifecycleText(request.sessionId) ||
+        !isBoundedLifecycleText(request.turnId)) {
+        throw new LifecycleStoreError("DENY_INPUT_INVALID", "deny input is malformed or oversized");
+    }
+    const paths = managedPaths(cwd, true);
+    return withStateLock(paths, options, () => {
+        const loaded = loadState(paths);
+        reconcileAllLastTransitions(paths, loaded.state, options);
+        const state = normalizeStateForMutation(paths, loaded);
+        const work = selectWorkForSession(state, request.sessionId, ["active"]);
+        if (work === null)
+            return { outcome: "nothing" };
+        const transitionId = `prompt-deny:${digest([work.work_id, request.sessionId, request.turnId].join("\0")).slice(0, 32)}`;
+        const existing = findCanonicalEvent(paths, state, transitionId, options);
+        if (existing !== undefined) {
+            ensureLedgerEvent(paths, existing, options);
+            const ids = new Set(existing.boundaryIds ?? []);
+            return {
+                outcome: "replay",
+                workId: work.work_id,
+                boundaries: (work.denied_boundaries ?? []).filter((entry) => ids.has(entry.boundary_id)),
+            };
+        }
+        const parked = work.parked_boundaries ?? [];
+        if (parked.length === 0)
+            return { outcome: "nothing" };
+        const refused = parked.map(boundaryFields);
+        const event = {
+            kind: "start_work_boundary_denied",
+            at: options.now?.() ?? new Date().toISOString(),
+            workId: work.work_id,
+            transitionId,
+            revision: state.revision + 1,
+            fromWorkStatus: "active",
+            toWorkStatus: "active",
+            plan: work.active_plan,
+            sessionId: `codex:${request.sessionId}`,
+            turnId: request.turnId,
+            boundaryIds: refused.map((entry) => entry.boundary_id),
+        };
+        const nextWork = withParked(omitPendingBoundary({
+            ...work,
+            denied_boundaries: [...(work.denied_boundaries ?? []), ...refused].slice(-MAX_DENIED_BOUNDARIES),
+            last_transition: event,
+        }), []);
+        const history = appendHistory(state, event);
+        const nextState = compactTerminalWorks({
+            ...state,
+            schema_version: 3,
+            revision: event.revision,
+            works: { ...state.works, [work.work_id]: nextWork },
             transition_history: history.events,
             history_floor_revision: history.floorRevision,
         });
@@ -265,7 +499,29 @@ export function transitionWork(cwd, request, options = {}) {
         writeStateAtomic(paths, nextState, false);
         options.afterStateWrite?.();
         ensureLedgerEvent(paths, event, options);
-        return { changed: true, state: nextState, event };
+        return { outcome: "denied", workId: work.work_id, boundaries: refused };
+    });
+}
+/**
+ * Drop a parked step whose root no longer exists, without an event or a revision move. Returns false and changes
+ * nothing when the root is still there or the step is not parked for this session.
+ */
+export function dropVanishedParkedBoundary(cwd, sessionId, boundaryId, options = {}) {
+    const paths = managedPaths(cwd, true);
+    return withStateLock(paths, options, () => {
+        const loaded = loadState(paths);
+        if (loaded.sourceSchema !== 3)
+            return false;
+        const work = selectWorkForSession(loaded.state, sessionId, ["active"]);
+        const entry = work?.parked_boundaries?.find((item) => item.boundary_id === boundaryId);
+        if (work === null || entry === undefined || pathExists(entry.root))
+            return false;
+        const nextWork = withParked(omitPendingBoundary(work), (work.parked_boundaries ?? []).filter((item) => item !== entry));
+        const nextState = { ...loaded.state, works: { ...loaded.state.works, [work.work_id]: nextWork } };
+        validateStateConsistency(nextState);
+        writeStateAtomic(paths, nextState, false);
+        options.afterStateWrite?.();
+        return true;
     });
 }
 export function advanceStopLease(cwd, request, options = {}) {
@@ -296,17 +552,20 @@ export function advanceStopLease(cwd, request, options = {}) {
             throw new LifecycleStoreError("PROGRESS_TOKEN_MISMATCH", "continuation progress token does not match the plan");
         }
         const lease = work.continuation_lease;
-        if (lease?.progress_token === request.progressToken && lease.turn_id === request.turnId) {
+        const parkedDigest = parkedDigestOf(work);
+        const sameQueue = (lease?.parked_digest ?? "") === parkedDigest;
+        if (lease?.progress_token === request.progressToken && lease.turn_id === request.turnId && sameQueue) {
             const event = findCanonicalEvent(paths, state, lease.transition_id, options);
             if (event === undefined || event.kind !== "start_work_continuation_issued") {
                 throw new LifecycleStoreError("LEASE_STATE_INVALID", "continuation lease lacks its canonical event");
             }
             return { outcome: "replay", state, event };
         }
-        if (lease?.progress_token === request.progressToken)
+        if (lease?.progress_token === request.progressToken && sameQueue)
             return { outcome: "silent", state };
         const at = options.now?.() ?? new Date().toISOString();
-        const transitionId = `stop-continue:${shortDigest(request.sessionId)}:${shortDigest(request.turnId)}:${request.progressToken}`;
+        // A newly parked step earns one more continuation; with nothing parked the id is the same as before.
+        const transitionId = `stop-continue:${shortDigest(request.sessionId)}:${shortDigest(request.turnId)}:${request.progressToken}${parkedDigest === "" ? "" : `:${parkedDigest}`}`;
         const existing = findCanonicalEvent(paths, state, transitionId, options);
         if (existing !== undefined) {
             ensureLedgerEvent(paths, existing, options);
@@ -332,6 +591,7 @@ export function advanceStopLease(cwd, request, options = {}) {
                 progress_token: request.progressToken,
                 turn_id: request.turnId,
                 transition_id: transitionId,
+                ...(parkedDigest === "" ? {} : { parked_digest: parkedDigest }),
             },
             last_transition: event,
         };
@@ -534,6 +794,7 @@ function loadState(paths) {
         historyFloor > revision) {
         throw new LifecycleStoreError("STATE_REVISION_INVALID", "history floor is inconsistent with state revision");
     }
+    const notices = parseCancelNotices(parsed["cancel_notices"]);
     const state = {
         ...parsed,
         schema_version: 3,
@@ -542,6 +803,7 @@ function loadState(paths) {
         works,
         ...(history === undefined ? {} : { transition_history: history }),
         ...(schema === 2 ? {} : { history_floor_revision: historyFloor }),
+        ...(notices === undefined ? {} : { cancel_notices: notices }),
     };
     if (schema === 3)
         validateStateConsistency(state);
@@ -574,7 +836,10 @@ function parseWork(paths, id, value, schema) {
     const last = parseLifecycleEvent(value["last_transition"]);
     if (value["last_transition"] !== undefined && last === undefined)
         return null;
-    if (last !== undefined && (last.workId !== id || last.plan !== activePlan || last.toWorkStatus !== status))
+    // A work written after migrating an old pause is active while its last event still records the pause.
+    const migratedPause = status === "active" && last?.kind === "start_work_paused" && last.toWorkStatus === "paused";
+    if (last !== undefined &&
+        (last.workId !== id || last.plan !== activePlan || (last.toWorkStatus !== status && !migratedPause)))
         return null;
     let authority;
     try {
@@ -591,8 +856,21 @@ function parseWork(paths, id, value, schema) {
     if (pending !== undefined) {
         if (status !== "paused" || authority === undefined)
             return null;
-        validateBoundaryAgainstAuthority(pending, authority, true);
+        validateBoundaryAgainstAuthority(pending, authority, true, true);
     }
+    const parked = parseParkedBoundaries(value["parked_boundaries"]);
+    if (value["parked_boundaries"] !== undefined && parked === undefined)
+        return null;
+    const denied = parseDeniedBoundaries(value["denied_boundaries"]);
+    if (value["denied_boundaries"] !== undefined && denied === undefined)
+        return null;
+    for (const entry of [...(parked ?? []), ...(denied ?? [])]) {
+        if (authority === undefined)
+            return null;
+        validateBoundaryAgainstAuthority(entry, authority, true, true);
+    }
+    if (parked !== undefined && parked.length > 0 && status !== "active")
+        return null;
     const grants = parseGrants(value["authority_grants"]);
     if (value["authority_grants"] !== undefined && grants === undefined)
         return null;
@@ -628,27 +906,109 @@ function parseWork(paths, id, value, schema) {
             }
         }
     }
-    return {
+    // Read-time migration: a schema-3 run an older version paused at one boundary is now active with that step
+    // parked. The raw `pending_boundary` key is dropped here so no later write carries it back.
+    const migrate = schema === 3 && status === "paused" && pending !== undefined && last !== undefined;
+    const parsed = {
         ...value,
         work_id: id,
         active_plan: activePlan,
         plan_name: value["plan_name"],
         session_ids: sessionIds,
-        status,
+        status: migrate ? "active" : status,
         worktree_path: normalizedWorktree,
         ...(authority === undefined ? {} : { authority }),
-        ...(pending === undefined ? {} : { pending_boundary: pending }),
+        ...(pending === undefined || migrate ? {} : { pending_boundary: pending }),
         ...(grants === undefined ? {} : { authority_grants: grants }),
         ...(lease === undefined ? {} : { continuation_lease: lease }),
         ...(last === undefined ? {} : { last_transition: last }),
+        ...(denied === undefined ? {} : { denied_boundaries: denied }),
     };
+    delete parsed["parked_boundaries"];
+    if (migrate)
+        delete parsed["pending_boundary"];
+    const queue = migrate && pending !== undefined && last !== undefined
+        ? [{ ...pending, parked_at: last.at, session_id: last.sessionId, transition_id: last.transitionId }]
+        : (parked ?? []);
+    if (queue.length > 0)
+        parsed["parked_boundaries"] = queue;
+    return parsed;
 }
-function normalizeStateForMutation(paths, loaded, migrationAuthority) {
+function parseParkedBoundaries(value) {
+    if (value === undefined)
+        return undefined;
+    if (!Array.isArray(value) || value.length > MAX_PARKED_BOUNDARIES)
+        return undefined;
+    const entries = [];
+    for (const item of value) {
+        if (!isRecord(item))
+            return undefined;
+        const { parked_at: at, session_id: session, transition_id: transition, ...rest } = item;
+        const boundary = parseBoundary(rest);
+        if (boundary === undefined ||
+            !isBoundedLifecycleText(at) ||
+            !isBoundedLifecycleText(session) ||
+            !isBoundedLifecycleText(transition))
+            return undefined;
+        entries.push({ ...boundary, parked_at: at, session_id: session, transition_id: transition });
+    }
+    if (new Set(entries.map((entry) => entry.boundary_id)).size !== entries.length)
+        return undefined;
+    if (new Set(entries.map((entry) => `${entry.action}\0${entry.root}`)).size !== entries.length)
+        return undefined;
+    return entries;
+}
+function parseDeniedBoundaries(value) {
+    if (value === undefined)
+        return undefined;
+    if (!Array.isArray(value) || value.length > MAX_DENIED_BOUNDARIES)
+        return undefined;
+    const entries = value.map(parseBoundary);
+    return entries.every((entry) => entry !== undefined) ? entries : undefined;
+}
+function parseCancelNotices(value) {
+    if (value === undefined)
+        return undefined;
+    if (!isRecord(value))
+        throw new LifecycleStoreError("STATE_INVALID", "cancel_notices must be an object");
+    const entries = Object.entries(value);
+    if (entries.length > MAX_CANCEL_NOTICES) {
+        throw new LifecycleStoreError("STATE_INVALID", "cancel_notices exceeds its limit");
+    }
+    const notices = [];
+    for (const [key, notice] of entries) {
+        if (!key.startsWith("codex:") ||
+            !isBoundedLifecycleText(key) ||
+            !isRecord(notice) ||
+            Object.keys(notice).some((field) => !["work_id", "plan_name", "by_session_id", "at"].includes(field)) ||
+            !isBoundedLifecycleText(notice["work_id"]) ||
+            !isBoundedLifecycleText(notice["plan_name"], START_WORK_MAX_DISPLAY_BYTES) ||
+            !isBoundedLifecycleText(notice["by_session_id"]) ||
+            !isBoundedLifecycleText(notice["at"])) {
+            throw new LifecycleStoreError("STATE_INVALID", `invalid cancel notice ${key}`);
+        }
+        notices.push([
+            key,
+            {
+                work_id: notice["work_id"],
+                plan_name: notice["plan_name"],
+                by_session_id: notice["by_session_id"],
+                at: notice["at"],
+            },
+        ]);
+    }
+    return Object.fromEntries(notices);
+}
+/**
+ * Lazily migrate a schema-2 state for a write. `cancelWorkId` names the work a typed cancel is about to end: it
+ * becomes terminal, and a terminal work needs no authority, so the cancel can migrate without one.
+ */
+function normalizeStateForMutation(paths, loaded, migrationAuthority, cancelWorkId) {
     if (loaded.sourceSchema === 3)
         return loaded.state;
     const works = Object.fromEntries(Object.entries(loaded.state.works).map(([id, work]) => {
         const plan = canonicalPlan(paths, work.active_plan, true);
-        if (isNonterminal(work.status) && migrationAuthority === undefined) {
+        if (isNonterminal(work.status) && migrationAuthority === undefined && id !== cancelWorkId) {
             throw new LifecycleStoreError("MIGRATION_AUTHORITY_REQUIRED", "schema-2 migration authority is required");
         }
         const authority = isNonterminal(work.status) ? migrationAuthority : work.authority;
@@ -751,7 +1111,11 @@ function validateStateConsistency(state) {
         }
         if (work.authority !== undefined && event.boundary !== undefined) {
             try {
-                validateBoundaryAgainstAuthority(event.boundary, work.authority, true, !isNonterminal(work.status));
+                // A run keeps going past a parked step, so its root may be gone by the time the user answers.
+                const mayBeGone = !isNonterminal(work.status) ||
+                    event.kind === "start_work_boundary_parked" ||
+                    event.kind === "start_work_paused";
+                validateBoundaryAgainstAuthority(event.boundary, work.authority, true, mayBeGone);
             }
             catch {
                 throw new LifecycleStoreError("AUTHORITY_INVALID", "history boundary is outside stored authority");
@@ -784,6 +1148,17 @@ function validateStateConsistency(state) {
     }
     else if (state.revision !== 0) {
         throw new LifecycleStoreError("STATE_REVISION_INVALID", "nonzero revision requires retained history");
+    }
+    if (Object.keys(state.cancel_notices ?? {}).length > MAX_CANCEL_NOTICES) {
+        throw new LifecycleStoreError("STATE_INVALID", "cancel_notices exceeds its limit");
+    }
+    for (const work of Object.values(state.works)) {
+        const parked = work.parked_boundaries ?? [];
+        if (parked.length > MAX_PARKED_BOUNDARIES ||
+            (parked.length > 0 && (work.status !== "active" || state.active_work_id !== work.work_id)) ||
+            new Set(parked.map((entry) => entry.boundary_id)).size !== parked.length) {
+            throw new LifecycleStoreError("BOUNDARY_STATE_INVALID", "parked steps belong only to the active work");
+        }
     }
     for (const work of Object.values(state.works)) {
         const last = work.last_transition;
@@ -828,6 +1203,9 @@ function parseLease(value) {
         return undefined;
     if (!isRecord(value))
         return undefined;
+    const parkedDigest = value["parked_digest"];
+    if (parkedDigest !== undefined && !isShortHash(parkedDigest))
+        return undefined;
     return isHash(value["progress_token"]) &&
         isBoundedLifecycleText(value["turn_id"]) &&
         isBoundedLifecycleText(value["transition_id"])
@@ -835,6 +1213,7 @@ function parseLease(value) {
             progress_token: value["progress_token"],
             turn_id: value["turn_id"],
             transition_id: value["transition_id"],
+            ...(parkedDigest === undefined ? {} : { parked_digest: parkedDigest }),
         }
         : undefined;
 }
@@ -872,6 +1251,7 @@ function parseLifecycleEvent(value) {
         "initFingerprint",
         "boundary",
         "grant",
+        "boundaryIds",
     ]);
     if (Object.keys(value).some((key) => !allowed.has(key)))
         return undefined;
@@ -901,13 +1281,17 @@ function parseLifecycleEvent(value) {
     const grant = parseGrant(value["grant"]);
     if (value["grant"] !== undefined && grant === undefined)
         return undefined;
+    const ids = value["boundaryIds"];
+    if (ids !== undefined &&
+        !(Array.isArray(ids) && ids.length <= MAX_PARKED_BOUNDARIES && ids.every((id) => isBoundedLifecycleText(id))))
+        return undefined;
     return {
         ...value,
         ...(boundary === undefined ? {} : { boundary }),
         ...(grant === undefined ? {} : { grant }),
     };
 }
-function transitionEvent(state, work, request, target, plan, at, boundary, grant) {
+function transitionEvent(state, work, request, target, planPath, progressToken, at, boundary, grant) {
     return {
         kind: kindForAction(request.action),
         at,
@@ -916,20 +1300,22 @@ function transitionEvent(state, work, request, target, plan, at, boundary, grant
         revision: state.revision + 1,
         fromWorkStatus: work.status,
         toWorkStatus: target,
-        plan: plan.relativePath,
+        plan: planPath,
         sessionId: `codex:${request.sessionId}`,
         reasonCode: request.reasonCode,
         ...(request.turnId === undefined ? {} : { turnId: request.turnId }),
-        progressToken: plan.progress.progressToken,
+        progressToken,
         ...(boundary === undefined ? {} : { boundary }),
         ...(grant === undefined ? {} : { grant }),
     };
 }
 function targetStatus(action, status, reasonCode) {
+    // A pause parks the step and the run keeps going; a resume of a parked step keeps it going too.
     if (action === "pause" && status === "active" && isPauseReason(reasonCode))
-        return "paused";
-    if (action === "resume" && status === "paused" && reasonCode === "explicit_user_resume")
         return "active";
+    if (action === "resume" && (status === "paused" || status === "active") && reasonCode === "explicit_user_resume") {
+        return "active";
+    }
     if (action === "cancel" && (status === "active" || status === "paused") && reasonCode === "user_cancelled") {
         return "abandoned";
     }
@@ -940,7 +1326,7 @@ function targetStatus(action, status, reasonCode) {
 }
 function kindForAction(action) {
     if (action === "pause")
-        return "start_work_paused";
+        return "start_work_boundary_parked";
     if (action === "resume")
         return "start_work_resumed";
     if (action === "cancel")
@@ -948,7 +1334,10 @@ function kindForAction(action) {
     return "start_work_completed";
 }
 function requestMatchesEvent(request, event) {
-    return (event.kind === kindForAction(request.action) &&
+    // An old pause transition id still replays: older versions recorded it as `start_work_paused`.
+    const kindMatches = event.kind === kindForAction(request.action) ||
+        (request.action === "pause" && event.kind === "start_work_paused");
+    return (kindMatches &&
         event.workId === request.workId &&
         event.sessionId === `codex:${request.sessionId}` &&
         event.reasonCode === request.reasonCode &&
@@ -1577,6 +1966,7 @@ function stableEventJson(event) {
         ...(event.initFingerprint === undefined ? {} : { initFingerprint: event.initFingerprint }),
         ...(event.boundary === undefined ? {} : { boundary: event.boundary }),
         ...(event.grant === undefined ? {} : { grant: event.grant }),
+        ...(event.boundaryIds === undefined ? {} : { boundaryIds: event.boundaryIds }),
     });
 }
 function optionalStableEqual(left, right) {
@@ -1639,6 +2029,9 @@ function shortDigest(value) {
 function isHash(value) {
     return typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 }
+function isShortHash(value) {
+    return typeof value === "string" && /^[a-f0-9]{16}$/.test(value);
+}
 function isPauseReason(value) {
     return value === "authorization_required" || value === "credential_required" || value === "host_capability_required";
 }
@@ -1656,7 +2049,9 @@ function isLifecycleKind(value) {
         value === "start_work_paused" ||
         value === "start_work_resumed" ||
         value === "start_work_cancelled" ||
-        value === "start_work_completed");
+        value === "start_work_completed" ||
+        value === "start_work_boundary_parked" ||
+        value === "start_work_boundary_denied");
 }
 function isWorkStatus(value) {
     return value === "active" || value === "paused" || value === "abandoned" || value === "completed";
@@ -1667,13 +2062,40 @@ function isNonterminal(value) {
 function isTransitionAction(value) {
     return value === "pause" || value === "resume" || value === "cancel" || value === "complete";
 }
-function terminalAction(value) {
-    return value === "cancel" || value === "complete";
-}
 function omitPendingBoundary(work) {
     const copy = { ...work };
     delete copy.pending_boundary;
     return copy;
+}
+/** Set the parked queue; an empty queue removes the key so terminal and quiet works keep their old shape. */
+function withParked(work, parked) {
+    const copy = { ...work };
+    if (parked.length === 0)
+        delete copy["parked_boundaries"];
+    else
+        copy["parked_boundaries"] = parked;
+    return copy;
+}
+function boundaryFields(entry) {
+    return {
+        boundary_id: entry.boundary_id,
+        authority_id: entry.authority_id,
+        action: entry.action,
+        root: entry.root,
+    };
+}
+export function isReleaseClass(action) {
+    return RELEASE_CLASS_ACTIONS.has(action.toLowerCase().replace(/[_ .]+/gu, "-"));
+}
+function isReadAction(action) {
+    return action === "read" || action === "inspect";
+}
+function accessKindOf(action) {
+    return isReadAction(action) ? "read" : "write";
+}
+function parkedDigestOf(work) {
+    const ids = (work.parked_boundaries ?? []).map((entry) => entry.boundary_id).sort();
+    return ids.length === 0 ? "" : shortDigest(ids.join("\0"));
 }
 function isCode(error, code) {
     return isRecord(error) && error["code"] === code;

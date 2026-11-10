@@ -36,7 +36,12 @@ export function readContinuationState(cwd, sessionId, _fs) {
         worktreePath: work.worktree_path,
         authority: work.authority,
         authorityGrants: work.authority_grants ?? [],
-        pendingBoundary: work.pending_boundary ?? null,
+        parkedBoundaries: (work.parked_boundaries ?? []).map((entry) => ({
+            id: entry.boundary_id,
+            action: entry.action,
+            root: entry.root,
+        })),
+        deniedBoundaries: (work.denied_boundaries ?? []).map((entry) => ({ action: entry.action, root: entry.root })),
         checklist,
     };
 }
@@ -60,8 +65,13 @@ export function diagnoseLifecycle(cwd) {
                 workId: inspected.state.active_work_id,
                 status: inspected.state.works[inspected.state.active_work_id]?.status ?? "invalid",
             },
-        pendingBoundary: inspected.state.active_work_id === null
-            ? null
-            : (inspected.state.works[inspected.state.active_work_id]?.pending_boundary ?? null),
+        parkedBoundaries: inspected.state.active_work_id === null
+            ? []
+            : (inspected.state.works[inspected.state.active_work_id]?.parked_boundaries ?? []).map((entry) => ({
+                boundary_id: entry.boundary_id,
+                authority_id: entry.authority_id,
+                action: entry.action,
+                root: entry.root,
+            })),
     };
 }

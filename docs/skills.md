@@ -253,13 +253,16 @@ A few skills are worth knowing by name:
   work too. It records where each source came from and under which licence, takes mechanisms and never wording,
   checks the spec against the captures for shared text, builds from the spec in a fresh agent context, and
   closes with a parity run and a report. Nothing is committed for you.
-- **Where was I.** After a break, `lit adhd` (or `lit rewind`) lists your recent Codex sessions with what each was
-  asked, what waits on you, a gauge such as `[▉▉▉░░] 3/5` only when both numbers are real (otherwise the
+- **Where was I.** After a break, `lit adhd` (or `lit rewind`) shows a KPI board: the one thing to do now and the
+  exact word to type, done and remaining work in four buckets with ten-cell bars, milestones, and up to five
+  reminders such as a session that waits on you, uncommitted work or a plan stalled for a week. `lit adhd detail`
+  adds the per-session list with what each was asked, what waits on you, a gauge such as `[▉▉▉░░] 3/5` only when both numbers are real (otherwise the
   known facts in words, such as `12 steps · 4m · last: apply_patch`), paused work, a roadmap of done, now and later
   with dates, and one next step. On the desktop card the look turns rainbow while it runs; the card and the session
   start offer `lit adhd` quietly after a break. Say `go` within 30 minutes to run that step. If you started a side discipline in
   the middle of a loop, `lit continue` returns to the loop at the stage and count it left. Nothing is edited, and
-  `lit approve` or `lit deny` for a Start Work boundary stay yours to type.
+  `lit approve` and `lit deny` (both optional; they settle every step a Start Work run parked) and `lit cancel`
+  stay yours to type.
 - **Word and PowerPoint.** Pick `lit-docx` for a Word report or proposal and `lit-pptx` for slides.
   A `lit` request for either one loads the matching skill, and asking for both loads both. Before it
   builds anything, each skill reads your material and decides what kind of deck or document it is: a

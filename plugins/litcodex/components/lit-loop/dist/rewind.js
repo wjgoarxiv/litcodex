@@ -15,6 +15,7 @@ import { clean, cleanDeep, cleanLines } from "./control-chars.js";
 import { readHerdrAgents } from "./herdr-agents.js";
 import { displayWidth, fit } from "./hud.js";
 import { codexHomeFrom, plainDirsOrMissing, readSmallJson, writeFileAtomic } from "./live-step.js";
+import { buildBoard, STALE_MS, } from "./rewind-board.js";
 import { makeRedactor } from "./rewind-redact.js";
 import { listRollouts, newBudget, readRollout, TOTAL_BYTES, } from "./rewind-rollout.js";
 import { readLiveness, readSessionsLiveness } from "./session-liveness.js";
@@ -151,6 +152,21 @@ function isTemplate(rows) {
     return (rows.some((row) => /<[^<>]{1,40}>/u.test(row.label)) ||
         (rows.length > 1 && new Set(rows.map((row) => row.label.trim())).size === 1));
 }
+/** A plan's first `#` heading, else its file name without the date prefix and extension, in words. */
+export function planTitle(text, file) {
+    const heading = /^#\s+(.+)$/mu
+        .exec(text)?.[1]
+        ?.replace(/^(?:plan|계획)\s*[:：]\s*/iu, "")
+        .trim();
+    if (heading !== undefined && heading !== "")
+        return heading;
+    const words = file
+        .replace(/\.md$/u, "")
+        .replace(/^\d{4}-\d{2}-\d{2}[-_]?/u, "")
+        .replace(/[-_]+/gu, " ")
+        .trim();
+    return words === "" ? file : words;
+}
 function plansOf(path) {
     const scan = { open: [], finished: [], skipped: [] };
     if (!plainDirsOrMissing(path, ".litcodex/plans"))
@@ -167,7 +183,8 @@ function plansOf(path) {
             }
             const text = readFileSync(full, "utf8");
             const rows = countPlanRows(text);
-            if (rows.total === 0 || isTemplate(planRows(text)))
+            const listed = planRows(text);
+            if (rows.total === 0 || isTemplate(listed))
                 continue;
             const plan = {
                 name: file,
@@ -175,6 +192,8 @@ function plansOf(path) {
                 total: rows.total,
                 gauge: stackGauge({ n: rows.done, total: rows.total }),
                 changedMs: stat.mtimeMs,
+                rows: listed,
+                title: planTitle(text, file),
             };
             (rows.done < rows.total ? scan.open : scan.finished).push(plan);
         }
@@ -184,8 +203,16 @@ function plansOf(path) {
     }
     return scan;
 }
+/** The `OpenPlan` fields alone, so the JSON does not carry every plan row twice. */
+const planFields = ({ name, done, total, gauge, changedMs }) => ({
+    name,
+    done,
+    total,
+    gauge,
+    changedMs,
+});
 function openPlansOf(path) {
-    return plansOf(path).open;
+    return plansOf(path).open.map(planFields);
 }
 /** The open plan `name` (a file under `.litcodex/plans`), or null when it is finished, a scaffold or missing. */
 export function openPlanNamed(cwd, name) {
@@ -346,15 +373,28 @@ function milestonesOf(path, git, paused, plans, now) {
 }
 // ── Next step ────────────────────────────────────────────────────────────────
 /** A paused start-work record waiting on a boundary answer, read from the workspace state file. */
-function pendingBoundary(cwd) {
+/**
+ * Steps the start-work run here parked: the active work's `parked_boundaries`, or 1 for a run an older version left
+ * paused at one boundary (read as one parked step). The run keeps going either way.
+ */
+function parkedCount(cwd) {
     if (!plainDirsOrMissing(cwd, ".litcodex/start-work"))
-        return false;
+        return 0;
     const state = readSmallJson(join(cwd, ".litcodex/start-work/state.json"), MAX_STATE_BYTES);
     if (!isRecord(state) || !isRecord(state["works"]))
-        return false;
-    return Object.values(state["works"])
+        return 0;
+    const work = Object.values(state["works"])
         .filter(isRecord)
-        .some((work) => work["status"] === "paused" && isRecord(work["pending_boundary"]));
+        .find((entry) => entry["work_id"] === state["active_work_id"]);
+    if (work === undefined)
+        return 0;
+    if (work["status"] === "paused" && isRecord(work["pending_boundary"]))
+        return 1;
+    const parked = work["parked_boundaries"];
+    return work["status"] === "active" && Array.isArray(parked) ? parked.length : 0;
+}
+function parkedSuffix(count) {
+    return count > 0 ? ` · ${count} parked (optional \`lit approve\`; \`lit cancel\` ends the run)` : "";
 }
 /** The start-work run under way here (active, or paused without a boundary), and whether this session owns it. */
 function workUnderWay(cwd, sessionId) {
@@ -377,8 +417,8 @@ function workUnderWay(cwd, sessionId) {
     return { id: activeId, mine };
 }
 /**
- * The one step worth taking next, in priority order: the paused frame of this session's stack, then a boundary
- * waiting for an answer (shown, never started), then work already under way, then the single open plan.
+ * The one step worth taking next, in priority order: the paused frame of this session's stack, then work already
+ * under way (with its parked steps counted, never waited on), then the single open plan.
  */
 export function chooseNext(cwd, sessionId) {
     return cleanDeep(chooseNextRaw(cwd, sessionId));
@@ -397,12 +437,7 @@ function chooseNextRaw(cwd, sessionId) {
             };
         }
     }
-    if (pendingBoundary(cwd)) {
-        return {
-            kind: "approve-boundary",
-            text: "start-work waits at a boundary: answer `lit approve` or `lit deny` yourself",
-        };
-    }
+    const parked = parkedSuffix(parkedCount(cwd));
     const signals = readWorkflowSignals(cwd, sessionId);
     const work = signals.work;
     if (work !== null && work.status !== "completed" && work.done < work.total) {
@@ -411,12 +446,12 @@ function chooseNextRaw(cwd, sessionId) {
         if (run === null || !run.mine) {
             return {
                 kind: "other-session",
-                text: `another session runs the ${work.status} start-work plan, ${work.done} of ${work.total} tasks done: continue it there`,
+                text: `another session runs the ${work.status} start-work plan, ${work.done} of ${work.total} tasks done: continue it there${parked}`,
             };
         }
         return {
             kind: "continue-work",
-            text: `continue the ${work.status} start-work plan, ${work.done} of ${work.total} tasks done`,
+            text: `continue the ${work.status} start-work plan, ${work.done} of ${work.total} tasks done${parked}`,
             work: run.id,
         };
     }
@@ -544,6 +579,7 @@ export function collectRewind(options) {
     ];
     const unique = [...new Set(folders)].filter((folder) => isAbsolute(folder));
     const { trees, gitState } = worktreesOf(unique, git);
+    const boardTrees = [];
     const worktrees = trees.map((tree) => {
         const signals = readWorkflowSignals(tree.path, null, now);
         const subject = git(tree.path, ["log", "-1", "--format=%s"]);
@@ -565,8 +601,12 @@ export function collectRewind(options) {
         // Every plan, this worktree's too, counts only if it changed inside the window.
         const inWindow = (plan) => plan.changedMs !== null && now - plan.changedMs <= sinceMs;
         const scan = plansOf(tree.path);
-        const openPlans = scan.open.filter(inWindow).slice(0, 4);
+        const openPlans = scan.open.filter(inWindow).slice(0, 4).map(planFields);
         const pausedHere = pausedFramesOf(tree.path);
+        boardTrees.push({
+            raw: tree.path,
+            input: boardTreeOf(tree.path, scan, inWindow, signals.goals, git, redact, now),
+        });
         return {
             path: redact(tree.path),
             branch: tree.branch,
@@ -598,6 +638,9 @@ export function collectRewind(options) {
                 .find((tree) => insideDir(where, homed(tree.path)));
         return { ...session, tree: owner?.path ?? null };
     });
+    // The board leads with the folder that asked.
+    const ownTree = (raw) => insideDir(options.cwd, raw);
+    const orderedTrees = [...boardTrees.filter((t) => ownTree(t.raw)), ...boardTrees.filter((t) => !ownTree(t.raw))];
     const herdr = readHerdrAgents(env, options.herdr);
     const lanes = lanesOf(placed, laneRootsOf(options.cwd, git), sessionId, env, herdr, now, homed);
     const chosen = chooseNext(options.cwd, sessionId);
@@ -613,6 +656,23 @@ export function collectRewind(options) {
         : chosen;
     if (sessionId !== null)
         writeNext(options.cwd, sessionId, next, now);
+    const suggestion = pickSuggestion(placed, worktrees);
+    const unknown = [
+        ...Object.entries({ sessions: sessionsState, git: gitState })
+            .filter(([, state]) => state === "unknown")
+            .map(([name]) => name),
+        ...(herdr.state === "unknown" ? ["herdr agents"] : []),
+    ];
+    const kpi = buildBoard({
+        now,
+        step: boardStepOf(next, suggestion, lanes, orderedTrees, plansOf(options.cwd).open, options.cwd, redact),
+        trees: orderedTrees.map((tree) => tree.input),
+        waiting: placed
+            .filter((session) => !session.current && session.status === "waiting-on-user")
+            .map((session) => ({ place: placeOf(session), question: lastQuestion(session.lastAgent) })),
+        working: Math.max(0, lanes.count - lanes.waiting),
+        unknown,
+    });
     // Commit subjects, branch names, plan rows and names, goals and paths are record text: none of it may carry a control.
     return cleanDeep({
         generatedAt: new Date(now).toISOString(),
@@ -620,12 +680,140 @@ export function collectRewind(options) {
         sessions: placed,
         worktrees,
         next,
-        lanes: { count: lanes.count, waiting: lanes.waiting, labels: lanes.labels, herdr: herdr.state },
+        lanes: {
+            count: lanes.count,
+            waiting: lanes.waiting,
+            labels: lanes.labels,
+            places: lanes.places,
+            herdr: herdr.state,
+        },
         suggestion: suggestionOf(placed, worktrees),
+        kpi,
         scope: { sinceMs, worktrees: worktrees.length },
         sources: { sessions: sessionsState, git: gitState, state: "ok" },
         budget: { limit, used: limit - budget.remaining, exhausted: budget.exhausted },
     });
+}
+// ── Board inputs ─────────────────────────────────────────────────────────────
+/** The plan file and state of the start-work run under way in this folder, or null. */
+function activeWorkOf(cwd) {
+    if (!plainDirsOrMissing(cwd, ".litcodex/start-work"))
+        return null;
+    const state = readSmallJson(join(cwd, ".litcodex/start-work/state.json"), MAX_STATE_BYTES);
+    if (!isRecord(state) || !isRecord(state["works"]))
+        return null;
+    const activeId = state["active_work_id"];
+    const work = Object.values(state["works"])
+        .filter(isRecord)
+        .find((entry) => entry["work_id"] === activeId && (entry["status"] === "active" || entry["status"] === "paused"));
+    if (work === undefined || typeof work["active_plan"] !== "string")
+        return null;
+    const file = basename(work["active_plan"]);
+    // An older version's pause at a boundary now reads as a running work with that step parked.
+    const paused = work["status"] === "paused" && !isRecord(work["pending_boundary"]);
+    return file.endsWith(".md") ? { file, paused } : null;
+}
+/** A count git prints on its own line, or null when git could not say. */
+function gitCount(git, cwd, args, lines) {
+    const out = git(cwd, args);
+    if (out === null)
+        return null;
+    if (lines)
+        return out.split("\n").filter((line) => line.trim() !== "").length;
+    const value = Number.parseInt(out.trim(), 10);
+    return Number.isFinite(value) && value >= 0 ? value : null;
+}
+/** What the board reads from one worktree: its plans in the window with their rows, stale plans, git state. */
+function boardTreeOf(path, scan, inWindow, goals, git, redact, now) {
+    const named = (plan) => ({
+        title: snippet(redact, plan.title, 80) ?? plan.name,
+        file: plan.name,
+        rows: plan.rows.map((row) => ({ done: row.done, label: snippet(redact, row.label, 120) ?? "" })),
+        changedMs: plan.changedMs,
+    });
+    const work = activeWorkOf(path);
+    return {
+        name: homeless(redact(path)),
+        plans: [...scan.open, ...scan.finished].filter(inWindow).slice(0, 8).map(named),
+        stale: scan.open
+            .filter((plan) => plan.changedMs !== null && now - plan.changedMs >= STALE_MS)
+            .map((plan) => ({ title: named(plan).title, changedMs: plan.changedMs ?? now })),
+        work: work === null ? null : { ...work, parked: parkedCount(path) },
+        parked: parkedCount(path),
+        goals: goals === null ? null : { done: goals.done, total: goals.total },
+        uncommitted: gitCount(git, path, ["status", "--porcelain=v1", "--untracked-files=normal"], true),
+        unpushed: gitCount(git, path, ["rev-list", "--count", "@{upstream}..HEAD"], false),
+        handoffNext: snippet(redact, handoffNext(path), 120),
+    };
+}
+/** The step to take now, as board data: the recorded `next`, else the suggestion, with no session id in it. */
+function boardStepOf(next, pick, lanes, trees, cwdOpen, cwd, redact) {
+    const own = trees.find((tree) => insideDir(cwd, tree.raw))?.input;
+    const titleOf = (file) => own?.plans.find((plan) => plan.file === file)?.title ??
+        snippet(redact, cwdOpen.find((plan) => plan.name === file)?.title ?? planTitle("", file), 80) ??
+        file;
+    switch (next.kind) {
+        case "resume-frame":
+            return { kind: "resume", skill: next.skill ?? "work", stage: next.stage ?? null };
+        case "approve-boundary":
+            return { kind: "approve", place: own?.name ?? homeless(redact(cwd)) };
+        case "continue-work": {
+            if (next.work !== undefined && own?.work != null) {
+                const plan = own.plans.find((item) => item.file === own.work?.file);
+                const rows = plan?.rows ?? cwdOpen.find((item) => item.name === own.work?.file)?.rows ?? [];
+                return {
+                    kind: "continue",
+                    title: titleOf(own.work.file),
+                    done: rows.length === 0 ? null : rows.filter((row) => row.done).length,
+                    total: rows.length === 0 ? null : rows.length,
+                };
+            }
+            return {
+                kind: "continue",
+                title: "lit-loop goals",
+                done: own?.goals?.done ?? null,
+                total: own?.goals?.total ?? null,
+            };
+        }
+        case "start-plan": {
+            const plan = cwdOpen.find((item) => item.name === next.plan);
+            return {
+                kind: "start",
+                title: titleOf(next.plan ?? ""),
+                done: plan?.done ?? 0,
+                total: plan?.total ?? 0,
+            };
+        }
+        case "other-session":
+            return { kind: "elsewhere" };
+        case "wait-lanes": {
+            const place = lanes.places[0] ?? "another lane";
+            return lanes.waiting > 0
+                ? { kind: "answer-lane", place, more: Math.max(0, lanes.count - 1) }
+                : { kind: "wait-lanes", place: [...new Set(lanes.places)].join(", ") || place, count: lanes.count };
+        }
+        case "handoff":
+            return { kind: "handoff", item: own?.handoffNext ?? next.text.replace(/^from the handoff:\s*/u, "") };
+        case "none":
+            break;
+    }
+    switch (pick.kind) {
+        case "answer":
+            return { kind: "answer", place: placeOf(pick.session), question: pick.question };
+        case "review":
+        case "check":
+        case "pick-up":
+            return { kind: pick.kind, place: placeOf(pick.session), title: pick.session.title ?? "no first request" };
+        case "resume":
+            return { kind: "resume-other", label: pick.label, place: pick.place };
+        case "plan-item": {
+            const tree = trees.find((item) => item.input.name === pick.place)?.input;
+            const title = tree?.plans.find((plan) => plan.file === pick.plan)?.title ?? planTitle("", pick.plan);
+            return { kind: "plan-item", title, item: pick.item };
+        }
+        case "nothing":
+            return { kind: "nothing" };
+    }
 }
 // ── Lanes ────────────────────────────────────────────────────────────────────
 /** This checkout's top folder and the other worktrees of its repository; the folder alone when git cannot say. */
@@ -658,6 +846,7 @@ function lanesOf(sessions, roots, sessionId, env, herdr, now, homed) {
             pane: null,
             waiting: session.status === "waiting-on-user",
             label: `${session.shortId} in ${placeOf(session)}`,
+            place: placeOf(session),
         });
     }
     for (const root of roots) {
@@ -679,6 +868,7 @@ function lanesOf(sessions, roots, sessionId, env, herdr, now, homed) {
                 pane: record.herdrPane,
                 waiting: false,
                 label: `${shortIdOf(id)} in ${basename(root)}`,
+                place: basename(root),
             });
         }
     }
@@ -707,6 +897,7 @@ function lanesOf(sessions, roots, sessionId, env, herdr, now, homed) {
             pane: agent.pane,
             waiting: agent.status === "blocked",
             label: `${agent.agent} in pane ${agent.pane ?? "unknown"}`,
+            place: homeless(agent.foregroundCwd ?? agent.cwd ?? null),
         });
     }
     const ordered = [...lanes.filter((lane) => lane.waiting), ...lanes.filter((lane) => !lane.waiting)];
@@ -714,6 +905,7 @@ function lanesOf(sessions, roots, sessionId, env, herdr, now, homed) {
         count: lanes.length,
         waiting: ordered.filter((lane) => lane.waiting).length,
         labels: ordered.slice(0, LANE_LABELS).map((lane) => lane.label),
+        places: ordered.slice(0, LANE_LABELS).map((lane) => lane.place),
     };
 }
 /** The held-back step: answer the lane that waits on the user, else wait for the lanes to finish. */
@@ -742,20 +934,38 @@ function lastQuestion(text) {
  * open plan item, the latest other active session, the latest other ended one. It is shown, never recorded.
  */
 export function suggestionOf(sessions, worktrees) {
+    const pick = pickSuggestion(sessions, worktrees);
+    switch (pick.kind) {
+        case "answer":
+            return `answer ${pick.session.shortId} in ${placeOf(pick.session)}${pick.question === null ? "" : `: “${pick.question}”`}`;
+        case "review":
+            return `review what ${pick.session.shortId} finished in ${placeOf(pick.session)}: ${fit(pick.session.title ?? "no first request", 50)}`;
+        case "resume":
+            return `resume ${pick.label} in ${pick.session} (${pick.place})`;
+        case "plan-item":
+            return `next in ${pick.plan} (${pick.place}): ${pick.item}`;
+        case "check":
+            return `check on ${pick.session.shortId} in ${placeOf(pick.session)} (${fit(pick.session.title ?? "no first request", 50)})${pick.session.doing === null ? "" : `, now ${pick.session.doing}`}`;
+        case "pick-up":
+            return `pick up ${pick.session.shortId} in ${placeOf(pick.session)}: ${fit(pick.session.title ?? "no first request", 50)}`;
+        case "nothing":
+            return "no session or plan in this window: say what to start";
+    }
+}
+/** The suggestion as data, so the brief and the board word the same pick. */
+function pickSuggestion(sessions, worktrees) {
     const others = sessions.filter((session) => !session.current);
     const waiting = others.find((session) => session.status === "waiting-on-user");
-    if (waiting !== undefined) {
-        const question = lastQuestion(waiting.lastAgent);
-        return `answer ${waiting.shortId} in ${placeOf(waiting)}${question === null ? "" : `: “${question}”`}`;
-    }
+    if (waiting !== undefined)
+        return { kind: "answer", session: waiting, question: lastQuestion(waiting.lastAgent) };
     // Finished work is reviewed, never picked up again as if it were still to do.
     const finished = others.find((session) => session.status === "done");
     if (finished !== undefined)
-        return `review what ${finished.shortId} finished in ${placeOf(finished)}: ${fit(finished.title ?? "no first request", 50)}`;
+        return { kind: "review", session: finished };
     for (const tree of worktrees) {
         const paused = tree.paused[0];
         if (paused !== undefined)
-            return `resume ${paused.label} in ${paused.session} (${homeless(tree.path)})`;
+            return { kind: "resume", label: paused.label, session: paused.session, place: homeless(tree.path) };
     }
     const liveTrees = new Set(sessions
         .filter((session) => session.status !== "ended" && session.status !== "done")
@@ -766,14 +976,19 @@ export function suggestionOf(sessions, worktrees) {
     const tree = withItem[0];
     const item = tree?.milestones.find((milestone) => milestone.state === "now");
     if (tree !== undefined && item !== undefined)
-        return `next in ${tree.openPlans[0]?.name ?? "the open plan"} (${homeless(tree.path)}): ${item.label}`;
+        return {
+            kind: "plan-item",
+            plan: tree.openPlans[0]?.name ?? "the open plan",
+            place: homeless(tree.path),
+            item: item.label,
+        };
     const active = others.find((session) => session.status === "active" || session.status === "idle");
     if (active !== undefined)
-        return `check on ${active.shortId} in ${placeOf(active)} (${fit(active.title ?? "no first request", 50)})${active.doing === null ? "" : `, now ${active.doing}`}`;
+        return { kind: "check", session: active };
     const ended = others.find((session) => session.status === "ended");
     if (ended !== undefined)
-        return `pick up ${ended.shortId} in ${placeOf(ended)}: ${fit(ended.title ?? "no first request", 50)}`;
-    return "no session or plan in this window: say what to start";
+        return { kind: "pick-up", session: ended };
+    return { kind: "nothing" };
 }
 // ── Brief ────────────────────────────────────────────────────────────────────
 function pad(text, width) {
@@ -937,7 +1152,7 @@ function nextBox(result, width) {
     const say = result.next.kind === "none"
         ? "nothing runs on its own here: open that session, or say what to do"
         : result.next.kind === "approve-boundary"
-            ? "answer `lit approve` or `lit deny` yourself"
+            ? "type `lit approve` (optional) or `lit cancel` yourself"
             : result.next.kind === "handoff"
                 ? "a step from the handoff note; `go` does not run it, so say what to do"
                 : result.next.kind === "other-session"

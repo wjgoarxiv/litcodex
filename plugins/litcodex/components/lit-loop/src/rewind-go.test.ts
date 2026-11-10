@@ -121,20 +121,17 @@ describe("takeGo", () => {
 		expect(stale?.kind === "hint" && stale.text).toMatch(/no longer holds/u);
 	});
 
-	it("never approves a boundary: go over an approve-boundary note only points at lit approve", () => {
+	it("never approves parked steps: go over an older approve-boundary note names lit approve and lit cancel", () => {
 		const cwd = workspace();
-		mkdirSync(join(cwd, ".litcodex/start-work"), { recursive: true });
+		mkdirSync(join(cwd, ".litcodex/adhd"), { recursive: true });
 		writeFileSync(
-			join(cwd, ".litcodex/start-work/state.json"),
-			JSON.stringify({
-				active_work_id: "w1",
-				works: { w1: { work_id: "w1", status: "paused", pending_boundary: { boundary_id: "b1" } } },
-			}),
+			notePath(cwd, "sess-1"),
+			JSON.stringify({ sessionId: "sess-1", kind: "approve-boundary", at: NOW }),
 		);
-		brief(cwd, "sess-1", NOW);
 		const go = takeGo(cwd, "sess-1", NOW + MIN);
 		expect(go).toMatchObject({ kind: "hint" });
-		expect(go?.kind === "hint" && go.text).toMatch(/lit approve/u);
+		expect(go?.kind === "hint" && go.text).toMatch(/`lit approve` \(optional\)/u);
+		expect(go?.kind === "hint" && go.text).toMatch(/`lit cancel` ends the run/u);
 	});
 
 	it("rejects a note forged for another session or with an unknown kind", () => {
@@ -153,15 +150,20 @@ describe("takeGo", () => {
 });
 
 describe("boundary answers", () => {
-	it.each(["lit approve", "lit deny", "lit 승인", "lit 거절", "  lit approve  "])("%j is an answer", (prompt) => {
-		expect(isBoundaryAnswer(prompt)).toBe(true);
-	});
+	it.each(["lit approve", "lit deny", "lit cancel", "lit 승인", "lit 거절", "lit 취소", "  lit approve  "])(
+		"%j is an answer",
+		(prompt) => {
+			expect(isBoundaryAnswer(prompt)).toBe(true);
+		},
+	);
 
 	it.each([
 		"lit approve it",
 		"Lit Approve",
 		"approve",
 		"lit approves",
+		"lit cancel now",
+		"Lit cancel",
 		"lit approve\nrm -rf",
 		`lit approve${" ".repeat(600)}`,
 	])("%j is not", (prompt) => {

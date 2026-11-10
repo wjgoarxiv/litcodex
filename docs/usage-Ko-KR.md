@@ -222,13 +222,13 @@ Codex의 native goal과 로컬 루프 기록은 별도로 관리됩니다. nativ
 | `lit brainstorm`, `lit ideation` 또는 `lit idea` | **lit-brainstorm** | 서로 다른 선택지를 많이 낸 뒤 고를 수 있는 짧은 목록으로 좁힘, 만들지는 않음 |
 | `lit schematic` 또는 `lit-schematic` | **lit-schematic** | 실제 장비를 SVG, PDF, PNG로 그림: P&ID, PFD, 실험 장치 그림, 아이소메트릭 컷어웨이. 이런 요청을 담은 단독 `lit`도 이 스킬로 이어짐 |
 | `lit hijack` 또는 `lit-hijack` | **lit-hijack** | 다른 사람이 공개한 기법(게시물, 아티클, 저장소, PDF)을 내 스킬로 옮김: 출처와 라이선스를 먼저 적고, 원문 표현 없는 명세를 쓰고, 따로 구현한 뒤 전후 비교로 증명함 |
-| `lit adhd` 또는 `lit rewind` | **lit-adhd** | 최근 Codex 세션을 읽기 전용으로 정리. 지금까지 끝낸 일, 지금 하는 일, 다음 한 걸음을 세 줄로 먼저 보여 주고, 이어서 요청, 진행 중·쉬는 중·끝냄·대기 상태, 게이지, 멈춘 작업, `go`로 실행할 다음 한 걸음을 정리. 끝난 세션은 검토하도록 권하고, 할 일이 따로 없으면 이 worktree HANDOFF의 `## Next`에서 다음 걸음을 가져옴. `lit continue`는 멈춘 루프를 그 단계 그대로 이어감 |
+| `lit adhd` 또는 `lit rewind` | **lit-adhd** | 최근 Codex 세션을 읽기 전용 KPI 보드로 정리. 지금 할 일(행동 하나, 이유 하나, 입력할 말), 한눈에 보기(끝남·진행 중·나를 기다림·남음과 전체 진행 막대), 마일스톤(계획마다 막대 한 줄), 최근 끝낸 일, 남은 일, `할 일 → 이렇게` 모양의 알림 최대 5개를 차례로 보여 줌. `lit adhd 자세히`는 세션별 요청, 진행 중·쉬는 중·끝냄·대기 상태, 게이지, 멈춘 작업 목록을 덧붙임. 끝난 세션은 검토하도록 권하고, 할 일이 따로 없으면 이 worktree HANDOFF의 `## Next`에서 다음 걸음을 가져옴. `lit continue`는 멈춘 루프를 그 단계 그대로 이어감 |
 | `litgoal` 또는 `lit goal` | **litgoal** | 완료 기준을 정하고 유지: 목표와 기준을 lit-loop와 Start Work가 향해 가는 루프 상태에 연결 |
 | `lit-recap` 또는 `lit recap` | **lit-recap** | `.litcodex` 원장을 읽기 전용으로 요약 |
 | `lit-comprehend` 또는 `comprehend` | **lit-comprehend** | 작업 트리 밖에 자체 완결형 설명 자료 생성 |
 | `review-work` 또는 `lit review` | **review-work** | Start Work 전에는 계획 검토, 뒤에는 작업 검토(읽기 전용). 있는 것을 보고 모드를 고르며 `lit review plan` 또는 `lit review work`로 지정 |
 | `litresearch`, `/litresearch` 또는 `lit research` | **litresearch** | 사실·가설·출처·불확실성을 나누는 연구 저널 |
-| `lit start work <plan-name>` | **Start Work** | 승인된 계획을 증거와 함께 실행 |
+| `lit start work <plan-name>` | **Start Work** | 승인된 계획을 증거와 함께 실행. 어느 창에서든 `lit cancel`(`lit 취소`)을 입력하면 실행을 끝냅니다. |
 | 정확히 단독으로 입력한 `handoff` | **lit-handoff** | 비밀값을 보호하는 재개 패킷 생성 또는 갱신 |
 | 정확히 단독으로 입력한 `lit-scientific-visualization` | **lit-scientific-visualization** | 훅을 통해 출판용 시각화 어댑터 로드 |
 

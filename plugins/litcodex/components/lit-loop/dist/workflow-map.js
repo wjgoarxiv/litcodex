@@ -212,7 +212,11 @@ function activeWorkPlan(repoRoot, sessionId) {
     const text = readText(repoRoot, join(repoRoot, ".litcodex/plans", file));
     if (text === null)
         return null;
-    return { status: work["status"], text };
+    // An older version's pause at a boundary reads as a running work with that step parked, never as PAUSED.
+    const status = work["status"] === "paused" && isRecord(work["pending_boundary"])
+        ? "active"
+        : work["status"];
+    return { status, text };
 }
 function readWork(repoRoot, sessionId) {
     const plan = activeWorkPlan(repoRoot, sessionId);

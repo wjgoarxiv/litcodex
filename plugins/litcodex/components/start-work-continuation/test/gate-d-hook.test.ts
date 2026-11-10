@@ -100,22 +100,23 @@ describe("Gate D Stop lease", () => {
 });
 
 describe("Gate D explicit prompt resume", () => {
-	it("registers the lifecycle UserPromptSubmit handler alongside Stop", () => {
+	it("registers the lifecycle UserPromptSubmit handler alongside Stop and the PreToolUse guard", () => {
 		expect(
 			EXPECTED_HOOKS.filter((hook) => hook.component === START_WORK_CONTINUATION_COMPONENT_DIR).map(
 				(hook) => `${hook.event}:${hook.subcommand}`,
 			),
-		).toEqual(["UserPromptSubmit:user-prompt-submit", "Stop:stop"]);
+		).toEqual(["UserPromptSubmit:user-prompt-submit", "Stop:stop", "PreToolUse:pre-tool-use"]);
 	});
 
 	it.each(["start-work", "$start-work", "lit start work", "$litcodex:start-work"])(
-		"resumes one paused work for exact leading Codex route %s and remains stdout-silent",
+		"grants the parked step of a legacy paused work for exact leading Codex route %s and remains stdout-silent",
 		(prefix) => {
 			const root = workspace("paused");
 			const prompt = `${prefix} plan --resume boundary-1 --grant grant-1`;
 			const input = userPrompt(root, "t1", prompt);
 			expect(runUserPromptSubmitHook(input)).toBe("");
 			expect(readLifecycleState(root)?.works["w1"]?.status).toBe("active");
+			expect(readLifecycleState(root)?.works["w1"]?.parked_boundaries).toBeUndefined();
 			expect(runUserPromptSubmitHook(input)).toBe("");
 			expect(events(root).filter((event) => event["kind"] === "start_work_resumed")).toHaveLength(1);
 		},
@@ -131,7 +132,7 @@ describe("Gate D explicit prompt resume", () => {
 	])("keeps non-authoritative route text inert: %s", (prompt) => {
 		const root = workspace("paused");
 		expect(runUserPromptSubmitHook(userPrompt(root, "t1", prompt))).toBe("");
-		expect(readLifecycleState(root)?.works["w1"]?.status).toBe("paused");
+		expect(readLifecycleState(root)?.works["w1"]?.parked_boundaries).toHaveLength(1);
 	});
 
 	it("validates an optional prompt selector against plan_name or canonical stem", () => {
@@ -141,7 +142,7 @@ describe("Gate D explicit prompt resume", () => {
 				userPrompt(mismatch, "t1", "start-work another-plan --resume boundary-1 --grant grant-1"),
 			),
 		).toBe("");
-		expect(readLifecycleState(mismatch)?.works["w1"]?.status).toBe("paused");
+		expect(readLifecycleState(mismatch)?.works["w1"]?.parked_boundaries).toHaveLength(1);
 
 		const display = workspace("paused", { plan_name: "Display plan" });
 		expect(
@@ -149,7 +150,7 @@ describe("Gate D explicit prompt resume", () => {
 				userPrompt(display, "t1", "$start-work Display plan --resume boundary-1 --grant grant-1"),
 			),
 		).toBe("");
-		expect(readLifecycleState(display)?.works["w1"]?.status).toBe("active");
+		expect(readLifecycleState(display)?.works["w1"]?.parked_boundaries).toBeUndefined();
 	});
 
 	it("reconciles a state-first resume crash on replay of the same prompt turn", () => {
@@ -176,7 +177,7 @@ describe("Gate D explicit prompt resume", () => {
 		expect(
 			runUserPromptSubmitHook({ ...userPrompt(root, "t1", "please continue"), transcript_path: transcript }),
 		).toBe("");
-		expect(readLifecycleState(root)?.works["w1"]?.status).toBe("paused");
+		expect(readLifecycleState(root)?.works["w1"]?.parked_boundaries).toHaveLength(1);
 	});
 
 	it("keeps cancelled work abandoned and Stop-silent", () => {

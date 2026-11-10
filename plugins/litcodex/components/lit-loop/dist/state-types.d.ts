@@ -10,7 +10,7 @@ export type LitLoopCodexGoalMode = "aggregate" | "per_story";
 /** Frozen tuple of the three user-model values (enumerable, single source). */
 export declare const LIT_LOOP_USER_MODELS: readonly LitLoopUserModel[];
 /** Lit-loop goal events plus canonical start-work lifecycle events. */
-export declare const LIT_LOOP_LEDGER_EVENT_KINDS: readonly ["plan_created", "goal_added", "goal_started", "goal_resumed", "goal_retried", "goal_completed", "goal_failed", "goal_blocked", "evidence_captured", "criterion_failed", "criterion_blocked", "criteria_revised", "state_recovered", "start_work_initialized", "start_work_continuation_issued", "start_work_paused", "start_work_resumed", "start_work_cancelled", "start_work_completed"];
+export declare const LIT_LOOP_LEDGER_EVENT_KINDS: readonly ["plan_created", "goal_added", "goal_started", "goal_resumed", "goal_retried", "goal_completed", "goal_failed", "goal_blocked", "evidence_captured", "criterion_failed", "criterion_blocked", "criteria_revised", "state_recovered", "start_work_initialized", "start_work_continuation_issued", "start_work_paused", "start_work_resumed", "start_work_cancelled", "start_work_completed", "start_work_boundary_parked", "start_work_boundary_denied"];
 export type LitLoopLedgerEventKind = (typeof LIT_LOOP_LEDGER_EVENT_KINDS)[number];
 /** Goal-id: uppercase `G`, exactly 3 digits, optional non-empty lowercase-slug. `G001-` invalid. */
 export declare const LIT_LOOP_GOAL_ID_RE: RegExp;

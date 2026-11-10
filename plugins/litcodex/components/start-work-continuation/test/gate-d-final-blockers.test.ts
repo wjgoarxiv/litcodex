@@ -19,7 +19,7 @@ afterEach(() => {
 });
 
 describe("Gate D null worktree contract", () => {
-	it("keeps schema-3 active and paused null worktrees readable as canonical cwd", () => {
+	it("keeps schema-3 null worktrees readable as canonical cwd, before and after a parked step", () => {
 		const root = workspace();
 		const initialized = initializeWork(root, init(root, null));
 
@@ -31,7 +31,11 @@ describe("Gate D null worktree contract", () => {
 		const external = externalRoot("null-paused");
 		transitionWork(root, pause(1, "pause-null", boundary(external, "pause-null", "deploy")));
 		expect(inspectLifecycleState(root)).toMatchObject({ ok: true });
-		expect(diagnoseLifecycle(root)).toMatchObject({ ok: true, active: { status: "paused" } });
+		expect(diagnoseLifecycle(root)).toMatchObject({
+			ok: true,
+			active: { status: "active" },
+			parkedBoundaries: [{ boundary_id: "pause-null" }],
+		});
 		expect(readLifecycleState(root)?.works["w1"]?.worktree_path).toBeNull();
 	});
 
@@ -65,7 +69,8 @@ describe("Gate D null worktree contract", () => {
 		expect(migrated.state).toMatchObject({ schema_version: 3, revision: 1 });
 		expect(migrated.state.works["w1"]?.worktree_path).toBeNull();
 		expect(inspectLifecycleState(root)).toMatchObject({ ok: true, sourceSchema: 3 });
-		expect(readLifecycleState(root)?.works["w1"]?.status).toBe("paused");
+		expect(readLifecycleState(root)?.works["w1"]?.status).toBe("active");
+		expect(readLifecycleState(root)?.works["w1"]?.parked_boundaries).toHaveLength(1);
 	});
 });
 
@@ -135,7 +140,7 @@ describe("Gate D effective boundary authorization", () => {
 		expect(result.state.works["w1"]?.status).toBe("active");
 	}, 15_000);
 
-	it("pauses and accepts a grant for a distinct external action and root", () => {
+	it("parks and accepts a grant for a distinct external action and root", () => {
 		const root = workspace();
 		initializeWork(root, init(root, root));
 		const external = externalRoot("distinct-root");
@@ -144,7 +149,11 @@ describe("Gate D effective boundary authorization", () => {
 		const paused = transitionWork(root, pause(1, "pause-distinct", requested));
 		const resumed = transitionWork(root, resume(2, "resume-distinct", requested, "grant-distinct"));
 
-		expect(paused).toMatchObject({ changed: true, state: { revision: 2 }, event: { kind: "start_work_paused" } });
+		expect(paused).toMatchObject({
+			changed: true,
+			state: { revision: 2 },
+			event: { kind: "start_work_boundary_parked" },
+		});
 		expect(resumed).toMatchObject({ changed: true, state: { revision: 3 }, event: { kind: "start_work_resumed" } });
 		expect(resumed.state.works["w1"]?.authority_grants).toContainEqual(
 			expect.objectContaining({ grant_id: "grant-distinct", action: "deploy", root: realpathSync(external) }),
