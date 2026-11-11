@@ -6,9 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.39] - 2026-11-11
+
 ### Changed
 
-- Nine content skills moved to wjgoarxiv-skills, a separate collection: `lit-pptx` (decks), `lit-docx`
+- Nine content skills moved to wjgoarxiv-skills (https://github.com/wjgoarxiv/wjgoarxiv-skills), a separate
+  public collection: `lit-pptx` (decks), `lit-docx`
   (documents), `lit-diagram-drawer`, `lit-schematic` and `lit-scientific-visualization` (figures), `frontend-ui-ux`
   and `visual-qa` (design), and `lit-typographic-motion` and `readme-studio` (video and covers). Each keeps its
   name here as a short stub that says where the skill went and gives the Codex copy command. The `lit` routes,
@@ -23,6 +26,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `litcodex office-runtime` and `litcodex motion-runtime`, the film pre-warm after a global install and
   `litcodex install`, and the film completion check that held the turn. They served only the moved skills.
 - The vendored scientific-visualization snapshot; it moved with its skill.
+
+### Note
+
+- To keep using a moved skill, clone the collection once and copy its Codex edition, for example `lit-docx`:
+
+  ```bash
+  git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
+  mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
+  cp -R wjgoarxiv-skills/variants/litcodex/lit-docx "${CODEX_HOME:-$HOME/.codex}/skills/lit-docx"
+  ```
+
+  Then start a new Codex session. Each stub prints the same lines for its own skill.
+- The plugin's hook list is unchanged by this release. If you no longer use the moved skills, you can delete the
+  engines the removed commands installed, `${XDG_CACHE_HOME:-~/.cache}/litcodex/office` and
+  `${XDG_CACHE_HOME:-~/.cache}/litcodex/motion-runtime`; nothing in LitCodex reads them any more.
 
 ## [1.0.38] - 2026-11-11
 
