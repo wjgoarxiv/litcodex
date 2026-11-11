@@ -40,8 +40,6 @@ import { promptModelRoute, renderModelRouteSummary, waitForModelRouteConfirmatio
 import type { OutputStyleId } from "./install-options.js";
 import { hasExplicitModelRouteFlags, parseInstallOptions } from "./install-options.js";
 import { renderPlainInstallResult } from "./install-output.js";
-import { motionRuntimeStatus, prepareMotionRuntime, renderMotionRuntime } from "./motion-runtime.js";
-import { officeRuntimeNotice, officeRuntimeStatus, prepareOfficeRuntime } from "./office-runtime.js";
 import { type MarketplaceSource, resolveBundledMarketplaceSource } from "./package-root.js";
 import { buildInstallPlan } from "./plan.js";
 import { renderInstallPlan } from "./render-plan.js";
@@ -427,10 +425,6 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 		...(attributionPrompt === undefined ? {} : { attributionPrompt }),
 	});
 
-	const officeRuntime = result.ok ? prepareOfficeRuntime(opts.codexHome, spawnSync, io.env) : undefined;
-	if (officeRuntime) io.stderr.write(`[litcodex] ${officeRuntimeNotice(officeRuntime.ready, officeRuntime.detail)}\n`);
-	const motionRuntime = result.ok ? prepareMotionRuntime(opts.codexHome, [], spawnSync, io.env) : undefined;
-	if (motionRuntime) io.stderr.write(`[litcodex] ${motionRuntime.receipt}\n`);
 	if (opts.json) {
 		io.stdout.write(`${JSON.stringify({ ...result, agentFile: agentFileLine })}\n`);
 	} else if (decorate) {
@@ -460,21 +454,8 @@ export function runDoctorCli(args: readonly string[], io: RouteIo = defaultIo())
 	writeCommandBanner(io, args);
 	const scope = doctorScopeFor(io.env);
 	const report = runDoctor({ spawn: realSpawn, fs: realFs, env: io.env, repoRoot: io.repoRoot, scope });
-	if (scope === "post-install") {
-		// The optional office and film runtimes never decide health; the update's 10 s check skips them.
-		if (json) io.stdout.write(`${JSON.stringify(report)}\n`);
-		else io.stdout.write(`${renderDoctorText(report)}\n`);
-		return report.ok ? 0 : 4;
-	}
-	const officeRuntime = officeRuntimeStatus(resolveCodexHome(io.env), spawnSync, io.env);
-	const motionRuntime = motionRuntimeStatus(resolveCodexHome(io.env), spawnSync, io.env);
-	if (json) {
-		io.stdout.write(`${JSON.stringify({ ...report, officeRuntime, motionRuntime })}\n`);
-	} else {
-		io.stdout.write(
-			`${renderDoctorText(report)}\n  office runtime: ${officeRuntime.ready ? "ready" : "missing"}\n${renderMotionRuntime(motionRuntime, "  ")}\n`,
-		);
-	}
+	if (json) io.stdout.write(`${JSON.stringify(report)}\n`);
+	else io.stdout.write(`${renderDoctorText(report)}\n`);
 	return report.ok ? 0 : 4;
 }
 

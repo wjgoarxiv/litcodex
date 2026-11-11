@@ -19,15 +19,8 @@
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, realpathSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-
-import {
-	assertCanonicalCorpusSnapshotStable,
-	CANONICAL_CORPUS_RELATIVE_ROOT,
-	CanonicalCorpusError,
-	verifyCanonicalCorpus,
-} from "../plugins/litcodex/skills/frontend-ui-ux/scripts/verify-canonical-corpus.mjs";
 
 // --- Legacy token set (assembled from fragments; self-immunity) -------------------------------
 
@@ -606,58 +599,6 @@ function reportLegacyError(errors, err) {
 	errors.push({ code: err.code, message: err.message, details: err.details });
 }
 
-/**
- * Return the exact candidate paths protected from the built-in legacy-token scan by the immutable
- * canonical frontend corpus.
- * The set is available only after the complete path/size/hash/legal verifier succeeds.
- * Repositories without that optional corpus retain the ordinary zero-exemption scanner behavior.
- */
-function captureCanonicalCorpusProtection(repoRoot, verifierFs) {
-	const corpusRoot = join(repoRoot, CANONICAL_CORPUS_RELATIVE_ROOT);
-	const enrolledSkillPath = join(repoRoot, "plugins/litcodex/skills/frontend-ui-ux/SKILL.md");
-	let stat;
-	try {
-		stat = statSync(corpusRoot, { throwIfNoEntry: false });
-	} catch (error) {
-		throw new LegacyScanError("LITCODEX_CANONICAL_CORPUS_UNREADABLE", "canonical corpus root is unreadable", {
-			causeCode: typeof error?.code === "string" ? boundedDiagnostic(error.code, 64) : "UNKNOWN",
-		});
-	}
-	if (stat === undefined) {
-		let enrolled;
-		try {
-			enrolled = statSync(enrolledSkillPath, { throwIfNoEntry: false });
-		} catch (error) {
-			throw new LegacyScanError("LITCODEX_CANONICAL_CORPUS_UNREADABLE", "frontend skill enrollment is unreadable", {
-				causeCode: typeof error?.code === "string" ? boundedDiagnostic(error.code, 64) : "UNKNOWN",
-			});
-		}
-		if (enrolled !== undefined) {
-			throw new LegacyScanError("LITCODEX_CANONICAL_CORPUS_MISSING", "enrolled canonical corpus root is missing", {
-				corpus: CANONICAL_CORPUS_RELATIVE_ROOT,
-			});
-		}
-		return { paths: new Set(), report: null };
-	}
-	try {
-		const report = verifyCanonicalCorpus(corpusRoot, verifierFs);
-		return {
-			paths: new Set([
-				...report.protectedRelativePaths.map((path) => `${CANONICAL_CORPUS_RELATIVE_ROOT}/${path}`),
-				`${CANONICAL_CORPUS_RELATIVE_ROOT}/MANIFEST.json`,
-			]),
-			report,
-		};
-	} catch (error) {
-		if (!(error instanceof CanonicalCorpusError)) throw error;
-		throw new LegacyScanError(error.code, error.message, { corpus: CANONICAL_CORPUS_RELATIVE_ROOT });
-	}
-}
-
-export function loadCanonicalCorpusProtection(repoRoot, verifierFs) {
-	return captureCanonicalCorpusProtection(repoRoot, verifierFs).paths;
-}
-
 function confirmMissingCandidate(context, rel, beforeDeletionConfirmation, errors) {
 	beforeDeletionConfirmation?.(rel);
 	let deleted;
@@ -724,7 +665,7 @@ function readCandidateText(context, rel, readFile, beforeDeletionConfirmation, e
 
 /**
  * Top-level scan. Never throws; converts LegacyScanError into report.errors.
- * @param {{repoRoot:string, allowlistPath:string, tokens?:readonly string[], modes?:Record<string,string>, readFile?:(path:string)=>Buffer, canonicalFs?:object, afterCanonicalCapture?:()=>void, beforeCandidateEnumeration?:()=>void, beforeDeletionConfirmation?:(path:string)=>void}} opts
+ * @param {{repoRoot:string, allowlistPath:string, tokens?:readonly string[], modes?:Record<string,string>, readFile?:(path:string)=>Buffer, beforeCandidateEnumeration?:()=>void, beforeDeletionConfirmation?:(path:string)=>void}} opts
  */
 export function runScan(opts) {
 	const tokens = opts.tokens ?? LEGACY_TOKENS;
@@ -753,15 +694,6 @@ export function runScan(opts) {
 	}
 
 	let candidate;
-	let canonicalCapture;
-	try {
-		canonicalCapture = captureCanonicalCorpusProtection(opts.repoRoot, opts.canonicalFs);
-		opts.afterCanonicalCapture?.();
-	} catch (err) {
-		if (!(err instanceof LegacyScanError)) throw err;
-		reportLegacyError(errors, err);
-		return emptyReport();
-	}
 	try {
 		candidate = enumerateCandidateFiles(opts.repoRoot, opts.beforeCandidateEnumeration);
 	} catch (err) {
@@ -775,44 +707,13 @@ export function runScan(opts) {
 
 	const allHits = [];
 	let scannedFiles = 0;
-	let protectedHits = 0;
 	for (const rel of files) {
-		if (canonicalCapture.paths.has(rel)) {
-			const corpusRelativePath = rel.slice(CANONICAL_CORPUS_RELATIVE_ROOT.length + 1);
-			const captured = canonicalCapture.report?.verifiedFiles?.get(corpusRelativePath)?.bytes;
-			if (!Buffer.isBuffer(captured)) {
-				errors.push({
-					code: "LITCODEX_CANONICAL_CORPUS_UNSTABLE",
-					message: "canonical corpus protected bytes are unavailable",
-					details: { corpus: CANONICAL_CORPUS_RELATIVE_ROOT },
-				});
-				continue;
-			}
-			if (!isBinary(captured)) {
-				scannedFiles += 1;
-				protectedHits += scanText(rel, captured.toString("utf8"), tokens, modes).length;
-			}
-			continue;
-		}
 		const text = readCandidateText(candidate.context, rel, readFile, opts.beforeDeletionConfirmation, errors);
 		if (text === null) continue;
 		scannedFiles += 1;
 		const hits = scanText(rel, text, tokens, modes);
 		for (const h of hits) allHits.push(h);
 	}
-	if (canonicalCapture.report !== null) {
-		try {
-			assertCanonicalCorpusSnapshotStable(canonicalCapture.report, opts.canonicalFs);
-		} catch (err) {
-			if (!(err instanceof CanonicalCorpusError)) throw err;
-			errors.push({
-				code: "LITCODEX_CANONICAL_CORPUS_UNSTABLE",
-				message: "canonical corpus changed after verified byte capture",
-				details: { corpus: CANONICAL_CORPUS_RELATIVE_ROOT },
-			});
-		}
-	}
-
 	const { offenders, deadEntries, pendingEntries } = reconcile(allHits, allowlist, candidatePaths);
 
 	offenders.sort((a, b) => {
@@ -831,8 +732,8 @@ export function runScan(opts) {
 	return {
 		ok,
 		scannedFiles,
-		totalHits: allHits.length + protectedHits,
-		allowlistedHits: allHits.length - offenders.length + protectedHits,
+		totalHits: allHits.length,
+		allowlistedHits: allHits.length - offenders.length,
 		offenders,
 		deadEntries: sortEntries(deadEntries),
 		pendingEntries: sortEntries(pendingEntries),
@@ -841,8 +742,8 @@ export function runScan(opts) {
 }
 
 /**
- * Scan every tracked file for externally supplied terms. Report text offenders by id only. Unlike
- * the built-in legacy-token scan, this path has no canonical-corpus exemption.
+ * Scan every tracked file for externally supplied terms. Report text offenders by id only. Like
+ * the built-in legacy-token scan, this path reads every tracked file with no exemption.
  * @param {{repoRoot:string, termsPath:string, readFile?:(path:string)=>Buffer}} opts
  */
 export function runExternalTermScan(opts) {
@@ -898,7 +799,7 @@ Flags:
   --json                  Emit the ScanReport as a single JSON line to stdout.
   --repo-root <path>      Repo root to scan (default: git toplevel, else cwd).
   --allowlist <path>      Allowlist file (default: <repo-root>/tools/legacy-token-allowlist.json).
-  --external-terms <path> Scan all tracked files, including the canonical corpus; report opaque ids.
+  --external-terms <path> Scan all tracked files; report opaque ids.
   --quiet                 Suppress the success summary line (ignored with --json).
   --help, -h              Print this usage and exit 0.`;
 

@@ -15,7 +15,6 @@ import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserProm
 import { laneScope, subagentEvent, toolLaneEvents } from "./lane-events.js";
 import { recordLaneEvent } from "./lane-state.js";
 import { detectWaitReason, endLiveStep, recordLiveStepEnd, recordLiveStepStart, recordTurnStart, writeThreadPointer, } from "./live-step.js";
-import { armMotionTurn, disarmMotionTurn, evaluateMotionStop, recordMotionTool, } from "./motion-gate.js";
 import { evaluatePlanPersistence, formatStopBlockOutput, rearmLitPlanIfSatisfied, recordLitPlanActivation, } from "./plan-persistence.js";
 import { clearActiveRoute, isBareLit, isLitContinue, readActiveRoute, readResumeWork, recordActiveRoute, } from "./reentry.js";
 import { isBoundaryAnswer, isGoPrompt, takeGo } from "./rewind-go.js";
@@ -151,13 +150,6 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
                 },
         };
     });
-    // A film prompt arms the completion gate for this session; any other prompt disarms it.
-    if (pointer !== null && isLitUserPromptSubmitInput(parsed)) {
-        if (decision.kind === "inject" && decision.film === true)
-            armMotionTurn(pointer.cwd, pointer.sessionId, auto.now);
-        else
-            disarmMotionTurn(pointer.cwd, pointer.sessionId);
-    }
     // A read-only brief never takes the saved route: the work under it keeps its contract and its place.
     if (pointer !== null && decision.kind === "inject" && decision.mode !== "lit-adhd") {
         recordActiveRoute(pointer.cwd, pointer.sessionId, spine?.skill ?? decision.mode);
@@ -385,16 +377,6 @@ export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoR
         // A subagent's Stop carries the parent's session id; the parent's turn is still running.
         if (isSubagent(parsed))
             return 0;
-        const motion = await evaluateMotionStop({
-            cwd: scope.cwd,
-            sessionId: scope.sessionId,
-            ...(auto.now === undefined ? {} : { now: auto.now }),
-            ...(auto.evaluateMotion === undefined ? {} : { evaluate: auto.evaluateMotion }),
-        });
-        if (motion.action === "block") {
-            stdout.write(formatStopBlockOutput(motion.reason));
-            return 0;
-        }
         const lastMsg = typeof record["last_assistant_message"] === "string" ? record["last_assistant_message"] : null;
         endLiveStep(scope.cwd, scope.sessionId, auto.now, true, detectWaitReason(lastMsg));
         const env = auto.env ?? process.env;
@@ -548,8 +530,6 @@ export async function runPostToolUseLiveHookCli(stdin, _stdout, _stderr, options
             recordLiveness(scope.cwd, scope.sessionId, "alive", options.env ?? process.env, now);
     }
     recordLanes(event.parsed, toolLaneEvents, now);
-    // A shell call that ran the film renderer is noted for the completion gate (motion-gate.ts).
-    recordMotionTool(event.parsed, now);
     return 0;
 }
 /** Fold a hook payload's lane events into the session's lane records; only a LIT thread has lanes to draw. */

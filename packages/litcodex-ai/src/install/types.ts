@@ -111,7 +111,6 @@ export interface DoctorReport {
 	/** `keep` or `off`: whether the block asks the model not to add AI attribution. */
 	readonly attribution: string;
 	readonly handoffInstalled: boolean;
-	readonly scientificVisualizationInstalled: boolean;
 	readonly capabilities: import("./host-capabilities.js").HostCapabilities;
 	readonly issues: readonly string[];
 	readonly warnings: readonly string[];

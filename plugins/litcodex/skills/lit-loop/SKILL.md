@@ -198,17 +198,18 @@ existing footage; a web page, landing page, screen or component that embeds a ba
 inserting a video into slides, a deck or a report; a script, transcript, summary, storyboard or
 thumbnail about a video; and UI motion such as button or hover motion, motion tokens or reduced
 motion. Bare motion or intro alone, including a motion put to a vote, never selects it. On a film
-request the hook names the installed `../lit-typographic-motion/scripts/render.mjs` by absolute
-path and lists its subcommands. Hand-encoded films are not the deliverable. A README, hero or
+request the hook adds a one-line film note that names the `../lit-typographic-motion/SKILL.md` stub
+by absolute path; the installed copy of the skill carries the renderer and its subcommands.
+Hand-encoded films are not the deliverable. A README, hero or
 banner loop is the same skill's cover mode: a silent, seamless loop gated on the decoded file.
 
 When this task creates or changes a user-facing web interface, put its UI behavior and probe in the
 plan or bounded acceptance checks. Load the installed sibling `../frontend-ui-ux/SKILL.md` as a
-supporting skill without a second banner. A request to build a page or screen, in English or Korean (a landing
-page, a dashboard, 화면 만들어줘), is this deliverable: before building, take its "Choose the design first" step (skipped under a bare `lit` or when the prompt names the look), then run
-`../frontend-ui-ux/scripts/design-lock.mjs init` so the look is locked, and the probe then checks DS-001 to DS-008
-against that lock. Run `../frontend-ui-ux/scripts/probe.mjs` on the built page at the seven-entry
-RS matrix and retain the JSON and screenshots. Remaining HIGH findings block done until fixed or named
+supporting skill without a second banner; it is a stub that hands over to the installed copy. A request to build a page or screen, in English or Korean (a landing
+page, a dashboard, 화면 만들어줘), is this deliverable: before building, take the copy's "Choose the design first" step (skipped under a bare `lit` or when the prompt names the look), then run
+the copy's design-lock `init` so the look is locked, and its probe then checks DS-001 to DS-008
+against that lock. Run the copy's interface probe on the built page at the seven-entry
+RS matrix and retain the JSON and screenshots. Without the copy, the UI criterion stays BLOCKED on the missing probe. Remaining HIGH findings block done until fixed or named
 as a specific limitation; an exit 2 keeps the UI criterion BLOCKED. This hand-off applies even when
 the larger task is an app. For a CLI or backend-only task with no user-facing web interface, do not load
 the frontend skill or run its browser probe. Decide from the deliverable, not quoted UI words.
@@ -233,6 +234,13 @@ name (덱 10장, 네오 브루탈리즘 스타일로) is a full deck request, no
 profiles without preference questions, and honor explicit user design choices.
 The request must actually seek an output; quoted examples and input-file names
 are inert. Run each skill's runtime and QA path, then inspect the rendered result.
+
+The content skills named in this section (lit-typographic-motion, frontend-ui-ux, visual-qa,
+lit-diagram-drawer, lit-schematic, lit-scientific-visualization, lit-docx, lit-pptx and readme-studio)
+moved to wjgoarxiv-skills. Each sibling file named here is now a same-name stub: it hands over to an
+installed copy of the skill when the session's skill list has one, and otherwise gives that skill's
+Codex install lines. Without the copy, pass those lines on once, build that deliverable by no other
+means, and finish the rest of the task; a check that needed the copy is recorded as missing.
 
 ### Durable task: use the checkpointed workflow
 

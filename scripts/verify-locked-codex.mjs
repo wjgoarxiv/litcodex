@@ -2,7 +2,7 @@
 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { isMain } from "../plugins/litcodex/skills/visual-qa/scripts/strict-input.mjs";
+import { isMain } from "./strict-json.mjs";
 import { ProbeTerminalError, verifyLockedCodex } from "./uiux-installed-probe-helpers.mjs";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");

@@ -102,9 +102,6 @@ describe("docs-audit command surface (pure)", () => {
 			"litcodex config attribution keep",
 			"litcodex agent-file project --dir <path>",
 			"litcodex hook user-prompt-submit",
-			"litcodex motion-runtime install",
-			"litcodex motion-runtime install --word-timing",
-			"litcodex motion-runtime status",
 			"litcodex loop create",
 			"litcodex loop run",
 			"litcodex loop status --json",
@@ -127,11 +124,21 @@ describe("docs-audit command surface (pure)", () => {
 		evidence("task-27-surface-fake-top.txt", `flagged ${hit.value}\nSTATUS: PASS`);
 	});
 
-	test("fake motion-runtime subcommand fails", () => {
-		const report = auditCommandSurface("```\nlitcodex motion-runtime warm\n```");
-		assert.ok(
-			report.offenders.some((o) => o.kind === "unknown-command" && o.value === "litcodex motion-runtime warm"),
-		);
+	test("only the changelog may keep the retired runtime routes, as history", () => {
+		const text = "- Add `litcodex office-runtime install|status` and `litcodex motion-runtime install`.\n";
+		const kinds = (rel) => auditDoc(text, rel).offenders.filter((o) => o.kind === "unknown-command").length;
+		assert.equal(kinds("CHANGELOG.md"), 0);
+		assert.ok(kinds("docs/usage.md") > 0);
+	});
+
+	test("the retired office and film runtime routes fail", () => {
+		for (const route of ["office-runtime", "motion-runtime"]) {
+			const report = auditCommandSurface(`\`\`\`\nlitcodex ${route} install\n\`\`\``);
+			assert.ok(
+				report.offenders.some((o) => o.kind === "unknown-command" && o.value.includes(route)),
+				`${route} must be flagged`,
+			);
+		}
 	});
 
 	test("fake loop subcommand fails", () => {

@@ -160,9 +160,10 @@ when the current authoritative request selects it.
 
 When a litwork task creates or changes a user-facing web interface, give the UI part its own plan
 criterion and load the installed sibling `../frontend-ui-ux/SKILL.md` as support without a second
-banner. For a new page or screen, take its "Choose the design first" step (skipped when the prompt names the look), then run `../frontend-ui-ux/scripts/design-lock.mjs init` so the look is locked.
-Run `../frontend-ui-ux/scripts/probe.mjs` on the built page at the seven-entry RS matrix; retain JSON and
-screenshots. Remaining HIGH findings block done until fixed or named as a specific limitation, and
+banner. That file is a same-name stub: frontend-ui-ux moved to wjgoarxiv-skills, and the stub hands over to
+the installed copy or gives its Codex install lines. With the copy, for a new page or screen, take its "Choose the design first" step (skipped when the prompt names the look), then run the copy's design-lock `init` so the look is locked.
+Run the copy's interface probe on the built page at the seven-entry RS matrix; retain JSON and
+screenshots. Without the copy, the UI criterion stays BLOCKED on the missing probe. Remaining HIGH findings block done until fixed or named as a specific limitation, and
 probe exit 2 keeps the criterion BLOCKED. For a CLI or backend-only task without a user-facing web
 interface, do not load the frontend skill or run its browser probe. Classify the deliverable itself,
 not UI words quoted in input files.

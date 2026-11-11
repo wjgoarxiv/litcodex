@@ -1,6 +1,23 @@
 {
   "schema": "litfamily.payload-substance/v1",
   "skills": {
-    "lit-burnoff-file": "Self-contained single-file cleanup adapter: scope, behavior lock, keep rules, verification, and no-op criteria live in SKILL.md. It links to the bundled cleanup and language policies for optional detail and ships no separate executable corpus."
+    "frontend-ui-ux": "Same-name stub for frontend-ui-ux, which moved to wjgoarxiv-skills: SKILL.md only says where the skill lives and gives the Codex install lines, so it ships no corpus of its own.",
+    "lit-burnoff-file": "Self-contained single-file cleanup adapter: scope, behavior lock, keep rules, verification, and no-op criteria live in SKILL.md. It links to the bundled cleanup and language policies for optional detail and ships no separate executable corpus.",
+    "readme-studio": "Same-name stub for readme-studio, which moved to wjgoarxiv-skills: SKILL.md only says where the skill lives and gives the Codex install lines, so it ships no corpus of its own.",
+    "visual-qa": "Same-name stub for visual-qa, which moved to wjgoarxiv-skills: SKILL.md only says where the skill lives and gives the Codex install lines, so it ships no corpus of its own."
+  },
+  "parityDivergences": {
+    "frontend-ui-ux": {
+      "date": "2026-11-11",
+      "reason": "frontend-ui-ux moved to wjgoarxiv-skills; LitCodex keeps only a same-name stub that points there, so its packed closure is intentionally far below the family median."
+    },
+    "lit-scientific-visualization": {
+      "date": "2026-11-11",
+      "reason": "lit-scientific-visualization moved to wjgoarxiv-skills; LitCodex keeps only a same-name stub that points there, so its packed closure is intentionally far below the family median."
+    },
+    "visual-qa": {
+      "date": "2026-11-11",
+      "reason": "visual-qa moved to wjgoarxiv-skills; LitCodex keeps only a same-name stub that points there, so its packed closure is intentionally far below the family median."
+    }
   }
 }

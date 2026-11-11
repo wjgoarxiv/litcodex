@@ -12,7 +12,6 @@ const EXACT_RUNTIME_FILES = new Set([
 ]);
 const REQUIRED_RUNTIME_FILES = [...EXACT_RUNTIME_FILES] as const;
 const PLUGIN_PREFIX = "plugins/litcodex/";
-const VENDOR_SCIENTIFIC_TESTS = new Set(["tests/test_figure_export.py", "tests/test_style_presets.py"]);
 
 export interface DevelopmentMarketplaceSource {
 	readonly root: string;
@@ -80,10 +79,6 @@ function isRuntimeVendorPath(relativePath: string): boolean {
 	}
 	if (relativePath.startsWith("handoff/")) {
 		return isRuntimeSkillPath(relativePath.slice("handoff/".length));
-	}
-	if (relativePath.startsWith("scientific-visualization/")) {
-		const corpusPath = relativePath.slice("scientific-visualization/".length);
-		return VENDOR_SCIENTIFIC_TESTS.has(corpusPath) || isRuntimeSkillPath(corpusPath);
 	}
 	return false;
 }

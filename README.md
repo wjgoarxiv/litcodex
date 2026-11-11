@@ -251,6 +251,10 @@ an editable file with its Markdown source next to it.
 lit turn notes.md into a ten-slide deck for the Monday review
 ```
 
+Both skills now live in wjgoarxiv-skills, a separate collection of content skills. LitCodex keeps their
+names, so the request above still reaches them: until you copy a skill into `~/.codex/skills/`, its stub
+answers with the one-line Codex install command.
+
 ### Cleaner prose, in English or Korean
 
 `$litcodex:lit-humanizer` rewrites stiff model writing while
@@ -270,9 +274,13 @@ Every skill can be picked in the Codex skill picker or mentioned by name, such a
 | Keeping LitCodex healthy | `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix` |
 | Running on their own | `rules`, `lsp` and `comment-checker`: project rules on each prompt, LSP and comment checks after edits |
 
+Apart from `browser-drive`, the screens, figures and film skills moved to wjgoarxiv-skills along with
+`lit-docx` and `lit-pptx`. Their names still work here; each one is a short stub that tells you where the
+skill went and how to copy it into `~/.codex/skills/`.
+
 ## What you can make
 
-Four pictures, each made by running a bundled skill's own scripts on this machine. Every figure in them is example data.
+Four pictures, each made by running a skill's own scripts on this machine. The deck, the page and the P&ID come from skills that now live in wjgoarxiv-skills. Every figure in them is example data.
 
 ### Where was I
 
@@ -487,8 +495,6 @@ flight asks what to start. Start Work always sends its full activation, because 
 | `litcodex doctor` | Diagnoses the install, loop state, host capabilities and effective config |
 | `litcodex uninstall` | Removes the plugin and the config LitCodex manages |
 | `litcodex config migrate` | Previews or applies the managed Codex config keys |
-| `litcodex office-runtime install` or `status` | Prepares or checks the pinned tools for Word and PowerPoint files |
-| `litcodex motion-runtime install` or `status` | Prepares or checks the film renderer tools |
 | `litcodex hud` | Shows the LIT card of the newest session live in a second terminal window |
 | `litcodex screen-status on`, `off` or `status` | Colours the LIT card in the terminal `codex` |
 | `litcodex statusline` | Prints the LIT status as one line, for a terminal status line command |

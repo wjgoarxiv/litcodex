@@ -140,7 +140,6 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 			missingSkillIds: [],
 			missingSkillResourcePaths: [],
 			handoffInstalled: false,
-			scientificVisualizationInstalled: false,
 			capabilities: unavailableCapabilities,
 			autoUpdate: readAutoUpdateReport(deps.env),
 			autoHandoff: autoHandoffWithWarnings(deps, null, warnings),
@@ -215,9 +214,6 @@ export function runDoctor(deps: DoctorDeps): DoctorReport {
 	}
 	if (!bundledSkills.handoffInstalled) {
 		issues.push("Bundled lit-handoff payload is incomplete. Run `litcodex install`.");
-	}
-	if (!bundledSkills.scientificVisualizationInstalled) {
-		issues.push("Bundled lit-scientific-visualization payload is incomplete. Run `litcodex install`.");
 	}
 	// After an update the install preflight has judged concurrency already; it refuses to install when unavailable.
 	if (!postInstall && capabilities.concurrency.status === "unavailable") {

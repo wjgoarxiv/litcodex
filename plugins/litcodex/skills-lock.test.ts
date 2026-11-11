@@ -21,7 +21,6 @@ import {
 	readLock,
 	SKILLS_ROOT,
 	seedBudget,
-	splitPack,
 } from "../../scripts/sync-skills-lock.mjs";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -74,12 +73,10 @@ describe("skills.lock.json", () => {
 			.sort();
 		const extra = fresh.pack.filter((path: string) => !lock.pack.includes(path));
 		const missing = lock.pack.filter((path: string) => !fresh.pack.includes(path));
-		const corpus = JSON.stringify(fresh.packCorpus) === JSON.stringify(lock.packCorpus);
-		expect({ stale, extra, missing, corpus }, "skills.lock.json is stale: run npm run sync:lock").toEqual({
+		expect({ stale, extra, missing }, "skills.lock.json is stale: run npm run sync:lock").toEqual({
 			stale: [],
 			extra: [],
 			missing: [],
-			corpus: true,
 		});
 		expect(fresh).toEqual(lock);
 	});
@@ -89,18 +86,6 @@ describe("skills.lock.json", () => {
 		const measured = measureSkills(SKILLS_ROOT);
 		expect(Object.keys(lock.budgets).sort(), "one budget per shipped skill").toEqual(Object.keys(measured).sort());
 		expect(budgetViolations(measured, lock.budgets)).toEqual([]);
-	});
-
-	it("pins the canonical corpus part of the pack list by digest, never by name", () => {
-		const corpus = "plugins/litcodex/skills/frontend-ui-ux/references/_canonical-corpus";
-		const split = splitPack(["z.md", `${corpus}/b.md`, "a.md", `${corpus}/a.md`]);
-		expect(split.pack).toEqual(["a.md", "z.md"]);
-		expect(split.packCorpus).toMatchObject({ root: corpus, files: 2 });
-		expect(splitPack([`${corpus}/a.md`, `${corpus}/b.md`]).packCorpus).toEqual(split.packCorpus);
-		expect(splitPack([`${corpus}/a.md`]).packCorpus.sha256, "a dropped corpus file changes the digest").not.toBe(
-			split.packCorpus.sha256,
-		);
-		expect(JSON.stringify(readLock().pack)).not.toContain(`${corpus}/`);
 	});
 
 	it("is wired as npm run sync:lock", () => {
@@ -169,7 +154,7 @@ describe("sync:lock budgets", () => {
 			});
 			expect(budgetViolations(lock.skills, lock.budgets)).toEqual([]);
 			expect(lock.pack).toEqual(["a", "b"]);
-			expect(lock.packCorpus.files).toBe(0);
+			expect(lock).not.toHaveProperty("packCorpus");
 			expect(lock.skills.kept).toMatchObject({ files: 2, skillMd: { bytes: 14_000 } });
 			expect(lock.skills.kept.sha256).toMatch(/^[0-9a-f]{64}$/u);
 			expect(buildLock({ skillsRoot: repo.skills, pack: ["a", "b"], previous: lock }), "deterministic").toEqual(

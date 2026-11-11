@@ -77,7 +77,7 @@ describe("runUserPromptSubmitHook lit-schematic routing #given/#when/#then", () 
 
 	it("keeps the film context for a film that is not a drawing", () => {
 		const ctx = parseInject(runUserPromptSubmitHook(ups("lit 우리 제품 소개 영상 만들어줘")));
-		expect(ctx).toContain("Film context: this is a film request.");
+		expect(ctx).toContain("Film context: this is a film request for lit-typographic-motion");
 		expect(ctx).not.toContain(LIT_SCHEMATIC_DIRECTIVE_MARKER);
 	});
 

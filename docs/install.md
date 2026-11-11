@@ -42,24 +42,9 @@ npm install -g @litfamily/litcodex
 litcodex install
 ```
 
-A global install does a little more than copy files. Right after the download, unless `CI` is set, a
-short setup script prints a welcome and then gets the video skill, `lit-typographic-motion`, ready ahead of time, so the
-tools it renders with are already in place the first time you ask for a video.
-
-Getting ready means a few downloads. The script runs `npm ci` to fetch pinned copies of `opentype.js`,
-`playwright-core` and `ws` from your npm registry, and it fetches pinned font and license files from
-GitHub and apache.org. It downloads no browser. Everything goes into
-`${XDG_CACHE_HOME:-~/.cache}/litcodex/motion-runtime/`. If the step does not finish, LitCodex is still
-installed, and the script prints the command to try again later: `litcodex motion-runtime install`.
-
-You can keep the script out of the global install in either of two ways:
-
-- Add `--ignore-scripts` to `npm install -g`. The whole script is left out, welcome included.
-- Set `CI=1` for that one command. The script sees it and stops before doing anything, just as it does
-  on a build server where `CI` is already set.
-
-Leaving it out here only postpones the downloads. `litcodex install` gets the video tools ready the same
-way after a successful install, and there is no switch to turn that off.
+A global install also runs a short setup script. Unless `CI` is set, it prints a welcome with the next
+steps. It downloads nothing. Add `--ignore-scripts` to `npm install -g`, or set `CI=1` for that one
+command, to leave it out.
 
 > Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.38 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.38 -- litcodex doctor`.
 

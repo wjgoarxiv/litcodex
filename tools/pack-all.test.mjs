@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { resolveNpmInvocation } from "../scripts/npm-command.mjs";
 import { assertPackage } from "./assert-pack-payload.mjs";
-import { packWorkspace, verifyPackedCanonicalCorpus } from "./pack-all.mjs";
+import { packWorkspace } from "./pack-all.mjs";
 
 const TOOL_SOURCE = fileURLToPath(new URL("./pack-all.mjs", import.meta.url));
 const ASSERT_SOURCE = fileURLToPath(new URL("./assert-pack-payload.mjs", import.meta.url));
@@ -273,72 +273,6 @@ process.stdout.write(JSON.stringify([{ name, version: "0.0.0", filename: "fixtur
 		]);
 		assert.equal(report.filesChecked, 3);
 	} finally {
-		rmSync(root, { recursive: true, force: true });
-	}
-});
-
-test("final package validation rejects canonical content changed inside the actual tarball", () => {
-	const root = mkdtempSync(join(tmpdir(), "lit-pack-canonical-bytes-"));
-	try {
-		const staged = join(root, "staged/package");
-		const relativeCorpus = "marketplace/plugins/litcodex/skills/frontend-ui-ux/references/_canonical-corpus";
-		const sourceCorpus = fileURLToPath(
-			new URL("../plugins/litcodex/skills/frontend-ui-ux/references/_canonical-corpus/", import.meta.url),
-		);
-		mkdirSync(join(staged, relativeCorpus, ".."), { recursive: true });
-		cpSync(sourceCorpus, join(staged, relativeCorpus), { recursive: true, preserveTimestamps: true });
-		writeFileSync(join(staged, relativeCorpus, "design/apple.md"), "changed only in packed bytes\n");
-
-		const runNpm = (args) => {
-			const destination = args[args.indexOf("--pack-destination") + 1];
-			const filename = "litfamily-litcodex-fixture.tgz";
-			const archived = spawnSync(
-				"tar",
-				["-czf", join(destination, filename), "-C", join(root, "staged"), "package"],
-				{
-					encoding: "utf8",
-				},
-			);
-			assert.equal(archived.status, 0, archived.stderr);
-			return {
-				status: 0,
-				stdout: JSON.stringify([{ name: "@litfamily/litcodex", filename, files: [], entryCount: 0, bundled: [] }]),
-				stderr: "",
-			};
-		};
-
-		assert.throws(
-			() => verifyPackedCanonicalCorpus(root, runNpm),
-			(error) => error.code === "LITCODEX_PACK_CANONICAL_CORPUS_INVALID",
-		);
-	} finally {
-		rmSync(root, { recursive: true, force: true });
-	}
-});
-
-test("final package validation creates its archive when publish dry-run is inherited", () => {
-	const root = mkdtempSync(join(tmpdir(), "lit-pack-inherited-dry-run-"));
-	const previousDryRun = process.env.npm_config_dry_run;
-	try {
-		const workspace = join(root, "packages/litcodex-ai");
-		const relativeCorpus = "marketplace/plugins/litcodex/skills/frontend-ui-ux/references/_canonical-corpus";
-		const sourceCorpus = fileURLToPath(
-			new URL("../plugins/litcodex/skills/frontend-ui-ux/references/_canonical-corpus/", import.meta.url),
-		);
-		mkdirSync(workspace, { recursive: true });
-		writeFileSync(
-			join(root, "package.json"),
-			JSON.stringify({ private: true, workspaces: ["packages/litcodex-ai"] }),
-		);
-		writeFileSync(join(workspace, "package.json"), JSON.stringify({ name: "@litfamily/litcodex", version: "0.0.0" }));
-		mkdirSync(join(workspace, relativeCorpus, ".."), { recursive: true });
-		cpSync(sourceCorpus, join(workspace, relativeCorpus), { recursive: true, preserveTimestamps: true });
-
-		process.env.npm_config_dry_run = "true";
-		assert.equal(verifyPackedCanonicalCorpus(root).fileCount, 167);
-	} finally {
-		if (previousDryRun === undefined) delete process.env.npm_config_dry_run;
-		else process.env.npm_config_dry_run = previousDryRun;
 		rmSync(root, { recursive: true, force: true });
 	}
 });

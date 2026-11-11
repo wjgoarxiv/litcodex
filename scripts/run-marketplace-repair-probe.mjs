@@ -126,7 +126,7 @@ function main() {
 		const bin = join(prefix, "bin", "litcodex");
 		const managed = join(codexHome, "marketplaces", "litcodex");
 		const source = join(prefix, "lib", "node_modules", "@litfamily", "litcodex", "marketplace");
-		const relativeTarget = "plugins/litcodex/skills/visual-qa/scripts/evidence-bytes.mjs";
+		const relativeTarget = "plugins/litcodex/skills/lit-humanizer/scripts/core.mjs";
 		const targetFile = join(managed, relativeTarget);
 		const sourceFile = join(source, relativeTarget);
 		const sentinel = join(codexHome, "user-owned.txt");

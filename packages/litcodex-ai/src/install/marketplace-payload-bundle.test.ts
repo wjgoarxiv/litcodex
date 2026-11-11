@@ -126,17 +126,16 @@ describe("marketplace payload bundle", () => {
 		expect(() => module.selectRuntimeFiles([unsafePath])).toThrow("noncanonical runtime path");
 	});
 
-	it("excludes repository coverage except the two immutable scientific payload tests", async () => {
+	it("excludes repository coverage, with no vendored test left to carry", async () => {
 		const module = await import(BUNDLE_SCRIPT_URL);
 		const coveragePaths = [
-			"plugins/litcodex/skills/frontend-ui-ux/frontend-ui-ux.test.ts",
-			"plugins/litcodex/skills/visual-qa/test/browser-contract.ts",
+			"plugins/litcodex/skills/lit-humanizer/lit-humanizer.test.ts",
+			"plugins/litcodex/skills/browser-drive/browser-drive.test.ts",
 			"plugins/litcodex/test/fixtures/metadata-invariants.json",
+			"plugins/litcodex/vendor/scientific-visualization/tests/test_style_presets.py",
 		];
-		const immutableTest = "plugins/litcodex/vendor/scientific-visualization/tests/test_style_presets.py";
-		const selected = module.selectRuntimeFiles([...coveragePaths, immutableTest]);
+		const selected = module.selectRuntimeFiles(coveragePaths);
 		for (const path of coveragePaths) expect(selected).not.toContain(path);
-		expect(selected).toContain(immutableTest);
 	});
 
 	it("fails closed when any non-retired tracked runtime file is missing", async () => {

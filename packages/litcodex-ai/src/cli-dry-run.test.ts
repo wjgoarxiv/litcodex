@@ -131,15 +131,6 @@ describe("--dry-run applies nothing on state-changing routes", () => {
 	});
 
 	it.each([
-		[["--dry-run", "office-runtime", "install"]],
-		[["office-runtime", "install", "--dry-run"]],
-		[["--dry-run", "motion-runtime", "install"]],
-		[["motion-runtime", "install", "--audio", "--dry-run"]],
-	])("%j prepares nothing", (args) => {
-		expectNothingApplied(sandbox(), args);
-	});
-
-	it.each([
 		[["--dry-run", "loop", "create", "--brief", "Fix login"]],
 		[["loop", "run", "--dry-run"]],
 		[["--dry-run", "loop", "checkpoint", "--goal-id", "G001", "--status", "complete", "--evidence", "ok"]],
@@ -196,14 +187,11 @@ describe("state-changing routes refuse options --help does not list", () => {
 	it.each([
 		[["uninstall", "-n"], "-n"],
 		[["uninstall", "--bogus"], "--bogus"],
-		[["office-runtime", "install", "-n"], "-n"],
-		[["office-runtime", "install", "--force"], "--force"],
-		[["motion-runtime", "install", "-n"], "-n"],
 	])("%j is refused before anything runs", (args, option) => {
 		expectRefused(args, option);
 	});
 
-	it.each([[["uninstall", "--dry-run=yes"]], [["office-runtime", "install", "--dry-run=1"]]])(
+	it.each([[["uninstall", "--dry-run=yes"]], [["uninstall", "--dry-run=1"]]])(
 		"%j: --dry-run only takes true or false",
 		(args) => {
 			expectRefused(args, "--dry-run=");
@@ -214,14 +202,6 @@ describe("state-changing routes refuse options --help does not list", () => {
 		[
 			["uninstall", "--dry-run=true"],
 			["uninstall", "--dry-run"],
-		],
-		[
-			["office-runtime", "install", "--dry-run=true"],
-			["office-runtime", "install", "--dry-run"],
-		],
-		[
-			["motion-runtime", "install", "--audio", "--dry-run=true"],
-			["motion-runtime", "install", "--audio", "--dry-run"],
 		],
 	])("%j is the same dry run as %j", (withValue, plain) => {
 		const box = sandbox();

@@ -75,8 +75,6 @@ export type HookDecision =
 			readonly stdout: string;
 			readonly mode: LitMode;
 			readonly entry?: "continue";
-			/** True when the film context was added, so the completion gate (motion-gate.ts) arms the turn. */
-			readonly film?: true;
 	  }
 	| { readonly kind: "noop" };
 
@@ -323,8 +321,7 @@ export function runUserPromptSubmitHook(
 	if (stdout === "") {
 		return { kind: "noop" };
 	}
-	const filmMark = film === "" ? {} : { film: true as const };
 	return keeps
-		? { kind: "inject", stdout, mode: route, entry: "continue", ...filmMark }
-		: { kind: "inject", stdout, mode: mode.mode, ...filmMark };
+		? { kind: "inject", stdout, mode: route, entry: "continue" }
+		: { kind: "inject", stdout, mode: mode.mode };
 }

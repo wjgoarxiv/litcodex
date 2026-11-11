@@ -30,19 +30,19 @@ afterEach(() => {
 });
 
 describe("exact bare scientific visualization UserPromptSubmit route", () => {
-	it("injects the native directive, exact banner, and complete adapter contract", () => {
+	it("injects the native directive, exact banner, and the moved-skill stub", () => {
 		// Given: the exact standalone scientific-visualization invocation.
 		// When: the real hook decision engine evaluates it.
 		const context = injectedContext(runUserPromptSubmitHook(userPrompt("lit-scientific-visualization")));
 
-		// Then: the trusted route arrives in one native envelope and names the complete installed adapter.
+		// Then: the trusted route arrives in one native envelope and names the installed stub, which gives the
+		// install lines for the skill and its authored source in wjgoarxiv-skills.
 		expect(context).toContain("<lit-scientific-visualization-mode>");
 		expect(context).toContain("🔥 **LIT IGNITED · lit-scientific-visualization** 🔥");
-		expect(context).toContain("scripts/dependency-preflight.py --json");
 		const adapterPath = /^skill lit-scientific-visualization: (.+)$/mu.exec(context)?.[1] ?? "";
 		const adapter = readFileSync(adapterPath, "utf8");
-		expect(adapter).toContain("authored_skill_root:");
-		expect(adapter).toContain("b1b8f1bf8791daecdbb00dc70631cd955e72976664d302af0bc81e218b9cec3b");
+		expect(adapter).toContain("stub_for: wjgoarxiv-skills plugins/figures/skills/lit-scientific-visualization/");
+		expect(adapter).toContain("plugins/figures/vendor/scientific-visualization");
 	});
 
 	it("accepts casing and edge whitespace while every non-exact form remains inert", () => {

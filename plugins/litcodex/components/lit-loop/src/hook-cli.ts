@@ -28,13 +28,6 @@ import {
 	writeThreadPointer,
 } from "./live-step.js";
 import {
-	armMotionTurn,
-	disarmMotionTurn,
-	evaluateMotionStop,
-	type MotionEvaluator,
-	recordMotionTool,
-} from "./motion-gate.js";
-import {
 	evaluatePlanPersistence,
 	formatStopBlockOutput,
 	rearmLitPlanIfSatisfied,
@@ -205,11 +198,6 @@ export async function runUserPromptSubmitHookCli(
 						},
 		};
 	});
-	// A film prompt arms the completion gate for this session; any other prompt disarms it.
-	if (pointer !== null && isLitUserPromptSubmitInput(parsed)) {
-		if (decision.kind === "inject" && decision.film === true) armMotionTurn(pointer.cwd, pointer.sessionId, auto.now);
-		else disarmMotionTurn(pointer.cwd, pointer.sessionId);
-	}
 	// A read-only brief never takes the saved route: the work under it keeps its contract and its place.
 	if (pointer !== null && decision.kind === "inject" && decision.mode !== "lit-adhd") {
 		recordActiveRoute(pointer.cwd, pointer.sessionId, spine?.skill ?? decision.mode);
@@ -258,8 +246,6 @@ export async function runUserPromptSubmitHookCli(
 export interface AutoHandoffHookOptions {
 	readonly env?: NodeJS.ProcessEnv;
 	readonly now?: number;
-	/** Replaces the installed film skill's done-check in the Stop gate; tests only. */
-	readonly evaluateMotion?: MotionEvaluator;
 }
 
 /** `lit-handoff auto on|off|status` changes a setting and never reaches the model: the prompt is blocked with one plain reply. */
@@ -467,16 +453,6 @@ export async function runStopPlanPersistenceHookCli(
 		}
 		// A subagent's Stop carries the parent's session id; the parent's turn is still running.
 		if (isSubagent(parsed)) return 0;
-		const motion = await evaluateMotionStop({
-			cwd: scope.cwd,
-			sessionId: scope.sessionId,
-			...(auto.now === undefined ? {} : { now: auto.now }),
-			...(auto.evaluateMotion === undefined ? {} : { evaluate: auto.evaluateMotion }),
-		});
-		if (motion.action === "block") {
-			stdout.write(formatStopBlockOutput(motion.reason));
-			return 0;
-		}
 		const lastMsg = typeof record["last_assistant_message"] === "string" ? record["last_assistant_message"] : null;
 		endLiveStep(scope.cwd, scope.sessionId, auto.now, true, detectWaitReason(lastMsg));
 		const env = auto.env ?? process.env;
@@ -670,8 +646,6 @@ export async function runPostToolUseLiveHookCli(
 			recordLiveness(scope.cwd, scope.sessionId, "alive", options.env ?? process.env, now);
 	}
 	recordLanes(event.parsed, toolLaneEvents, now);
-	// A shell call that ran the film renderer is noted for the completion gate (motion-gate.ts).
-	recordMotionTool(event.parsed, now);
 	return 0;
 }
 

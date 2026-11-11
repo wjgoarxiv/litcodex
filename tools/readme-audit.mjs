@@ -22,8 +22,6 @@ const DEFAULT_CONTRACT_PATH = fileURLToPath(new URL("./readme-contract.json", im
 export const TOP_LEVEL_ROUTES = Object.freeze([
 	"install",
 	"doctor",
-	"office-runtime",
-	"motion-runtime",
 	"uninstall",
 	"agent-file",
 	"config",
@@ -54,8 +52,6 @@ export const LOOP_SUBCOMMANDS = Object.freeze([
 // routable with the matching sub-token.
 export const CONFIG_SUBCOMMANDS = Object.freeze(["migrate", "agentFile", "attribution"]);
 export const HOOK_SUBCOMMANDS = Object.freeze(["user-prompt-submit", "stop", "session-start", "post-compact"]);
-export const OFFICE_RUNTIME_SUBCOMMANDS = Object.freeze(["install", "status"]);
-export const MOTION_RUNTIME_SUBCOMMANDS = Object.freeze(["install", "status"]);
 
 // Fixed, contract-derived non-gating claims (G16.2): descriptive claims the audit deliberately
 // does NOT verify against the live Codex host. Emitted verbatim so the report self-documents the

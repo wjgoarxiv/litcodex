@@ -15,14 +15,17 @@ const durableGuides = [
 ];
 
 describe("web interface hand-off from execution routes", () => {
+	// frontend-ui-ux moved to wjgoarxiv-skills; its sibling is a stub, so the surfaces name the installed copy's
+	// design lock and interface probe and keep the UI criterion BLOCKED when no copy is installed.
 	it("keeps a web interface build inside lit-loop or litwork connected to the installed probe", () => {
 		expect(modeForToken("lit").mode).toBe("lit-loop");
 		expect(modeForToken("litwork").mode).toBe("litwork");
 		for (const body of surfaces) {
 			expect(body).toContain("user-facing web interface");
 			expect(body).toContain("frontend-ui-ux/SKILL.md");
-			expect(body).toContain("design-lock.mjs");
-			expect(body).toContain("scripts/probe.mjs");
+			expect(body).toContain("design-lock");
+			expect(body).toContain("interface probe");
+			expect(body.replace(/\s+/gu, " ")).toContain("BLOCKED on the missing probe");
 			expect(body).toContain("RS matrix");
 			expect(body).toMatch(/HIGH.{0,160}(?:block|done)/s);
 		}
@@ -39,7 +42,8 @@ describe("web interface hand-off from execution routes", () => {
 		for (const body of durableGuides) {
 			expect(body).toContain("user-facing web interface");
 			expect(body).toContain("frontend-ui-ux/SKILL.md");
-			expect(body).toContain("scripts/probe.mjs");
+			expect(body).toContain("interface probe");
+			expect(body.replace(/\s+/gu, " ")).toContain("BLOCKED on the missing probe");
 			expect(body).toContain("RS matrix");
 			expect(body).toMatch(/HIGH.{0,160}(?:block|PASS)/s);
 		}

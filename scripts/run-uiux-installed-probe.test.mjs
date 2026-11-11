@@ -3,12 +3,10 @@ import { spawnSync } from "node:child_process";
 import {
 	chmodSync,
 	existsSync,
-	lstatSync,
 	mkdirSync,
 	mkdtempSync,
 	readdirSync,
 	readFileSync,
-	readlinkSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs";
@@ -17,8 +15,6 @@ import { join } from "node:path";
 import { after, it } from "node:test";
 import { resolveNpmInvocation } from "./npm-command.mjs";
 import * as installedProbe from "./run-uiux-installed-probe.mjs";
-import { SCENARIO_IDS } from "./uiux-installed-host-probe.mjs";
-import { assertBetaDesignContract, designContract, evidenceBundle } from "./uiux-installed-probe-helpers.mjs";
 
 const roots = [];
 
@@ -51,11 +47,6 @@ function assertCredentialFree(env) {
 		);
 	}
 }
-
-it("uses an honestly unavailable independent-review capability for installed beta smoke", () => {
-	const bundle = evidenceBundle(designContract(), { captureBytes: Buffer.from("fixture") });
-	assert.equal(bundle.evidence_manifest.capabilities.independent_review, false);
-});
 
 it("rejects an exact-version absolute spoof before execution or credential exposure", () => {
 	const root = temporaryRoot("litcodex-uiux-spoof-");
@@ -199,7 +190,7 @@ it("keeps pack, install, postinstall, installer, and Codex version checks creden
 	);
 });
 
-it("gives validators, scenarios, hooks, and doctor no auth while only both exact Codex exec children get the key", async () => {
+it("gives helpers, hooks, and doctor no auth while only both exact Codex exec children get the key", async () => {
 	const root = temporaryRoot("litcodex-uiux-semantic-env-");
 	const prefix = join(root, "prefix");
 	const home = join(root, "home");
@@ -226,19 +217,9 @@ it("gives validators, scenarios, hooks, and doctor no auth while only both exact
 	writeFileSync(join(autoresearchRoot, "SKILL.md"), "loaded autoresearch skill\n");
 	writeFileSync(join(autoconferenceRoot, "SKILL.md"), "loaded autoconference skill\n");
 	writeFileSync(join(root, "pack", "litcodex-ai.tgz"), "packed");
-	writeFileSync(
-		join(frontendRoot, "SKILL.md"),
-		'```bash\nFRONTEND_UIUX_SKILL_FILE="<absolute path of the SKILL.md selected for this turn>"\nprintf \'"valid":true --input design-contract.json\'\n```\n',
-	);
-	writeFileSync(
-		join(visualRoot, "SKILL.md"),
-		[
-			"```bash\nprintf '\"valid\":true --input design-contract.json'\n```",
-			'```bash\nprintf \'"verdict":"PASS" --now 2026-07-25T06:00:00.000Z\'\n```',
-			"```bash\nprintf '\"similarityScore\": 100 image-diff reference.png actual.png'\n```",
-			"```bash\nprintf '\"controlSequencesValid\": true tui-check capture.txt --cols 80'\n```",
-		].join("\n"),
-	);
+	// The two interface skills are same-name stubs now; the probe still discovers them and binds the host run.
+	writeFileSync(join(frontendRoot, "SKILL.md"), "frontend-ui-ux stub\n");
+	writeFileSync(join(visualRoot, "SKILL.md"), "visual-qa stub\n");
 
 	const setupEnv = installedProbe.credentialFreeSetupEnv(home, codexHome, prefix, codexBin, {
 		PATH: "/usr/bin:/bin",
@@ -251,16 +232,6 @@ it("gives validators, scenarios, hooks, and doctor no auth while only both exact
 	const apiKey = "exact-host-exec-key";
 	const calls = [];
 	const identityCheckCallCounts = [];
-	const scenarioStdout = `${JSON.stringify({
-		status: "PASS",
-		count: 8,
-		scenarios: SCENARIO_IDS.map((name) => ({
-			name,
-			actual: "PASS",
-			expected: "PASS",
-			assertions: [{ pass: true }, { pass: true }, { pass: true }],
-		})),
-	})}\n`;
 	const responseFor = (id) =>
 		`${JSON.stringify({
 			type: "item.completed",
@@ -271,47 +242,11 @@ it("gives validators, scenarios, hooks, and doctor no auth while only both exact
 		})}\n`;
 	const runCommand = async (command, args, options) => {
 		calls.push({ command, args, options });
-		if (command === "sh") {
-			const block = args.at(-1);
-			if (block.includes("design-contract")) {
-				// The documented block names its own SKILL.md; the probe must fill that in as the model would.
-				return block.includes(`FRONTEND_UIUX_SKILL_FILE="${join(frontendRoot, "SKILL.md")}"`)
-					? processResult({ stdout: '{"valid":true}\n' })
-					: processResult({ exitCode: 1, stderr: "Cannot find module scripts/validate-design-contract.mjs" });
-			}
-			if (block.includes("--now")) return processResult({ stdout: '{"verdict":"PASS"}\n' });
-			if (block.includes("image-diff")) return processResult({ stdout: '{"similarityScore": 100}\n' });
-			return processResult({ stdout: '{"controlSequencesValid": true}\n' });
-		}
-		if (command === process.execPath && args[0]?.endsWith("validate-evidence.mjs")) {
-			const input = args[args.indexOf("--input") + 1];
-			if (input === "evidence-bundle.json") return processResult({ stdout: '{"verdict":"PASS"}\n' });
-			if (input === "stale-evidence-bundle.json") {
-				return processResult({ stdout: '{"verdict":"BLOCKED","blocked_codes":["BLOCKED_EVIDENCE_STALE"]}\n' });
-			}
-			if (input === "reviewer-block-evidence-bundle.json") {
-				return processResult({
-					stdout: '{"verdict":"BLOCKED","blocked_codes":["BLOCKED_INDEPENDENT_REVIEW_UNAVAILABLE"]}\n',
-				});
-			}
-			return processResult({ stdout: '{"verdict":"FAIL"}\n' });
-		}
-		if (command === process.execPath && args[0]?.endsWith("validate-design-contract.mjs")) {
-			return processResult({ stdout: '{"valid":true}\n' });
-		}
-		if (command === process.execPath && args[0]?.endsWith("cli.mjs")) {
-			return args[1] === "image-diff"
-				? processResult({ stdout: '{"similarityScore": 100}\n' })
-				: processResult({ stdout: '{"controlSequencesValid": true}\n' });
-		}
 		if (command === "python3" && args[0]?.endsWith("init_research.py")) {
 			return processResult({ stdout: "Research project scaffolded\n" });
 		}
 		if (command === "python3" && args[0]?.endsWith("init_conference.py")) {
 			return processResult({ stdout: "Conference scaffolded\n" });
-		}
-		if (args.some((arg) => arg.endsWith?.("run-uiux-visual-qa-scenarios.mjs"))) {
-			return processResult({ stdout: scenarioStdout });
 		}
 		if (command === installedBin && args[0] === "hook") return processResult();
 		if (command === installedBin && args[0] === "doctor") {
@@ -342,35 +277,19 @@ it("gives validators, scenarios, hooks, and doctor no auth while only both exact
 	});
 
 	assert.equal(report.status, "PASS");
-	assert.equal(report.counts.semanticCommands, 14);
+	assert.equal(report.counts.semanticCommands, 2);
 	assert.deepEqual(
 		report.semanticCommands.map(({ name }) => name),
-		[
-			"documented-autoresearch-helper",
-			"documented-autoconference-helper",
-			"documented-design-validator",
-			"installed-visual-design-validator",
-			"installed-beta-evidence-pass",
-			"installed-beta-evidence-missing",
-			"installed-beta-evidence-non-image",
-			"installed-beta-evidence-stale",
-			"installed-beta-evidence-root-escape",
-			"installed-beta-evidence-symlink",
-			"installed-beta-evidence-reviewer-block",
-			"documented-image-diff",
-			"documented-tui-check",
-			"scenario-table",
-		],
+		["documented-autoresearch-helper", "documented-autoconference-helper"],
 	);
-	const linkedCapture = join(home, "project", "evidence-root", "captures", "linked.png");
-	assert.equal(lstatSync(linkedCapture).isSymbolicLink(), true);
-	assert.equal(readlinkSync(linkedCapture), join(home, "project", "outside.png"));
-	assert.equal(existsSync(readlinkSync(linkedCapture)), true);
-	assert.deepEqual(identityCheckCallCounts, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]);
+	assert.deepEqual(
+		identityCheckCallCounts,
+		calls.map((_, index) => index),
+	);
 	const codexExecCalls = calls.filter(({ command, args }) => command === codexBin && args[0] === "exec");
 	const nonCodexCalls = calls.filter(({ command, args }) => command !== codexBin || args[0] !== "exec");
 	assert.equal(codexExecCalls.length, 2);
-	assert.equal(nonCodexCalls.length, 17);
+	assert.equal(nonCodexCalls.length, 5);
 	for (const { options } of nonCodexCalls) {
 		assert.equal(options.env.AUTORESEARCH_ROOT, undefined);
 		assert.equal(options.env.AUTOCONFERENCE_ROOT, undefined);
@@ -395,21 +314,4 @@ it("gives validators, scenarios, hooks, and doctor no auth while only both exact
 		assert.equal(options.env.npm_config_prefix, undefined);
 	}
 	assert.equal(JSON.stringify(report).includes(apiKey), false);
-});
-
-it("accepts every beta design contract version and refuses other schemas", () => {
-	for (const schemaId of ["litfamily.design-contract/v1beta1", "litfamily.design-contract/v1beta2"]) {
-		assertBetaDesignContract({ ...designContract(), schema_id: schemaId });
-	}
-	for (const schemaId of [
-		"litfamily.design-contract/v1alpha1",
-		"litfamily.evidence-manifest/v1beta1",
-		"litfamily.design-contract/v1beta1-draft",
-		undefined,
-	]) {
-		assert.throws(
-			() => assertBetaDesignContract({ ...designContract(), schema_id: schemaId }),
-			/installed probe contract must be beta/u,
-		);
-	}
 });

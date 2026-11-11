@@ -1,33 +1,19 @@
 #!/usr/bin/env node
 
 import { createHash, randomUUID } from "node:crypto";
-import {
-	accessSync,
-	constants,
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	readdirSync,
-	readFileSync,
-	symlinkSync,
-	writeFileSync,
-} from "node:fs";
+import { accessSync, constants, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { isMain } from "../plugins/litcodex/skills/visual-qa/scripts/strict-input.mjs";
 import { resolveNpmInvocation } from "./npm-command.mjs";
-import { discoverAndHook, probeHost, runScenarioTable } from "./uiux-installed-host-probe.mjs";
+import { isMain } from "./strict-json.mjs";
+import { discoverAndHook, probeHost } from "./uiux-installed-host-probe.mjs";
 import {
 	assert,
-	assertBetaDesignContract,
 	assertRepositoryCodexIdentity,
 	boundedErrorMessage,
 	captureRepositoryCodexIdentity,
-	commandRecordAsync,
-	designContract,
-	evidenceBundle,
 	outputEvidence,
 	ProbeTerminalError,
 	runProbeLifecycle,
@@ -37,21 +23,6 @@ import {
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const evidencePath = join(repoRoot, ".litcodex/evidence/task-uiux-installed-receipt.json");
-const NOW = "2026-07-25T06:00:00.000Z";
-
-// A documented block may ask for the path of the SKILL.md in use; fill it in the way the model would.
-const SKILL_FILE_PLACEHOLDER = "<absolute path of the SKILL.md selected for this turn>";
-
-function documentedBlock(skillRoot, marker) {
-	const skillFile = join(skillRoot, "SKILL.md");
-	const markdown = readFileSync(skillFile, "utf8");
-	const matches = [...markdown.matchAll(/```bash\n([\s\S]*?)\n```/g)]
-		.map((match) => match[1] ?? "")
-		.filter((block) => block.includes(marker));
-	assert(matches.length === 1, `expected one documented block for ${marker}, found ${matches.length}`);
-	return matches[0].replaceAll(SKILL_FILE_PLACEHOLDER, skillFile);
-}
-
 async function commandTextRecordAsync(name, command, args, options, stdoutMarker, runCommand) {
 	const result = await runCommand(command, args, options);
 	assert(
@@ -166,69 +137,10 @@ export async function semanticProbe({
 	assertAuthFreeCodexHome(setupEnv.CODEX_HOME, "semantic and doctor");
 	assert(existsSync(managedMarketplace), "installed public surface did not create the managed marketplace");
 	const skills = join(managedMarketplace, "plugins/litcodex/skills");
-	const frontendRoot = join(skills, "frontend-ui-ux");
-	const visualRoot = join(skills, "visual-qa");
 	const autoresearchRoot = join(skills, "autoresearch");
 	const autoconferenceRoot = join(skills, "autoconference");
 	const installedBin = join(prefix, "bin/litcodex");
 	mkdirSync(project, { recursive: true });
-	const evidenceRoot = join(project, "evidence-root");
-	mkdirSync(join(evidenceRoot, "captures"), { recursive: true });
-	const contract = designContract();
-	assertBetaDesignContract(contract);
-	const captureBytes = Buffer.from(
-		"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGPgEpH7DwABpAE8k4sOtwAAAABJRU5ErkJggg==",
-		"base64",
-	);
-	const nonImageBytes = Buffer.from("not a PNG", "utf8");
-	const bundle = evidenceBundle(contract, { captureBytes });
-	assert(
-		bundle.evidence_manifest.schema_id === "litfamily.evidence-manifest/v1beta1",
-		"installed evidence must be beta",
-	);
-	const variants = {
-		"evidence-bundle.json": bundle,
-		"missing-evidence-bundle.json": evidenceBundle(contract, {
-			captureBytes,
-			capturePath: "captures/missing.png",
-		}),
-		"non-image-evidence-bundle.json": evidenceBundle(contract, {
-			captureBytes: nonImageBytes,
-			capturePath: "captures/not-image.png",
-		}),
-		"stale-evidence-bundle.json": evidenceBundle(contract, {
-			captureBytes,
-			capturedAt: "2026-07-25T04:59:20.000Z",
-			createdAt: "2026-07-25T05:00:00.000Z",
-		}),
-		"root-escape-evidence-bundle.json": evidenceBundle(contract, {
-			captureBytes,
-			capturePath: "../outside.png",
-		}),
-		"symlink-evidence-bundle.json": evidenceBundle(contract, {
-			captureBytes,
-			capturePath: "captures/linked.png",
-		}),
-		"reviewer-block-evidence-bundle.json": evidenceBundle(contract, { captureBytes, full: true }),
-	};
-	const files = {
-		design: join(project, "design-contract.json"),
-		tui: join(project, "capture.txt"),
-		reference: join(project, "reference.png"),
-		actual: join(project, "actual.png"),
-	};
-	writeFileSync(files.design, `${JSON.stringify(contract)}\n`);
-	for (const [name, value] of Object.entries(variants)) {
-		writeFileSync(join(project, name), `${JSON.stringify(value)}\n`);
-	}
-	writeFileSync(join(evidenceRoot, "captures", "primary.png"), captureBytes);
-	writeFileSync(join(evidenceRoot, "captures", "not-image.png"), nonImageBytes);
-	const outsideCapture = join(project, "outside.png");
-	writeFileSync(outsideCapture, captureBytes);
-	symlinkSync(outsideCapture, join(evidenceRoot, "captures", "linked.png"));
-	writeFileSync(files.tui, "┌────┐\n│한글│\n└────┘\n");
-	writeFileSync(files.reference, readFileSync(join(repoRoot, "plugins/litcodex/assets/logo.png")));
-	writeFileSync(files.actual, readFileSync(join(repoRoot, "plugins/litcodex/assets/logo.png")));
 	const normalizedApiKey = typeof apiKey === "string" ? apiKey.trim() : "";
 	const provenanceRunCommand = (command, args, options) => {
 		assertCodexIdentity(codexIdentity);
@@ -247,20 +159,6 @@ export async function semanticProbe({
 	delete helperEnv.AUTORESEARCH_ROOT;
 	delete helperEnv.AUTOCONFERENCE_ROOT;
 	const helperBase = { ...base, env: helperEnv };
-	const visualDesignValidator = join(visualRoot, "scripts/validate-design-contract.mjs");
-	const evidenceValidator = join(visualRoot, "scripts/validate-evidence.mjs");
-	const visualCli = join(visualRoot, "scripts/cli.mjs");
-	const evidenceArgs = (input, tier = "smoke") => [
-		evidenceValidator,
-		"--input",
-		input,
-		"--tier",
-		tier,
-		"--now",
-		NOW,
-		"--evidence-root",
-		"evidence-root",
-	];
 	const commands = [
 		await commandTextRecordAsync(
 			"documented-autoresearch-helper",
@@ -298,108 +196,7 @@ export async function semanticProbe({
 			"scaffolded",
 			provenanceRunCommand,
 		),
-		await commandRecordAsync(
-			"documented-design-validator",
-			"sh",
-			["-c", documentedBlock(frontendRoot, "--input design-contract.json")],
-			base,
-			0,
-			{ valid: true },
-			provenanceRunCommand,
-		),
-		await commandRecordAsync(
-			"installed-visual-design-validator",
-			process.execPath,
-			[visualDesignValidator, "--input", "design-contract.json"],
-			base,
-			0,
-			{ valid: true },
-			provenanceRunCommand,
-		),
-		await commandRecordAsync(
-			"installed-beta-evidence-pass",
-			process.execPath,
-			evidenceArgs("evidence-bundle.json"),
-			base,
-			0,
-			{ verdict: "PASS" },
-			provenanceRunCommand,
-		),
-		await commandRecordAsync(
-			"installed-beta-evidence-missing",
-			process.execPath,
-			evidenceArgs("missing-evidence-bundle.json"),
-			base,
-			0,
-			{ verdict: "FAIL" },
-			provenanceRunCommand,
-		),
-		await commandRecordAsync(
-			"installed-beta-evidence-non-image",
-			process.execPath,
-			evidenceArgs("non-image-evidence-bundle.json"),
-			base,
-			0,
-			{ verdict: "FAIL" },
-			provenanceRunCommand,
-		),
-		await commandRecordAsync(
-			"installed-beta-evidence-stale",
-			process.execPath,
-			evidenceArgs("stale-evidence-bundle.json"),
-			base,
-			0,
-			{ verdict: "BLOCKED", blocked_codes: ["BLOCKED_EVIDENCE_STALE"] },
-			provenanceRunCommand,
-		),
-		await commandRecordAsync(
-			"installed-beta-evidence-root-escape",
-			process.execPath,
-			evidenceArgs("root-escape-evidence-bundle.json"),
-			base,
-			0,
-			{ verdict: "FAIL" },
-			provenanceRunCommand,
-		),
-		await commandRecordAsync(
-			"installed-beta-evidence-symlink",
-			process.execPath,
-			evidenceArgs("symlink-evidence-bundle.json"),
-			base,
-			0,
-			{ verdict: "FAIL" },
-			provenanceRunCommand,
-		),
-		await commandRecordAsync(
-			"installed-beta-evidence-reviewer-block",
-			process.execPath,
-			evidenceArgs("reviewer-block-evidence-bundle.json", "full"),
-			base,
-			0,
-			{ verdict: "BLOCKED", blocked_codes: ["BLOCKED_INDEPENDENT_REVIEW_UNAVAILABLE"] },
-			provenanceRunCommand,
-		),
-		await commandRecordAsync(
-			"documented-image-diff",
-			process.execPath,
-			[visualCli, "image-diff", "reference.png", "actual.png"],
-			base,
-			0,
-			{ similarityScore: 100 },
-			provenanceRunCommand,
-		),
-		await commandRecordAsync(
-			"documented-tui-check",
-			process.execPath,
-			[visualCli, "tui-check", "capture.txt", "--cols", "80"],
-			base,
-			0,
-			{ controlSequencesValid: true },
-			provenanceRunCommand,
-		),
 	];
-	const scenario = await runScenarioTable(repoRoot, installedPackage, base, provenanceRunCommand);
-	commands.push(scenario.record);
 	const { discovery, hooks } = await discoverAndHook(skills, installedBin, base, provenanceRunCommand);
 	const host = await probeHost({
 		installedBin,
@@ -419,7 +216,7 @@ export async function semanticProbe({
 			tarballSha256: createHash("sha256").update(readFileSync(tarball)).digest("hex"),
 			installedPackagePresent: existsSync(installedPackage),
 			managedMarketplacePresent: existsSync(managedMarketplace),
-			sourceFallbackUnavailable: !existsSync(join(installedPackage, "plugins/litcodex/skills/visual-qa")),
+			sourceFallbackUnavailable: !existsSync(join(installedPackage, "plugins/litcodex/skills/lit-loop")),
 		},
 		setupCommands,
 		semanticCommands: commands,
@@ -432,8 +229,6 @@ export async function semanticProbe({
 			semanticCommands: commands.length,
 			discoveredSkills: discovery.length,
 			zeroStdoutHooks: hooks.filter(({ stdoutBytes }) => stdoutBytes === 0).length,
-			scenarios: scenario.result.count,
-			scenarioAssertions: scenario.result.scenarios.reduce((sum, item) => sum + item.assertions.length, 0),
 		},
 	};
 }

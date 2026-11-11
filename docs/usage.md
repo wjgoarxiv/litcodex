@@ -218,7 +218,7 @@ The hook keeps this per session under `.litcodex/lit-reentry/`; a missing or unr
 activation. Standalone skills can also be selected by exact ID
 from the Codex picker or with a scoped mention, including `$litcodex:lit-handoff` and
 `$litcodex:lit-scientific-visualization`.
-For report or proposal output, bare `lit` loads `lit-docx`; for slide or presentation output it loads `lit-pptx`; a count-only request such as "a 10-slide deck in neo-brutalism" counts as a slide request. Both are loaded when both formats are requested. Explicit picker or `$litcodex:lit-docx` and `$litcodex:lit-pptx` selection also works. `litcodex install` prepares the pinned runtime outside the session; `litcodex office-runtime status` and `litcodex doctor` report readiness. If offline, run `litcodex office-runtime install` later outside the sandbox.
+For report or proposal output, bare `lit` loads `lit-docx`; for slide or presentation output it loads `lit-pptx`; a count-only request such as "a 10-slide deck in neo-brutalism" counts as a slide request. Both are loaded when both formats are requested. Explicit picker or `$litcodex:lit-docx` and `$litcodex:lit-pptx` selection also works. Both skills now live in wjgoarxiv-skills and bring their own pinned tools; until you copy them into `~/.codex/skills/`, their LitCodex stubs answer with the copy command.
 
 ## Commands
 

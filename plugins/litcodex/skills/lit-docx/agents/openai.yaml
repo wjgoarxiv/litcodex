@@ -1,6 +1,6 @@
 interface:
   display_name: "lit-docx"
-  short_description: "Create and edit styled Word reports"
+  short_description: "Moved to wjgoarxiv-skills; shows the Codex install line"
   search_terms:
     - "report"
     - "document"

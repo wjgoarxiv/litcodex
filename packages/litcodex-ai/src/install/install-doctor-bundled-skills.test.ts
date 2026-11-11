@@ -125,7 +125,7 @@ describe("doctor — bundled skill payloads", () => {
 		expect(fresh.issues).toEqual([]);
 
 		const deps = doctorDeps([codexBin, sentinelPath], rootConfig);
-		const familyRoot = "/tmp/test-codex-home/marketplaces/litcodex/plugins/litcodex/skills/frontend-ui-ux";
+		const familyRoot = "/tmp/test-codex-home/marketplaces/litcodex/plugins/litcodex/skills/lit-humanizer";
 		const damaged = runDoctor({
 			...deps,
 			fs: {
@@ -139,11 +139,11 @@ describe("doctor — bundled skill payloads", () => {
 		const catalogIssue = catalogIssues[0];
 		if (!catalogIssue) throw new Error("expected one bounded catalog issue");
 		expect(catalogIssue.length).toBeLessThanOrEqual(600);
-		expect(catalogIssue).toMatch(/frontend-ui-ux: \d+ missing/);
-		expect(catalogIssue).toContain("frontend-ui-ux/SKILL.md");
+		expect(catalogIssue).toMatch(/lit-humanizer: \d+ missing/);
+		expect(catalogIssue).toContain("lit-humanizer/SKILL.md");
 		expect(catalogIssue).toMatch(/\+\d+ more/);
-		expect(damaged.missingSkillResourcePaths.length).toBeGreaterThan(100);
-		expect(JSON.stringify(damaged.missingSkillResourcePaths).length).toBeGreaterThan(10_000);
+		expect(damaged.missingSkillResourcePaths.length).toBeGreaterThan(60);
+		expect(JSON.stringify(damaged.missingSkillResourcePaths).length).toBeGreaterThan(3_000);
 	});
 
 	it("bounds human rendering for all canonical missing exact resources while preserving the structured report", () => {
@@ -203,7 +203,7 @@ describe("doctor — bundled skill payloads", () => {
 		expect(report.issues.some((issue) => issue.includes("lit-handoff"))).toBe(true);
 	});
 
-	it("fails health when a picker-native UI resource is tampered", () => {
+	it("fails health when the frontend-ui-ux stub is tampered or gains an orphan file", () => {
 		for (const payloadMutation of [{ tamper: "uiux-visual-qa" }, { extra: "uiux-visual-qa" }] as const) {
 			const report = runDoctor(
 				doctorDeps(
@@ -253,48 +253,9 @@ describe("doctor — bundled skill payloads", () => {
 		}
 	});
 
-	it("reports the bundled picker-native scientific-visualization payload as installed", () => {
+	it("checks no scientific-visualization source payload: that skill moved and its stub is a catalog entry", () => {
 		const report = runDoctor(doctorDeps([codexBin, sentinelPath]));
-		expect(report.scientificVisualizationInstalled).toBe(true);
+		expect(report).not.toHaveProperty("scientificVisualizationInstalled");
 		expect(report.issues.some((issue) => issue.includes("lit-scientific-visualization"))).toBe(false);
-	});
-
-	it("fails health when the scientific-visualization payload is incomplete", () => {
-		const report = runDoctor(
-			doctorDeps(
-				[codexBin, sentinelPath],
-				"model_context_window = 372000\nmodel_auto_compact_token_limit = 334800\n",
-				undefined,
-				"0.3.44",
-				"0.144.0",
-				true,
-				false,
-			),
-		);
-		expect(report.scientificVisualizationInstalled).toBe(false);
-		expect(report.ok).toBe(false);
-		expect(report.issues.some((issue) => issue.includes("lit-scientific-visualization"))).toBe(true);
-	});
-
-	it("fails health when scientific-visualization source bytes drift or a pyc appears", () => {
-		for (const payloadMutation of [
-			{ tamper: "scientific-visualization" },
-			{ extra: "scientific-visualization" },
-		] as const) {
-			const report = runDoctor(
-				doctorDeps(
-					[codexBin, sentinelPath],
-					undefined,
-					undefined,
-					undefined,
-					undefined,
-					true,
-					true,
-					payloadMutation,
-				),
-			);
-			expect(report.scientificVisualizationInstalled).toBe(false);
-			expect(report.ok).toBe(false);
-		}
 	});
 });

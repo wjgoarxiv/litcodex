@@ -911,7 +911,7 @@ describe("CLI", () => {
 		assert.equal(r.code, 0);
 		assert.match(r.stdout, /Usage:/);
 		assert.match(r.stdout, /all tracked files/i);
-		assert.match(r.stdout, /canonical corpus/i);
+		assert.doesNotMatch(r.stdout, /canonical corpus/i);
 	});
 
 	test("non-git root fails closed (exit 1, NOT vacuous 0)", () => {

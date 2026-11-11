@@ -14,7 +14,6 @@ import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { verifyCanonicalCorpus } from "../plugins/litcodex/skills/frontend-ui-ux/scripts/verify-canonical-corpus.mjs";
 import { readWorkspaceBinDeclarations } from "../scripts/mark-cli-executable.mjs";
 import { resolveNpmInvocation } from "../scripts/npm-command.mjs";
 import {
@@ -844,21 +843,9 @@ test("loadPayloadManifest throws MANIFEST_INVALID on version mismatch and on unr
 
 // --- version-agnostic (G5): asserter never compares version to a constant -----------------------
 
-test("pack manifest expands the verified corpus copy into required and exact payload paths", () => {
-	const installer = manifest.packages.find((packageRule) => packageRule.name === "@litfamily/litcodex");
-	const [copy] = installer.verifiedCorpusCopies;
-	assert.ok(copy, "installer must declare its verified corpus copy");
-	const source = verifyCanonicalCorpus(resolve(HERE, "..", copy.sourceRoot));
-	const sourcePaths = [...source.verifiedFiles.keys()].sort();
-	const exact = installer.exactFileSets.find((fileSet) => copy.destinationPrefix.startsWith(fileSet.prefix));
-	const relativePrefix = copy.destinationPrefix.slice(exact.prefix.length);
-	const expectedExact = sourcePaths.map((path) => `${relativePrefix}${path}`).sort();
-	const actualExact = exact.allowedPaths.filter((path) => path.startsWith(relativePrefix)).sort();
-	assert.deepEqual(actualExact, expectedExact);
-	assert.deepEqual(
-		installer.requiredPaths.filter((path) => path.startsWith(copy.destinationPrefix)).sort(),
-		sourcePaths.map((path) => `${copy.destinationPrefix}${path}`).sort(),
-	);
+test("pack manifest declares no verified corpus copy: the frontend corpus moved out with its skill", () => {
+	for (const packageRule of manifest.packages)
+		assert.equal(packageRule.verifiedCorpusCopies, undefined, packageRule.name);
 });
 
 test("version literal is not asserted (0.1.0 and 1.0.0 both clean)", () => {
@@ -896,29 +883,22 @@ test("seed manifest pins load-bearing forbidden segments and excludes hooks/CHAN
 		Object.values(installerPackage.bin).map((path) => path.replace(/^\.\//, "")),
 	);
 	assert.ok(installer.allowedGlobs.includes("dist/**"), "@litfamily/litcodex must allow dist/**");
-	assert.ok(
-		installer.requiredPaths.includes(
-			"marketplace/plugins/litcodex/skills/visual-qa/schemas/evidence-manifest.v1beta1.json",
-		),
-		"@litfamily/litcodex must require the evidence-eligible visual QA schema",
-	);
-	assert.ok(
-		installer.requiredPaths.includes(
-			"marketplace/plugins/litcodex/skills/visual-qa/schemas/design-contract.v1beta2.json",
-		),
-		"@litfamily/litcodex must require the visual QA beta2 design schema",
-	);
 	for (const path of [
+		"marketplace/plugins/litcodex/skills/visual-qa/SKILL.md",
 		"marketplace/plugins/litcodex/skills/lit-scientific-visualization/SKILL.md",
+		"node_modules/@litcodex/lit-loop/skills/lit-scientific-visualization/SKILL.md",
+	]) {
+		const pinned = installer.requiredPaths.includes(path) || installer.requiredFuture.includes(path);
+		assert.ok(pinned, `the moved-skill stub ${path} must stay in the payload`);
+	}
+	for (const path of [
+		"marketplace/plugins/litcodex/skills/visual-qa/schemas/evidence-manifest.v1beta1.json",
 		"marketplace/plugins/litcodex/skills/lit-scientific-visualization/scripts/dependency-preflight.py",
 		"marketplace/plugins/litcodex/vendor/scientific-visualization/SKILL.md",
-		"marketplace/plugins/litcodex/vendor/scientific-visualization/scripts/style_presets.py",
-		"marketplace/plugins/litcodex/vendor/scientific-visualization/tests/test_style_presets.py",
-		"node_modules/@litcodex/lit-loop/skills/lit-scientific-visualization/SKILL.md",
-		"node_modules/@litcodex/lit-loop/skills/lit-scientific-visualization/scripts/dependency-preflight.py",
 		"node_modules/@litcodex/lit-loop/vendor/scientific-visualization/assets/color_palettes.py",
 	]) {
-		assert.ok(installer.requiredFuture.includes(path), `science payload manifest missing ${path}`);
+		const pinned = installer.requiredPaths.includes(path) || installer.requiredFuture.includes(path);
+		assert.ok(!pinned, `${path} left with its skill and must not be pinned`);
 	}
 	assert.ok(installer.allowedGlobs.includes("marketplace/**"), "@litfamily/litcodex must allow its local marketplace");
 	assert.ok(
@@ -935,26 +915,25 @@ test("seed manifest pins load-bearing forbidden segments and excludes hooks/CHAN
 	);
 	assert.ok(!installer.allowedGlobs.includes("CHANGELOG.md"), "@litfamily/litcodex must NOT allow CHANGELOG.md");
 	const installerExactSets = installer.exactFileSets.map((entry) => [entry.prefix, entry.allowedPaths.length]);
-	const visualQaExactSet = installer.exactFileSets.find(
-		(entry) => entry.prefix === "marketplace/plugins/litcodex/skills/visual-qa/",
-	);
-	assert.ok(
-		visualQaExactSet.allowedPaths.includes("schemas/design-contract.v1beta2.json"),
-		"visual QA exact payload must allow the beta2 design schema",
-	);
-	const frontendUiuxExactSet = installer.exactFileSets.find(
-		(entry) => entry.prefix === "marketplace/plugins/litcodex/skills/frontend-ui-ux/",
-	);
-	assert.ok(
-		frontendUiuxExactSet.allowedPaths.includes("schemas/design-contract.v1beta2.json"),
-		"frontend exact payload must allow the beta2 design schema",
-	);
-	assert.ok(
-		frontendUiuxExactSet.allowedPaths.includes("references/taste-direction.md"),
-		"frontend exact payload must allow the taste direction reference",
-	);
-	assert.ok(frontendUiuxExactSet.allowedPaths.includes("references/motion-guide.md"));
-	assert.ok(frontendUiuxExactSet.allowedPaths.includes("examples/readme-ab/README.md"));
+	// Moved skills keep an exact set that admits only the stub and its picker metadata.
+	for (const id of [
+		"frontend-ui-ux",
+		"lit-diagram-drawer",
+		"lit-docx",
+		"lit-pptx",
+		"lit-schematic",
+		"lit-typographic-motion",
+		"readme-studio",
+		"visual-qa",
+	]) {
+		const set = installer.exactFileSets.find(
+			(entry) => entry.prefix === `marketplace/plugins/litcodex/skills/${id}/`,
+		);
+		assert.ok(set, `${id} keeps an exact stub set`);
+		for (const path of set.allowedPaths) {
+			assert.ok(["SKILL.md", "agents/openai.yaml"].includes(path), `${id} stub set admits only the stub: ${path}`);
+		}
+	}
 	const humanizerExactSet = installer.exactFileSets.find(
 		(entry) => entry.prefix === "marketplace/plugins/litcodex/skills/lit-humanizer/",
 	);
@@ -969,24 +948,22 @@ test("seed manifest pins load-bearing forbidden segments and excludes hooks/CHAN
 		["marketplace/plugins/litcodex/skills/autoresearch/", 30],
 		["marketplace/plugins/litcodex/skills/browser-drive/", 4],
 		["marketplace/plugins/litcodex/skills/coding-session-audit/", 4],
-		["marketplace/plugins/litcodex/skills/frontend-ui-ux/", 228],
+		["marketplace/plugins/litcodex/skills/frontend-ui-ux/", 1],
 		["marketplace/plugins/litcodex/skills/lit-adhd/", 4],
-		["marketplace/plugins/litcodex/skills/lit-diagram-drawer/", 328],
-		["marketplace/plugins/litcodex/skills/lit-docx/", 63],
+		["marketplace/plugins/litcodex/skills/lit-diagram-drawer/", 2],
+		["marketplace/plugins/litcodex/skills/lit-docx/", 2],
 		["marketplace/plugins/litcodex/skills/lit-hijack/", 8],
 		["marketplace/plugins/litcodex/skills/lit-humanizer/", 68],
-		["marketplace/plugins/litcodex/skills/lit-pptx/", 130],
-		["marketplace/plugins/litcodex/skills/lit-schematic/", 33],
-		["marketplace/plugins/litcodex/skills/lit-typographic-motion/", 120],
-		["marketplace/plugins/litcodex/skills/readme-studio/", 23],
+		["marketplace/plugins/litcodex/skills/lit-pptx/", 2],
+		["marketplace/plugins/litcodex/skills/lit-schematic/", 2],
+		["marketplace/plugins/litcodex/skills/lit-typographic-motion/", 2],
+		["marketplace/plugins/litcodex/skills/readme-studio/", 1],
 		["marketplace/plugins/litcodex/skills/structural-search/", 4],
-		["marketplace/plugins/litcodex/skills/visual-qa/", 23],
+		["marketplace/plugins/litcodex/skills/visual-qa/", 1],
 		["marketplace/plugins/litcodex/skills/wikify/", 14],
 		["marketplace/plugins/litcodex/vendor/handoff/", 4],
-		["marketplace/plugins/litcodex/vendor/scientific-visualization/", 16],
 		["node_modules/@litcodex/lit-loop/skills/lit-humanizer/", 68],
 		["node_modules/@litcodex/lit-loop/vendor/handoff/", 4],
-		["node_modules/@litcodex/lit-loop/vendor/scientific-visualization/", 16],
 	]);
 
 	const component = manifest.packages.find((p) => p.name === "@litcodex/lit-loop");
@@ -1032,27 +1009,6 @@ test("seed manifest pins load-bearing forbidden segments and excludes hooks/CHAN
 					"evals/evals.json",
 					"examples/HANDOFF-example-generic-auth-refactor.md",
 					"templates/HANDOFF.md",
-				],
-			},
-			{
-				prefix: "vendor/scientific-visualization/",
-				allowedPaths: [
-					"SKILL.md",
-					"assets/color_palettes.py",
-					"assets/nature.mplstyle",
-					"assets/presentation.mplstyle",
-					"assets/publication.mplstyle",
-					"evals/evals.json",
-					"references/color_palettes.md",
-					"references/journal_requirements.md",
-					"references/matplotlib_examples.md",
-					"references/mdanalysis_martini_visualization.md",
-					"references/publication_guidelines.md",
-					"references/seaborn_for_publications.md",
-					"scripts/figure_export.py",
-					"scripts/style_presets.py",
-					"tests/test_figure_export.py",
-					"tests/test_style_presets.py",
 				],
 			},
 			{

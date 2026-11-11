@@ -241,8 +241,7 @@ export function runUserPromptSubmitHook(input, reentry = () => NO_REENTRY) {
     if (stdout === "") {
         return { kind: "noop" };
     }
-    const filmMark = film === "" ? {} : { film: true };
     return keeps
-        ? { kind: "inject", stdout, mode: route, entry: "continue", ...filmMark }
-        : { kind: "inject", stdout, mode: mode.mode, ...filmMark };
+        ? { kind: "inject", stdout, mode: route, entry: "continue" }
+        : { kind: "inject", stdout, mode: mode.mode };
 }

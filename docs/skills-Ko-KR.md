@@ -6,6 +6,10 @@
 
 번들 스킬을 모두 모았습니다. 줄마다 시작하는 방법과 얻는 것을 적었고, 마지막 줄은 알아서 돌아가는 검사를 묶었습니다.
 
+그중 아홉 개(`lit-pptx`, `lit-docx`, `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`, `frontend-ui-ux`, `visual-qa`, `lit-typographic-motion`, `readme-studio`)는 이제 콘텐츠 스킬을 따로 모은 wjgoarxiv-skills에 있습니다. 표의 설명은 그 스킬을
+`~/.codex/skills/`에 복사한 뒤의 모습입니다. 복사하기 전에는 같은 이름이 LitCodex의 짧은 스텁으로 가고, 스텁이 옮겨 간 곳과
+복사 명령을 알려 줍니다.
+
 <table>
 <tr><th>이렇게 됩니다</th><th>스킬</th><th>얻는 것</th></tr>
 <tr>
@@ -270,10 +274,9 @@
   문서는 Report, Brief, Manual, Proposal, Memo, Journal 여섯 방향이 있고, 첫 쪽에 무엇이 오는지, 요약을 어떻게
   쓰는지, 절에 번호를 붙이는지 같은 구조가 서로 다릅니다. 모두 연구기관 보고서처럼 검은 제목, 칸을 칠하지 않은
   표, 많아야 한 가지 강조색으로 인쇄되고, 한국어 문서는 날짜·표 캡션·단위·줄바꿈을 한국어 관례대로 씁니다.
-  어느 쪽이든 편집 가능한 Markdown 원본이 DOCX/PPTX 옆에 남고, 다른 방향을 원하면 결과를 보고 말하면 됩니다. 두 스킬에 필요한 고정 버전 도구는 `litcodex install`이 Codex 세션 밖에서 미리 받아
-  둡니다. 준비됐는지는 `litcodex office-runtime status`나 `litcodex doctor`로 확인하세요. 네트워크 없이 설치했다면
-  나중에 샌드박스 밖에서 `litcodex office-runtime install`을 실행하면 됩니다. LibreOffice·pandoc·XeLaTeX처럼 선택적으로
-  쓰는 도구가 있는지는 Office 실행기의 doctor 명령이 알려 줍니다.
+  어느 쪽이든 편집 가능한 Markdown 원본이 DOCX/PPTX 옆에 남고, 다른 방향을 원하면 결과를 보고 말하면 됩니다. 두 스킬은 wjgoarxiv-skills로 옮겨 가면서 고정 버전 도구도
+  함께 가져갔고, LitCodex는 더 이상 그 도구를 준비하지 않습니다. LibreOffice·pandoc·XeLaTeX처럼 선택적으로 쓰는 도구가
+  있는지는 설치한 스킬의 doctor 명령이 알려 줍니다.
 - **글 다듬기.** 영어·한국어 글은 `lit-humanizer`를 고르세요. 파일에 쓰기 직전에 훅이 누가 봐도 초안 티가 나는
   표현 몇 가지는 막고, 애매한 것은 막지 않고 짚어만 줍니다. Office·PDF 파일은 호스트가 텍스트를 꺼낼 수 있으면
   만들어진 직후에 확인합니다.

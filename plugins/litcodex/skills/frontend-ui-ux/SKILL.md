@@ -7,64 +7,68 @@ description: "Design frontend interfaces from a compact direction; resolve mater
 
 ```yaml
 contract_schema_version: 1
-artifact_kind: litcodex_skill_entrypoint
 skill_name: frontend-ui-ux
 host: Codex CLI
 reader_projection: shared_rule
-selection_surface: "$litcodex:frontend-ui-ux in the Codex skill picker"
-automatic_route: false
 registration_surface: plugins/litcodex/skills/frontend-ui-ux/SKILL.md
+stub_for: wjgoarxiv-skills plugins/design/skills/frontend-ui-ux/
+output_channels:
+  artifact_genre: no_artifact
+  limitations_channel: reply
 ```
 
-On activation, emit exactly one first-line probe: `🔥 **LIT IGNITED · frontend-ui-ux** 🔥`.
+When directly selected, the first visible line is `🔥 **LIT IGNITED · frontend-ui-ux** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-Do not write because the user only mentioned a keyword or left the target ambiguous. Review-only and plan-only work is read-only. Clarify material intent; keep authorized implementation scoped.
+This is a stub. frontend-ui-ux makes a web interface from one locked design direction, inspected across the responsive matrix. It moved out of LitCodex into **wjgoarxiv-skills**, as `plugins/design/skills/frontend-ui-ux` in the `design` family. The id stays here so its routes still land: `$litcodex:frontend-ui-ux`, the picker, implicit interface requests and the web page row of the bare `lit` table.
 
 ## #contract.inputs
 
-Outcome, constraints, and authorization define scope. See `references/complete-contract.md` for inputs and safeguards.
+The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `frontend-ui-ux` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/frontend-ui-ux/SKILL.md`) means the moved skill is installed.
 
 ## #contract.mode_matrix
 
-| Mode | Use when | Required result |
+| Mode | Trigger | Required behavior |
 | --- | --- | --- |
-| build | Default authorized interface work | Working source, probe, and review handoff. |
-| polish | Styling values on an existing UI | Probe before/after; no restructure. |
-| audit | Same-surface pivot after work in this session | Read-only findings; no fix. Cold review goes to `visual-qa`. |
-| harden | Cue-gated stress of an existing UI | Repair observed breaks, at most three rounds. |
+| Installed | The separate `frontend-ui-ux` copy is listed | Open it and follow it; skip this notice. |
+| Not installed, direct | frontend-ui-ux was asked for | Give the notice and install lines, then stop. |
+| Not installed, in a workflow | A lit workflow step wanted frontend-ui-ux | Name it once as not installed, give the lines, finish the rest. |
 
 ## #contract.procedure
 
-Follow `references/complete-contract.md`, `references/production-interview.md`, `references/motion-guide.md`, and `references/probe-and-review.md`; default direction is `references/default-editorial-pixel.json`. Always load `references/craft-floor.md` and `references/slop-register.md` once selected. Use `litfamily.design-contract/v1beta2` with `schemas/design-contract.v1beta2.json`. Lead with the user's primary information and actions; implement the interactions needed for the user's task. Inspect real 390/1440 renders, navigation, links, and visible controls. Source/tests are not visual proof; `visual-qa` owns verdicts.
+1. Print the banner when selected directly.
+2. If the installed copy is listed, read it fully and let it run the request.
+3. Otherwise say what frontend-ui-ux makes, that it moved to wjgoarxiv-skills (`plugins/design/skills/frontend-ui-ux`), and give the lines below unchanged. Checking a built page is visual-qa (same family).
+4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
-### Choose the design first
+## Install in Codex
 
-For a new page or screen the user has the right to choose the look. Before `design-lock.mjs` runs or markup is written, follow `references/design-choice.md`: style, family and density, recommended first, by `request_user_input` or a numbered list.
+wjgoarxiv-skills is **not published yet**: copy from a local clone (the path is a placeholder).
 
-Then a new page or screen starts from a design lock: run `scripts/design-lock.mjs init` and follow `references/house-styles.md` (five house styles, the `kit/`, one signature moment). Density is rich unless the user asks for minimal or calm. The probe adds DS-001..008 beside `design.lock.json` and prints a LOOK rubric; judge the screenshots by eye.
+```bash
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
+cp -R "<path to your wjgoarxiv-skills clone>/plugins/design/skills/frontend-ui-ux" "${CODEX_HOME:-$HOME/.codex}/skills/frontend-ui-ux"
+```
 
-Mode words apply only after picker selection or a bounded lit-loop delegation. `scripts/route-mode.mjs` checks English/Korean UI objects and excludes video, slides, prose, and server work; text alone never activates this skill. Use build by default, polish for value-only edits, audit only after same-surface session work, and harden for stress cues.
+Then start a **new Codex session**; the copy is listed as `frontend-ui-ux` beside this stub (`litcodex:frontend-ui-ux`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/frontend-ui-ux`.
 
 ## #contract.outputs
 
-Report result, preview and material gap. Keep full evidence in the work area.
+```json
+{ "contract_schema_version": 1, "output_schema": { "mode": "installed | not-installed", "notice": "what it makes, where it moved, the install lines", "artifacts": [] } }
+```
 
 ## #contract.evidence
 
-Load `references/complete-contract.md` and `references/canonical-library.md` for detail. Imported scripts stay inert. The exact host-selected SKILL.md path anchors every validator/resource lookup; never hardcode a cache path. Derive the validator path from that file:
-
-```bash
-FRONTEND_UIUX_SKILL_FILE="<absolute path of the SKILL.md selected for this turn>"
-FRONTEND_UIUX_SKILL_ROOT="$(cd "$(dirname "$FRONTEND_UIUX_SKILL_FILE")" && pwd -P)"
-node "$FRONTEND_UIUX_SKILL_ROOT/scripts/validate-design-contract.mjs" --input design-contract.json
-```
-
-See `references/evidence-review.md` for evidence-root and host-review limits.
+The reply names `plugins/design/skills/frontend-ui-ux` and carries the install lines unchanged; installed mode follows the moved skill's own rules.
 
 ## #contract.hard_stops
 
-Never change host config/auth, widen authority, fabricate evidence, or overwrite work. Missing renderer means `BLOCKED`.
+| Stop class | Stop immediately when | Required response |
+| --- | --- | --- |
+| Missing skill | No installed copy is listed | Notice and install lines; no artifact. |
+| Install request | The user asks the stub to install it | Show the lines; the user runs them. |
 
 ## #contract.anti_patterns
 
-Avoid keyword-only authorization, schema-only stops, and source-as-render proof.
+- Do not claim frontend-ui-ux ran or present hand-made output as its result.
+- Do not edit the placeholder into a guessed path.

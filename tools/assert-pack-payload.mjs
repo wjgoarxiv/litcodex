@@ -21,12 +21,7 @@
 //   2 = operator/environment fault (bad flag, unreadable/malformed manifest, bad pack JSON).
 
 import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import {
-	assertCanonicalCorpusSnapshotStable,
-	CANONICAL_CORPUS_RELATIVE_ROOT,
-	verifyCanonicalCorpus,
-} from "../plugins/litcodex/skills/frontend-ui-ux/scripts/verify-canonical-corpus.mjs";
+import { resolve } from "node:path";
 import { enrichPackResultsFromRepo } from "./enrich-pack-bin-paths.mjs";
 
 /** Built-in no-trace path denylist segments that must never be stored raw in JSON fixtures. */
@@ -280,24 +275,11 @@ export function loadPayloadManifest(manifestPath) {
 				`manifest rule for ${rule.name} has an unsafe allowedHiddenPaths[] entry`,
 			);
 		}
-		if (!Array.isArray(rule.verifiedCorpusCopies ?? [])) {
+		if (rule.verifiedCorpusCopies !== undefined) {
 			throw new PackPayloadError(
 				"LITCODEX_PACK_MANIFEST_INVALID",
-				`manifest rule for ${rule.name} must have verifiedCorpusCopies[] when present`,
+				`manifest rule for ${rule.name} declares verifiedCorpusCopies, but the package ships no verified corpus`,
 			);
-		}
-		for (const copy of rule.verifiedCorpusCopies ?? []) {
-			if (
-				copy === null ||
-				typeof copy !== "object" ||
-				copy.sourceRoot !== CANONICAL_CORPUS_RELATIVE_ROOT ||
-				!isSafeRelativeDirectory(copy.destinationPrefix)
-			) {
-				throw new PackPayloadError(
-					"LITCODEX_PACK_MANIFEST_INVALID",
-					`manifest verified corpus copy for ${rule.name} must use a safe destination and the pinned source root`,
-				);
-			}
 		}
 		for (const fileSet of rule.exactFileSets ?? []) {
 			if (
@@ -323,76 +305,7 @@ export function loadPayloadManifest(manifestPath) {
 			? uniqueStrings([...m.gitForbiddenSegments, ...BUILTIN_FORBIDDEN_SEGMENTS])
 			: m.gitForbiddenSegments,
 	};
-	expandVerifiedCorpusCopies(manifest, resolve(dirname(resolve(manifestPath)), ".."));
 	return manifest;
-}
-
-function isSafeRelativeDirectory(value) {
-	return (
-		typeof value === "string" &&
-		value.endsWith("/") &&
-		!value.startsWith("/") &&
-		!value.includes("\\") &&
-		!value.includes("\0") &&
-		!value.split("/").includes("..")
-	);
-}
-
-function expandVerifiedCorpusCopies(manifest, repoRoot) {
-	for (const rule of manifest.packages) {
-		for (const copy of rule.verifiedCorpusCopies ?? []) {
-			const matchingSets = (rule.exactFileSets ?? []).filter(
-				(fileSet) =>
-					copy.destinationPrefix.startsWith(fileSet.prefix) &&
-					copy.destinationPrefix.length > fileSet.prefix.length,
-			);
-			if (matchingSets.length !== 1) {
-				throw new PackPayloadError(
-					"LITCODEX_PACK_MANIFEST_INVALID",
-					`manifest verified corpus copy for ${rule.name} must belong to one exact file set`,
-				);
-			}
-
-			let paths;
-			try {
-				const report = verifyCanonicalCorpus(resolve(repoRoot, copy.sourceRoot));
-				paths = [...report.verifiedFiles.keys()].sort();
-				assertCanonicalCorpusSnapshotStable(report);
-			} catch (error) {
-				throw new PackPayloadError(
-					"LITCODEX_PACK_CANONICAL_CORPUS_INVALID",
-					"verified package corpus failed its integrity check",
-					{ causeCode: typeof error?.code === "string" ? error.code : "UNKNOWN" },
-				);
-			}
-			if (paths.length === 0 || paths.some((path) => !isSafeRelativeFile(path))) {
-				throw new PackPayloadError(
-					"LITCODEX_PACK_CANONICAL_CORPUS_INVALID",
-					"verified package corpus returned an empty or unsafe path set",
-				);
-			}
-
-			const destinationPaths = paths.map((path) => `${copy.destinationPrefix}${path}`);
-			rule.requiredPaths = uniqueStrings([...rule.requiredPaths, ...destinationPaths]);
-			const fileSet = matchingSets[0];
-			const relativePrefix = copy.destinationPrefix.slice(fileSet.prefix.length);
-			fileSet.allowedPaths = uniqueStrings([
-				...fileSet.allowedPaths,
-				...paths.map((path) => `${relativePrefix}${path}`),
-			]);
-		}
-	}
-}
-
-function isSafeRelativeFile(value) {
-	return (
-		typeof value === "string" &&
-		value.length > 0 &&
-		!value.startsWith("/") &&
-		!value.includes("\\") &&
-		!value.includes("\0") &&
-		!value.split("/").includes("..")
-	);
 }
 
 function uniqueStrings(values) {

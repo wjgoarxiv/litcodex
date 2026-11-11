@@ -1,27 +1,14 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
-import {
-	HANDOFF_SOURCE_HASHES,
-	SCIENTIFIC_VISUALIZATION_SOURCE_HASHES,
-	SCIENTIFIC_VISUALIZATION_SOURCE_MANIFEST,
-} from "./bundled-skill-manifests.js";
+import { HANDOFF_SOURCE_HASHES } from "./bundled-skill-manifests.js";
 import type { ReadonlyFsLike } from "./codex.js";
 
 const HANDOFF_FILES = ["SKILL.md"] as const;
 
-const SCIENTIFIC_VISUALIZATION_FILES = ["SKILL.md", "scripts/dependency-preflight.py"] as const;
-
-const VENDOR_LEGAL_FILES = [
-	"NOTICE",
-	"licenses/022_handoff-MIT.txt",
-	"licenses/045_scientific-visualization-MIT.txt",
-	"provenance/022_handoff.md",
-	"provenance/045_scientific-visualization.md",
-] as const;
+const VENDOR_LEGAL_FILES = ["NOTICE", "licenses/022_handoff-MIT.txt", "provenance/022_handoff.md"] as const;
 
 export interface BundledSkillReport {
 	readonly handoffInstalled: boolean;
-	readonly scientificVisualizationInstalled: boolean;
 }
 
 export function probeBundledSkills(fs: ReadonlyFsLike, marketplaceRoot: string): BundledSkillReport {
@@ -29,23 +16,12 @@ export function probeBundledSkills(fs: ReadonlyFsLike, marketplaceRoot: string):
 	const skillsRoot = join(pluginRoot, "skills");
 	const vendorRoot = join(pluginRoot, "vendor");
 	const handoffRoot = join(skillsRoot, "lit-handoff");
-	const scientificVisualizationRoot = join(skillsRoot, "lit-scientific-visualization");
 	const vendorComplete = payloadComplete(fs, vendorRoot, VENDOR_LEGAL_FILES);
 	return {
 		handoffInstalled:
 			vendorComplete &&
 			payloadComplete(fs, handoffRoot, HANDOFF_FILES) &&
 			payloadExact(fs, join(vendorRoot, "handoff"), HANDOFF_SOURCE_HASHES),
-		scientificVisualizationInstalled:
-			vendorComplete &&
-			payloadComplete(fs, scientificVisualizationRoot, SCIENTIFIC_VISUALIZATION_FILES) &&
-			payloadExact(
-				fs,
-				join(vendorRoot, "scientific-visualization"),
-				SCIENTIFIC_VISUALIZATION_SOURCE_HASHES,
-				SCIENTIFIC_VISUALIZATION_SOURCE_MANIFEST,
-				"045_scientific-visualization",
-			),
 	};
 }
 

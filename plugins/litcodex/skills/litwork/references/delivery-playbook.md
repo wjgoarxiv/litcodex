@@ -35,8 +35,9 @@ real capability: planning, domain implementation, browser or desktop driving, de
 cleanup. Record why each selected skill is needed. A skill name is not evidence that it ran.
 
 For work that creates or changes a user-facing web interface, plan a UI criterion and load the
-installed sibling `../frontend-ui-ux/SKILL.md` for implementation and verification. Capture the
-`../../frontend-ui-ux/scripts/probe.mjs` command, the seven-entry RS matrix JSON, and screenshots from the built page.
+installed sibling `../frontend-ui-ux/SKILL.md` for implementation and verification; it is a stub that hands over
+to the installed copy of the moved skill. Capture the copy's interface probe command, the seven-entry RS matrix
+JSON, and screenshots from the built page; without the copy the criterion is BLOCKED on the missing probe.
 Remaining HIGH findings block PASS until fixed or named as a specific limitation; exit 2 is
 BLOCKED. A CLI or backend-only deliverable without a web interface has no frontend probe.
 

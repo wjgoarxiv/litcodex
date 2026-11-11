@@ -1,4 +1,3 @@
-import { type MotionEvaluator } from "./motion-gate.js";
 /** Hard cap on stdin to bound memory / ReDoS exposure inside the 5 s Codex hook budget. 8 MB. */
 export declare const MAX_STDIN_BYTES = 8000000;
 /** Machine-readable error envelope emitted to stderr on a NON-zero exit. */
@@ -20,8 +19,6 @@ export declare function runUserPromptSubmitHookCli(stdin: NodeJS.ReadableStream,
 export interface AutoHandoffHookOptions {
     readonly env?: NodeJS.ProcessEnv;
     readonly now?: number;
-    /** Replaces the installed film skill's done-check in the Stop gate; tests only. */
-    readonly evaluateMotion?: MotionEvaluator;
 }
 /**
  * Asks the model to open the LIT card for this LIT turn, so the live card sits next to the newest turn

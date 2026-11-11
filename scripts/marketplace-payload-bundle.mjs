@@ -19,7 +19,6 @@ const CANONICAL_REPO_ROOT = realpathSync(REPO_ROOT);
 const PACKAGE_ROOT = join(REPO_ROOT, "packages/litcodex-ai");
 const DEST = join(PACKAGE_ROOT, "marketplace");
 const PLUGIN_PREFIX = "plugins/litcodex/";
-const VENDOR_SCIENTIFIC_TESTS = new Set(["tests/test_figure_export.py", "tests/test_style_presets.py"]);
 
 const REQUIRED_RUNTIME_FILES = new Set([
 	".agents/plugins/marketplace.json",
@@ -28,23 +27,6 @@ const REQUIRED_RUNTIME_FILES = new Set([
 	"plugins/litcodex/assets/screenshot-lit-ignited.png",
 	"plugins/litcodex/.mcp.json",
 	"plugins/litcodex/hooks/hooks.json",
-	"plugins/litcodex/skills/visual-qa/schemas/design-contract.v1alpha1.json",
-	"plugins/litcodex/skills/visual-qa/schemas/evidence-manifest.v1alpha1.json",
-	"plugins/litcodex/skills/visual-qa/schemas/review-receipt.v1alpha1.json",
-	"plugins/litcodex/skills/visual-qa/scripts/ansi.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/east-asian-width.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/evidence-bytes.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/image-diff.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/png-crc.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/png-decode.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/tui-grid.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/types.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/validate-design-contract.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/validate-evidence.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/validate-review-receipt.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/entrypoint.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/strict-input.mjs",
-	"plugins/litcodex/skills/visual-qa/scripts/cli.mjs",
 ]);
 
 const RETIRED_RUNTIME_FILES = new Set([
@@ -203,10 +185,6 @@ function isRuntimeVendorPath(relativePath) {
 	}
 	if (relativePath.startsWith("handoff/")) {
 		return isRuntimeSkillPath(relativePath.slice("handoff/".length));
-	}
-	if (relativePath.startsWith("scientific-visualization/")) {
-		const corpusPath = relativePath.slice("scientific-visualization/".length);
-		return VENDOR_SCIENTIFIC_TESTS.has(corpusPath) || isRuntimeSkillPath(corpusPath);
 	}
 	return false;
 }

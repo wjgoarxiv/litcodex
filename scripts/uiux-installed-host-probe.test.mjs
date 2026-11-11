@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
 
-import { probeHost, runScenarioTable, SCENARIO_IDS } from "./uiux-installed-host-probe.mjs";
+import { probeHost } from "./uiux-installed-host-probe.mjs";
 
 const roots = [];
 
@@ -28,41 +28,6 @@ function baseEnv(extra = {}) {
 function result({ exitCode = 0, stdout = "", stderr = "", spawnError, timedOut = false } = {}) {
 	return { exitCode, stdout, stderr, spawnError, timedOut, durationMs: 1 };
 }
-
-it("scenario records omit executable argv and retain exact IDs, counts, and stream evidence", async () => {
-	const pathCanary = `ghp_${"S".repeat(36)}`;
-	const stdout = `${JSON.stringify({
-		status: "PASS",
-		count: 8,
-		scenarios: SCENARIO_IDS.map((name) => ({
-			name,
-			actual: "PASS",
-			expected: "PASS",
-			assertions: [{ pass: true }, { pass: true }, { pass: true }],
-		})),
-	})}\n`;
-	const calls = [];
-	const scenario = await runScenarioTable(
-		join("/repo", pathCanary),
-		join("/installed", pathCanary),
-		baseEnv({ [`SECRET_${pathCanary}`]: `npm_${"E".repeat(36)}` }),
-		async (command, args) => {
-			calls.push({ command, args });
-			return result({ stdout, stderr: "safe warning" });
-		},
-	);
-	const serialized = JSON.stringify(scenario.record);
-	assert.equal(calls.length, 1);
-	assert.equal(serialized.includes(pathCanary), false);
-	assert.equal(Object.hasOwn(scenario.record, "command"), false);
-	assert.deepEqual(scenario.record.scenarioIds, SCENARIO_IDS);
-	assert.equal(scenario.record.scenarioCount, 8);
-	assert.equal(scenario.record.semanticAssertions, 24);
-	assert.equal(scenario.record.stdoutBytes, Buffer.byteLength(stdout));
-	assert.match(scenario.record.stdoutSha256, /^[a-f0-9]{64}$/u);
-	assert.equal(scenario.record.stderrEvidence.bytes, Buffer.byteLength("safe warning"));
-	assert.match(scenario.record.stderrEvidence.sha256, /^[a-f0-9]{64}$/u);
-});
 
 async function runProbe({ scope = "doctor", responses, env, nonce = "fresh-nonce" }) {
 	const calls = [];

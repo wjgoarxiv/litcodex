@@ -455,7 +455,8 @@ describe("the first activation keeps its content and drops its duplication", () 
 		}
 		expect(first.context).toContain("덱 N장");
 		expect(first.context).toContain("화면 만들어줘");
-		expect(first.context).toContain("scripts/design-lock.mjs");
+		expect(first.context).toContain("wjgoarxiv-skills");
+		expect(first.context).not.toContain("scripts/design-lock.mjs");
 		expect(first.context.split(PLUGIN_ROOT).length - 1).toBeLessThanOrEqual(3);
 		expect(first.context).toContain(`${PLUGIN_ROOT}skills`);
 		expect(first.context).toContain("### Bounded task");

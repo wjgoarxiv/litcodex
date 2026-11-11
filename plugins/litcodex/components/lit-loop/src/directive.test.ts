@@ -197,7 +197,7 @@ it("gives newly authored video priority over slide and interface hand-offs", () 
 			"background video",
 			"thumbnail",
 			"bare motion",
-			"../lit-typographic-motion/scripts/render.mjs",
+			"../lit-typographic-motion/skill.md` stub",
 		]) {
 			expect(body.toLowerCase()).toContain(phrase);
 		}

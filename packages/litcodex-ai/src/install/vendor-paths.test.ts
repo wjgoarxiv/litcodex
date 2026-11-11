@@ -20,10 +20,9 @@ import { materializeManagedMarketplace } from "./marketplace-payload.js";
 const REPO_ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
 const VENDOR_ROOT = join(REPO_ROOT, "plugins/litcodex/vendor");
 const BUNDLE_SCRIPT_URL = pathToFileURL(join(REPO_ROOT, "scripts/marketplace-payload-bundle.mjs")).href;
-const VENDOR_PAIRS = [
-	["022_handoff", "handoff"],
-	["045_scientific-visualization", "scientific-visualization"],
-] as const;
+// lit-scientific-visualization moved to wjgoarxiv-skills with its vendored source, so handoff is the one
+// numbered vendor root left to migrate.
+const VENDOR_PAIRS = [["022_handoff", "handoff"]] as const;
 
 const roots: string[] = [];
 
@@ -41,19 +40,12 @@ describe("canonical vendor paths", () => {
 		}
 
 		const module = await import(`${BUNDLE_SCRIPT_URL}?canonical-vendor-contract`);
-		const selected = module.selectRuntimeFiles([
-			"plugins/litcodex/vendor/handoff/SKILL.md",
-			"plugins/litcodex/vendor/scientific-visualization/SKILL.md",
-		]);
-		expect(selected).toEqual(
-			expect.arrayContaining([
-				"plugins/litcodex/vendor/handoff/SKILL.md",
-				"plugins/litcodex/vendor/scientific-visualization/SKILL.md",
-			]),
-		);
+		const selected = module.selectRuntimeFiles(["plugins/litcodex/vendor/handoff/SKILL.md"]);
+		expect(selected).toEqual(expect.arrayContaining(["plugins/litcodex/vendor/handoff/SKILL.md"]));
+		expect(existsSync(join(VENDOR_ROOT, "scientific-visualization"))).toBe(false);
 		const payloadManifest = readFileSync(join(REPO_ROOT, "tools/pack-payload-manifest.json"), "utf8");
 		expect(payloadManifest).toContain("marketplace/plugins/litcodex/vendor/handoff/");
-		expect(payloadManifest).toContain("marketplace/plugins/litcodex/vendor/scientific-visualization/");
+		expect(payloadManifest).not.toContain("vendor/scientific-visualization/");
 		expect(payloadManifest).not.toMatch(/marketplace\/plugins\/litcodex\/vendor\/022_handoff\//u);
 		expect(payloadManifest).not.toMatch(/marketplace\/plugins\/litcodex\/vendor\/045_scientific-visualization\//u);
 	});
@@ -83,9 +75,6 @@ describe("canonical vendor paths", () => {
 		expect(readFileSync(join(paths.targetRoot, "plugins/litcodex/vendor/handoff/SKILL.md"), "utf8")).toBe(
 			"handoff bytes\n",
 		);
-		expect(
-			readFileSync(join(paths.targetRoot, "plugins/litcodex/vendor/scientific-visualization/SKILL.md"), "utf8"),
-		).toBe("science bytes\n");
 	});
 
 	for (const [kind, mutate] of [
@@ -163,7 +152,7 @@ function fixture(): { sourceRoot: string; targetRoot: string } {
 	for (const [, canonical] of VENDOR_PAIRS) {
 		const vendor = join(sourceRoot, "plugins/litcodex/vendor", canonical);
 		mkdirSync(vendor, { recursive: true });
-		writeFileSync(join(vendor, "SKILL.md"), canonical === "handoff" ? "handoff bytes\n" : "science bytes\n");
+		writeFileSync(join(vendor, "SKILL.md"), "handoff bytes\n");
 	}
 	return { sourceRoot, targetRoot };
 }

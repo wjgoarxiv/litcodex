@@ -46,34 +46,16 @@ export const HOOK_SKILL_NAMES = Object.freeze([
 
 export const HANDOFF_SKILL_FILES = Object.freeze(["SKILL.md"]);
 
-export const SCIENTIFIC_VISUALIZATION_SKILL_FILES = Object.freeze(["SKILL.md", "scripts/dependency-preflight.py"]);
+export const SCIENTIFIC_VISUALIZATION_SKILL_FILES = Object.freeze(["SKILL.md"]);
 
 export const VENDOR_FILES = Object.freeze([
 	"NOTICE",
 	"licenses/022_handoff-MIT.txt",
-	"licenses/045_scientific-visualization-MIT.txt",
 	"provenance/022_handoff.md",
-	"provenance/045_scientific-visualization.md",
 	"handoff/SKILL.md",
 	"handoff/evals/evals.json",
 	"handoff/examples/HANDOFF-example-generic-auth-refactor.md",
 	"handoff/templates/HANDOFF.md",
-	"scientific-visualization/SKILL.md",
-	"scientific-visualization/assets/color_palettes.py",
-	"scientific-visualization/assets/nature.mplstyle",
-	"scientific-visualization/assets/presentation.mplstyle",
-	"scientific-visualization/assets/publication.mplstyle",
-	"scientific-visualization/evals/evals.json",
-	"scientific-visualization/references/color_palettes.md",
-	"scientific-visualization/references/journal_requirements.md",
-	"scientific-visualization/references/matplotlib_examples.md",
-	"scientific-visualization/references/mdanalysis_martini_visualization.md",
-	"scientific-visualization/references/publication_guidelines.md",
-	"scientific-visualization/references/seaborn_for_publications.md",
-	"scientific-visualization/scripts/figure_export.py",
-	"scientific-visualization/scripts/style_presets.py",
-	"scientific-visualization/tests/test_figure_export.py",
-	"scientific-visualization/tests/test_style_presets.py",
 ]);
 
 export const BROWSER_DRIVE_SKILL_FILES = Object.freeze([

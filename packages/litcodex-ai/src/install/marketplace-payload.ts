@@ -30,10 +30,7 @@ export interface MaterializeMarketplaceResult {
 
 const MARKETPLACE_MANIFEST = join(".agents", "plugins", "marketplace.json");
 const PLUGIN_MANIFEST = join("plugins", "litcodex", ".codex-plugin", "plugin.json");
-const LEGACY_VENDOR_PATHS = [
-	{ legacy: "022_handoff", canonical: "handoff" },
-	{ legacy: "045_scientific-visualization", canonical: "scientific-visualization" },
-] as const;
+const LEGACY_VENDOR_PATHS = [{ legacy: "022_handoff", canonical: "handoff" }] as const;
 const LEGACY_SKILL_RELATIVE = "plugins/litcodex/skills/lit-korean";
 const LEGACY_SKILL_FILES = {
 	"SKILL.md": "70abba94d0a8d5d1f18ccbb38ab8acbb60c3948d41f6bf34fc271747f18cd570",

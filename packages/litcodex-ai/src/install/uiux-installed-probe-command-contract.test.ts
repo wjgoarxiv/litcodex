@@ -14,11 +14,16 @@ const helpersUrl = new URL("../../../../scripts/uiux-installed-probe-helpers.mjs
 const helpers = readFileSync(helpersUrl, "utf8");
 
 describe("UIUX installed probe documented command fidelity", () => {
-	it("does not pre-seed skill-root variables that the documented blocks must resolve", () => {
-		expect(probe).not.toMatch(/LITCODEX_FRONTEND_UIUX_ROOT:\s*join\(/);
-		expect(probe).not.toMatch(/LITCODEX_VISUAL_QA_ROOT:\s*join\(/);
-		expect(probe).not.toContain("commandEnv");
-		expect(probe).toContain("function documentedBlock");
+	it("runs no design or visual-qa command now that those skills are stubs", () => {
+		for (const gone of [
+			"documentedBlock",
+			"assertBetaDesignContract",
+			"installed-beta-evidence",
+			"runScenarioTable",
+		]) {
+			expect(probe, gone).not.toContain(gone);
+			expect(helpers, gone).not.toContain(gone);
+		}
 		expect(probe).toContain("const base = { cwd: project, env: setupEnv, signal };");
 	});
 
@@ -36,29 +41,6 @@ describe("UIUX installed probe documented command fidelity", () => {
 		expect(probe.indexOf("assertCodexIdentity(codexIdentity)", hostRunner)).toBeLessThan(
 			probe.indexOf("env.OPENAI_API_KEY = normalizedApiKey", hostRunner),
 		);
-	});
-
-	it("exercises installed beta material evidence and every false-PASS boundary", () => {
-		expect(probe).toContain("assertBetaDesignContract(contract);");
-		expect(helpers).toContain('schema_id: "litfamily.design-contract/v1beta1"');
-		expect(helpers).toContain("^litfamily\\.design-contract\\/v1beta[1-9]");
-		expect(probe).toContain("litfamily.evidence-manifest/v1beta1");
-		expect(probe).toContain("--input");
-		expect(probe).toContain("--tier");
-		expect(probe).toContain("--now");
-		expect(probe).toContain("--evidence-root");
-		for (const commandName of [
-			"installed-beta-evidence-pass",
-			"installed-beta-evidence-missing",
-			"installed-beta-evidence-non-image",
-			"installed-beta-evidence-stale",
-			"installed-beta-evidence-root-escape",
-			"installed-beta-evidence-symlink",
-			"installed-beta-evidence-reviewer-block",
-		]) {
-			expect(probe).toContain(commandName);
-		}
-		expect(probe).not.toContain("installed-probe-capture-v1");
 	});
 
 	it("production entrypoint never persists a secret-shaped missing CODEX_BIN path", () => {

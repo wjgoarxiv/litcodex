@@ -3,60 +3,6 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { assert, outputEvidence, timedAsync } from "./uiux-installed-probe-helpers.mjs";
 
-export const SCENARIO_IDS = [
-	"public-service-form-ko",
-	"fintech-dashboard",
-	"healthcare-mobile",
-	"saas-landing-responsive",
-	"brownfield-design-system",
-	"reference-fidelity",
-	"cjk-terminal-dashboard",
-	"missing-capture-auth-review",
-];
-
-export async function runScenarioTable(repoRoot, installedPackage, base, runCommand = timedAsync) {
-	const command = [
-		process.execPath,
-		join(repoRoot, "tools/run-uiux-visual-qa-scenarios.mjs"),
-		"--installed-root",
-		installedPackage,
-		"--fixtures",
-		join(repoRoot, "tools/scenarios/uiux-visual-qa"),
-		"--scenario",
-		"all",
-		"--json",
-	];
-	const run = await runCommand(command[0], command.slice(1), base);
-	assert(run.exitCode === 0, `scenario driver failed with exit ${run.exitCode}`);
-	const result = JSON.parse(run.stdout);
-	assert(result.status === "PASS" && result.count === 8, "scenario summary is not exact 8/8 PASS");
-	assert(
-		JSON.stringify(result.scenarios.map(({ name }) => name)) === JSON.stringify(SCENARIO_IDS),
-		"scenario IDs drifted",
-	);
-	assert(
-		result.scenarios.every(
-			({ assertions, actual, expected }) =>
-				actual === expected && assertions.length >= 3 && assertions.every(({ pass }) => pass === true),
-		),
-		"scenario semantic assertion failed",
-	);
-	return {
-		result,
-		record: {
-			name: "scenario-table",
-			exitCode: run.exitCode,
-			durationMs: run.durationMs,
-			stdoutBytes: Buffer.byteLength(run.stdout),
-			stdoutSha256: createHash("sha256").update(run.stdout).digest("hex"),
-			stderrEvidence: outputEvidence(run.stderr),
-			scenarioIds: SCENARIO_IDS,
-			scenarioCount: result.count,
-			semanticAssertions: result.scenarios.reduce((sum, item) => sum + item.assertions.length, 0),
-		},
-	};
-}
-
 export async function discoverAndHook(skills, installedBin, base, runCommand = timedAsync) {
 	const discovery = ["frontend-ui-ux", "visual-qa"].map((id) => {
 		const path = join(skills, id, "SKILL.md");

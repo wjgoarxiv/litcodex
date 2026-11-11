@@ -84,10 +84,13 @@ describe("dispatch (pure routing core)", () => {
 		expect(r.stderr).not.toContain(NPX_TOKEN);
 	});
 
-	it("routes Office runtime installation and status explicitly", () => {
-		expect(dispatch(["office-runtime", "install"]).exitCode).toBe(0);
-		expect(dispatch(["office-runtime", "status"]).exitCode).toBe(0);
-		expect(dispatch(["office-runtime", "unknown"]).exitCode).toBe(64);
+	it("no longer routes the office and film runtimes, which left with their skills", () => {
+		for (const route of ["office-runtime", "motion-runtime"]) {
+			const unknown = dispatch(["no-such-route"]).exitCode;
+			expect(unknown).not.toBe(0);
+			expect(dispatch([route, "install"]).exitCode, route).toBe(unknown);
+			expect(dispatch(["help"]).stdout, route).not.toContain(route);
+		}
 	});
 
 	it("--dry-run routing is position-independent and resolves install locally", () => {

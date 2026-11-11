@@ -5,7 +5,6 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, wr
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import process from "node:process";
-import { isMain } from "../plugins/litcodex/skills/visual-qa/scripts/strict-input.mjs";
 import { runCliPhase } from "./install-smoke-cli-phase.mjs";
 import { runInstallPhase } from "./install-smoke-install-phase.mjs";
 import { runPackagePhase } from "./install-smoke-package-phase.mjs";
@@ -17,6 +16,7 @@ import {
 	sandboxEnv,
 	snapshotTree,
 } from "./install-smoke-runtime.mjs";
+import { isMain } from "./strict-json.mjs";
 
 const repoRoot = process.cwd();
 const evidenceDir = join(repoRoot, ".litcodex/evidence");

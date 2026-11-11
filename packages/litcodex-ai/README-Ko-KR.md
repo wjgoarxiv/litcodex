@@ -66,6 +66,8 @@ lit 회원가입 폼에 입력 검증을 추가해줘
   `coding-session-audit`, `lit-comprehend`, `lit-hijack`, `lit-adhd`.
 - 문서, 그림, 화면: `lit-docx`, `lit-pptx`, `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`,
   `lit-typographic-motion`, `lit-humanizer`, `readme-studio`, `frontend-ui-ux`, `visual-qa`, `browser-drive`.
+  `lit-humanizer`와 `browser-drive`를 뺀 나머지는 이제 wjgoarxiv-skills에 있고, 여기 있는 이름은 `~/.codex/skills/`에
+  복사하는 명령을 알려 주는 스텁입니다.
 - 코드: `debugging`, `refactor`, `lit-code`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`,
   `structural-search`, `lsp-setup`, `lit-init`.
 - 관리: `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix`. `rules`, `lsp`,

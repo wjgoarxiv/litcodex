@@ -237,6 +237,9 @@ lit research Node 22에서 PKCE를 지원하는 OAuth 라이브러리를 출처�
 lit notes.md로 월요일 회의용 열 장짜리 발표자료를 만들어줘
 ```
 
+두 스킬은 이제 콘텐츠 스킬을 따로 모은 wjgoarxiv-skills에 있습니다. LitCodex는 이름을 그대로 두어서 위 요청도
+그 스킬로 갑니다. 스킬을 `~/.codex/skills/`에 복사하기 전까지는 스텁이 Codex 설치 명령 한 줄로 답합니다.
+
 ### 영어·한국어 글 다듬기
 
 `$litcodex:lit-humanizer`는 사실과 단서는 남기고 딱딱한 AI 문장을 다시 씁니다. 파일에
@@ -256,9 +259,12 @@ lit notes.md로 월요일 회의용 열 장짜리 발표자료를 만들어줘
 | LitCodex 관리 | `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix` |
 | 알아서 도는 검사 | `rules`, `lsp`, `comment-checker`: 프롬프트마다 프로젝트 규칙을 넣고, 수정 뒤에는 LSP와 주석을 확인 |
 
+화면, 그림, 영상 스킬은 `browser-drive`를 빼고 `lit-docx`, `lit-pptx`와 함께 wjgoarxiv-skills로 옮겼습니다.
+이름은 여기서도 그대로 쓸 수 있고, 각 이름은 스킬이 옮겨 간 곳과 `~/.codex/skills/`에 복사하는 방법을 알려 주는 짧은 스텁입니다.
+
 ## 만들 수 있는 것
 
-번들 스킬의 스크립트를 이 컴퓨터에서 직접 돌려 만든 그림 네 장입니다. 그림 속 수치는 모두 예시 자료입니다.
+스킬의 스크립트를 이 컴퓨터에서 직접 돌려 만든 그림 네 장입니다. 발표자료, 페이지, P&ID는 이제 wjgoarxiv-skills에 있는 스킬로 만든 것입니다. 그림 속 수치는 모두 예시 자료입니다.
 
 ### 어디까지 했더라
 
@@ -467,8 +473,6 @@ Codex 목표 도구로 이어지는 점선은 도구가 있을 때 에이전트�
 | `litcodex doctor` | 설치, 루프 상태, 호스트 기능, 실제 적용된 설정 진단 |
 | `litcodex uninstall` | 플러그인과 LitCodex가 관리하는 설정 제거 |
 | `litcodex config migrate` | 관리되는 Codex 설정을 미리 보거나 적용 |
-| `litcodex office-runtime install` 또는 `status` | Word·PowerPoint 파일에 쓰는 고정 버전 도구를 준비하거나 확인 |
-| `litcodex motion-runtime install` 또는 `status` | 영상 렌더러 도구를 준비하거나 확인 |
 | `litcodex hud` | 가장 최근 세션의 LIT 카드를 두 번째 터미널 창에 실시간으로 표시 |
 | `litcodex screen-status on`, `off` 또는 `status` | 터미널 `codex`에서 LIT 카드에 색 넣기 |
 | `litcodex statusline` | 상태 줄 명령에 쓸 수 있게 LIT 상태를 한 줄로 출력 |

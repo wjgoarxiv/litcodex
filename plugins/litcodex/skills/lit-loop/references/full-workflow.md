@@ -75,8 +75,9 @@ Before scheduling a goal, make every criterion executable. It must name:
   cleanup receipt.
 
 When a goal creates or changes a user-facing web interface, add a distinct UI criterion before
-implementation. Load the installed sibling `../frontend-ui-ux/SKILL.md` for that portion and record
-its `../../frontend-ui-ux/scripts/probe.mjs` invocation, seven-entry RS matrix JSON, and screenshots as evidence. HIGH
+implementation. Load the installed sibling `../frontend-ui-ux/SKILL.md` for that portion; it is a stub for the
+skill that moved to wjgoarxiv-skills and hands over to the installed copy. Record the copy's interface probe
+invocation, seven-entry RS matrix JSON, and screenshots as evidence; without the copy the criterion is BLOCKED on the missing probe. HIGH
 findings block criterion PASS until fixed or named as a specific limitation; probe exit 2 records
 BLOCKED. A CLI or backend-only goal with no web interface needs no frontend skill or browser probe.
 

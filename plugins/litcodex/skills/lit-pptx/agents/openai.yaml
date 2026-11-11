@@ -1,6 +1,6 @@
 interface:
   display_name: "lit-pptx"
-  short_description: "Create and QA editable PowerPoint decks"
+  short_description: "Moved to wjgoarxiv-skills; shows the Codex install line"
   search_terms:
     - "slides"
     - "deck"

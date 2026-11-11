@@ -1,6 +1,6 @@
 interface:
   display_name: "Lit Scientific Visualization"
-  short_description: "Design evidence-backed scientific figures"
+  short_description: "Moved to wjgoarxiv-skills; shows the Codex install line"
   default_prompt: "Use $litcodex:lit-scientific-visualization to create this figure."
 policy:
   allow_implicit_invocation: false

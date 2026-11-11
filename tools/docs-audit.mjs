@@ -33,8 +33,6 @@ import {
 	HOOK_SUBCOMMANDS,
 	LOOP_SUBCOMMANDS,
 	lineOfIndex,
-	MOTION_RUNTIME_SUBCOMMANDS,
-	OFFICE_RUNTIME_SUBCOMMANDS,
 } from "./readme-audit.mjs";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
@@ -245,16 +243,6 @@ function classifyInvocation(first, tail) {
 		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "hook" };
 		return { ok: HOOK_SUBCOMMANDS.includes(sub), shown: `hook ${sub}` };
 	}
-	if (first === "office-runtime") {
-		const sub = tail.find((t) => !t.startsWith("-"));
-		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "office-runtime" };
-		return { ok: OFFICE_RUNTIME_SUBCOMMANDS.includes(sub), shown: `office-runtime ${sub}` };
-	}
-	if (first === "motion-runtime") {
-		const sub = tail.find((t) => !t.startsWith("-"));
-		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "motion-runtime" };
-		return { ok: MOTION_RUNTIME_SUBCOMMANDS.includes(sub), shown: `motion-runtime ${sub}` };
-	}
 	if (first === "screen-status") {
 		const sub = tail.find((t) => !t.startsWith("-"));
 		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "screen-status" };
@@ -277,10 +265,19 @@ function classifyInvocation(first, tail) {
  * @param {object} [contract] frozen README contract (only used for README.md)
  * @param {{npmPackageName:string,npmPackageVersion:string,litLoopHookStatusMessage:string}} [facts] live package/manifest facts
  */
+// Routes that existed in earlier releases. The changelog keeps recording them as history; every other doc
+// that still names one is describing a command the CLI no longer has.
+const RETIRED_ROUTES = Object.freeze(["office-runtime", "motion-runtime"]);
+const RETIRED_ROUTE_RE = new RegExp(`^litcodex (?:${RETIRED_ROUTES.join("|")})(?: |$)`, "u");
+
 export function auditDoc(text, relPath, contract, facts) {
 	const offenders = [];
 	const surface = auditCommandSurface(text);
-	offenders.push(...surface.offenders);
+	offenders.push(
+		...surface.offenders.filter(
+			(o) => !(relPath === "CHANGELOG.md" && o.kind === "unknown-command" && RETIRED_ROUTE_RE.test(o.value)),
+		),
+	);
 	if (PUBLIC_ROUTE_READMES.has(relPath)) {
 		offenders.push(...auditPublicHookRoutes(text, relPath, facts?.englishPublicHookRoutes));
 	}

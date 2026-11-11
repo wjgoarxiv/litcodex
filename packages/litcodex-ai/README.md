@@ -70,7 +70,8 @@ Pick any skill in the Codex skill picker or mention it by scoped name, such as `
   `wikify`, `coding-session-audit`, `lit-comprehend`, `lit-hijack` and `lit-adhd`.
 - Documents, figures and screens: `lit-docx`, `lit-pptx`, `lit-diagram-drawer`,
   `lit-schematic`, `lit-scientific-visualization`, `lit-typographic-motion`, `lit-humanizer`, `readme-studio`,
-  `frontend-ui-ux`, `visual-qa` and `browser-drive`.
+  `frontend-ui-ux`, `visual-qa` and `browser-drive`. All of these except `lit-humanizer` and `browser-drive` now
+  live in wjgoarxiv-skills; their names here are stubs that give the copy command for `~/.codex/skills/`.
 - Code: `debugging`, `refactor`, `lit-code`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`,
   `structural-search`, `lsp-setup` and `lit-init`.
 - Upkeep: `litcodex-doctor`, `litcodex-report-bug` and `litcodex-contribute-bug-fix`. `rules`, `lsp`

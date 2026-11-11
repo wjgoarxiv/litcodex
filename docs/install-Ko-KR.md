@@ -40,23 +40,9 @@ npm install -g @litfamily/litcodex
 litcodex install
 ```
 
-전역으로 설치하면 파일 복사로 끝나지 않습니다. `CI`가 설정되어 있지 않으면 내려받기가 끝난 뒤 짧은 설치
-스크립트가 환영 문구를 보여 주고, 영상 스킬 `lit-typographic-motion`이 쓸 도구를 미리 받아 둡니다. 처음 영상을
-요청할 때 렌더링 도구가 이미 준비되어 있게 하려는 것입니다.
-
-미리 받아 두는 만큼 인터넷을 씁니다. 스크립트가 `npm ci`로 버전이 고정된 `opentype.js`, `playwright-core`, `ws`를
-npm 레지스트리에서 받고, 역시 고정된 글꼴·라이선스 파일을 GitHub와 apache.org에서 받습니다. 브라우저는 받지
-않습니다. 받은 것은 모두 `${XDG_CACHE_HOME:-~/.cache}/litcodex/motion-runtime/`에 들어갑니다. 이 단계가 끝나지
-않아도 LitCodex 설치는 그대로 남고, 나중에 다시 해 볼 명령 `litcodex motion-runtime install`을 알려 줍니다.
-
-전역 설치 때 이 스크립트를 빼고 싶다면 방법은 두 가지입니다.
-
-- `npm install -g`에 `--ignore-scripts`를 붙이세요. 스크립트가 통째로 빠지고 환영 문구도 나오지 않습니다.
-- 그 명령에만 `CI=1`을 설정하세요. 스크립트가 이 값을 보고 아무것도 하지 않은 채 끝납니다. `CI`가 원래
-  설정된 빌드 서버에서 조용히 넘어가는 것과 같은 방식입니다.
-
-여기서 빼면 내려받기가 뒤로 미뤄질 뿐입니다. `litcodex install`이 설치에 성공한 뒤 같은 방식으로 영상 도구를
-준비하고, 이 단계는 끌 수 없습니다.
+전역으로 설치하면 짧은 설치 스크립트도 함께 돕니다. `CI`가 설정되어 있지 않으면 환영 문구와 다음 단계를
+보여 주고, 아무것도 내려받지 않습니다. 빼고 싶다면 `npm install -g`에 `--ignore-scripts`를 붙이거나 그 명령에만
+`CI=1`을 설정하세요.
 
 > 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.38 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.38 -- litcodex doctor`.
 

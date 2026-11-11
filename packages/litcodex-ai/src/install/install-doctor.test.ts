@@ -27,7 +27,6 @@ describe("doctor — agentsInstalled probe", () => {
 		expect(report.agentsInstalled).toBe(false);
 		expect(report.skillCatalogComplete).toBe(false);
 		expect(report.handoffInstalled).toBe(false);
-		expect(report.scientificVisualizationInstalled).toBe(false);
 	});
 
 	it("reports current host-default root limits separately from host capability support", () => {

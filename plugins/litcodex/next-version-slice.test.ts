@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { existsSync, lstatSync, readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -8,8 +7,6 @@ import { runUserPromptSubmitHook } from "./components/lit-loop/src/codex-hook.js
 
 const repoRoot = fileURLToPath(new URL("../../", import.meta.url));
 const skillsRoot = fileURLToPath(new URL("./skills/", import.meta.url));
-const frontendRoot = `${skillsRoot}frontend-ui-ux/`;
-const corpusRoot = `${frontendRoot}references/_canonical-corpus/`;
 
 function filesUnder(root: string): string[] {
 	const files: string[] = [];
@@ -25,49 +22,6 @@ function filesUnder(root: string): string[] {
 	}
 	return files.sort();
 }
-
-describe("approved next-version corpus", () => {
-	it("ships the exact pinned 167-file canonical frontend library without resurrecting retired normalized data", () => {
-		expect(existsSync(corpusRoot), "canonical corpus root must exist").toBe(true);
-		if (!existsSync(corpusRoot)) return;
-
-		const contentFiles = filesUnder(corpusRoot).filter(
-			(path) =>
-				path.startsWith("design/") ||
-				path.startsWith("designpowers/") ||
-				path.startsWith("perfection/") ||
-				path.startsWith("ui-ux-db/"),
-		);
-		const bytes = contentFiles.reduce((sum, path) => sum + readFileSync(`${corpusRoot}${path}`).byteLength, 0);
-		const records = contentFiles
-			.map(
-				(path) =>
-					`${createHash("sha256")
-						.update(readFileSync(`${corpusRoot}${path}`))
-						.digest("hex")}  ${path}\n`,
-			)
-			.join("");
-
-		expect(contentFiles).toHaveLength(167);
-		expect(bytes).toBe(2_596_349);
-		expect(createHash("sha256").update(records).digest("hex")).toBe(
-			"f6959eeae02685102df9fbedafb2c437be4d51df8e102f9fcf32298f7674e7d7",
-		);
-		expect(existsSync(`${frontendRoot}resources/design-intelligence.json`)).toBe(false);
-	});
-
-	it("ships legal files, provenance, a full manifest, and a fail-closed verifier", () => {
-		for (const path of ["LICENSE", "ATTRIBUTION.md", "LICENSE-Apache-2.0.txt", "MANIFEST.json", "PROVENANCE.md"]) {
-			expect(existsSync(`${corpusRoot}${path}`), path).toBe(true);
-		}
-		expect(existsSync(`${frontendRoot}scripts/verify-canonical-corpus.mjs`)).toBe(true);
-	});
-
-	it("keeps mixed canonical line endings out of Git text normalization", () => {
-		const attributes = readFileSync(`${repoRoot}.gitattributes`, "utf8");
-		expect(attributes).toContain("plugins/litcodex/skills/frontend-ui-ux/references/_canonical-corpus/** -text");
-	});
-});
 
 describe("approved next-version picker families", () => {
 	it("pins each complete installed family closure rather than only its entrypoint", async () => {

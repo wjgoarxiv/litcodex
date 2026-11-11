@@ -62,14 +62,11 @@ describe("development workspace marketplace fallback", () => {
 		for (const path of repositoryOnlyPaths) {
 			write(join(repoRoot, "plugins/litcodex/skills/example", path), "must not ship\n");
 		}
-		const scienceRoot = join(repoRoot, "plugins/litcodex/skills/lit-scientific-visualization");
-		const scienceVendorRoot = join(repoRoot, "plugins/litcodex/vendor/scientific-visualization");
-		write(join(scienceRoot, "SKILL.md"), "# Science adapter\n");
-		write(join(scienceRoot, "scripts/dependency-preflight.py"), "print('ready')\n");
-		write(join(scienceVendorRoot, "scripts/style_presets.py"), "# exact source\n");
-		write(join(scienceVendorRoot, "tests/test_style_presets.py"), "# authorized upstream test\n");
-		write(join(scienceVendorRoot, "tests/test_figure_export.py"), "# authorized upstream test\n");
-		write(join(scienceVendorRoot, "tests/test_unapproved.py"), "# repository-only test\n");
+		const staleVendorTest = join(
+			repoRoot,
+			"plugins/litcodex/vendor/scientific-visualization/tests/test_style_presets.py",
+		);
+		write(staleVendorTest, "# a vendored test from before the skill moved out\n");
 
 		// When: the installer resolves its bundled marketplace source.
 		const source = resolveBundledMarketplaceSource({ packageRoot, tempParent });
@@ -91,21 +88,9 @@ describe("development workspace marketplace fallback", () => {
 			).toBe(false);
 		}
 		expect(
-			existsSync(
-				join(source.root, "plugins/litcodex/skills/lit-scientific-visualization/scripts/dependency-preflight.py"),
-			),
-		).toBe(true);
-		for (const path of ["test_style_presets.py", "test_figure_export.py"] as const) {
-			expect(existsSync(join(source.root, "plugins/litcodex/vendor/scientific-visualization/tests", path))).toBe(
-				true,
-			);
-		}
-		expect(
-			existsSync(join(source.root, "plugins/litcodex/vendor/scientific-visualization/tests/test_unapproved.py")),
-		).toBe(false);
-		expect(
 			existsSync(join(source.root, "plugins/litcodex/vendor/scientific-visualization/tests/test_style_presets.py")),
-		).toBe(true);
+			"no vendored test ships once its skill moved out",
+		).toBe(false);
 		expect(source.disposable).toBe(true);
 		source.cleanup();
 		expect(existsSync(source.root)).toBe(false);
@@ -188,8 +173,8 @@ describe("development workspace marketplace fallback", () => {
 		expect(probeSkillCatalogPayload(fs, source.root).complete).toBe(true);
 		expect(existsSync(join(source.root, "plugins/litcodex/skills/skill-observer"))).toBe(false);
 		for (const [skillId, probePath] of [
-			["frontend-ui-ux", "scripts/validate-design-contract.mjs"],
-			["visual-qa", "scripts/evidence-bytes.mjs"],
+			["lit-humanizer", "scripts/core.mjs"],
+			["autoresearch", "scripts/init_research.py"],
 		] as const) {
 			const skillRoot = join(source.root, "plugins/litcodex/skills", skillId);
 			const sourceRoot = join(sourceSkills, skillId);

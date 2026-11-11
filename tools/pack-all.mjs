@@ -17,15 +17,9 @@
 // Exit codes: 0 clean, 1 payload issue(s), 2 operator/npm fault.
 
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { realpathSync } from "node:fs";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-	CANONICAL_CORPUS_RELATIVE_ROOT,
-	CanonicalCorpusError,
-	verifyCanonicalCorpus,
-} from "../plugins/litcodex/skills/frontend-ui-ux/scripts/verify-canonical-corpus.mjs";
 import { WorkspaceBinError } from "../scripts/mark-cli-executable.mjs";
 import { resolveNpmInvocation } from "../scripts/npm-command.mjs";
 import { assertPayload, loadPayloadManifest, PackPayloadError, parsePackJson } from "./assert-pack-payload.mjs";
@@ -106,73 +100,10 @@ export function packAll(repoRoot, runNpm = defaultRunNpm) {
 	return merged;
 }
 
-/** Validate the immutable corpus from bytes extracted from a real npm tarball, not dry-run metadata. */
-export function verifyPackedCanonicalCorpus(repoRoot, runNpm = defaultRunNpm, runTar = defaultRunTar) {
-	const temporary = mkdtempSync(join(tmpdir(), "litcodex-packed-corpus-"));
-	try {
-		const destination = join(temporary, "pack");
-		const extracted = join(temporary, "extracted");
-		mkdirSync(destination);
-		mkdirSync(extracted);
-		const packed = runNpm(
-			[
-				"pack",
-				"--dry-run=false",
-				"--json",
-				"--workspace",
-				"packages/litcodex-ai",
-				"--pack-destination",
-				destination,
-			],
-			repoRoot,
-		);
-		if (packed.error || packed.status !== 0) {
-			throw new PackPayloadError(
-				"LITCODEX_PACK_NPM_FAILED",
-				`actual npm pack failed for canonical corpus validation (status ${packed.status})`,
-			);
-		}
-		const results = parsePackJson(packed.stdout);
-		if (results.length !== 1 || results[0].name !== "@litfamily/litcodex") {
-			throw new PackPayloadError(
-				"LITCODEX_PACK_WORKSPACE_MISMATCH",
-				"actual npm pack did not return exactly the @litfamily/litcodex package",
-			);
-		}
-		const filename = results[0].filename;
-		if (typeof filename !== "string" || filename === "" || basename(filename) !== filename) {
-			throw new PackPayloadError("LITCODEX_PACK_SHAPE_INVALID", "actual npm pack returned an unsafe filename");
-		}
-		const archive = join(destination, filename);
-		const unpacked = runTar(["-xzf", archive, "-C", extracted], repoRoot);
-		if (unpacked.error || unpacked.status !== 0) {
-			throw new PackPayloadError("LITCODEX_PACK_ARCHIVE_INVALID", "actual package archive could not be extracted");
-		}
-		const corpusRoot = join(extracted, "package", "marketplace", CANONICAL_CORPUS_RELATIVE_ROOT);
-		try {
-			return verifyCanonicalCorpus(corpusRoot);
-		} catch (error) {
-			if (!(error instanceof CanonicalCorpusError)) throw error;
-			throw new PackPayloadError(
-				"LITCODEX_PACK_CANONICAL_CORPUS_INVALID",
-				"actual packed canonical corpus bytes do not match the pinned authority",
-				{ causeCode: error.code },
-			);
-		}
-	} finally {
-		rmSync(temporary, { recursive: true, force: true });
-	}
-}
-
 /** Default npm runner: fixed argv, no shell. */
 function defaultRunNpm(args, cwd) {
 	const npm = resolveNpmInvocation(args);
 	const res = spawnSync(npm.command, npm.args, { cwd, encoding: "utf8", shell: false });
-	return { status: res.status, stdout: res.stdout ?? "", stderr: res.stderr ?? "", error: res.error };
-}
-
-function defaultRunTar(args, cwd) {
-	const res = spawnSync("tar", args, { cwd, encoding: "utf8", shell: false });
 	return { status: res.status, stdout: res.stdout ?? "", stderr: res.stderr ?? "", error: res.error };
 }
 
@@ -224,14 +155,12 @@ function main() {
 
 	let results;
 	let manifest;
-	let packedCanonical;
 	try {
 		results = packAll(opts.repoRoot);
 		manifest = loadPayloadManifest(manifestPath);
-		if (opts.requireFuture) packedCanonical = verifyPackedCanonicalCorpus(opts.repoRoot);
 	} catch (err) {
 		process.stderr.write(`[pack-all] ${err.message}\n`);
-		process.exit(err?.code === "LITCODEX_PACK_CANONICAL_CORPUS_INVALID" ? 1 : 2);
+		process.exit(2);
 	}
 
 	const report = assertPayload(results, manifest, { requireFuture: opts.requireFuture });
@@ -247,7 +176,7 @@ function main() {
 		);
 	} else if (report.ok) {
 		process.stdout.write(
-			`pack payload: OK (${report.checkedPackages.length} packages, ${report.filesChecked} files checked${packedCanonical ? `, ${packedCanonical.fileCount + 5} canonical files verified from packed bytes` : ""})\n`,
+			`pack payload: OK (${report.checkedPackages.length} packages, ${report.filesChecked} files checked)\n`,
 		);
 	} else {
 		for (const issue of report.issues) {

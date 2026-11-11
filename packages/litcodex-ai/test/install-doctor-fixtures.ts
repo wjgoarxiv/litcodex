@@ -2,10 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { desiredAgentRoutes, installedAgentPath } from "../src/install/agent-routing.js";
-import {
-	HANDOFF_SOURCE_HASHES,
-	SCIENTIFIC_VISUALIZATION_SOURCE_HASHES,
-} from "../src/install/bundled-skill-manifests.js";
+import { HANDOFF_SOURCE_HASHES } from "../src/install/bundled-skill-manifests.js";
 import type { runDoctor } from "../src/install/doctor.js";
 import { REPO_ROOT } from "../src/install/install-test-helpers.js";
 import { CANONICAL_SKILL_IDS, CANONICAL_SKILL_RESOURCE_PATHS } from "../src/install/skill-catalog.js";
@@ -47,17 +44,18 @@ export function doctorDeps(
 	pluginVersion = "1.0.38",
 	codexVersion = "0.144.0",
 	handoffAvailable = true,
-	scientificVisualizationAvailable = true,
+	// Kept so positional callers keep their argument order; lit-scientific-visualization is a stub now and the
+	// doctor checks no vendored source for it.
+	_retiredScientificVisualizationSlot = true,
 	payloadMutation?: {
 		readonly tamper?:
 			| "handoff"
-			| "scientific-visualization"
 			| "uiux-visual-qa"
 			| "humanizer"
 			| "lit-diagram-drawer"
 			| "lit-schematic"
 			| "lit-hijack";
-		readonly extra?: "handoff" | "scientific-visualization" | "uiux-visual-qa";
+		readonly extra?: "handoff" | "uiux-visual-qa";
 		readonly missing?: "lit-diagram-drawer" | "lit-schematic" | "lit-hijack" | "card-server";
 	},
 ): Parameters<typeof runDoctor>[0] {
@@ -75,40 +73,11 @@ export function doctorDeps(
 		`${handoffRoot}/SKILL.md`,
 		`${vendorRoot}/NOTICE`,
 		`${vendorRoot}/licenses/022_handoff-MIT.txt`,
-		`${vendorRoot}/licenses/045_scientific-visualization-MIT.txt`,
 		`${vendorRoot}/provenance/022_handoff.md`,
-		`${vendorRoot}/provenance/045_scientific-visualization.md`,
 		`${handoffOriginalRoot}/SKILL.md`,
 		`${handoffOriginalRoot}/evals/evals.json`,
 		`${handoffOriginalRoot}/examples/HANDOFF-example-generic-auth-refactor.md`,
 		`${handoffOriginalRoot}/templates/HANDOFF.md`,
-	];
-	const scientificVisualizationRoot = `${skillsRoot}/lit-scientific-visualization`;
-	const scientificVisualizationOriginalRoot = `${vendorRoot}/scientific-visualization`;
-	const scientificVisualizationFiles = [
-		`${scientificVisualizationRoot}/SKILL.md`,
-		`${scientificVisualizationRoot}/scripts/dependency-preflight.py`,
-		`${vendorRoot}/NOTICE`,
-		`${vendorRoot}/licenses/022_handoff-MIT.txt`,
-		`${vendorRoot}/licenses/045_scientific-visualization-MIT.txt`,
-		`${vendorRoot}/provenance/022_handoff.md`,
-		`${vendorRoot}/provenance/045_scientific-visualization.md`,
-		`${scientificVisualizationOriginalRoot}/SKILL.md`,
-		`${scientificVisualizationOriginalRoot}/scripts/style_presets.py`,
-		`${scientificVisualizationOriginalRoot}/scripts/figure_export.py`,
-		`${scientificVisualizationOriginalRoot}/assets/color_palettes.py`,
-		`${scientificVisualizationOriginalRoot}/assets/nature.mplstyle`,
-		`${scientificVisualizationOriginalRoot}/assets/presentation.mplstyle`,
-		`${scientificVisualizationOriginalRoot}/assets/publication.mplstyle`,
-		`${scientificVisualizationOriginalRoot}/evals/evals.json`,
-		`${scientificVisualizationOriginalRoot}/references/color_palettes.md`,
-		`${scientificVisualizationOriginalRoot}/references/journal_requirements.md`,
-		`${scientificVisualizationOriginalRoot}/references/matplotlib_examples.md`,
-		`${scientificVisualizationOriginalRoot}/references/mdanalysis_martini_visualization.md`,
-		`${scientificVisualizationOriginalRoot}/references/publication_guidelines.md`,
-		`${scientificVisualizationOriginalRoot}/references/seaborn_for_publications.md`,
-		`${scientificVisualizationOriginalRoot}/tests/test_figure_export.py`,
-		`${scientificVisualizationOriginalRoot}/tests/test_style_presets.py`,
 	];
 	const skillCatalogRoot = `${codexHome}/marketplaces/litcodex/plugins/litcodex/skills`;
 	const frontendUiuxRoot = `${skillCatalogRoot}/frontend-ui-ux`;
@@ -163,7 +132,6 @@ export function doctorDeps(
 				fsFiles.includes(path) ||
 				(fsFiles.includes(sentinelPath) && completeAgentTomls.has(path)) ||
 				(handoffAvailable && handoffFiles.includes(path)) ||
-				(scientificVisualizationAvailable && scientificVisualizationFiles.includes(path)) ||
 				(skillCatalogFiles.includes(path) &&
 					!(payloadMutation?.missing === "lit-diagram-drawer" && path === `${diagramDrawerRoot}/SKILL.md`) &&
 					!(payloadMutation?.missing === "lit-schematic" && path === `${schematicRoot}/SKILL.md`) &&
@@ -194,12 +162,6 @@ export function doctorDeps(
 				if (root === handoffOriginalRoot && handoffAvailable) {
 					const paths = Object.keys(HANDOFF_SOURCE_HASHES);
 					return payloadMutation?.extra === "handoff" ? [...paths, "__pycache__/rogue.pyc"] : paths;
-				}
-				if (root === scientificVisualizationOriginalRoot && scientificVisualizationAvailable) {
-					const paths = Object.keys(SCIENTIFIC_VISUALIZATION_SOURCE_HASHES);
-					return payloadMutation?.extra === "scientific-visualization"
-						? [...paths, "__pycache__/rogue.pyc"]
-						: paths;
 				}
 				if (root === frontendUiuxRoot) {
 					const paths = Object.keys(FRONTEND_UIUX_PAYLOAD_HASHES);
@@ -239,10 +201,7 @@ export function doctorDeps(
 					path.startsWith(`${skillCatalogRoot}/wikify/`)
 				) {
 					const relativePath = path.slice(skillCatalogRoot.length + 1);
-					if (
-						payloadMutation?.tamper === "uiux-visual-qa" &&
-						relativePath === "frontend-ui-ux/scripts/validate-design-contract.mjs"
-					) {
+					if (payloadMutation?.tamper === "uiux-visual-qa" && relativePath === "frontend-ui-ux/SKILL.md") {
 						return Buffer.from("tampered");
 					}
 					if (payloadMutation?.tamper === "humanizer" && relativePath === "lit-humanizer/SKILL.md") {
@@ -265,13 +224,6 @@ export function doctorDeps(
 						return Buffer.from("tampered");
 					}
 					return readFileSync(join(REPO_ROOT, "plugins/litcodex/vendor/handoff", relativePath));
-				}
-				if (path.startsWith(`${scientificVisualizationOriginalRoot}/`)) {
-					const relativePath = path.slice(scientificVisualizationOriginalRoot.length + 1);
-					if (payloadMutation?.tamper === "scientific-visualization" && relativePath === "SKILL.md") {
-						return Buffer.from("tampered");
-					}
-					return readFileSync(join(REPO_ROOT, "plugins/litcodex/vendor/scientific-visualization", relativePath));
 				}
 				throw new Error(`unexpected binary read: ${path}`);
 			},

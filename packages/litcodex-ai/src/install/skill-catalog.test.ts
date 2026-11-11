@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { catalogFs, REQUIRED_SKILL_RESOURCES, SKILL_IDS } from "../../test/skill-catalog-fixtures.js";
@@ -23,20 +23,25 @@ describe("canonical bundled skill catalog", () => {
 		expect(CANONICAL_SKILL_RESOURCE_PATHS).toContain("lsp/references/runtime-triage.md");
 	});
 
-	it("keeps frontend motion guidance and the README A/B slot in its checked resource closure", () => {
-		const skill = readFileSync(
-			new URL("../../../../plugins/litcodex/skills/frontend-ui-ux/SKILL.md", import.meta.url),
-			"utf8",
-		);
-		const slot = readFileSync(
-			new URL("../../../../plugins/litcodex/skills/frontend-ui-ux/examples/readme-ab/README.md", import.meta.url),
-			"utf8",
-		);
-		expect(skill).toContain("references/motion-guide.md");
-		expect(CANONICAL_SKILL_RESOURCE_PATHS).toContain("frontend-ui-ux/references/motion-guide.md");
-		expect(slot).toContain("without-skill.md");
-		expect(slot).toContain("with-skill.md");
-		expect(slot).toContain("receipt.json");
+	it("keeps each moved skill as a same-name stub with no resource closure beyond its picker metadata", () => {
+		for (const id of [
+			"lit-pptx",
+			"lit-docx",
+			"lit-diagram-drawer",
+			"lit-schematic",
+			"lit-scientific-visualization",
+			"frontend-ui-ux",
+			"visual-qa",
+			"lit-typographic-motion",
+			"readme-studio",
+		]) {
+			expect(CANONICAL_SKILL_IDS).toContain(id);
+			const closure = CANONICAL_SKILL_RESOURCE_PATHS.filter((path) => path.startsWith(`${id}/`));
+			expect(
+				closure.filter((path) => path !== `${id}/agents/openai.yaml`),
+				id,
+			).toEqual([]);
+		}
 	});
 
 	it("accepts only a complete installed catalog", () => {
@@ -56,14 +61,14 @@ describe("canonical bundled skill catalog", () => {
 		expect(incomplete.missingSkillIds).toEqual(["debugging", "lit-code"]);
 	});
 
-	// Re-probes the whole catalog once per readme-studio resource and went past 5 s under a full parallel suite.
-	it("requires readme-studio and its reference closure in an installed catalog", () => {
-		expect(CANONICAL_SKILL_IDS).toContain("readme-studio");
+	// Re-probes the whole catalog once per lit-humanizer resource and went past 5 s under a full parallel suite.
+	it("requires lit-humanizer and its reference closure in an installed catalog", () => {
+		expect(CANONICAL_SKILL_IDS).toContain("lit-humanizer");
 
 		const marketplaceRoot = "/tmp/litcodex-marketplace";
 		const skillsRoot = join(marketplaceRoot, "plugins", "litcodex", "skills");
-		const readmeResources = CANONICAL_SKILL_RESOURCE_PATHS.filter((path) => path.startsWith("readme-studio/"));
-		expect(readmeResources.length).toBeGreaterThan(0);
+		const humanizerResources = CANONICAL_SKILL_RESOURCE_PATHS.filter((path) => path.startsWith("lit-humanizer/"));
+		expect(humanizerResources.length).toBeGreaterThan(0);
 
 		const installed = new Set([
 			...CANONICAL_SKILL_IDS.map((skillId) => join(skillsRoot, skillId, "SKILL.md")),
@@ -72,15 +77,15 @@ describe("canonical bundled skill catalog", () => {
 		const completeFs = catalogFs(installed, marketplaceRoot);
 		expect(probeSkillCatalogPayload(completeFs, marketplaceRoot).complete).toBe(true);
 
-		const readmeEntrypoint = join(skillsRoot, "readme-studio", "SKILL.md");
-		installed.delete(readmeEntrypoint);
+		const humanizerEntrypoint = join(skillsRoot, "lit-humanizer", "SKILL.md");
+		installed.delete(humanizerEntrypoint);
 		expect(probeSkillCatalogPayload(catalogFs(installed, marketplaceRoot), marketplaceRoot)).toMatchObject({
 			complete: false,
-			missingSkillIds: ["readme-studio"],
+			missingSkillIds: ["lit-humanizer"],
 		});
-		installed.add(readmeEntrypoint);
+		installed.add(humanizerEntrypoint);
 
-		for (const resourcePath of readmeResources) {
+		for (const resourcePath of humanizerResources) {
 			const installedPath = join(skillsRoot, resourcePath);
 			installed.delete(installedPath);
 			expect(

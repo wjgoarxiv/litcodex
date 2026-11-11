@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- The scientific-visualization and schematic routes inject the bundled same-name stubs of skills that moved to
+  wjgoarxiv-skills. The film route names its stub, and the film completion check that held the turn is gone.
+
 ### Fixed
 - A repeated `lit …` continues the mode a session already holds with a short note (at most 600 bytes, no skill
   re-read) instead of the full activation, using a per-session record under `.litcodex/lit-reentry/` that

@@ -17,18 +17,6 @@ import { runAgentFileProjectCli, runConfigAgentFileCli, runConfigAttributionCli 
 import { resolveCodexHome } from "./install/codex.js";
 import { renderDryRunPlan, runDoctorCli, runInstallCli, runUninstallCli } from "./install/index.js";
 import { managedMarketplaceRoot } from "./install/marketplace.js";
-import {
-	motionRuntimeScript,
-	motionRuntimeStatus,
-	prepareMotionRuntime,
-	renderMotionRuntime,
-} from "./install/motion-runtime.js";
-import {
-	officeRuntimeNotice,
-	officeRuntimeScript,
-	officeRuntimeStatus,
-	prepareOfficeRuntime,
-} from "./install/office-runtime.js";
 import { buildInstallPlan } from "./install/plan.js";
 import { renderInstallPlan } from "./install/render-plan.js";
 import { renderBanner, shouldDecorate } from "./ui.js";
@@ -100,19 +88,6 @@ const ROUTES: Readonly<Record<string, RouteHandler>> = {
 			exitCode: 64,
 		};
 	},
-	"office-runtime": (rest) =>
-		rest[0] === "install" || rest[0] === "status"
-			? ok(`litcodex office-runtime ${rest[0]}\n`)
-			: { stdout: "", stderr: "Usage: litcodex office-runtime install|status\n", exitCode: 64 },
-	"motion-runtime": (rest) =>
-		(rest[0] === "install" && rest.slice(1).every((flag) => flag === "--audio" || flag === "--word-timing")) ||
-		(rest[0] === "status" && rest.length === 1)
-			? ok(`litcodex motion-runtime ${rest.join(" ")}\n`)
-			: {
-					stdout: "",
-					stderr: "Usage: litcodex motion-runtime install [--audio] [--word-timing] | status\n",
-					exitCode: 64,
-				},
 	config: configRouteHandler,
 	loop: () => ok("litcodex loop\n"),
 	hud: () => ok("litcodex hud\n"),
@@ -158,9 +133,6 @@ function renderHelp(): string {
 		"Usage:",
 		"  litcodex install [--dry-run] [options]   Install LitCodex into Codex",
 		"  litcodex doctor                          Diagnose the LitCodex install",
-		"  litcodex office-runtime install|status   Prepare or inspect Office dependencies",
-		"  litcodex motion-runtime install|status   Prepare or inspect film renderer dependencies",
-		"  Typographic-motion engine adapted from mexicat/pdoom-video (MIT, Giacomo Magnanini), commit `ca251e3`.",
 		"  litcodex uninstall                       Remove LitCodex from Codex",
 		"  litcodex config migrate                  Migrate Codex config for LitCodex",
 		"  litcodex config agentFile on|off        Add or remove the LitFamily block in the global AGENTS.md",
@@ -362,51 +334,6 @@ export async function runCli(rawArgv: readonly string[]): Promise<number> {
 			const exitCode = runDoctorCli(rest.slice(1));
 			const barrierExitCode = notifyAfterManagementCommand("doctor", argv, exitCode);
 			return barrierExitCode ?? exitCode;
-		}
-		if (head === "office-runtime") {
-			const mode = rest[1];
-			if (mode !== "install" && mode !== "status") return dispatchExit(dispatch(argv));
-			if (mode === "install") {
-				const refused = refuseUnknownOptions("office-runtime install", rest.slice(2), []);
-				if (refused !== undefined) return refused;
-			}
-			const codexHome = resolveCodexHome(process.env);
-			if (dryRun && mode === "install") {
-				return writeDryRun("litcodex office-runtime install", [
-					`Run the pinned Office installer: ${officeRuntimeScript(codexHome)} install`,
-				]);
-			}
-			const result = mode === "install" ? prepareOfficeRuntime(codexHome) : officeRuntimeStatus(codexHome);
-			process.stdout.write(`${officeRuntimeNotice(result.ready, result.detail)}\n`);
-			return result.ready ? 0 : mode === "install" ? 3 : 4;
-		}
-		if (head === "motion-runtime") {
-			const mode = rest[1];
-			const flags = rest.slice(2);
-			if (mode === "install") {
-				const refused = refuseUnknownOptions("motion-runtime install", flags, ["--audio", "--word-timing"]);
-				if (refused !== undefined) return refused;
-			}
-			const valid =
-				(mode === "install" && flags.every((flag) => flag === "--audio" || flag === "--word-timing")) ||
-				(mode === "status" && flags.length === 0);
-			if (!valid) return dispatchExit(dispatch(argv));
-			const codexHome = resolveCodexHome(process.env);
-			if (dryRun && mode === "install") {
-				return writeDryRun(`litcodex motion-runtime ${rest.slice(1).join(" ")}`, [
-					`Run the film renderer pre-warm: ${[motionRuntimeScript(codexHome), "install", ...flags].join(" ")}`,
-				]);
-			}
-			if (mode === "install") {
-				const result = prepareMotionRuntime(codexHome, flags);
-				process.stdout.write(
-					`${result.output}${renderMotionRuntime(result.status)}\n[litcodex] ${result.receipt}\n`,
-				);
-				return result.exitCode === 0 ? 0 : result.exitCode === 14 ? 14 : 3;
-			}
-			const report = motionRuntimeStatus(codexHome);
-			process.stdout.write(`${renderMotionRuntime(report)}\n`);
-			return report.ready ? 0 : 4;
 		}
 		if (head === "uninstall") {
 			const refused = refuseUnknownOptions("uninstall", rest.slice(1), ["--json", "--no-tui", "--no-auto-update"]);

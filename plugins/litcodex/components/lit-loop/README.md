@@ -21,8 +21,10 @@ activation, a bare `lit` over an active Start Work plan, a published plan or ope
 `lit new …` or `lit restart …` starts again in full. The hook keeps one small record per session under
 `.litcodex/lit-reentry/` and PostCompact deletes it; a missing or unreadable record means a full activation.
 Exact bare `handoff` and `lit-scientific-visualization` prompts are dedicated standalone routes. The
-scientific route injects its `<lit-scientific-visualization-mode>` envelope plus the complete bundled
-adapter, while quoted, fenced, mixed, slash-style, scoped, and near-miss forms remain inert.
+scientific route injects its `<lit-scientific-visualization-mode>` envelope plus the bundled same-name stub
+(the skill moved to wjgoarxiv-skills), while quoted, fenced, mixed, slash-style, scoped, and near-miss forms
+remain inert. The `lit schematic` route likewise injects the lit-schematic stub, and a film request names the
+lit-typographic-motion stub without holding the turn.
 
 ## Automatic handoff
 

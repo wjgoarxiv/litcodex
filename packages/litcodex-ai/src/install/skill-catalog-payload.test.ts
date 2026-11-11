@@ -21,12 +21,6 @@ describe("installed skill catalog payload integrity", () => {
 		const missingResourceProbes = [
 			"lsp/references/runtime-triage.md",
 			...Object.entries(EXACT_PAYLOADS).flatMap(([skillId, hashes]) => {
-				if (skillId === "lit-diagram-drawer") {
-					return [
-						"lit-diagram-drawer/agents/openai.yaml",
-						"lit-diagram-drawer/scripts/visual-quality-geometry.mjs",
-					];
-				}
 				const nestedPath = Object.keys(hashes).find((path) => path !== "SKILL.md");
 				return nestedPath ? [`${skillId}/${nestedPath}`] : [];
 			}),
@@ -53,41 +47,41 @@ describe("installed skill catalog payload integrity", () => {
 		const completeFs = catalogFs(installed, marketplaceRoot);
 		expect(probeSkillCatalogPayload(completeFs, marketplaceRoot).complete).toBe(true);
 
-		const frontendSkill = join(marketplaceRoot, "plugins", "litcodex", "skills", "frontend-ui-ux", "SKILL.md");
-		installed.delete(frontendSkill);
+		const humanizerSkill = join(marketplaceRoot, "plugins", "litcodex", "skills", "lit-humanizer", "SKILL.md");
+		installed.delete(humanizerSkill);
 		expect(probeSkillCatalogPayload(catalogFs(installed, marketplaceRoot), marketplaceRoot)).toMatchObject({
 			complete: false,
-			missingSkillIds: ["frontend-ui-ux"],
+			missingSkillIds: ["lit-humanizer"],
 		});
-		installed.add(frontendSkill);
+		installed.add(humanizerSkill);
 
 		expect(
 			probeSkillCatalogPayload(
 				{
 					...completeFs,
 					readFileBufferSync: (path: string) =>
-						path.endsWith("visual-qa/scripts/cli.mjs")
+						path.endsWith("lit-humanizer/scripts/detect.mjs")
 							? Buffer.from("tampered")
 							: completeFs.readFileBufferSync(path),
 				},
 				marketplaceRoot,
 			).complete,
 		).toBe(false);
-		const diagramGeometry = join(
+		const researchHelper = join(
 			marketplaceRoot,
 			"plugins",
 			"litcodex",
 			"skills",
-			"lit-diagram-drawer",
+			"autoresearch",
 			"scripts",
-			"visual-quality-geometry.mjs",
+			"init_research.py",
 		);
 		expect(
 			probeSkillCatalogPayload(
 				{
 					...completeFs,
 					readFileBufferSync: (path: string) =>
-						path === diagramGeometry ? Buffer.from("tampered") : completeFs.readFileBufferSync(path),
+						path === researchHelper ? Buffer.from("tampered") : completeFs.readFileBufferSync(path),
 				},
 				marketplaceRoot,
 			).complete,
@@ -103,14 +97,14 @@ describe("installed skill catalog payload integrity", () => {
 		).toBe(false);
 	});
 
-	it("rejects a one-byte strict-input tamper and accepts the restored source", () => {
+	it("rejects a one-byte helper tamper and accepts the restored source", () => {
 		const marketplaceRoot = "/tmp/litcodex-marketplace";
 		const skillsRoot = join(marketplaceRoot, "plugins", "litcodex", "skills");
 		const installed = new Set(SKILL_IDS.map((id) => join(skillsRoot, id, "SKILL.md")));
 		for (const resourcePath of REQUIRED_SKILL_RESOURCES) installed.add(join(skillsRoot, resourcePath));
 		const completeFs = catalogFs(installed, marketplaceRoot);
-		const strictInput = join(skillsRoot, "visual-qa", "scripts", "strict-input.mjs");
-		const tamperedBytes = Buffer.from(completeFs.readFileBufferSync(strictInput));
+		const helper = join(skillsRoot, "autoconference", "scripts", "init_conference.py");
+		const tamperedBytes = Buffer.from(completeFs.readFileBufferSync(helper));
 		tamperedBytes[0] = (tamperedBytes[0] ?? 0) ^ 0x01;
 
 		expect(
@@ -118,7 +112,7 @@ describe("installed skill catalog payload integrity", () => {
 				{
 					...completeFs,
 					readFileBufferSync: (path: string) =>
-						path === strictInput ? tamperedBytes : completeFs.readFileBufferSync(path),
+						path === helper ? tamperedBytes : completeFs.readFileBufferSync(path),
 				},
 				marketplaceRoot,
 			).complete,
@@ -127,8 +121,8 @@ describe("installed skill catalog payload integrity", () => {
 	});
 
 	it.each([
-		["frontend-ui-ux", "scripts/validate-design-contract.mjs"],
-		["visual-qa", "scripts/evidence-bytes.mjs"],
+		["lit-humanizer", "scripts/core.mjs"],
+		["autoresearch", "scripts/style_presets.py"],
 	])("packaged %s rejects symmetric missing, tampered, and orphan bytes", (skillId, probePath) => {
 		const marketplaceRoot = "/tmp/litcodex-marketplace";
 		const skillsRoot = join(marketplaceRoot, "plugins", "litcodex", "skills");

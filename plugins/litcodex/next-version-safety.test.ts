@@ -454,15 +454,12 @@ describe("native-only execution and recursive documentation contracts", () => {
 			["autoconference", "Source project identifier: `autoconference-skill`."],
 			["wikify", "Source project identifier: `llm-wikify`."],
 			["lit-handoff", "Source directory identifier: `022_handoff` (vendored at `vendor/handoff/`)."],
-			["lit-scientific-visualization", "Source directory identifier: `045_scientific-visualization`."],
 		] as const;
 		const records = ownerSourceRecords.map(([family, sourceIdentifier]) => {
 			const provenancePath =
 				family === "lit-handoff"
 					? join(vendorRoot, "provenance/022_handoff.md")
-					: family === "lit-scientific-visualization"
-						? join(vendorRoot, "provenance/045_scientific-visualization.md")
-						: join(skillsRoot, family, "PROVENANCE.md");
+					: join(skillsRoot, family, "PROVENANCE.md");
 			const provenance = readFileSync(provenancePath, "utf8");
 			expect(provenance).toContain("Source owner identifier: `wjgoarxiv`.");
 			expect(provenance).toContain(sourceIdentifier);
@@ -470,13 +467,11 @@ describe("native-only execution and recursive documentation contracts", () => {
 			return provenance;
 		});
 
-		for (const family of ["autoresearch", "autoconference", "lit-handoff", "lit-scientific-visualization"]) {
+		for (const family of ["autoresearch", "autoconference", "lit-handoff"]) {
 			const provenancePath =
 				family === "lit-handoff"
 					? join(vendorRoot, "provenance/022_handoff.md")
-					: family === "lit-scientific-visualization"
-						? join(vendorRoot, "provenance/045_scientific-visualization.md")
-						: join(skillsRoot, family, "PROVENANCE.md");
+					: join(skillsRoot, family, "PROVENANCE.md");
 			const provenance = readFileSync(provenancePath, "utf8");
 			expect(provenance).toContain("does not claim anonymous upstream retrieval");
 		}

@@ -4,9 +4,8 @@ import { accessSync, constants, existsSync, lstatSync, readFileSync, realpathSyn
 import { link, mkdir, rename, rm, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { canonicalJson, parseJson, sha256 } from "../plugins/litcodex/skills/visual-qa/scripts/strict-input.mjs";
-import { uiuxDesignContract } from "../tools/uiux-design-contract.mjs";
 import { run } from "./run-install-smoke.mjs";
+import { parseJson } from "./strict-json.mjs";
 
 export function assert(condition, message) {
 	if (!condition) throw new Error(message);
@@ -1036,147 +1035,6 @@ export async function commandRecordAsync(
 		stdoutBytes: Buffer.byteLength(result.stdout),
 		stdoutSha256: createHash("sha256").update(result.stdout).digest("hex"),
 		stderrEvidence: outputEvidence(result.stderr),
-	};
-}
-
-export function assertBetaDesignContract(contract) {
-	assert(
-		/^litfamily\.design-contract\/v1beta[1-9]\d*$/u.test(contract?.schema_id ?? ""),
-		"installed probe contract must be beta",
-	);
-}
-
-export function designContract() {
-	return {
-		...uiuxDesignContract({ id: "installed-probe" }),
-		schema_id: "litfamily.design-contract/v1beta1",
-		lane: "brownfield",
-		tokens: [{ id: "token:action", category: "color", value: "accent-600", usage: "primary action" }],
-		component_behaviors: [
-			{
-				component_id: "component:primary-action",
-				state_ids: ["state:error"],
-				interaction_ids: ["interaction:critical"],
-				keyboard_behavior: "Enter activates the primary action",
-			},
-		],
-		responsive_transformations: [
-			{
-				route_id: "route:primary",
-				viewport_id: "viewport:small",
-				behavior: "The primary region stacks at compact width",
-			},
-		],
-		motion: {
-			policy: "functional",
-			reduced_motion_behavior: "State changes without translation",
-			transitions: [
-				{
-					id: "transition:primary",
-					interaction_id: "interaction:critical",
-					duration_ms: 120,
-					easing: "ease-out",
-				},
-			],
-		},
-		acceptance_criteria: [
-			{
-				id: "criterion:primary",
-				observable: "Keyboard activation reaches the error state",
-				verification: "browser",
-				required: true,
-				inventory_ids: ["component:primary-action", "interaction:critical", "state:error"],
-			},
-		],
-	};
-}
-
-export function evidenceBundle(
-	contract,
-	{
-		captureBytes,
-		capturePath = "captures/primary.png",
-		capturedAt = "2026-07-25T05:59:20.000Z",
-		createdAt = "2026-07-25T05:59:30.000Z",
-		full = false,
-	} = {},
-) {
-	if (!Buffer.isBuffer(captureBytes) || captureBytes.length === 0) {
-		throw new Error("installed beta evidence requires material capture bytes");
-	}
-	const smokeIds = [
-		"route:primary",
-		"interaction:critical",
-		"viewport:small",
-		"viewport:large",
-		...contract.evidence_policy.required_channels.map((channel) => `channel:${channel}`),
-	];
-	const ids = full
-		? [
-				"route:primary",
-				"route:secondary",
-				"region:primary",
-				"component:primary-action",
-				"interaction:critical",
-				"state:error",
-				"viewport:small",
-				"viewport:large",
-				...contract.evidence_policy.required_channels.map((channel) => `channel:${channel}`),
-			]
-		: smokeIds;
-	const items = Object.fromEntries(
-		ids.map((id) => [id, Buffer.from(`installed-item:${id}`, "utf8").toString("base64")]),
-	);
-	const inventory = ids.map((id) => ({
-		id,
-		status: "captured",
-		evidence_hash: sha256(Buffer.from(`installed-item:${id}`, "utf8")),
-		captured_at: capturedAt,
-	}));
-	const manifest = {
-		schema_id: "litfamily.evidence-manifest/v1beta1",
-		created_at: createdAt,
-		maximum_age_seconds: 60,
-		design_contract_hash: sha256(canonicalJson(contract)),
-		source_hash: contract.source_hash,
-		capture_hash: sha256(captureBytes),
-		capture_path: capturePath,
-		capture_byte_length: captureBytes.length,
-		capture_width: 1,
-		capture_height: 1,
-		environment: {
-			surface: "web",
-			renderer_identity: "isolated-installed-probe",
-			capture_tool: "litcodex installed-surface driver",
-			locale: "ko-KR",
-			color_scheme: "light",
-			reduced_motion: true,
-			process_owned: true,
-			session_owned: true,
-		},
-		capabilities: { capture: true, auth: true, independent_review: false },
-		inventory,
-		review_receipt_hashes: [],
-		cleanup: {
-			status: "complete",
-			temporary_artifacts_removed: true,
-			session_terminated: true,
-			auth_state_removed: true,
-		},
-		blockers: [],
-		findings: [],
-	};
-	const evidence = {
-		manifest: canonicalJson(manifest),
-		inventory: canonicalJson(inventory),
-		inventory_items: items,
-		capture_base64: captureBytes.toString("base64"),
-	};
-	return {
-		design_contract: contract,
-		evidence_manifest: manifest,
-		evidence_bytes: evidence,
-		review_receipts: [],
 	};
 }
 

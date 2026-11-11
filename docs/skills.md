@@ -7,6 +7,10 @@
 Every bundled skill is here. Each row shows how to start it and what you get back; the last row groups
 the checks that run on their own.
 
+Nine of them now live in wjgoarxiv-skills, a separate collection of content skills: `lit-pptx`, `lit-docx`, `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`, `frontend-ui-ux`, `visual-qa`, `lit-typographic-motion` and `readme-studio`. Their rows
+describe the skill as it works once you copy it into `~/.codex/skills/`. Until then the name reaches a
+short LitCodex stub that says where the skill went and gives the copy command.
+
 <table>
 <tr><th>What it looks like</th><th>Skill</th><th>What you get</th></tr>
 <tr>
@@ -279,10 +283,8 @@ A few skills are worth knowing by name:
   whether sections are numbered. All of them print the way an institute report does, with ink
   headings, plain booktabs tables and at most one accent colour, and Korean documents follow Korean
   conventions for dates, captions, units and line breaks. You always get editable Markdown next to
-  the DOCX or PPTX, and if you want a different direction you can say so after seeing the pages. Both skills need a few pinned tools, which
-  `litcodex install` fetches ahead of time, outside the Codex session. To see whether they are ready,
-  run `litcodex office-runtime status` or `litcodex doctor`. If you installed without a network, run
-  `litcodex office-runtime install` later, outside the sandbox. The Office runner's own doctor command
+  the DOCX or PPTX, and if you want a different direction you can say so after seeing the pages. Both skills moved to wjgoarxiv-skills and
+  bring their own pinned tools; LitCodex no longer prepares them. The installed skill's own doctor command
   tells you whether the optional LibreOffice, pandoc and XeLaTeX support is there.
 - **Prose.** Pick `lit-humanizer` to edit English or Korean prose. Before a file is written, its hook
   stops a small set of clear drafting tells and points out the softer ones without stopping anything.

@@ -24,10 +24,10 @@ import {
 } from "./file-walk.js";
 import { REPO_ROOT } from "./install-test-helpers.js";
 import {
+	AUTORESEARCH_PAYLOAD_HASHES,
 	BROWSER_DRIVE_PAYLOAD_HASHES,
-	FRONTEND_UIUX_PAYLOAD_HASHES,
+	HUMANIZER_PAYLOAD_HASHES,
 	README_STUDIO_PAYLOAD_HASHES,
-	VISUAL_QA_PAYLOAD_HASHES,
 } from "./skill-resource-hashes.js";
 
 const tempRoots: string[] = [];
@@ -40,7 +40,7 @@ afterEach(() => {
 
 function copyExpectedSkill(
 	sandbox: string,
-	skillId: "browser-drive" | "frontend-ui-ux" | "readme-studio" | "visual-qa",
+	skillId: "autoresearch" | "browser-drive" | "lit-humanizer" | "readme-studio",
 	hashes: Readonly<Record<string, string>>,
 ): string {
 	const source = join(REPO_ROOT, "plugins/litcodex/skills", skillId);
@@ -60,13 +60,10 @@ function realUiDoctor(
 	const sandbox = mkdtempSync(join(tmpdir(), "litcodex-doctor-real-fs-"));
 	tempRoots.push(sandbox);
 	const actualRoots = new Map([
-		[
-			join(managedSkills, "frontend-ui-ux"),
-			copyExpectedSkill(sandbox, "frontend-ui-ux", FRONTEND_UIUX_PAYLOAD_HASHES),
-		],
+		[join(managedSkills, "autoresearch"), copyExpectedSkill(sandbox, "autoresearch", AUTORESEARCH_PAYLOAD_HASHES)],
 		[join(managedSkills, "readme-studio"), copyExpectedSkill(sandbox, "readme-studio", README_STUDIO_PAYLOAD_HASHES)],
 		[join(managedSkills, "browser-drive"), copyExpectedSkill(sandbox, "browser-drive", BROWSER_DRIVE_PAYLOAD_HASHES)],
-		[join(managedSkills, "visual-qa"), copyExpectedSkill(sandbox, "visual-qa", VISUAL_QA_PAYLOAD_HASHES)],
+		[join(managedSkills, "lit-humanizer"), copyExpectedSkill(sandbox, "lit-humanizer", HUMANIZER_PAYLOAD_HASHES)],
 	]);
 	const base = doctorDeps([codexBin, sentinelPath]);
 	const listFilesRecursive = base.fs.listFilesRecursive;
@@ -84,7 +81,7 @@ function realUiDoctor(
 							? (listFilesRecursive?.(root) ?? [])
 							: listPayloadEntries(
 									actual,
-									actual.endsWith("/visual-qa") ? visualDirectoryReader : undefined,
+									actual.endsWith("/lit-humanizer") ? visualDirectoryReader : undefined,
 									directoryCapability,
 								);
 					},
@@ -101,13 +98,13 @@ function realUiDoctor(
 	};
 }
 
-describe("doctor — real filesystem UI skill payloads", () => {
+describe("doctor — real filesystem skill payloads", () => {
 	it("accepts exact regular files and rejects outside and broken symlinks", () => {
 		const healthy = realUiDoctor();
 		const report = healthy.run();
 		expect(report.skillCatalogComplete, JSON.stringify(report, null, 2)).toBe(true);
 
-		const visualRoot = healthy.actualRoots.get(join(managedSkills, "visual-qa"));
+		const visualRoot = healthy.actualRoots.get(join(managedSkills, "lit-humanizer"));
 		expect(visualRoot).toBeDefined();
 		if (visualRoot === undefined) return;
 		const outside = join(dirname(visualRoot), "outside.txt");
@@ -123,10 +120,10 @@ describe("doctor — real filesystem UI skill payloads", () => {
 
 	it("rejects an expected payload file replaced by a same-byte symlink", () => {
 		const fixture = realUiDoctor();
-		const visualRoot = fixture.actualRoots.get(join(managedSkills, "visual-qa"));
+		const visualRoot = fixture.actualRoots.get(join(managedSkills, "lit-humanizer"));
 		expect(visualRoot).toBeDefined();
 		if (visualRoot === undefined) return;
-		const expectedPath = join(visualRoot, "scripts/cli.mjs");
+		const expectedPath = join(visualRoot, "scripts/core.mjs");
 		const outside = join(dirname(visualRoot), "same-byte-cli.mjs");
 		writeFileSync(outside, readFileSync(expectedPath));
 		rmSync(expectedPath);
@@ -137,7 +134,7 @@ describe("doctor — real filesystem UI skill payloads", () => {
 
 	it("rejects an expected skill root replaced by a same-byte directory symlink", () => {
 		const fixture = realUiDoctor();
-		const managedRoot = join(managedSkills, "visual-qa");
+		const managedRoot = join(managedSkills, "lit-humanizer");
 		const visualRoot = fixture.actualRoots.get(managedRoot);
 		expect(visualRoot).toBeDefined();
 		if (visualRoot === undefined) return;
@@ -171,7 +168,7 @@ describe("doctor — real filesystem UI skill payloads", () => {
 				for (let entry = directory.readSync(); entry !== null; entry = directory.readSync()) entries.push(entry);
 				return entries;
 			});
-			const visualRoot = fixture.actualRoots.get(join(managedSkills, "visual-qa"));
+			const visualRoot = fixture.actualRoots.get(join(managedSkills, "lit-humanizer"));
 			expect(visualRoot).toBeDefined();
 			if (visualRoot === undefined) return;
 			scriptsRoot = join(visualRoot, "scripts");
@@ -199,7 +196,7 @@ describe("doctor — real filesystem UI skill payloads", () => {
 				}
 				return entries;
 			});
-			const visualRoot = fixture.actualRoots.get(join(managedSkills, "visual-qa"));
+			const visualRoot = fixture.actualRoots.get(join(managedSkills, "lit-humanizer"));
 			expect(visualRoot).toBeDefined();
 			if (visualRoot === undefined) return;
 			scriptsRoot = join(visualRoot, "scripts");
@@ -212,7 +209,7 @@ describe("doctor — real filesystem UI skill payloads", () => {
 
 	it("treats an installed test file as an orphaned managed-payload mutation", () => {
 		const fixture = realUiDoctor();
-		const visualRoot = fixture.actualRoots.get(join(managedSkills, "visual-qa"));
+		const visualRoot = fixture.actualRoots.get(join(managedSkills, "lit-humanizer"));
 		expect(visualRoot).toBeDefined();
 		if (visualRoot === undefined) return;
 		const tests = join(visualRoot, "tests");
@@ -223,7 +220,7 @@ describe("doctor — real filesystem UI skill payloads", () => {
 
 	it.runIf(process.platform !== "win32")("rejects a FIFO special entry", () => {
 		const fixture = realUiDoctor();
-		const frontendRoot = fixture.actualRoots.get(join(managedSkills, "frontend-ui-ux"));
+		const frontendRoot = fixture.actualRoots.get(join(managedSkills, "autoresearch"));
 		expect(frontendRoot).toBeDefined();
 		if (frontendRoot === undefined) return;
 		const fifo = join(frontendRoot, "scripts/unexpected-fifo");
@@ -249,7 +246,7 @@ describe("doctor — real filesystem UI skill payloads", () => {
 
 		it("rejects a symlinked skill root", () => {
 			const fixture = realUiDoctor(undefined, windowsStablePathCapability);
-			const visualRoot = fixture.actualRoots.get(join(managedSkills, "visual-qa"));
+			const visualRoot = fixture.actualRoots.get(join(managedSkills, "lit-humanizer"));
 			expect(visualRoot).toBeDefined();
 			if (visualRoot === undefined) return;
 			const outside = join(dirname(visualRoot), "windows-same-byte-root");
@@ -261,10 +258,10 @@ describe("doctor — real filesystem UI skill payloads", () => {
 
 		it("rejects a same-byte leaf symlink", () => {
 			const fixture = realUiDoctor(undefined, windowsStablePathCapability);
-			const visualRoot = fixture.actualRoots.get(join(managedSkills, "visual-qa"));
+			const visualRoot = fixture.actualRoots.get(join(managedSkills, "lit-humanizer"));
 			expect(visualRoot).toBeDefined();
 			if (visualRoot === undefined) return;
-			const expectedPath = join(visualRoot, "scripts/cli.mjs");
+			const expectedPath = join(visualRoot, "scripts/core.mjs");
 			const outside = join(dirname(visualRoot), "windows-same-byte-cli.mjs");
 			writeFileSync(outside, readFileSync(expectedPath));
 			rmSync(expectedPath);
@@ -294,7 +291,7 @@ describe("doctor — real filesystem UI skill payloads", () => {
 				for (let entry = directory.readSync(); entry !== null; entry = directory.readSync()) entries.push(entry);
 				return entries;
 			}, windowsStablePathCapability);
-			const visualRoot = fixture.actualRoots.get(join(managedSkills, "visual-qa"));
+			const visualRoot = fixture.actualRoots.get(join(managedSkills, "lit-humanizer"));
 			expect(visualRoot).toBeDefined();
 			if (visualRoot === undefined) return;
 			scriptsRoot = join(visualRoot, "scripts");
@@ -318,7 +315,7 @@ describe("doctor — real filesystem UI skill payloads", () => {
 				}
 				return entries;
 			}, windowsStablePathCapability);
-			const visualRoot = fixture.actualRoots.get(join(managedSkills, "visual-qa"));
+			const visualRoot = fixture.actualRoots.get(join(managedSkills, "lit-humanizer"));
 			expect(visualRoot).toBeDefined();
 			if (visualRoot === undefined) return;
 			scriptsRoot = join(visualRoot, "scripts");
@@ -339,7 +336,7 @@ describe("doctor — real filesystem UI skill payloads", () => {
 				}
 				return entries;
 			}, windowsStablePathCapability);
-			const visualRoot = fixture.actualRoots.get(join(managedSkills, "visual-qa"));
+			const visualRoot = fixture.actualRoots.get(join(managedSkills, "lit-humanizer"));
 			expect(visualRoot).toBeDefined();
 			if (visualRoot === undefined) return;
 			scriptsRoot = join(visualRoot, "scripts");

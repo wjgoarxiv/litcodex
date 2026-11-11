@@ -8,10 +8,7 @@
 //   skills   generated. Per skill: SKILL.md bytes and sha256, tracked file count, total bytes, and one sha256 over
 //            every tracked file's relative path, size and sha256.
 //   pack     generated. The sorted `npm pack --dry-run --json --ignore-scripts` [0].files paths of the repository
-//            root, the tree the marketplace channel copies, except the canonical frontend corpus.
-//   packCorpus  generated. That corpus's packed paths as a root, a count and one sha256 over the sorted relative
-//            paths. Its third-party file names may carry guarded legacy tokens that the scanner exempts only inside
-//            the corpus itself, so the lock pins them the way tools/pack-payload-manifest.json does: by digest.
+//            root, the tree the marketplace channel copies.
 //
 // Only files in the git index are measured, so a stray local file never makes the lock stale; `git add` a new skill
 // before syncing. A skill without a budget and a budget without a skill are refusals until named on the command
@@ -23,14 +20,13 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { CANONICAL_CORPUS_RELATIVE_ROOT } from "../plugins/litcodex/skills/frontend-ui-ux/scripts/verify-canonical-corpus.mjs";
 import { resolveNpmInvocation } from "./npm-command.mjs";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const LOCK_PATH = join(REPO_ROOT, "skills.lock.json");
 export const SKILLS_ROOT = join(REPO_ROOT, "plugins", "litcodex", "skills");
 const NOTE =
-	"npm run sync:lock rewrites skills, pack and packCorpus. budgets are hand-owned: every run keeps them, and refuses to write while a skill breaks one.";
+	"npm run sync:lock rewrites skills and pack. budgets are hand-owned: every run keeps them, and refuses to write while a skill breaks one.";
 const HEADROOM = 1.5;
 
 const sha256 = (data) => createHash("sha256").update(data).digest("hex");
@@ -138,21 +134,6 @@ export function budgetViolations(skills, budgets) {
 	return out;
 }
 
-/** Split a packed file list into the paths the lock names and a digest of the canonical corpus paths. */
-export function splitPack(paths) {
-	const prefix = `${CANONICAL_CORPUS_RELATIVE_ROOT}/`;
-	const sorted = [...paths].sort();
-	const corpus = sorted.filter((path) => path.startsWith(prefix)).map((path) => path.slice(prefix.length));
-	return {
-		pack: sorted.filter((path) => !path.startsWith(prefix)),
-		packCorpus: {
-			root: CANONICAL_CORPUS_RELATIVE_ROOT,
-			files: corpus.length,
-			sha256: sha256(corpus.map((path) => `${path}\n`).join("")),
-		},
-	};
-}
-
 const sortedObject = (entries) => Object.fromEntries([...entries].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
 
 /** The next lock. Budgets are copied as written; only ids named in acceptNew are seeded and in drop removed. */
@@ -163,7 +144,7 @@ export function buildLock({ skillsRoot, pack, previous = {}, acceptNew = [], dro
 	for (const id of drop) if (skills[id] || !kept[id]) throw new Error(`--drop ${id}: not a missing skill`);
 	const budgets = Object.entries(kept).filter(([id]) => !drop.includes(id));
 	for (const id of acceptNew) budgets.push([id, seedBudget(skills[id])]);
-	return { note: NOTE, budgets: sortedObject(budgets), skills, ...splitPack(pack) };
+	return { note: NOTE, budgets: sortedObject(budgets), skills, pack: [...pack].sort() };
 }
 
 export const readLock = (path = LOCK_PATH) => JSON.parse(readFileSync(path, "utf8"));
@@ -201,8 +182,7 @@ function main(argv) {
 		acceptNew: options.acceptNew,
 		drop: options.drop,
 	});
-	if (options.keepPack)
-		Object.assign(lock, { pack: previous.pack ?? [], packCorpus: previous.packCorpus ?? lock.packCorpus });
+	if (options.keepPack) Object.assign(lock, { pack: previous.pack ?? [] });
 	const broken = budgetViolations(lock.skills, lock.budgets);
 	if (broken.length > 0) {
 		process.stdout.write(
@@ -222,7 +202,7 @@ function main(argv) {
 	for (const id of options.drop) process.stdout.write(`dropped budget: ${id}\n`);
 	const count = Object.keys(lock.skills).length;
 	process.stdout.write(
-		`skills.lock.json: ${current ? "already current" : "updated"} (${count} skills, ${lock.pack.length + lock.packCorpus.files} packed files)\n`,
+		`skills.lock.json: ${current ? "already current" : "updated"} (${count} skills, ${lock.pack.length} packed files)\n`,
 	);
 	return 0;
 }

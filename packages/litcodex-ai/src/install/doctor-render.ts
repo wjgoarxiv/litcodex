@@ -27,7 +27,6 @@ export function renderDoctorText(report: DoctorReport): string {
 			? [`  missing skill resources: ${missingResourceSummary(report.missingSkillResourcePaths)}`]
 			: []),
 		`  lit-handoff: ${yn(report.handoffInstalled)}`,
-		`  science payload: ${yn(report.scientificVisualizationInstalled)}`,
 		...(report.autoUpdate === undefined
 			? []
 			: [
