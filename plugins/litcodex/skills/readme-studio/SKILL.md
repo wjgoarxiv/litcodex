@@ -11,7 +11,7 @@ skill_name: readme-studio
 host: Codex CLI
 reader_projection: shared_rule
 registration_surface: plugins/litcodex/skills/readme-studio/SKILL.md
-stub_for: wjgoarxiv-skills plugins/video-covers/skills/readme-studio/
+stub_for: wjgoarxiv-skills variants/litcodex/readme-studio/
 output_channels:
   artifact_genre: no_artifact
   limitations_channel: reply
@@ -19,7 +19,7 @@ output_channels:
 
 When directly selected, the first visible line is `🔥 **LIT IGNITED · readme-studio** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-This is a stub. readme-studio makes a factual project README with an inspected cover and an optional motion cover. It moved out of LitCodex into **wjgoarxiv-skills**, as `plugins/video-covers/skills/readme-studio` in the `video-covers` family. The id stays here so its routes still land: `$litcodex:readme-studio`, the picker and implicit README requests.
+This is a stub. readme-studio makes a factual project README with an inspected cover and an optional motion cover. It moved out of LitCodex into **wjgoarxiv-skills**, in the `video-covers` family; its self-contained Codex edition is `variants/litcodex/readme-studio`. The id stays here so its routes still land: `$litcodex:readme-studio`, the picker and implicit README requests.
 
 ## #contract.inputs
 
@@ -37,7 +37,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 1. Print the banner when selected directly.
 2. If the installed copy is listed, read it fully and let it run the request.
-3. Otherwise say what readme-studio makes, that it moved to wjgoarxiv-skills (`plugins/video-covers/skills/readme-studio`), and give the lines below unchanged. A motion cover is lit-typographic-motion's cover mode (same family).
+3. Otherwise say what readme-studio makes, that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/readme-studio`), and give the lines below unchanged. A motion cover is lit-typographic-motion's cover mode (same family).
 4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
 ## Install in Codex
@@ -46,10 +46,10 @@ wjgoarxiv-skills is **not published yet**: copy from a local clone (the path is 
 
 ```bash
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R "<path to your wjgoarxiv-skills clone>/plugins/video-covers/skills/readme-studio" "${CODEX_HOME:-$HOME/.codex}/skills/readme-studio"
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/readme-studio" "${CODEX_HOME:-$HOME/.codex}/skills/readme-studio"
 ```
 
-Then start a **new Codex session**; the copy is listed as `readme-studio` beside this stub (`litcodex:readme-studio`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/readme-studio`.
+Then start a **new Codex session**; the copy is listed as `readme-studio` beside this stub (`litcodex:readme-studio`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/readme-studio`; to update, delete it and copy again (`cp -R` onto an existing folder nests the copy). LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
 
 ## #contract.outputs
 
@@ -59,7 +59,7 @@ Then start a **new Codex session**; the copy is listed as `readme-studio` beside
 
 ## #contract.evidence
 
-The reply names `plugins/video-covers/skills/readme-studio` and carries the install lines unchanged; installed mode follows the moved skill's own rules.
+The reply names `variants/litcodex/readme-studio` and carries the install lines unchanged; installed mode follows the moved skill's own rules.
 
 ## #contract.hard_stops
 

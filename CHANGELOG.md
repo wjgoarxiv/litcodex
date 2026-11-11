@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `visual-qa` (design), and `lit-typographic-motion` and `readme-studio` (video and covers). Each keeps its
   name here as a short stub that says where the skill went and gives the Codex copy command. The `lit` routes,
   the hook routes and doctor still reach the stubs.
+- Each stub's copy command now installs the skill's Codex edition, `variants/litcodex/<id>` in wjgoarxiv-skills: one
+  self-contained folder written for Codex that needs no LitCodex. The scientific-visualization stub no longer asks for a
+  second vendor copy, because its authored source ships inside that folder. The copy lives in `~/.codex/skills/`,
+  which `litcodex install` and upgrades never write, so it survives the next upgrade.
 
 ### Removed
 

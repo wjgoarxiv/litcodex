@@ -10,7 +10,7 @@ route: "`lit schematic`, the glued `lit-schematic`, or a bare `lit` that asks fo
 injection_surface: "UserPromptSubmit additionalContext"
 component_surface: "plugins/litcodex/components/lit-loop directive loader"
 skill_name: "lit-schematic"
-stub_for: "wjgoarxiv-skills plugins/figures/skills/lit-schematic/"
+stub_for: "wjgoarxiv-skills variants/litcodex/lit-schematic/"
 wrapper_contract: "keep <lit-schematic-mode> as the first line and its closing tag as the final non-whitespace line"
 required_sections:
   - "#contract.activation"
@@ -23,7 +23,7 @@ required_sections:
   - "#contract.anti_patterns"
 ```
 
-This directive is an LLM-facing contract injected by the LitCodex Codex plugin, not user-authored prompt text. The route still fires as before (`lit schematic`, the glued `lit-schematic`, or a bare `lit` that asks for a drawing of real equipment), but lit-schematic itself moved out of LitCodex into wjgoarxiv-skills, as `plugins/figures/skills/lit-schematic/`. The installed `lit-schematic` SKILL.md in this plugin is a same-name stub, and this directive is its route contract.
+This directive is an LLM-facing contract injected by the LitCodex Codex plugin, not user-authored prompt text. The route still fires as before (`lit schematic`, the glued `lit-schematic`, or a bare `lit` that asks for a drawing of real equipment), but lit-schematic itself moved out of LitCodex into wjgoarxiv-skills, whose Codex edition is `variants/litcodex/lit-schematic/`. The installed `lit-schematic` SKILL.md in this plugin is a same-name stub, and this directive is its route contract.
 
 **MANDATORY**: First user-visible line this turn MUST be exactly:
 `🔥 **LIT IGNITED · lit-schematic** 🔥`
@@ -61,11 +61,11 @@ This directive is an LLM-facing contract injected by the LitCodex Codex plugin, 
 
 1. Print the banner line above verbatim.
 2. For the selected route, read relevant `.litcodex` state only when the user points at earlier drawing work; the stub keeps none of its own. Check the skill list for the installed copy; when present, read it completely and let it run the request.
-3. Otherwise tell the user what lit-schematic makes (P&IDs, PFDs and BFDs, equipment layouts, apparatus figures and isometric cutaways as millimetre-sized SVG with PDF and 600 dpi PNG), that it moved to wjgoarxiv-skills (`plugins/figures/skills/lit-schematic/`), and give these lines unchanged:
+3. Otherwise tell the user what lit-schematic makes (P&IDs, PFDs and BFDs, equipment layouts, apparatus figures and isometric cutaways as millimetre-sized SVG with PDF and 600 dpi PNG), that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-schematic/`, a self-contained folder), and give these lines unchanged:
 
 ```bash
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R "<path to your wjgoarxiv-skills clone>/plugins/figures/skills/lit-schematic" "${CODEX_HOME:-$HOME/.codex}/skills/lit-schematic"
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic" "${CODEX_HOME:-$HOME/.codex}/skills/lit-schematic"
 ```
 
    wjgoarxiv-skills is not published yet, so the source is a local clone; after copying, the user starts a new Codex session.

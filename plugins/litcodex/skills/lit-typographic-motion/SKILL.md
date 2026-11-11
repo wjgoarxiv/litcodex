@@ -11,7 +11,7 @@ skill_name: lit-typographic-motion
 host: Codex CLI
 reader_projection: shared_rule
 registration_surface: plugins/litcodex/skills/lit-typographic-motion/SKILL.md
-stub_for: wjgoarxiv-skills plugins/video-covers/skills/lit-typographic-motion/
+stub_for: wjgoarxiv-skills variants/litcodex/lit-typographic-motion/
 output_channels:
   artifact_genre: no_artifact
   limitations_channel: reply
@@ -19,7 +19,7 @@ output_channels:
 
 When directly selected, the first visible line is `🔥 **LIT IGNITED · lit-typographic-motion** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-This is a stub. lit-typographic-motion makes a short film (MP4) or seamless README cover loop: treatment, stage or type path, score and QA gate. It moved out of LitCodex into **wjgoarxiv-skills**, as `plugins/video-covers/skills/lit-typographic-motion` in the `video-covers` family. The id stays here so its routes still land: `$litcodex:lit-typographic-motion`, the picker, implicit film requests and the film row of the bare `lit` table, whose film note names this stub.
+This is a stub. lit-typographic-motion makes a short film (MP4) or seamless README cover loop: treatment, stage or type path, score and QA gate. It moved out of LitCodex into **wjgoarxiv-skills**, in the `video-covers` family; its self-contained Codex edition is `variants/litcodex/lit-typographic-motion`. The id stays here so its routes still land: `$litcodex:lit-typographic-motion`, the picker, implicit film requests and the film row of the bare `lit` table, whose film note names this stub.
 
 ## #contract.inputs
 
@@ -37,7 +37,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 1. Print the banner when selected directly.
 2. If the installed copy is listed, read it fully and let it run the request.
-3. Otherwise say what lit-typographic-motion makes, that it moved to wjgoarxiv-skills (`plugins/video-covers/skills/lit-typographic-motion`), and give the lines below unchanged. LitCodex no longer pre-warms a film runtime or holds the turn with a film check.
+3. Otherwise say what lit-typographic-motion makes, that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-typographic-motion`), and give the lines below unchanged. LitCodex no longer pre-warms a film runtime or holds the turn with a film check.
 4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
 ## Install in Codex
@@ -46,10 +46,10 @@ wjgoarxiv-skills is **not published yet**: copy from a local clone (the path is 
 
 ```bash
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R "<path to your wjgoarxiv-skills clone>/plugins/video-covers/skills/lit-typographic-motion" "${CODEX_HOME:-$HOME/.codex}/skills/lit-typographic-motion"
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-typographic-motion" "${CODEX_HOME:-$HOME/.codex}/skills/lit-typographic-motion"
 ```
 
-Then start a **new Codex session**; the copy is listed as `lit-typographic-motion` beside this stub (`litcodex:lit-typographic-motion`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/lit-typographic-motion`.
+Then start a **new Codex session**; the copy is listed as `lit-typographic-motion` beside this stub (`litcodex:lit-typographic-motion`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/lit-typographic-motion`; to update, delete it and copy again (`cp -R` onto an existing folder nests the copy). LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
 
 ## #contract.outputs
 
@@ -59,7 +59,7 @@ Then start a **new Codex session**; the copy is listed as `lit-typographic-motio
 
 ## #contract.evidence
 
-The reply names `plugins/video-covers/skills/lit-typographic-motion` and carries the install lines unchanged; installed mode follows the moved skill's own rules.
+The reply names `variants/litcodex/lit-typographic-motion` and carries the install lines unchanged; installed mode follows the moved skill's own rules.
 
 ## #contract.hard_stops
 

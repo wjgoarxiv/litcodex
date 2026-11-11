@@ -5,5 +5,5 @@ The only vendored authored snapshot left here is `handoff/`, included under the 
 where it came from and the hash of each file.
 
 The scientific-visualization snapshot that used to sit beside it moved, with the
-lit-scientific-visualization skill, to wjgoarxiv-skills (`plugins/figures/vendor/scientific-visualization`),
-where its license and provenance files went with it.
+lit-scientific-visualization skill, to wjgoarxiv-skills; its Codex edition carries it in
+`variants/litcodex/lit-scientific-visualization/vendor/`, with its license and provenance files.

@@ -10,7 +10,7 @@ route: "exact bare lit-scientific-visualization"
 injection_surface: "UserPromptSubmit additionalContext"
 component_surface: "plugins/litcodex/components/lit-loop directive loader"
 skill_name: "lit-scientific-visualization"
-stub_for: "wjgoarxiv-skills plugins/figures/skills/lit-scientific-visualization/"
+stub_for: "wjgoarxiv-skills variants/litcodex/lit-scientific-visualization/"
 wrapper_contract: "keep <lit-scientific-visualization-mode> as the first line and its closing tag as the final non-whitespace line"
 required_sections:
   - "#contract.activation"
@@ -23,7 +23,7 @@ required_sections:
   - "#contract.anti_patterns"
 ```
 
-This directive is an LLM-facing contract injected by the LitCodex Codex plugin, not user-authored prompt text. The route still fires as before (exact bare lit-scientific-visualization), but lit-scientific-visualization itself moved out of LitCodex into wjgoarxiv-skills, as `plugins/figures/skills/lit-scientific-visualization/`. The installed `lit-scientific-visualization` SKILL.md in this plugin is a same-name stub, and this directive is its route contract.
+This directive is an LLM-facing contract injected by the LitCodex Codex plugin, not user-authored prompt text. The route still fires as before (exact bare lit-scientific-visualization), but lit-scientific-visualization itself moved out of LitCodex into wjgoarxiv-skills, whose Codex edition is `variants/litcodex/lit-scientific-visualization/`. The installed `lit-scientific-visualization` SKILL.md in this plugin is a same-name stub, and this directive is its route contract.
 
 **MANDATORY**: First user-visible line this turn MUST be exactly:
 `🔥 **LIT IGNITED · lit-scientific-visualization** 🔥`
@@ -47,16 +47,15 @@ This directive is an LLM-facing contract injected by the LitCodex Codex plugin, 
 
 1. Print the banner line above verbatim.
 2. Check the skill list for the installed copy; when present, read it completely and let it run the request.
-3. Otherwise tell the user what lit-scientific-visualization makes (publication-quality plots of measured data on the authored scientific-visualization source), that it moved to wjgoarxiv-skills (`plugins/figures/skills/lit-scientific-visualization/`), and give these lines unchanged:
+3. Otherwise tell the user what lit-scientific-visualization makes (publication-quality plots of measured data on the authored scientific-visualization source), that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-scientific-visualization/`, a self-contained folder), and give these lines unchanged:
 
 ```bash
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills" "${CODEX_HOME:-$HOME/.codex}/vendor"
-cp -R "<path to your wjgoarxiv-skills clone>/plugins/figures/skills/lit-scientific-visualization" "${CODEX_HOME:-$HOME/.codex}/skills/lit-scientific-visualization"
-cp -R "<path to your wjgoarxiv-skills clone>/plugins/figures/vendor/scientific-visualization" "${CODEX_HOME:-$HOME/.codex}/vendor/scientific-visualization"
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-scientific-visualization" "${CODEX_HOME:-$HOME/.codex}/skills/lit-scientific-visualization"
 ```
 
    wjgoarxiv-skills is not published yet, so the source is a local clone; after copying, the user starts a new Codex session.
-4. The second copy is the authored source at `plugins/figures/vendor/scientific-visualization/`, which the adapter reads through its `../../vendor/` path. The scoped `$litcodex:lit-scientific-visualization` and the picker stay native Codex skill-discovery routes to the stub.
+4. The authored scientific-visualization source ships inside that one folder (`vendor/scientific-visualization/`), so no second copy is needed. The scoped `$litcodex:lit-scientific-visualization` and the picker stay native Codex skill-discovery routes to the stub.
 
 ## #contract.outputs
 

@@ -11,7 +11,7 @@ skill_name: lit-pptx
 host: Codex CLI
 reader_projection: shared_rule
 registration_surface: plugins/litcodex/skills/lit-pptx/SKILL.md
-stub_for: wjgoarxiv-skills plugins/decks/skills/lit-pptx/
+stub_for: wjgoarxiv-skills variants/litcodex/lit-pptx/
 output_channels:
   artifact_genre: no_artifact
   limitations_channel: reply
@@ -19,7 +19,7 @@ output_channels:
 
 When directly selected, the first visible line is `🔥 **LIT IGNITED · lit-pptx** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-This is a stub. lit-pptx makes an editable PowerPoint deck (.pptx) from Markdown slide source, with native charts, embedded fonts and a layout QA gate. It moved out of LitCodex into **wjgoarxiv-skills**, as `plugins/decks/skills/lit-pptx` in the `decks` family. The id stays here so its routes still land: `$litcodex:lit-pptx`, the picker, implicit deck requests and the slides row of the bare `lit` table.
+This is a stub. lit-pptx makes an editable PowerPoint deck (.pptx) from Markdown slide source, with native charts, embedded fonts and a layout QA gate. It moved out of LitCodex into **wjgoarxiv-skills**, in the `decks` family; its self-contained Codex edition is `variants/litcodex/lit-pptx`. The id stays here so its routes still land: `$litcodex:lit-pptx`, the picker, implicit deck requests and the slides row of the bare `lit` table.
 
 ## #contract.inputs
 
@@ -37,7 +37,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 1. Print the banner when selected directly.
 2. If the installed copy is listed, read it fully and let it run the request.
-3. Otherwise say what lit-pptx makes, that it moved to wjgoarxiv-skills (`plugins/decks/skills/lit-pptx`), and give the lines below unchanged. A Word report is lit-docx (documents family).
+3. Otherwise say what lit-pptx makes, that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-pptx`), and give the lines below unchanged. A Word report is lit-docx (documents family).
 4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
 ## Install in Codex
@@ -46,10 +46,10 @@ wjgoarxiv-skills is **not published yet**: copy from a local clone (the path is 
 
 ```bash
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R "<path to your wjgoarxiv-skills clone>/plugins/decks/skills/lit-pptx" "${CODEX_HOME:-$HOME/.codex}/skills/lit-pptx"
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-pptx" "${CODEX_HOME:-$HOME/.codex}/skills/lit-pptx"
 ```
 
-Then start a **new Codex session**; the copy is listed as `lit-pptx` beside this stub (`litcodex:lit-pptx`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/lit-pptx`.
+Then start a **new Codex session**; the copy is listed as `lit-pptx` beside this stub (`litcodex:lit-pptx`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/lit-pptx`; to update, delete it and copy again (`cp -R` onto an existing folder nests the copy). LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
 
 ## #contract.outputs
 
@@ -59,7 +59,7 @@ Then start a **new Codex session**; the copy is listed as `lit-pptx` beside this
 
 ## #contract.evidence
 
-The reply names `plugins/decks/skills/lit-pptx` and carries the install lines unchanged; installed mode follows the moved skill's own rules.
+The reply names `variants/litcodex/lit-pptx` and carries the install lines unchanged; installed mode follows the moved skill's own rules.
 
 ## #contract.hard_stops
 

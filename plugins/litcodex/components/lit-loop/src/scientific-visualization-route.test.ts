@@ -36,13 +36,13 @@ describe("exact bare scientific visualization UserPromptSubmit route", () => {
 		const context = injectedContext(runUserPromptSubmitHook(userPrompt("lit-scientific-visualization")));
 
 		// Then: the trusted route arrives in one native envelope and names the installed stub, which gives the
-		// install lines for the skill and its authored source in wjgoarxiv-skills.
+		// install line for the skill's self-contained Codex edition in wjgoarxiv-skills.
 		expect(context).toContain("<lit-scientific-visualization-mode>");
 		expect(context).toContain("🔥 **LIT IGNITED · lit-scientific-visualization** 🔥");
 		const adapterPath = /^skill lit-scientific-visualization: (.+)$/mu.exec(context)?.[1] ?? "";
 		const adapter = readFileSync(adapterPath, "utf8");
-		expect(adapter).toContain("stub_for: wjgoarxiv-skills plugins/figures/skills/lit-scientific-visualization/");
-		expect(adapter).toContain("plugins/figures/vendor/scientific-visualization");
+		expect(adapter).toContain("stub_for: wjgoarxiv-skills variants/litcodex/lit-scientific-visualization/");
+		expect(adapter).not.toContain("plugins/figures/vendor/scientific-visualization");
 	});
 
 	it("accepts casing and edge whitespace while every non-exact form remains inert", () => {

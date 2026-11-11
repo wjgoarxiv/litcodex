@@ -3,7 +3,8 @@
 // Five families left the plugin for the separate wjgoarxiv-skills collection. Each moved skill keeps its
 // directory, its id and every Codex route that reached it, but the directory now holds a short stub that
 // says three things: the skill moved, where it lives in wjgoarxiv-skills, and the one Codex install line
-// for that skill. These checks fail while a body, a runtime or a body-only hook context is still shipped.
+// for that skill. The line copies the skill's Codex edition, variants/litcodex/<id>: one self-contained folder
+// written for Codex, into ${CODEX_HOME}/skills/<id>, a directory the LitCodex installer never writes. These checks fail while a body, a runtime or a body-only hook context is still shipped.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -49,20 +50,25 @@ describe("moved skills are same-name stubs that point at wjgoarxiv-skills", () =
 		expect(text).toMatch(new RegExp(`^---\\nname: ${id}\\n`, "u"));
 		expect(text).toContain(`🔥 **LIT IGNITED · ${id}** 🔥`);
 		expect(text).toContain("wjgoarxiv-skills");
-		expect(text).toContain(`plugins/${family}/skills/${id}/`);
+		expect(text).toContain(`stub_for: wjgoarxiv-skills variants/litcodex/${id}/`);
+		expect(text).toContain(`\`${family}\` family`);
+		expect(text).not.toContain(`plugins/${family}/`);
 		expect(text).toContain(PLACEHOLDER);
 		expect(text).toContain(
-			`cp -R "${PLACEHOLDER}/plugins/${family}/skills/${id}" "\${CODEX_HOME:-$HOME/.codex}/skills/${id}"`,
+			`cp -R "${PLACEHOLDER}/variants/litcodex/${id}" "\${CODEX_HOME:-$HOME/.codex}/skills/${id}"`,
 		);
+		expect(text.match(/^cp -R /gmu)?.length, "one skill, one folder").toBe(1);
+		expect(text).toMatch(/upgrades never write/u);
 		expect(text).toMatch(/not published yet/iu);
 		expect(text).toMatch(/new Codex session/iu);
 		expect(text).not.toMatch(/\/Users\/[a-z]|~\/Desktop|27_LITFAMILY|\.worktrees\//u);
 		expect(Buffer.byteLength(text)).toBeLessThan(9000);
 	});
 
-	it("the scientific-visualization stub also names the authored source the adapter reads", () => {
+	it("the scientific-visualization stub needs no second copy: its Codex edition carries the authored source", () => {
 		const text = stub("lit-scientific-visualization");
-		expect(text).toContain("plugins/figures/vendor/scientific-visualization/");
+		expect(text).not.toMatch(/vendor_source|plugins\/figures\/vendor|\/vendor\/scientific-visualization"/u);
+		expect(text).toContain("`vendor/scientific-visualization`");
 		expect(existsSync(join(PLUGIN_DIR, "vendor", "scientific-visualization"))).toBe(false);
 		expect(existsSync(join(PLUGIN_DIR, "vendor", "licenses", "045_scientific-visualization-MIT.txt"))).toBe(false);
 		expect(existsSync(join(PLUGIN_DIR, "vendor", "provenance", "045_scientific-visualization.md"))).toBe(false);
@@ -104,7 +110,8 @@ describe("hook routes still reach the stubs and carry no body procedure", () => 
 			expect(decision.kind === "inject" && decision.mode).toBe("lit-schematic");
 			const ctx = context(decision);
 			expect(ctx).toContain("🔥 **LIT IGNITED · lit-schematic** 🔥");
-			expect(ctx).toContain("plugins/figures/skills/lit-schematic/");
+			expect(ctx).toContain("variants/litcodex/lit-schematic/");
+			expect(ctx).not.toContain("plugins/figures/");
 			expect(ctx).toContain(PLACEHOLDER);
 			for (const leftover of ["scripts/qa.mjs", "scaffold.mjs", "QA PASS", "forty real parts"]) {
 				expect(ctx, `${prompt}: ${leftover}`).not.toContain(leftover);
@@ -115,7 +122,8 @@ describe("hook routes still reach the stubs and carry no body procedure", () => 
 	it("the exact bare scientific-visualization route injects the stub contract", () => {
 		const ctx = context(runUserPromptSubmitHook(ups("lit-scientific-visualization")));
 		expect(ctx).toContain("🔥 **LIT IGNITED · lit-scientific-visualization** 🔥");
-		expect(ctx).toContain("plugins/figures/vendor/scientific-visualization/");
+		expect(ctx).toContain("variants/litcodex/lit-scientific-visualization/");
+		expect(ctx).not.toContain("plugins/figures/");
 		expect(ctx).toContain(PLACEHOLDER);
 		for (const leftover of ["16-file", "dependency-preflight", "rcparams"]) expect(ctx).not.toContain(leftover);
 	});

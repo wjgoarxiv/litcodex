@@ -11,8 +11,7 @@ skill_name: lit-scientific-visualization
 host: Codex CLI
 reader_projection: shared_rule
 registration_surface: plugins/litcodex/skills/lit-scientific-visualization/SKILL.md
-stub_for: wjgoarxiv-skills plugins/figures/skills/lit-scientific-visualization/
-vendor_source: wjgoarxiv-skills plugins/figures/vendor/scientific-visualization/
+stub_for: wjgoarxiv-skills variants/litcodex/lit-scientific-visualization/
 output_channels:
   artifact_genre: no_artifact
   limitations_channel: reply
@@ -20,7 +19,7 @@ output_channels:
 
 When directly selected, the first visible line is `🔥 **LIT IGNITED · lit-scientific-visualization** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-This is a stub. lit-scientific-visualization makes a publication-quality plot of measured data on the authored scientific-visualization source. It moved out of LitCodex into **wjgoarxiv-skills**, as `plugins/figures/skills/lit-scientific-visualization` in the `figures` family. The id stays here so its routes still land: the exact bare `lit-scientific-visualization` hook route, `$litcodex:lit-scientific-visualization` and the picker.
+This is a stub. lit-scientific-visualization makes a publication-quality plot of measured data on the authored scientific-visualization source. It moved out of LitCodex into **wjgoarxiv-skills**, in the `figures` family; its self-contained Codex edition is `variants/litcodex/lit-scientific-visualization`. The id stays here so its routes still land: the exact bare `lit-scientific-visualization` hook route, `$litcodex:lit-scientific-visualization` and the picker.
 
 ## #contract.inputs
 
@@ -38,7 +37,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 1. Print the banner when selected directly.
 2. If the installed copy is listed, read it fully and let it run the request.
-3. Otherwise say what lit-scientific-visualization makes, that it moved to wjgoarxiv-skills (`plugins/figures/skills/lit-scientific-visualization`), and give the lines below unchanged. Its authored source, `plugins/figures/vendor/scientific-visualization` in the same repository, is copied below into the vendor folder the skill reads.
+3. Otherwise say what lit-scientific-visualization makes, that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-scientific-visualization`), and give the lines below unchanged. Its authored source ships inside that folder (`vendor/scientific-visualization`), so one copy is the whole install.
 4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
 ## Install in Codex
@@ -47,12 +46,10 @@ wjgoarxiv-skills is **not published yet**: copy from a local clone (the path is 
 
 ```bash
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R "<path to your wjgoarxiv-skills clone>/plugins/figures/skills/lit-scientific-visualization" "${CODEX_HOME:-$HOME/.codex}/skills/lit-scientific-visualization"
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/vendor"
-cp -R "<path to your wjgoarxiv-skills clone>/plugins/figures/vendor/scientific-visualization" "${CODEX_HOME:-$HOME/.codex}/vendor/scientific-visualization"
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-scientific-visualization" "${CODEX_HOME:-$HOME/.codex}/skills/lit-scientific-visualization"
 ```
 
-Then start a **new Codex session**; the copy is listed as `lit-scientific-visualization` beside this stub (`litcodex:lit-scientific-visualization`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/lit-scientific-visualization` and the vendor folder copied with it.
+Then start a **new Codex session**; the copy is listed as `lit-scientific-visualization` beside this stub (`litcodex:lit-scientific-visualization`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/lit-scientific-visualization`; to update, delete it and copy again (`cp -R` onto an existing folder nests the copy). LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
 
 ## #contract.outputs
 
@@ -62,7 +59,7 @@ Then start a **new Codex session**; the copy is listed as `lit-scientific-visual
 
 ## #contract.evidence
 
-The reply names `plugins/figures/skills/lit-scientific-visualization` and carries the install lines unchanged; installed mode follows the moved skill's own rules.
+The reply names `variants/litcodex/lit-scientific-visualization` and carries the install lines unchanged; installed mode follows the moved skill's own rules.
 
 ## #contract.hard_stops
 

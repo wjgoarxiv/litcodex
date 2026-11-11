@@ -234,12 +234,12 @@ const LIT_SCHEMATIC = [
 	"**MANDATORY**: First user-visible line this turn MUST be exactly:",
 	"🔥 **LIT IGNITED · lit-schematic** 🔥",
 	AUTHORITY,
-	"You are on the lit-schematic route for drawings of real equipment (P&ID, PFD or BFD, equipment layout, apparatus figure, isometric cutaway). The skill moved out of LitCodex: it now lives in wjgoarxiv-skills as `plugins/figures/skills/lit-schematic/`, and {skill:lit-schematic} is the same-name stub.",
+	"You are on the lit-schematic route for drawings of real equipment (P&ID, PFD or BFD, equipment layout, apparatus figure, isometric cutaway). The skill moved out of LitCodex: it now lives in wjgoarxiv-skills, whose Codex edition is `variants/litcodex/lit-schematic/`, and {skill:lit-schematic} is the same-name stub.",
 	BLOCKED,
 	"",
 	"1. Read the stub {skill:lit-schematic}. When the session's skill list has a separate `lit-schematic` copy (normally under `$CODEX_HOME/skills/`, where `$CODEX_HOME` defaults to `~/.codex`), open that file and let it handle the request.",
 	"2. Otherwise say what lit-schematic makes, that it moved to wjgoarxiv-skills, and give the stub's install lines unchanged, for example:",
-	'   `cp -R "<path to your wjgoarxiv-skills clone>/plugins/figures/skills/lit-schematic" "$CODEX_HOME/skills/lit-schematic"`, then a new Codex session.',
+	'   `cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic" "$CODEX_HOME/skills/lit-schematic"`, then a new Codex session.',
 	"3. Draw nothing by hand and do not imitate the moved procedure. Stop after the notice.",
 ];
 
@@ -320,10 +320,10 @@ const SCIENTIFIC_VISUALIZATION = [
 	"**MANDATORY:** the exact first user-visible line is",
 	"🔥 **LIT IGNITED · lit-scientific-visualization** 🔥",
 	AUTHORITY,
-	"This route fires only for the bare word `lit-scientific-visualization`. The skill moved out of LitCodex: it now lives in wjgoarxiv-skills as `plugins/figures/skills/lit-scientific-visualization/`, with the authored source it reads in `plugins/figures/vendor/scientific-visualization/`. The adapter named below is the same-name stub.",
+	"This route fires only for the bare word `lit-scientific-visualization`. The skill moved out of LitCodex: it now lives in wjgoarxiv-skills, whose Codex edition `variants/litcodex/lit-scientific-visualization/` carries the authored source it reads. The adapter named below is the same-name stub.",
 	BLOCKED,
 	"1. Read the stub. When the session's skill list has a separate `lit-scientific-visualization` copy, open that file and follow it.",
-	"2. Otherwise say what the skill makes and that it moved, and give the stub's install lines unchanged: they copy the skill folder into `$CODEX_HOME/skills/` and its source into `$CODEX_HOME/vendor/` (`$CODEX_HOME` defaults to `~/.codex`), using `<path to your wjgoarxiv-skills clone>` as the source; then a new Codex session.",
+	"2. Otherwise say what the skill makes and that it moved, and give the stub's install lines unchanged: they copy the one skill folder into `$CODEX_HOME/skills/` (`$CODEX_HOME` defaults to `~/.codex`), using `<path to your wjgoarxiv-skills clone>` as the source; then a new Codex session.",
 	"3. Plot nothing by hand. Stop after the notice.",
 ];
 

@@ -11,7 +11,7 @@ skill_name: visual-qa
 host: Codex CLI
 reader_projection: shared_rule
 registration_surface: plugins/litcodex/skills/visual-qa/SKILL.md
-stub_for: wjgoarxiv-skills plugins/design/skills/visual-qa/
+stub_for: wjgoarxiv-skills variants/litcodex/visual-qa/
 output_channels:
   artifact_genre: no_artifact
   limitations_channel: reply
@@ -19,7 +19,7 @@ output_channels:
 
 When directly selected, the first visible line is `🔥 **LIT IGNITED · visual-qa** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-This is a stub. visual-qa makes a check of a built interface: states at several viewports, screenshots and a PASS, FAIL or BLOCKED receipt. It moved out of LitCodex into **wjgoarxiv-skills**, as `plugins/design/skills/visual-qa` in the `design` family. The id stays here so its routes still land: `$litcodex:visual-qa`, the picker, implicit visual checks and the visual steps of lit-loop, litwork and review-work.
+This is a stub. visual-qa makes a check of a built interface: states at several viewports, screenshots and a PASS, FAIL or BLOCKED receipt. It moved out of LitCodex into **wjgoarxiv-skills**, in the `design` family; its self-contained Codex edition is `variants/litcodex/visual-qa`. The id stays here so its routes still land: `$litcodex:visual-qa`, the picker, implicit visual checks and the visual steps of lit-loop, litwork and review-work.
 
 ## #contract.inputs
 
@@ -37,7 +37,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 1. Print the banner when selected directly.
 2. If the installed copy is listed, read it fully and let it run the request.
-3. Otherwise say what visual-qa makes, that it moved to wjgoarxiv-skills (`plugins/design/skills/visual-qa`), and give the lines below unchanged. Building the page is frontend-ui-ux (same family).
+3. Otherwise say what visual-qa makes, that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/visual-qa`), and give the lines below unchanged. Building the page is frontend-ui-ux (same family).
 4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
 ## Install in Codex
@@ -46,10 +46,10 @@ wjgoarxiv-skills is **not published yet**: copy from a local clone (the path is 
 
 ```bash
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R "<path to your wjgoarxiv-skills clone>/plugins/design/skills/visual-qa" "${CODEX_HOME:-$HOME/.codex}/skills/visual-qa"
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/visual-qa" "${CODEX_HOME:-$HOME/.codex}/skills/visual-qa"
 ```
 
-Then start a **new Codex session**; the copy is listed as `visual-qa` beside this stub (`litcodex:visual-qa`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/visual-qa`.
+Then start a **new Codex session**; the copy is listed as `visual-qa` beside this stub (`litcodex:visual-qa`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/visual-qa`; to update, delete it and copy again (`cp -R` onto an existing folder nests the copy). LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
 
 ## #contract.outputs
 
@@ -59,7 +59,7 @@ Then start a **new Codex session**; the copy is listed as `visual-qa` beside thi
 
 ## #contract.evidence
 
-The reply names `plugins/design/skills/visual-qa` and carries the install lines unchanged; installed mode follows the moved skill's own rules.
+The reply names `variants/litcodex/visual-qa` and carries the install lines unchanged; installed mode follows the moved skill's own rules.
 
 ## #contract.hard_stops
 
