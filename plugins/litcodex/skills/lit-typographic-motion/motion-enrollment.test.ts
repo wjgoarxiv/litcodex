@@ -64,8 +64,8 @@ describe("lit-typographic-motion enrollment", () => {
 
 describe("lit-typographic-motion corpus and caps", () => {
 	const skill = readFileSync(join(skillRoot, "SKILL.md"), "utf8");
-	it("keeps SKILL.md within the 4,096-byte entrypoint cap and pointing at every reference", () => {
-		expect(Buffer.byteLength(skill, "utf8")).toBeLessThanOrEqual(4096);
+	// The 4,096-byte SKILL.md entrypoint cap is this skill's maxSkillBytes budget in skills.lock.json.
+	it("keeps SKILL.md pointing at every reference", () => {
 		for (const ref of ["treatment", "studio", "stage", "depth", "sound", "style-bibles", "type-and-timing", "quality-gate", "runtime", "cover", "design-choice"]) expect(skill).toContain(`references/${ref}.md`);
 		for (const phrase of ["ask no questions", "--stills-only", "completion --out O", "Hand-encoded films are not the deliverable", "litcodex motion-runtime install", "at least 600 s", "invent a labelled example subject"]) expect(skill).toContain(phrase);
 		for (const gone of ["kinetic-typography film", "not this deliverable", "sample copy", "3-6 short lines"]) expect(skill).not.toContain(gone);

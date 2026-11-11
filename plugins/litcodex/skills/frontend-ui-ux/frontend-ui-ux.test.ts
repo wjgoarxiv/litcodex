@@ -50,7 +50,7 @@ describe("frontend-ui-ux picker-native characterization", () => {
 	});
 
 	it("keeps the model-facing entrypoint bounded and routes dense detail lazily", () => {
-		expect(Buffer.byteLength(skill, "utf8")).toBeLessThanOrEqual(4096);
+		// The 4,096-byte SKILL.md cap is this skill's maxSkillBytes budget in skills.lock.json.
 		expect(skill).toContain("references/complete-contract.md");
 		const detail = new URL("./references/complete-contract.md", import.meta.url);
 		expect(existsSync(detail)).toBe(true);

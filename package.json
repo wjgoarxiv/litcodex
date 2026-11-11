@@ -30,6 +30,7 @@
 		"build:release-tools": "tsc -p tools/release/tsconfig.runtime.json",
 		"generate:skill-payload-hashes": "node scripts/generate-skill-payload-hashes.mjs",
 		"check:skill-payload-hashes": "node scripts/generate-skill-payload-hashes.mjs --check",
+		"sync:lock": "node scripts/sync-skills-lock.mjs",
 		"pretest:vitest": "npm run build:release-tools",
 		"test": "npm run test:vitest && npm run test:node && npm run test:python",
 		"test:vitest": "node scripts/run-isolated-tests.mjs vitest run --passWithNoTests=false",

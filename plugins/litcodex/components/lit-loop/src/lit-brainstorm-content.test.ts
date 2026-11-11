@@ -30,7 +30,6 @@ describe("lit-brainstorm directive and skill", () => {
 		const words = (text: string): number => text.trim().split(/\s+/u).length;
 		expect(words(skill)).toBeGreaterThanOrEqual(2_600);
 		expect(words(directive)).toBeGreaterThanOrEqual(1_500);
-		expect(Buffer.byteLength(skill)).toBeGreaterThanOrEqual(15_000);
 	});
 
 	it("wraps the directive in <lit-brainstorm-mode> and mandates the banner", () => {

@@ -25,7 +25,6 @@ describe("lit-schematic directive and skill", () => {
 		const words = (text: string): number => text.trim().split(/\s+/u).length;
 		expect(words(skill)).toBeGreaterThanOrEqual(1_500);
 		expect(words(directive)).toBeGreaterThanOrEqual(900);
-		expect(Buffer.byteLength(skill)).toBeGreaterThanOrEqual(15_000);
 	});
 
 	it("wraps the directive in <lit-schematic-mode> and mandates the banner", () => {

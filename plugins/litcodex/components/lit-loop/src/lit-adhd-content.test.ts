@@ -22,7 +22,6 @@ describe("lit-adhd directive and skill", () => {
 	it("stays a dense workflow rather than a placeholder", () => {
 		expect(words(skill)).toBeGreaterThanOrEqual(1_800);
 		expect(words(directive)).toBeGreaterThanOrEqual(1_000);
-		expect(Buffer.byteLength(skill)).toBeGreaterThanOrEqual(12_000);
 	});
 
 	it("wraps the directive in <lit-adhd-mode> and mandates the banner", () => {

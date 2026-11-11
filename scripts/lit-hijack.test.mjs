@@ -90,7 +90,6 @@ describe("lit-hijack payload closure and density", () => {
 	it("keeps the skill dense and contract-shaped", () => {
 		const words = (text) => text.split(/\s+/u).filter(Boolean).length;
 		assert.ok(words(body) >= 3000, `SKILL.md has ${words(body)} words`);
-		assert.ok(Buffer.byteLength(body) >= 18_000, `SKILL.md is ${Buffer.byteLength(body)} bytes`);
 		for (const ref of readdirSync(join(skillRoot, "references"))) {
 			const text = readFileSync(join(skillRoot, "references", ref), "utf8");
 			assert.ok(text.length >= 3_000, `references/${ref} has content`);

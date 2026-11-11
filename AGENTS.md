@@ -54,6 +54,18 @@ test fixtures at an actual user profile. The installer migration must not scan p
 `dist/` directories under `plugins/litcodex/components/*/` are generated **but tracked**.
 Rebuild rather than hand-editing them, and expect them in release diffs.
 
+`skills.lock.json` pins the shipped skill tree. `npm run sync:lock` (`scripts/sync-skills-lock.mjs`) rewrites
+its generated half: per skill under `plugins/litcodex/skills/`, the SKILL.md and whole-folder sha256, bytes and
+tracked file count, plus the repository root's `npm pack --dry-run --json --ignore-scripts` file list. Run it after
+any change to a skill folder or to what the root packs; `plugins/litcodex/skills-lock.test.ts` fails while the lock
+is stale. Its `budgets` are hand-owned (SKILL.md min/max bytes, min/max files, max total bytes per skill) and hold
+the SKILL.md floors and the 4,096-byte entrypoint caps that suites used to assert one by one. Sync keeps every
+budget as written and refuses to write while a skill breaks one, has none, or a budget has no skill:
+`--accept-new <id>` seeds a new skill's budget and `--drop <id>` removes an orphan one, each repeatable and printed.
+Only files in the git index are measured, so `git add` a new skill before syncing. Raise a budget deliberately;
+never lower one to pass. `generate:skill-payload-hashes` and `tools/pack-payload-manifest.json` are separate: they
+pin the installer doctor's payload and the published tarballs, and stay as they are.
+
 ## The brand-hygiene scanner
 
 `npm run scan:legacy-tokens` enumerates every tracked or untracked-non-ignored text file and
