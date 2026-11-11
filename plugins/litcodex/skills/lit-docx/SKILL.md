@@ -42,7 +42,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 ## Install in Codex
 
-wjgoarxiv-skills is **not published yet**: copy from a local clone (the path is a placeholder).
+Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then copy (placeholder path):
 
 ```bash
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"

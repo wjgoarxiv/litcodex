@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   self-contained folder written for Codex that needs no LitCodex. The scientific-visualization stub no longer asks for a
   second vendor copy, because its authored source ships inside that folder. The copy lives in `~/.codex/skills/`,
   which `litcodex install` and upgrades never write, so it survives the next upgrade.
+- The stubs and the schematic and scientific-visualization `lit` routes no longer say wjgoarxiv-skills is unpublished:
+  they give its public address, https://github.com/wjgoarxiv/wjgoarxiv-skills, as the clone to copy from.
 
 ### Removed
 

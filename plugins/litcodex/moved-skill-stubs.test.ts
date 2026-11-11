@@ -59,7 +59,8 @@ describe("moved skills are same-name stubs that point at wjgoarxiv-skills", () =
 		);
 		expect(text.match(/^cp -R /gmu)?.length, "one skill, one folder").toBe(1);
 		expect(text).toMatch(/upgrades never write/u);
-		expect(text).toMatch(/not published yet/iu);
+		expect(text).not.toMatch(/not published yet/iu);
+		expect(text).toContain("Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then copy");
 		expect(text).toMatch(/new Codex session/iu);
 		expect(text).not.toMatch(/\/Users\/[a-z]|~\/Desktop|27_LITFAMILY|\.worktrees\//u);
 		expect(Buffer.byteLength(text)).toBeLessThan(9000);
@@ -118,6 +119,18 @@ describe("hook routes still reach the stubs and carry no body procedure", () => 
 			}
 		}
 	});
+
+	it.each(["lit-schematic", "lit-scientific-visualization"])(
+		"the %s directive names the public repo and clones it first",
+		(id) => {
+			const text = readFileSync(join(PLUGIN_DIR, "components", "lit-loop", "directives", `${id}.md`), "utf8");
+			expect(text).not.toMatch(/not published yet/iu);
+			expect(text).toContain("wjgoarxiv-skills is public at https://github.com/wjgoarxiv/wjgoarxiv-skills");
+			expect(text).toContain(
+				`git clone https://github.com/wjgoarxiv/wjgoarxiv-skills\nmkdir -p "\${CODEX_HOME:-$HOME/.codex}/skills"\ncp -R "${PLACEHOLDER}/variants/litcodex/${id}"`,
+			);
+		},
+	);
 
 	it("the exact bare scientific-visualization route injects the stub contract", () => {
 		const ctx = context(runUserPromptSubmitHook(ups("lit-scientific-visualization")));

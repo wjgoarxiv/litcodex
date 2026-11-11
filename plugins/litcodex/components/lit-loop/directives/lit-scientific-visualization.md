@@ -50,11 +50,12 @@ This directive is an LLM-facing contract injected by the LitCodex Codex plugin, 
 3. Otherwise tell the user what lit-scientific-visualization makes (publication-quality plots of measured data on the authored scientific-visualization source), that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-scientific-visualization/`, a self-contained folder), and give these lines unchanged:
 
 ```bash
+git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-scientific-visualization" "${CODEX_HOME:-$HOME/.codex}/skills/lit-scientific-visualization"
 ```
 
-   wjgoarxiv-skills is not published yet, so the source is a local clone; after copying, the user starts a new Codex session.
+   wjgoarxiv-skills is public at https://github.com/wjgoarxiv/wjgoarxiv-skills; the copy reads from the user's clone of it (the path is a placeholder). After copying, the user starts a new Codex session.
 4. The authored scientific-visualization source ships inside that one folder (`vendor/scientific-visualization/`), so no second copy is needed. The scoped `$litcodex:lit-scientific-visualization` and the picker stay native Codex skill-discovery routes to the stub.
 
 ## #contract.outputs

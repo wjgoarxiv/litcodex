@@ -64,11 +64,12 @@ This directive is an LLM-facing contract injected by the LitCodex Codex plugin, 
 3. Otherwise tell the user what lit-schematic makes (P&IDs, PFDs and BFDs, equipment layouts, apparatus figures and isometric cutaways as millimetre-sized SVG with PDF and 600 dpi PNG), that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-schematic/`, a self-contained folder), and give these lines unchanged:
 
 ```bash
+git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic" "${CODEX_HOME:-$HOME/.codex}/skills/lit-schematic"
 ```
 
-   wjgoarxiv-skills is not published yet, so the source is a local clone; after copying, the user starts a new Codex session.
+   wjgoarxiv-skills is public at https://github.com/wjgoarxiv/wjgoarxiv-skills; the copy reads from the user's clone of it (the path is a placeholder). After copying, the user starts a new Codex session.
 
 ## #contract.outputs
 
