@@ -6,6 +6,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `litcodex extensions`, so LitCodex installs and looks after the nine LitFamily extensions itself. It does in code
+  what the four stub lines do, and each write only prints its plan until you add `--yes`.
+  - `list` shows each extension as not installed, installed (with the receipt's variant, time and source), yours
+    (a folder with no receipt), or competing with a same-name skill in another folder Codex reads. `--json` too.
+  - `check` changes nothing. It names competing and duplicate copies, a copy nested inside another, folders without
+    a receipt, receipts whose source is gone, an unshown old notice and the runtimes 1.0.38 left behind, with a fix
+    line for each, and the size of the backups. It exits 1 when something needs action.
+  - `install <id...>`, `--family <name>` or `--all` stops when a same-name skill sits in `~/.agents/skills` or the
+    project's `.agents/skills` or `.codex/skills` (`--allow-shadow` installs anyway and warns), moves an old copy
+    whole to `~/.codex/extension-backups/<date-time>/<id>`, copies a fresh one and writes a receipt with the
+    source's sha256. A symbolic link or file in the way stops it, and every id is checked before anything is written.
+  - `update` fetches the source and reinstalls only the extensions whose source changed; the rest are "current".
+  - `remove <id...>` moves an installed copy to the backups and refuses a folder without a LitCodex receipt.
+  - `prune-backups [--older-than <days>]` lists backups with sizes and deletes them only with `--yes`, only inside
+    `extension-backups`.
+
+  Without `--from <clone>`, LitCodex keeps a shallow, sparse clone of only `variants/litcodex/` in
+  `~/.cache/litcodex/extensions-src`; with no git or no network it stops with the `--from` hint and installs nothing.
+  `litcodex doctor` prints a one-line summary of `check`, the help lists the verbs, the stubs and READMEs name them
+  beside the manual lines, and the install notice now shows the verbs. When `check` finds something on an install
+  or upgrade, the notice adds one line pointing at `litcodex extensions check`; nothing changes on its own.
+
 ### Fixed
 
 - The extension install lines no longer nest a copy inside an existing folder. Before, `cp -R` onto an

@@ -248,6 +248,7 @@ Codex의 native goal과 로컬 루프 기록은 별도로 관리됩니다. nativ
 | `litcodex install` | LitCodex 플러그인과 훅 등록 |
 | `litcodex doctor` | 설치, 호스트 설정, 루프 상태 진단 |
 | `litcodex uninstall` | 플러그인과 관리 설정 제거 |
+| `litcodex extensions list`, `check`, `install`, `update`, `remove`, `prune-backups` | `~/.codex/skills/`의 LitFamily 확장 아홉 개 관리. `--yes`를 붙이기 전에는 할 일만 보여 줌 |
 | `litcodex config migrate` | 관리되는 Codex 설정을 미리 보거나 적용 |
 | `litcodex hook user-prompt-submit` | 호스트가 호출하는 훅 진입점 |
 | `litcodex loop create` | 브리프에서 목표와 성공 기준 도출 |

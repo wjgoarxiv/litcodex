@@ -34,12 +34,27 @@ describe("the LitFamily extensions notice", () => {
 			"are now LitFamily extensions, kept in the extension shelf https://github.com/wjgoarxiv/wjgoarxiv-skills",
 		);
 		expect(text).toContain("full LitFamily experience");
-		for (const line of INSTALL_LINES) expect(text).toContain(`  ${line}\n`);
+		expect(text).toContain("  litcodex extensions list\n  litcodex extensions install lit-docx --yes\n");
+		expect(text).toContain("`litcodex extensions update --yes`");
+		expect(text).toContain("only shows its plan until you add --yes");
 		expect(text).not.toMatch(/runtimes|delete/u);
 		expect(text).not.toMatch(/cp -R wjgoarxiv-skills/u);
 		expect(text).toContain("extension-backups/");
 		expect(text).not.toMatch(/\u001b/u);
 		expect(text.trimEnd().split("\n").length).toBeLessThanOrEqual(10);
+	});
+
+	it("adds the one check line for an existing user whose extension folders need a look", () => {
+		const line =
+			"2 things about your extension folders need a look: run `litcodex extensions check`. Nothing was changed.";
+		const text = renderExtensionsNotice({
+			previousVersion: "1.0.38",
+			leftovers: ["/h/.cache/litcodex/office"],
+			checkLine: line,
+		});
+		expect(text).toContain(`${line}\n`);
+		expect(text.trimEnd().split("\n").length).toBeLessThanOrEqual(10);
+		expect(renderExtensionsNotice({ leftovers: [] })).not.toContain("extensions check");
 	});
 
 	it("on an upgrade names the runtimes the old version left behind and says they can be deleted", () => {

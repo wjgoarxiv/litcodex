@@ -23,6 +23,7 @@ export const TOP_LEVEL_ROUTES = Object.freeze([
 	"install",
 	"doctor",
 	"uninstall",
+	"extensions",
 	"agent-file",
 	"config",
 	"loop",

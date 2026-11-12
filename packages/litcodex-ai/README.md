@@ -82,8 +82,24 @@ Pick any skill in the Codex skill picker or mention it by scoped name, such as `
 LitCodex carries the LitFamily core, which is complete and works on its own. Nine skills that make files (decks,
 documents, figures, design, video and covers) are LitFamily extensions, kept in the extension shelf
 [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills). Install the ones you use alongside LitCodex to
-get the full LitFamily experience. Clone the shelf once, then run four lines from your project folder with your
-clone path in place of the placeholder, for example for `lit-docx`:
+get the full LitFamily experience. LitCodex can install them for you, and each command only prints its plan until
+you add `--yes`:
+
+```bash
+litcodex extensions list
+litcodex extensions install lit-docx --yes
+litcodex extensions install --family figures --yes
+litcodex extensions check
+litcodex extensions update --yes
+```
+
+`install` stops when a same-name skill sits in `~/.agents/skills` or the project's skill folders, moves an old copy
+whole to `~/.codex/extension-backups/`, copies and leaves a receipt. Without `--from <path to your clone>` it keeps a
+sparse clone of the shelf in `~/.cache/litcodex/extensions-src`. `remove` refuses folders you made yourself, `check`
+prints a fix line per problem, and `prune-backups --yes` deletes old backups.
+
+To do it by hand, clone the shelf once, then run four lines from your project folder with your clone path in place
+of the placeholder, for example for `lit-docx`:
 
 ```bash
 git clone https://github.com/wjgoarxiv/wjgoarxiv-skills

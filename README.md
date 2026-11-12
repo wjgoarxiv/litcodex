@@ -305,7 +305,7 @@ workflow. That core is complete and works on its own.
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/diagrams/core-extensions.en.dark.png">
-    <img src="./docs/assets/readme/diagrams/core-extensions.en.light.png" width="900" alt="Left, the LitCodex core of 38 skills in six groups: code, plan run and review, research and knowledge, sessions and prose, keeping LitCodex healthy, and running on their own. Below them, nine same-name stubs that say what the skill makes and how to copy it. Right, the extensions in wjgoarxiv-skills in five families: decks with lit-pptx, documents with lit-docx, figures with lit-diagram-drawer, lit-schematic and lit-scientific-visualization, design with frontend-ui-ux and visual-qa, and video-covers with lit-typographic-motion and readme-studio, each in its own folder under variants/litcodex/&lt;id&gt;/. Bottom, three steps: clone the repository once, copy one folder into ~/.codex/skills/&lt;id&gt;, start a new session, after which the stub opens your copy.">
+    <img src="./docs/assets/readme/diagrams/core-extensions.en.light.png" width="900" alt="Left, the LitCodex core of 38 skills in six groups: code, plan run and review, research and knowledge, sessions and prose, keeping LitCodex healthy, and running on their own. Below them, nine same-name stubs that say what the skill makes and how to copy it. Right, the extensions in wjgoarxiv-skills in five families: decks with lit-pptx, documents with lit-docx, figures with lit-diagram-drawer, lit-schematic and lit-scientific-visualization, design with frontend-ui-ux and visual-qa, and video-covers with lit-typographic-motion and readme-studio, each in its own folder under variants/litcodex/&lt;id&gt;/. Bottom, installing one extension in four steps: check for a same-name skill in ~/.agents/skills and the project folders, move an old copy aside to ~/.codex/extension-backups/, copy into ~/.codex/skills/&lt;id&gt;, and leave the .litfamily-extension.json receipt. litcodex extensions install &lt;id&gt; --yes runs all four, and list, check, install, update, remove and prune-backups manage the extensions; without --yes each only shows its plan.">
   </picture>
 </p>
 
@@ -313,8 +313,30 @@ Nine skills that make files are LitFamily extensions: `lit-pptx` (decks), `lit-d
 `lit-diagram-drawer`, `lit-schematic` and `lit-scientific-visualization` (figures), `frontend-ui-ux` and
 `visual-qa` (design), and `lit-typographic-motion` and `readme-studio` (video and covers). They are kept in the
 extension shelf, [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills). Install the ones you use
-alongside LitCodex to get the full LitFamily experience. Each one is a folder you copy into Codex. Clone the shelf
-once, then run four lines from your project folder, with your clone path in place of the placeholder. For `lit-docx`:
+alongside LitCodex to get the full LitFamily experience. Each one is a folder that goes into Codex's own skills
+folder, and LitCodex can put it there for you. Every command below only prints its plan until you add `--yes`:
+
+```bash
+litcodex extensions list
+litcodex extensions install lit-docx --yes
+litcodex extensions install --family figures --yes
+litcodex extensions check
+litcodex extensions update --yes
+```
+
+`list` shows which of the nine are installed, which folders are yours (they have no receipt), and any same-name skill
+elsewhere that Codex would also list. `install` does what the four manual lines further down do. It stops when a
+same-name skill sits in `~/.agents/skills` or in the project's skill folders, because LitCodex never touches those.
+Otherwise it moves an old copy whole to `~/.codex/extension-backups/<date-time>/`, copies a fresh one and leaves a
+receipt. Without `--from <path to your clone>` it keeps its own small clone of the shelf, holding only the Codex
+editions, in `~/.cache/litcodex/extensions-src`, so the first install needs `git` and a network connection. `update`
+fetches that clone again and reinstalls whatever changed. `remove <id>` moves an installed copy to the backups and
+refuses a folder you made yourself. `check` changes nothing and prints a fix line for each problem it finds, and
+`prune-backups` lists the backups with their sizes and deletes them only with `--yes`. `litcodex doctor` prints a
+one-line summary of the same check.
+
+To do the same by hand, clone the shelf once, then run four lines from your project folder, with your clone path in
+place of the placeholder. For `lit-docx`:
 
 ```bash
 git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
@@ -574,6 +596,7 @@ flight asks what to start. Start Work always sends its full activation, because 
 | `litcodex install` | Registers the LitCodex plugin and hook |
 | `litcodex doctor` | Diagnoses the install, loop state, host capabilities and effective config |
 | `litcodex uninstall` | Removes the plugin and the config LitCodex manages |
+| `litcodex extensions list`, `check`, `install`, `update`, `remove`, `prune-backups` | Manages the nine LitFamily extensions in `~/.codex/skills/`; writes only with `--yes` |
 | `litcodex config migrate` | Previews or applies the managed Codex config keys |
 | `litcodex hud` | Shows the LIT card of the newest session live in a second terminal window |
 | `litcodex screen-status on`, `off` or `status` | Colours the LIT card in the terminal `codex` |

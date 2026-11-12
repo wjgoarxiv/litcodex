@@ -253,6 +253,11 @@ function classifyInvocation(first, tail) {
 		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "agent-file" };
 		return { ok: sub === "project", shown: `agent-file ${sub}` };
 	}
+	if (first === "extensions") {
+		const sub = tail.find((t) => !t.startsWith("-"));
+		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "extensions" };
+		return { ok: EXTENSIONS_VERBS.includes(sub), shown: `extensions ${sub}` };
+	}
 	const TOP = ["install", "doctor", "uninstall", "hud", "statusline", "run"];
 	return { ok: TOP.includes(first), shown: first };
 }
@@ -267,6 +272,16 @@ function classifyInvocation(first, tail) {
  */
 // Routes that existed in earlier releases. The changelog keeps recording them as history; every other doc
 // that still names one is describing a command the CLI no longer has.
+const EXTENSIONS_VERBS = Object.freeze([
+	"list",
+	"check",
+	"install",
+	"update",
+	"remove",
+	"prune-backups",
+	"list|check|install|update|remove|prune-backups",
+]);
+
 const RETIRED_ROUTES = Object.freeze(["office-runtime", "motion-runtime"]);
 const RETIRED_ROUTE_RE = new RegExp(`^litcodex (?:${RETIRED_ROUTES.join("|")})(?: |$)`, "u");
 

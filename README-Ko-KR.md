@@ -289,7 +289,7 @@ LitCodex에는 LitFamily 코어가 들어 있습니다. `lit` 루프, 계획, �
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/diagrams/core-extensions.ko.dark.png">
-    <img src="./docs/assets/readme/diagrams/core-extensions.ko.light.png" width="900" alt="왼쪽은 LitCodex 코어 스킬 38개를 여섯 묶음으로 나눈 것이다. 코드, 계획·실행·리뷰, 조사와 지식, 세션과 문장, LitCodex 관리, 알아서 도는 검사. 그 아래에 무엇을 만드는지와 복사 명령을 알려 주는 같은 이름의 스텁 아홉 개가 있다. 오른쪽은 wjgoarxiv-skills의 확장 다섯 패밀리다. decks의 lit-pptx, documents의 lit-docx, figures의 lit-diagram-drawer·lit-schematic·lit-scientific-visualization, design의 frontend-ui-ux·visual-qa, video-covers의 lit-typographic-motion·readme-studio이며, 스킬마다 variants/litcodex/&lt;id&gt;/ 폴더 하나다. 아래는 세 단계다. 저장소를 한 번 클론하고, 폴더 하나를 ~/.codex/skills/&lt;id&gt;로 복사하고, 새 세션을 열면 스텁이 그 복사본에 요청을 넘긴다.">
+    <img src="./docs/assets/readme/diagrams/core-extensions.ko.light.png" width="900" alt="왼쪽은 LitCodex 코어 스킬 38개를 여섯 묶음으로 나눈 것이다. 코드, 계획·실행·리뷰, 조사와 지식, 세션과 문장, LitCodex 관리, 알아서 도는 검사. 그 아래에 무엇을 만드는지와 복사 명령을 알려 주는 같은 이름의 스텁 아홉 개가 있다. 오른쪽은 wjgoarxiv-skills의 확장 다섯 패밀리다. decks의 lit-pptx, documents의 lit-docx, figures의 lit-diagram-drawer·lit-schematic·lit-scientific-visualization, design의 frontend-ui-ux·visual-qa, video-covers의 lit-typographic-motion·readme-studio이며, 스킬마다 variants/litcodex/&lt;id&gt;/ 폴더 하나다. 아래는 확장 하나를 설치하는 네 단계다. ~/.agents/skills와 프로젝트 폴더에서 같은 이름의 스킬을 확인하고, 예전 복사본을 ~/.codex/extension-backups/로 옮겨 두고, ~/.codex/skills/&lt;id&gt;에 복사하고, .litfamily-extension.json 영수증을 남긴다. litcodex extensions install &lt;id&gt; --yes가 네 단계를 한 번에 하고, list, check, install, update, remove, prune-backups로 확장을 관리한다. --yes가 없으면 할 일만 보여 준다.">
   </picture>
 </p>
 
@@ -297,8 +297,29 @@ LitCodex에는 LitFamily 코어가 들어 있습니다. `lit` 루프, 계획, �
 `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`(그림), `frontend-ui-ux`, `visual-qa`(디자인),
 `lit-typographic-motion`, `readme-studio`(영상과 커버)는 확장 선반인
 [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills)에 있습니다. 쓰는 것만 LitCodex 옆에 설치하면
-LitFamily를 온전히 쓸 수 있습니다. 확장 하나는 Codex에 복사하는 폴더 하나입니다. 선반을 한 번 받아 두고,
-프로젝트 폴더에서 네 줄을 실행하세요. 자리표시자 대신 받아 둔 경로를 넣으면 됩니다. `lit-docx`라면 이렇습니다.
+LitFamily를 온전히 쓸 수 있습니다. 확장 하나는 Codex 자체 스킬 폴더에 들어가는 폴더 하나이고, 그 일은
+LitCodex가 대신 해 줄 수 있습니다. 아래 명령은 모두 `--yes`를 붙이기 전까지 할 일만 보여 줍니다.
+
+```bash
+litcodex extensions list
+litcodex extensions install lit-docx --yes
+litcodex extensions install --family figures --yes
+litcodex extensions check
+litcodex extensions update --yes
+```
+
+`list`는 아홉 개 가운데 무엇이 설치되어 있는지, 어떤 폴더가 직접 만든 것인지(영수증이 없는 폴더), Codex가 함께
+목록에 올릴 같은 이름의 스킬이 다른 곳에 있는지 보여 줍니다. `install`은 아래 네 줄이 하는 일을 그대로 합니다.
+`~/.agents/skills`나 프로젝트의 스킬 폴더에 같은 이름의 스킬이 있으면 멈춥니다. LitCodex는 그 폴더를 건드리지
+않기 때문입니다. 그렇지 않으면 예전 복사본을 통째로 `~/.codex/extension-backups/<날짜-시각>/`로 옮기고, 새로
+복사한 뒤 영수증을 남깁니다. `--from <받아 둔 경로>`를 주지 않으면 Codex 판만 담은 작은 선반 클론을
+`~/.cache/litcodex/extensions-src`에 따로 두므로, 처음 설치할 때는 `git`과 네트워크가 필요합니다. `update`는 그
+클론을 다시 받아 바뀐 것만 다시 설치합니다. `remove <id>`는 설치한 복사본을 백업 자리로 옮기고, 직접 만든 폴더는
+거절합니다. `check`는 아무것도 바꾸지 않고 문제마다 고치는 명령을 한 줄씩 보여 주며, `prune-backups`는 백업과 그
+크기를 보여 주고 `--yes`를 붙였을 때만 지웁니다. `litcodex doctor`도 같은 검사를 한 줄로 요약합니다.
+
+손으로 하려면 선반을 한 번 받아 두고, 프로젝트 폴더에서 네 줄을 실행하세요. 자리표시자 대신 받아 둔 경로를 넣으면
+됩니다. `lit-docx`라면 이렇습니다.
 
 ```bash
 git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
@@ -552,6 +573,7 @@ LitCodex가 그 도구를 직접 부르지는 않습니다. 로그인, 모델 �
 | `litcodex install` | LitCodex 플러그인과 훅 등록 |
 | `litcodex doctor` | 설치, 루프 상태, 호스트 기능, 실제 적용된 설정 진단 |
 | `litcodex uninstall` | 플러그인과 LitCodex가 관리하는 설정 제거 |
+| `litcodex extensions list`, `check`, `install`, `update`, `remove`, `prune-backups` | `~/.codex/skills/`에 있는 LitFamily 확장 아홉 개 관리. `--yes`를 붙였을 때만 씀 |
 | `litcodex config migrate` | 관리되는 Codex 설정을 미리 보거나 적용 |
 | `litcodex hud` | 가장 최근 세션의 LIT 카드를 두 번째 터미널 창에 실시간으로 표시 |
 | `litcodex screen-status on`, `off` 또는 `status` | 터미널 `codex`에서 LIT 카드에 색 넣기 |

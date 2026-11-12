@@ -397,12 +397,12 @@
 		},
 		"frontend-ui-ux": {
 			"skillMd": {
-				"bytes": 5219,
-				"sha256": "93c4b93e363846f047a39e31b40d1b5f8889f15f36397471f3ad841d5d28780d"
+				"bytes": 5396,
+				"sha256": "1216f545edeeff4202eef872f5d92c852f7a9a056599d7be84e150c506915378"
 			},
 			"files": 1,
-			"bytes": 5219,
-			"sha256": "bf9272d2c94e7bfdf6eff49d6bc57419f58809a870d1bdab2521e9743cc20805"
+			"bytes": 5396,
+			"sha256": "16ec203f47fe5d6571e1b10e914e5f46eb467a92d8a97746092813800dd97499"
 		},
 		"lit-adhd": {
 			"skillMd": {
@@ -478,21 +478,21 @@
 		},
 		"lit-diagram-drawer": {
 			"skillMd": {
-				"bytes": 5413,
-				"sha256": "b4cee8bd39f7d06bb8546441bdd777d40c7939ca6775408fa59e0490c8295000"
+				"bytes": 5594,
+				"sha256": "3cf29db5e8e12753671ff8ebca7fe7cec68d73d72c02b7362641fe1cc7020ec8"
 			},
 			"files": 2,
-			"bytes": 5659,
-			"sha256": "06a564ad7b994097c45843fb93f84d844037fe688878fab54dfc889a959a1dec"
+			"bytes": 5840,
+			"sha256": "f2f1bdaa0b2a6f8e2a5cea3e5c7066b5ab74dab17e16a6f8aa023ecd567a7013"
 		},
 		"lit-docx": {
 			"skillMd": {
-				"bytes": 5109,
-				"sha256": "e151be5fb9471701a7109eaf3177101d30b162508d942e58c4095b13619981ac"
+				"bytes": 5280,
+				"sha256": "e98b3248dc429e92b50bd1acda3e825147e24e00cc2f574a90c893f9bfbffaad"
 			},
 			"files": 2,
-			"bytes": 5494,
-			"sha256": "3d89a7bb416831dd9c1f9d8579ef57a81fde2bcfd79aba108c5473b9cf06c382"
+			"bytes": 5665,
+			"sha256": "8472091f78102e589cb5c843d7cc4b5d2c2284e45adfb649f98442dac4d29233"
 		},
 		"lit-fetch": {
 			"skillMd": {
@@ -559,12 +559,12 @@
 		},
 		"lit-pptx": {
 			"skillMd": {
-				"bytes": 5060,
-				"sha256": "a1ace1ea51fa7ea4d9c4669105678328fd07c0d462a751b9c2c9c0f5f5b924f3"
+				"bytes": 5231,
+				"sha256": "8f6032634ee8597bddc56b82f30df7d1365ec626cd852851b21cc5d98dbf7b6c"
 			},
 			"files": 2,
-			"bytes": 5476,
-			"sha256": "e2c8b1a16a93409c3e8e234606c5bfaec8536b70c9b7700a78c63db1d4434136"
+			"bytes": 5647,
+			"sha256": "8b17945d71a0160447fc33e39f4f204b49723456001cd4681b6f25cd3dec1dc4"
 		},
 		"lit-recap": {
 			"skillMd": {
@@ -577,21 +577,21 @@
 		},
 		"lit-schematic": {
 			"skillMd": {
-				"bytes": 5255,
-				"sha256": "f56844e02953d88e64fe5046f41b0f76d2171f92c1a07c668d48e4bb8afecfab"
+				"bytes": 5431,
+				"sha256": "4b7ec8b14a27b02f622cabe350224be630d5f366b8aa62e0bd61f21363f8e42d"
 			},
 			"files": 2,
-			"bytes": 5516,
-			"sha256": "b7f093499886eb00fbf1a610223bf4e9eb47d93c26d282255416b0540009fcac"
+			"bytes": 5692,
+			"sha256": "93ea186606881895f8ec89ed3c342bc5b5bd5cb3e11b9a9b55404095386e3a9c"
 		},
 		"lit-scientific-visualization": {
 			"skillMd": {
-				"bytes": 5760,
-				"sha256": "bf48a248917fb04e4ec34de549adeb9906fd0d74b99a8669708a5b73b22f19d3"
+				"bytes": 5951,
+				"sha256": "b2825ed73abe82cdea66accb68d40761f8bb91af6f0d889f7291b454a2699273"
 			},
 			"files": 2,
-			"bytes": 6026,
-			"sha256": "3e8fe3b5f3f5a1f94a81f7011cdbbbeeccf971300a61e1977fa982edfa24bf8c"
+			"bytes": 6217,
+			"sha256": "d8287836eca1e47a4ab92203c561afdc232882f561a73439fd8d448b44e6541f"
 		},
 		"lit-team": {
 			"skillMd": {
@@ -604,12 +604,12 @@
 		},
 		"lit-typographic-motion": {
 			"skillMd": {
-				"bytes": 5585,
-				"sha256": "f03adbfdb1d0bff34b489684cf6c4f0a78e9be688d9d1d55ec8911428229e455"
+				"bytes": 5770,
+				"sha256": "d1e882c49a56b10ab0d111fbcc9daeeeb8087697e1b682dc2548df021a89e86b"
 			},
 			"files": 2,
-			"bytes": 6121,
-			"sha256": "c714ebfb6255a6b782ca026f38596056df3e5390ccd53519e272e9c85c173316"
+			"bytes": 6306,
+			"sha256": "6910d0970fd748a558c8b515c00373c3ebf030e45a65581a1204715bb7136bf7"
 		},
 		"litcodex-contribute-bug-fix": {
 			"skillMd": {
@@ -685,12 +685,12 @@
 		},
 		"readme-studio": {
 			"skillMd": {
-				"bytes": 5186,
-				"sha256": "d78d5f8d74b6213e1c1275b3498ceb67bd0f220f1c961251e46d0939f68e9020"
+				"bytes": 5362,
+				"sha256": "da31c724c7c70bc84a2ad414899f781e3d1d4395214432e381dca61e638a194e"
 			},
 			"files": 1,
-			"bytes": 5186,
-			"sha256": "5434554b12a7d624bd5fbf15ac998e6b10e1a1a9454e437aafebab7d2b05cfe0"
+			"bytes": 5362,
+			"sha256": "de9ca3acd6021540db308798631ad2eab97760135cde09ecba7b1f6bbdbee23d"
 		},
 		"refactor": {
 			"skillMd": {
@@ -739,12 +739,12 @@
 		},
 		"visual-qa": {
 			"skillMd": {
-				"bytes": 5032,
-				"sha256": "08ef9dcf66070d2f45243255adf3bf164f9919acb1fa1aab30d9ae6779f63b22"
+				"bytes": 5204,
+				"sha256": "5c34fbc7174f4f9b9bda63ba75449b7f909770dcb1f3553aaa6e80c6e4d642ae"
 			},
 			"files": 1,
-			"bytes": 5032,
-			"sha256": "cff2ad01f73b059ee6949740c82f6ab078250d0093d61a2c183035759a9572f8"
+			"bytes": 5204,
+			"sha256": "bb94086a2cd93bc7c7affbe5a70b7cb77e55f8c6f3f57f18220403108a17a293"
 		},
 		"wikify": {
 			"skillMd": {
@@ -927,6 +927,8 @@
 		"packages/litcodex-ai/src/install/execute.ts",
 		"packages/litcodex-ai/src/install/extensions-notice.test.ts",
 		"packages/litcodex-ai/src/install/extensions-notice.ts",
+		"packages/litcodex-ai/src/install/extensions.test.ts",
+		"packages/litcodex-ai/src/install/extensions.ts",
 		"packages/litcodex-ai/src/install/file-walk.test.ts",
 		"packages/litcodex-ai/src/install/file-walk.ts",
 		"packages/litcodex-ai/src/install/g20-routing.test.ts",

@@ -42,7 +42,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 ## Install in Codex
 
-Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then run these lines from your project folder (the clone path is a placeholder). One line each: check, move aside, copy, receipt.
+Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then run these lines from your project folder (the clone path is a placeholder). One line each: check, move aside, copy, receipt. Or let LitCodex run the same steps: `litcodex extensions install visual-qa` shows the plan, `--yes` runs it, and `litcodex extensions check` names old or competing copies.
 
 ```bash
 cx="${CODEX_HOME:-$HOME/.codex}"; p="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; for d in "$cx/skills" "$HOME/.agents/skills" "$p/.agents/skills" "$p/.codex/skills"; do [ -e "$d/visual-qa" ] && echo "found: $d/visual-qa"; done; echo "check done"

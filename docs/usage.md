@@ -227,6 +227,7 @@ For report or proposal output, bare `lit` loads `lit-docx`; for slide or present
 | `litcodex install` | Register the LitCodex plugin and hook |
 | `litcodex doctor` | Diagnose installation, loop state, host capabilities, and effective config |
 | `litcodex uninstall` | Remove the plugin and LitCodex-managed config |
+| `litcodex extensions list`, `check`, `install`, `update`, `remove`, `prune-backups` | Manage the nine LitFamily extensions in `~/.codex/skills/`; every write is a dry run until `--yes` |
 | `litcodex config migrate` | Preview or apply managed Codex config keys |
 | `litcodex hook user-prompt-submit` | Run the host hook entrypoint |
 | `litcodex loop create` | Derive goals and criteria from a brief |

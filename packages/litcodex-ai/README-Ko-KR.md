@@ -78,8 +78,24 @@ lit 회원가입 폼에 입력 검증을 추가해줘
 LitCodex에는 LitFamily 코어가 들어 있고, 이 코어는 혼자서도 완결되어 동작합니다. 파일을 만드는 스킬 아홉
 개(발표자료, 문서, 그림, 디자인, 영상과 커버)는 LitFamily 확장이며 확장 선반인
 [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills)에 있습니다. 쓰는 것만 LitCodex 옆에 설치하면
-LitFamily를 온전히 쓸 수 있습니다. 선반을 한 번 받아 두고 프로젝트 폴더에서 네 줄을 실행하세요. 자리표시자 대신
-받아 둔 경로를 넣습니다. `lit-docx`라면 이렇습니다.
+LitFamily를 온전히 쓸 수 있습니다. 설치는 LitCodex가 대신 해 줄 수 있고, 명령마다 `--yes`를 붙이기 전까지는 할
+일만 보여 줍니다.
+
+```bash
+litcodex extensions list
+litcodex extensions install lit-docx --yes
+litcodex extensions install --family figures --yes
+litcodex extensions check
+litcodex extensions update --yes
+```
+
+`install`은 `~/.agents/skills`나 프로젝트 스킬 폴더에 같은 이름의 스킬이 있으면 멈추고, 아니면 예전 복사본을
+통째로 `~/.codex/extension-backups/`로 옮긴 뒤 복사하고 영수증을 남깁니다. `--from <받아 둔 경로>`가 없으면
+`~/.cache/litcodex/extensions-src`에 선반의 작은 클론을 둡니다. `remove`는 직접 만든 폴더를 거절하고, `check`는
+문제마다 고치는 명령을 한 줄씩 보여 주며, `prune-backups --yes`는 오래된 백업을 지웁니다.
+
+손으로 하려면 선반을 한 번 받아 두고 프로젝트 폴더에서 네 줄을 실행하세요. 자리표시자 대신 받아 둔 경로를
+넣습니다. `lit-docx`라면 이렇습니다.
 
 ```bash
 git clone https://github.com/wjgoarxiv/wjgoarxiv-skills

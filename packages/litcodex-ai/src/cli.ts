@@ -77,6 +77,7 @@ function renderInstallDryRun(rest: readonly string[]): string {
 const ROUTES: Readonly<Record<string, RouteHandler>> = {
 	install: (rest, dryRun) => (dryRun ? ok(renderInstallDryRun(rest)) : ok("litcodex install\n")),
 	doctor: () => ok("litcodex doctor\n"),
+	extensions: () => ok("litcodex extensions\n"),
 	uninstall: () => ok("litcodex uninstall\n"),
 	"agent-file": (rest) => {
 		if (rest[0] === "--help" || rest[0] === "-h" || rest[0] === "project") {
@@ -134,6 +135,7 @@ function renderHelp(): string {
 		"  litcodex install [--dry-run] [options]   Install LitCodex into Codex",
 		"  litcodex doctor                          Diagnose the LitCodex install",
 		"  litcodex uninstall                       Remove LitCodex from Codex",
+		"  litcodex extensions list|check|install|update|remove|prune-backups  Manage the nine LitFamily extensions (dry run until --yes)",
 		"  litcodex config migrate                  Migrate Codex config for LitCodex",
 		"  litcodex config agentFile on|off        Add or remove the LitFamily block in the global AGENTS.md",
 		"  litcodex config attribution keep|off    Ask the model not to add AI attribution to commits and PRs (a request, not a guarantee)",
@@ -252,6 +254,18 @@ export async function runCli(rawArgv: readonly string[]): Promise<number> {
 		// Read-only, so a dry run is the real run; `hud --help` prints the command's own usage.
 		const { hudCommand } = await import("@litcodex/lit-loop/dist/hud-cli.js");
 		return hudCommand(rest.slice(1), { stdout: process.stdout, stderr: process.stderr, env: process.env });
+	}
+
+	if (head === "extensions") {
+		// Every write verb is a dry run until --yes; a global --dry-run wins over --yes.
+		const { runExtensionsCli } = await import("./install/extensions.js");
+		const args = rest.slice(1).filter((token) => !(dryRun && token === "--yes"));
+		return runExtensionsCli(args, {
+			stdout: process.stdout,
+			stderr: process.stderr,
+			env: process.env,
+			cwd: process.cwd(),
+		});
 	}
 
 	if (head === "statusline" && !isHelp) {

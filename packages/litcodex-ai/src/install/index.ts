@@ -35,6 +35,7 @@ import { codexSpawnInvocation, type ReadonlyFsLike, resolveCodexHome, type Spawn
 import { doctorScopeFor, renderDoctorText, runDoctor } from "./doctor.js";
 import { exitCodeForInstallError, InstallError, toErrorJson } from "./errors.js";
 import { type ExecuteDeps, executeInstallPlan } from "./execute.js";
+import { extensionsDoctorLine, extensionsNoticeLine } from "./extensions.js";
 import { announceExtensions } from "./extensions-notice.js";
 import { listPayloadEntries, readRegularFileBuffer } from "./file-walk.js";
 import { promptModelRoute, renderModelRouteSummary, waitForModelRouteConfirmation } from "./install-model-prompt.js";
@@ -450,6 +451,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 			env: io.env,
 			json: opts.json,
 			write: (text) => io.stdout.write(text),
+			...checkLineFor(io),
 		});
 	}
 	return result.ok ? 0 : 3;
@@ -469,8 +471,13 @@ export function runDoctorCli(args: readonly string[], io: RouteIo = defaultIo())
 	const scope = doctorScopeFor(io.env);
 	const report = runDoctor({ spawn: realSpawn, fs: realFs, env: io.env, repoRoot: io.repoRoot, scope });
 	if (json) io.stdout.write(`${JSON.stringify(report)}\n`);
-	else io.stdout.write(`${renderDoctorText(report)}\n`);
+	else io.stdout.write(`${renderDoctorText(report)}\n${extensionsDoctorLine({ env: io.env, cwd: io.repoRoot })}\n`);
 	return report.ok ? 0 : 4;
+}
+
+function checkLineFor(io: RouteIo): { checkLine?: string } {
+	const checkLine = extensionsNoticeLine({ env: io.env, cwd: io.repoRoot });
+	return checkLine === undefined ? {} : { checkLine };
 }
 
 /** Shared text for a `--dry-run` of a state-changing route: the title, then numbered steps. */

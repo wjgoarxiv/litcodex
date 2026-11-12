@@ -71,7 +71,7 @@ cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-schematic" ]; then ech
 cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/lit-schematic/SKILL.md" ] && printf '{"id":"lit-schematic","source":"%s","variant":"litcodex","installed_at":"%s"}\n' "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$cx/skills/lit-schematic/.litfamily-extension.json"
 ```
 
-   wjgoarxiv-skills is public at https://github.com/wjgoarxiv/wjgoarxiv-skills; the copy reads from the user's clone of it (the path is a placeholder). The lines check for same-name skills, move an old copy whole to `${CODEX_HOME:-$HOME/.codex}/extension-backups/<date-time>/lit-schematic` and write a receipt; running them again updates. After copying, the user starts a new Codex session.
+   wjgoarxiv-skills is public at https://github.com/wjgoarxiv/wjgoarxiv-skills; the copy reads from the user's clone of it (the path is a placeholder). The lines check for same-name skills, move an old copy whole to `${CODEX_HOME:-$HOME/.codex}/extension-backups/<date-time>/lit-schematic` and write a receipt; running them again updates. `litcodex extensions install lit-schematic` does the same steps (a plan first, `--yes` to run). After copying, the user starts a new Codex session.
 
 ## #contract.outputs
 

@@ -34,17 +34,20 @@ export interface ExtensionsNoticeInput {
 	readonly previousVersion?: string;
 	/** Runtime and cache folders the earlier version left behind that still exist. */
 	readonly leftovers: readonly string[];
+	/** One line pointing at `litcodex extensions check` when the extension folders need a look. */
+	readonly checkLine?: string;
 }
 
 export function renderExtensionsNotice(input: ExtensionsNoticeInput): string {
 	const lines = [
 		"LitFamily extensions",
 		"LitCodex carries the LitFamily core, which is complete and works on its own.",
-		`Nine skills that make files (decks, documents, figures, design and video covers) are now LitFamily extensions, kept in the extension shelf ${EXTENSIONS_REPO_URL}. Install the ones you use alongside LitCodex to get the full LitFamily experience. For lit-docx, clone the shelf, then run these lines from your project folder with your clone path:`,
-		`  git clone ${EXTENSIONS_REPO_URL}`,
-		...extensionInstallLines("lit-docx").map((line) => `  ${line}`),
-		`They look for same-name skills, move an old copy aside to \${CODEX_HOME:-$HOME/.codex}/extension-backups/, copy, and leave a receipt; run them again to update. Each extension's stub, such as $litcodex:lit-pptx, prints its own lines.`,
+		`Nine skills that make files (decks, documents, figures, design and video covers) are now LitFamily extensions, kept in the extension shelf ${EXTENSIONS_REPO_URL}. Install the ones you use alongside LitCodex to get the full LitFamily experience. LitCodex can install them for you; each command only shows its plan until you add --yes:`,
+		"  litcodex extensions list",
+		"  litcodex extensions install lit-docx --yes",
+		`It looks for same-name skills, moves an old copy aside to \${CODEX_HOME:-$HOME/.codex}/extension-backups/, copies, and leaves a receipt; \`litcodex extensions update --yes\` refreshes what you installed. Each extension's stub, such as $litcodex:lit-pptx, also prints the same steps as shell lines.`,
 	];
+	if (input.checkLine !== undefined) lines.push(input.checkLine);
 	if (input.previousVersion !== undefined && input.leftovers.length > 0) {
 		lines.push(
 			`LitCodex ${input.previousVersion} left its office and film runtimes in ${input.leftovers.join(" and ")}; you can delete them if you do not install those extensions.`,
@@ -74,6 +77,7 @@ export interface AnnounceExtensionsOptions {
 	readonly json: boolean;
 	readonly write: (text: string) => void;
 	readonly exists?: (path: string) => boolean;
+	readonly checkLine?: string;
 }
 
 /**
@@ -85,6 +89,7 @@ export function announceExtensions(opts: AnnounceExtensionsOptions): void {
 	const text = renderExtensionsNotice({
 		...(opts.payload.previousVersion === undefined ? {} : { previousVersion: opts.payload.previousVersion }),
 		leftovers: opts.payload.previousVersion === undefined ? [] : leftoverRuntimePaths(opts.env, opts.exists),
+		...(opts.checkLine === undefined ? {} : { checkLine: opts.checkLine }),
 	});
 	if (!opts.json) opts.write(`\n${text}`);
 	try {

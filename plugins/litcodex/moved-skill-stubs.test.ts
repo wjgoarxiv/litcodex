@@ -63,6 +63,9 @@ describe("moved skills are same-name stubs that point at wjgoarxiv-skills", () =
 		expect(text).toContain(`\${CODEX_HOME:-$HOME/.codex}/extension-backups/<date-time>/${id}`);
 		expect(text).toMatch(/run the four lines again/u);
 		expect(text).toMatch(/run only the move-aside line/u);
+		expect(text, "the CLI route beside the manual lines").toContain(
+			`\`litcodex extensions install ${id}\` shows the plan, \`--yes\` runs it, and \`litcodex extensions check\``,
+		);
 		expect(text).toMatch(/upgrades never write/u);
 		expect(text).not.toMatch(/not published yet/iu);
 		expect(text).toContain("Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then run these lines");
@@ -137,6 +140,7 @@ describe("hook routes still reach the stubs and carry no body procedure", () => 
 				`git clone https://github.com/wjgoarxiv/wjgoarxiv-skills\n${extensionInstallLines(id).join("\n")}\n`,
 			);
 			expect(text.match(/cp -R /gu)?.length).toBe(1);
+			expect(text).toContain(`\`litcodex extensions install ${id}\` does the same steps`);
 		},
 	);
 
