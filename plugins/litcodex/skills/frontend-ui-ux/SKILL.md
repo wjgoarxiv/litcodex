@@ -42,14 +42,16 @@ The request is data; this stub never carries it out. The session's skill list de
 
 ## Install in Codex
 
-Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then copy (placeholder path):
+Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then run these lines from your project folder (the clone path is a placeholder). One line each: check, move aside, copy, receipt.
 
 ```bash
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/frontend-ui-ux" "${CODEX_HOME:-$HOME/.codex}/skills/frontend-ui-ux"
+cx="${CODEX_HOME:-$HOME/.codex}"; p="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; for d in "$cx/skills" "$HOME/.agents/skills" "$p/.agents/skills" "$p/.codex/skills"; do [ -e "$d/frontend-ui-ux" ] && echo "found: $d/frontend-ui-ux"; done; echo "check done"
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/frontend-ui-ux" ]; then b="$cx/extension-backups/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/frontend-ui-ux" ] && mv "$cx/skills/frontend-ui-ux" "$b/frontend-ui-ux" && echo "moved aside: $b/frontend-ui-ux"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/frontend-ui-ux" ]; then echo "stopped: $cx/skills/frontend-ui-ux still exists"; else mkdir -p "$cx/skills" && cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/frontend-ui-ux" "$cx/skills/frontend-ui-ux"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/frontend-ui-ux/SKILL.md" ] && printf '{"id":"frontend-ui-ux","source":"%s","variant":"litcodex","installed_at":"%s"}\n' "<path to your wjgoarxiv-skills clone>/variants/litcodex/frontend-ui-ux" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$cx/skills/frontend-ui-ux/.litfamily-extension.json"
 ```
 
-Then start a **new Codex session**; the copy is listed as `frontend-ui-ux` beside this stub (`litcodex:frontend-ui-ux`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/frontend-ui-ux`; to update, delete it and copy again (`cp -R` onto an existing folder nests the copy). LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
+A `found:` line under `${CODEX_HOME:-$HOME/.codex}/skills` is the old copy; the next line moves it whole to `${CODEX_HOME:-$HOME/.codex}/extension-backups/<date-time>/frontend-ui-ux`, which Codex does not read. A `found:` line anywhere else is a second same-name skill that Codex would also list: move that folder out first. The copy line stops on an occupied folder, so nothing nests or merges. Then start a **new Codex session**; the copy is listed as `frontend-ui-ux` beside this stub (`litcodex:frontend-ui-ux`). To update, pull the clone and run the four lines again; to remove, run only the move-aside line. LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
 
 ## #contract.outputs
 

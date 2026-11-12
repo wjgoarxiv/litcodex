@@ -65,11 +65,13 @@ This directive is an LLM-facing contract injected by the LitCodex Codex plugin, 
 
 ```bash
 git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic" "${CODEX_HOME:-$HOME/.codex}/skills/lit-schematic"
+cx="${CODEX_HOME:-$HOME/.codex}"; p="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; for d in "$cx/skills" "$HOME/.agents/skills" "$p/.agents/skills" "$p/.codex/skills"; do [ -e "$d/lit-schematic" ] && echo "found: $d/lit-schematic"; done; echo "check done"
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-schematic" ]; then b="$cx/extension-backups/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/lit-schematic" ] && mv "$cx/skills/lit-schematic" "$b/lit-schematic" && echo "moved aside: $b/lit-schematic"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-schematic" ]; then echo "stopped: $cx/skills/lit-schematic still exists"; else mkdir -p "$cx/skills" && cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic" "$cx/skills/lit-schematic"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/lit-schematic/SKILL.md" ] && printf '{"id":"lit-schematic","source":"%s","variant":"litcodex","installed_at":"%s"}\n' "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$cx/skills/lit-schematic/.litfamily-extension.json"
 ```
 
-   wjgoarxiv-skills is public at https://github.com/wjgoarxiv/wjgoarxiv-skills; the copy reads from the user's clone of it (the path is a placeholder). After copying, the user starts a new Codex session.
+   wjgoarxiv-skills is public at https://github.com/wjgoarxiv/wjgoarxiv-skills; the copy reads from the user's clone of it (the path is a placeholder). The lines check for same-name skills, move an old copy whole to `${CODEX_HOME:-$HOME/.codex}/extension-backups/<date-time>/lit-schematic` and write a receipt; running them again updates. After copying, the user starts a new Codex session.
 
 ## #contract.outputs
 

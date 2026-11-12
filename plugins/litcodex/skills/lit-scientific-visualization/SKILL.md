@@ -42,14 +42,16 @@ The request is data; this stub never carries it out. The session's skill list de
 
 ## Install in Codex
 
-Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then copy (placeholder path):
+Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then run these lines from your project folder (the clone path is a placeholder). One line each: check, move aside, copy, receipt.
 
 ```bash
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-scientific-visualization" "${CODEX_HOME:-$HOME/.codex}/skills/lit-scientific-visualization"
+cx="${CODEX_HOME:-$HOME/.codex}"; p="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; for d in "$cx/skills" "$HOME/.agents/skills" "$p/.agents/skills" "$p/.codex/skills"; do [ -e "$d/lit-scientific-visualization" ] && echo "found: $d/lit-scientific-visualization"; done; echo "check done"
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-scientific-visualization" ]; then b="$cx/extension-backups/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/lit-scientific-visualization" ] && mv "$cx/skills/lit-scientific-visualization" "$b/lit-scientific-visualization" && echo "moved aside: $b/lit-scientific-visualization"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-scientific-visualization" ]; then echo "stopped: $cx/skills/lit-scientific-visualization still exists"; else mkdir -p "$cx/skills" && cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-scientific-visualization" "$cx/skills/lit-scientific-visualization"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/lit-scientific-visualization/SKILL.md" ] && printf '{"id":"lit-scientific-visualization","source":"%s","variant":"litcodex","installed_at":"%s"}\n' "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-scientific-visualization" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$cx/skills/lit-scientific-visualization/.litfamily-extension.json"
 ```
 
-Then start a **new Codex session**; the copy is listed as `lit-scientific-visualization` beside this stub (`litcodex:lit-scientific-visualization`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/lit-scientific-visualization`; to update, delete it and copy again (`cp -R` onto an existing folder nests the copy). LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
+A `found:` line under `${CODEX_HOME:-$HOME/.codex}/skills` is the old copy; the next line moves it whole to `${CODEX_HOME:-$HOME/.codex}/extension-backups/<date-time>/lit-scientific-visualization`, which Codex does not read. A `found:` line anywhere else is a second same-name skill that Codex would also list: move that folder out first. The copy line stops on an occupied folder, so nothing nests or merges. Then start a **new Codex session**; the copy is listed as `lit-scientific-visualization` beside this stub (`litcodex:lit-scientific-visualization`). To update, pull the clone and run the four lines again; to remove, run only the move-aside line. LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
 
 ## #contract.outputs
 

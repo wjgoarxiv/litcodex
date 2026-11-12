@@ -238,8 +238,7 @@ const LIT_SCHEMATIC = [
 	BLOCKED,
 	"",
 	"1. Read the stub {skill:lit-schematic}. When the session's skill list has a separate `lit-schematic` copy (normally under `$CODEX_HOME/skills/`, where `$CODEX_HOME` defaults to `~/.codex`), open that file and let it handle the request.",
-	"2. Otherwise say what lit-schematic makes, that it is a LitFamily extension in wjgoarxiv-skills, and give the stub's install lines unchanged, for example:",
-	'   `cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic" "$CODEX_HOME/skills/lit-schematic"`, then a new Codex session.',
+	"2. Otherwise say what lit-schematic makes, that it is a LitFamily extension in wjgoarxiv-skills, and give the stub's four install lines unchanged: a check for same-name skills, a move-aside of an old copy into `$CODEX_HOME/extension-backups/`, the copy from `<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic`, and a receipt; then a new Codex session.",
 	"3. Draw nothing by hand and do not imitate the moved procedure. Stop after the notice.",
 ];
 

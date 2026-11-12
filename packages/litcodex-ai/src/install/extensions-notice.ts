@@ -7,7 +7,27 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
 export const EXTENSIONS_REPO_URL = "https://github.com/wjgoarxiv/wjgoarxiv-skills";
+export const CLONE_PLACEHOLDER = "<path to your wjgoarxiv-skills clone>";
 const NOTICE_SCHEMA_VERSION = 1;
+
+/**
+ * The four shell lines that install one extension's Codex edition, the same in every stub, README and this notice.
+ * Each line works alone in bash and zsh: a read-only check of every folder Codex 0.167 reads skills from (its own
+ * skills folder, ~/.agents/skills, and the project's .agents/skills and .codex/skills); a move-aside of an existing
+ * copy into extension-backups/, which Codex does not scan; a copy that refuses an occupied folder, so `cp -R` cannot
+ * nest; and a dot-file receipt inside the installed folder. Running them again is the update; the move-aside alone
+ * is the removal. Nothing is deleted.
+ */
+export function extensionInstallLines(id: string, clone: string = CLONE_PLACEHOLDER): readonly string[] {
+	const cx = `cx="\${CODEX_HOME:-$HOME/.codex}"; `;
+	const source = `${clone}/variants/litcodex/${id}`;
+	return [
+		`${cx}p="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; for d in "$cx/skills" "$HOME/.agents/skills" "$p/.agents/skills" "$p/.codex/skills"; do [ -e "$d/${id}" ] && echo "found: $d/${id}"; done; echo "check done"`,
+		`${cx}if [ -e "$cx/skills/${id}" ]; then b="$cx/extension-backups/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/${id}" ] && mv "$cx/skills/${id}" "$b/${id}" && echo "moved aside: $b/${id}"; fi`,
+		`${cx}if [ -e "$cx/skills/${id}" ]; then echo "stopped: $cx/skills/${id} still exists"; else mkdir -p "$cx/skills" && cp -R "${source}" "$cx/skills/${id}"; fi`,
+		`${cx}[ -f "$cx/skills/${id}/SKILL.md" ] && printf '{"id":"${id}","source":"%s","variant":"litcodex","installed_at":"%s"}\\n' "${source}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$cx/skills/${id}/.litfamily-extension.json"`,
+	];
+}
 
 export interface ExtensionsNoticeInput {
 	/** The replaced payload's version on an upgrade; absent on a first install or a same-version repair. */
@@ -20,12 +40,10 @@ export function renderExtensionsNotice(input: ExtensionsNoticeInput): string {
 	const lines = [
 		"LitFamily extensions",
 		"LitCodex carries the LitFamily core, which is complete and works on its own.",
-		`Nine skills that make files (decks, documents, figures, design and video covers) are now LitFamily extensions, kept in the extension shelf ${EXTENSIONS_REPO_URL}.`,
-		"Install the ones you use alongside LitCodex to get the full LitFamily experience. For lit-docx:",
+		`Nine skills that make files (decks, documents, figures, design and video covers) are now LitFamily extensions, kept in the extension shelf ${EXTENSIONS_REPO_URL}. Install the ones you use alongside LitCodex to get the full LitFamily experience. For lit-docx, clone the shelf, then run these lines from your project folder with your clone path:`,
 		`  git clone ${EXTENSIONS_REPO_URL}`,
-		`  mkdir -p "\${CODEX_HOME:-$HOME/.codex}/skills"`,
-		`  cp -R wjgoarxiv-skills/variants/litcodex/lit-docx "\${CODEX_HOME:-$HOME/.codex}/skills/lit-docx"`,
-		"Each extension's stub, such as $litcodex:lit-pptx, prints its own copy line.",
+		...extensionInstallLines("lit-docx").map((line) => `  ${line}`),
+		`They look for same-name skills, move an old copy aside to \${CODEX_HOME:-$HOME/.codex}/extension-backups/, copy, and leave a receipt; run them again to update. Each extension's stub, such as $litcodex:lit-pptx, prints its own lines.`,
 	];
 	if (input.previousVersion !== undefined && input.leftovers.length > 0) {
 		lines.push(

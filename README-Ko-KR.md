@@ -297,13 +297,24 @@ LitCodex에는 LitFamily 코어가 들어 있습니다. `lit` 루프, 계획, �
 `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`(그림), `frontend-ui-ux`, `visual-qa`(디자인),
 `lit-typographic-motion`, `readme-studio`(영상과 커버)는 확장 선반인
 [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills)에 있습니다. 쓰는 것만 LitCodex 옆에 설치하면
-LitFamily를 온전히 쓸 수 있습니다. 확장 하나는 한 번 복사하는 폴더 하나입니다. `lit-docx`라면 이렇습니다.
+LitFamily를 온전히 쓸 수 있습니다. 확장 하나는 Codex에 복사하는 폴더 하나입니다. 선반을 한 번 받아 두고,
+프로젝트 폴더에서 네 줄을 실행하세요. 자리표시자 대신 받아 둔 경로를 넣으면 됩니다. `lit-docx`라면 이렇습니다.
 
 ```bash
 git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R wjgoarxiv-skills/variants/litcodex/lit-docx "${CODEX_HOME:-$HOME/.codex}/skills/lit-docx"
+cx="${CODEX_HOME:-$HOME/.codex}"; p="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; for d in "$cx/skills" "$HOME/.agents/skills" "$p/.agents/skills" "$p/.codex/skills"; do [ -e "$d/lit-docx" ] && echo "found: $d/lit-docx"; done; echo "check done"
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-docx" ]; then b="$cx/extension-backups/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/lit-docx" ] && mv "$cx/skills/lit-docx" "$b/lit-docx" && echo "moved aside: $b/lit-docx"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-docx" ]; then echo "stopped: $cx/skills/lit-docx still exists"; else mkdir -p "$cx/skills" && cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-docx" "$cx/skills/lit-docx"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/lit-docx/SKILL.md" ] && printf '{"id":"lit-docx","source":"%s","variant":"litcodex","installed_at":"%s"}\n' "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-docx" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$cx/skills/lit-docx/.litfamily-extension.json"
 ```
+
+첫 줄은 Codex가 스킬을 읽는 모든 곳, 곧 `~/.codex/skills`, `~/.agents/skills`, 프로젝트의 `.agents/skills`와
+`.codex/skills`에서 `lit-docx` 폴더를 찾습니다. `~/.codex/skills`에 예전 복사본이 있으면 둘째 줄이 그 폴더를 통째로
+`~/.codex/extension-backups/<날짜-시각>/lit-docx`로 옮깁니다. Codex는 그곳을 읽지 않습니다. 다른 곳에서 찾았다면
+Codex가 둘 다 목록에 올리니 그 폴더는 직접 옮겨 두세요. 셋째 줄은 비어 있는 자리에만 복사하고, 폴더가 아직 있으면
+멈춥니다. 그래서 새 복사본이 예전 것 안으로 들어가는 일이 없습니다. 넷째 줄은 설치한 폴더 안에 작은 영수증
+`.litfamily-extension.json`을 남깁니다. 업데이트할 때는 받아 둔 저장소를 pull한 뒤 네 줄을 다시 실행하고,
+확장을 빼려면 둘째 줄만 실행하세요. 폴더는 백업 자리로 옮겨 둡니다.
 
 복사한 뒤에는 Codex 세션을 새로 여세요. 확장이 없어도 이름은 그대로 동작합니다. `$litcodex:lit-pptx` 같은
 스텁이 그 스킬이 무엇을 만드는지 알려 주고 자기 복사 명령을 보여 줍니다. `litcodex install`과 업그레이드는

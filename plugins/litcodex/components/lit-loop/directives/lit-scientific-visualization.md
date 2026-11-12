@@ -51,11 +51,13 @@ This directive is an LLM-facing contract injected by the LitCodex Codex plugin, 
 
 ```bash
 git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-scientific-visualization" "${CODEX_HOME:-$HOME/.codex}/skills/lit-scientific-visualization"
+cx="${CODEX_HOME:-$HOME/.codex}"; p="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; for d in "$cx/skills" "$HOME/.agents/skills" "$p/.agents/skills" "$p/.codex/skills"; do [ -e "$d/lit-scientific-visualization" ] && echo "found: $d/lit-scientific-visualization"; done; echo "check done"
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-scientific-visualization" ]; then b="$cx/extension-backups/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/lit-scientific-visualization" ] && mv "$cx/skills/lit-scientific-visualization" "$b/lit-scientific-visualization" && echo "moved aside: $b/lit-scientific-visualization"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-scientific-visualization" ]; then echo "stopped: $cx/skills/lit-scientific-visualization still exists"; else mkdir -p "$cx/skills" && cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-scientific-visualization" "$cx/skills/lit-scientific-visualization"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/lit-scientific-visualization/SKILL.md" ] && printf '{"id":"lit-scientific-visualization","source":"%s","variant":"litcodex","installed_at":"%s"}\n' "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-scientific-visualization" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$cx/skills/lit-scientific-visualization/.litfamily-extension.json"
 ```
 
-   wjgoarxiv-skills is public at https://github.com/wjgoarxiv/wjgoarxiv-skills; the copy reads from the user's clone of it (the path is a placeholder). After copying, the user starts a new Codex session.
+   wjgoarxiv-skills is public at https://github.com/wjgoarxiv/wjgoarxiv-skills; the copy reads from the user's clone of it (the path is a placeholder). The lines check for same-name skills, move an old copy whole to `${CODEX_HOME:-$HOME/.codex}/extension-backups/<date-time>/lit-scientific-visualization` and write a receipt; running them again updates. After copying, the user starts a new Codex session.
 4. The authored scientific-visualization source ships inside that one folder (`vendor/scientific-visualization/`), so no second copy is needed. The scoped `$litcodex:lit-scientific-visualization` and the picker stay native Codex skill-discovery routes to the stub.
 
 ## #contract.outputs

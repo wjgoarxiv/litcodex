@@ -82,15 +82,21 @@ Pick any skill in the Codex skill picker or mention it by scoped name, such as `
 LitCodex carries the LitFamily core, which is complete and works on its own. Nine skills that make files (decks,
 documents, figures, design, video and covers) are LitFamily extensions, kept in the extension shelf
 [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills). Install the ones you use alongside LitCodex to
-get the full LitFamily experience, for example `lit-docx`:
+get the full LitFamily experience. Clone the shelf once, then run four lines from your project folder with your
+clone path in place of the placeholder, for example for `lit-docx`:
 
 ```bash
 git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R wjgoarxiv-skills/variants/litcodex/lit-docx "${CODEX_HOME:-$HOME/.codex}/skills/lit-docx"
+cx="${CODEX_HOME:-$HOME/.codex}"; p="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; for d in "$cx/skills" "$HOME/.agents/skills" "$p/.agents/skills" "$p/.codex/skills"; do [ -e "$d/lit-docx" ] && echo "found: $d/lit-docx"; done; echo "check done"
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-docx" ]; then b="$cx/extension-backups/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/lit-docx" ] && mv "$cx/skills/lit-docx" "$b/lit-docx" && echo "moved aside: $b/lit-docx"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-docx" ]; then echo "stopped: $cx/skills/lit-docx still exists"; else mkdir -p "$cx/skills" && cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-docx" "$cx/skills/lit-docx"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/lit-docx/SKILL.md" ] && printf '{"id":"lit-docx","source":"%s","variant":"litcodex","installed_at":"%s"}\n' "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-docx" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$cx/skills/lit-docx/.litfamily-extension.json"
 ```
 
-Each stub, such as `$litcodex:lit-pptx`, prints its own copy line. An upgrade saves files you added or changed in
+The lines look for same-name skills in every folder Codex reads, move an old copy whole to
+`~/.codex/extension-backups/<date-time>/lit-docx` (Codex does not read it), copy into the empty folder, and leave a
+receipt inside it. Run them again to update; run only the second line to remove. Each stub, such as
+`$litcodex:lit-pptx`, prints its own lines. An upgrade saves files you added or changed in
 LitCodex skill folders to `~/.codex/litcodex-backups/<date>/` first. Versions up to 1.0.38 left runtimes in
 `~/.cache/litcodex/office` and `~/.cache/litcodex/motion-runtime`; delete them if you do not install the extensions.
 

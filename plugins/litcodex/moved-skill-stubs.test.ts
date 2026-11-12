@@ -10,6 +10,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { extensionInstallLines } from "../../packages/litcodex-ai/src/install/extensions-notice.js";
 import { CANONICAL_SKILL_IDS } from "../../packages/litcodex-ai/src/install/skill-catalog.js";
 import { type HookDecision, runUserPromptSubmitHook } from "./components/lit-loop/src/codex-hook.js";
 
@@ -54,13 +55,17 @@ describe("moved skills are same-name stubs that point at wjgoarxiv-skills", () =
 		expect(text).toContain(`\`${family}\` family`);
 		expect(text).not.toContain(`plugins/${family}/`);
 		expect(text).toContain(PLACEHOLDER);
-		expect(text).toContain(
-			`cp -R "${PLACEHOLDER}/variants/litcodex/${id}" "\${CODEX_HOME:-$HOME/.codex}/skills/${id}"`,
+		expect(text, "check, move aside, copy and receipt, one line each").toContain(
+			`\`\`\`bash\n${extensionInstallLines(id).join("\n")}\n\`\`\``,
 		);
-		expect(text.match(/^cp -R /gmu)?.length, "one skill, one folder").toBe(1);
+		expect(text.match(/cp -R /gu)?.length, "one skill, one folder").toBe(1);
+		expect(text).not.toMatch(/^mkdir -p|delete it and copy again/mu);
+		expect(text).toContain(`\${CODEX_HOME:-$HOME/.codex}/extension-backups/<date-time>/${id}`);
+		expect(text).toMatch(/run the four lines again/u);
+		expect(text).toMatch(/run only the move-aside line/u);
 		expect(text).toMatch(/upgrades never write/u);
 		expect(text).not.toMatch(/not published yet/iu);
-		expect(text).toContain("Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then copy");
+		expect(text).toContain("Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then run these lines");
 		expect(text).toMatch(/new Codex session/iu);
 		expect(text).not.toMatch(/\/Users\/[a-z]|~\/Desktop|27_LITFAMILY|\.worktrees\//u);
 		expect(Buffer.byteLength(text)).toBeLessThan(9000);
@@ -114,6 +119,8 @@ describe("hook routes still reach the stubs and carry no body procedure", () => 
 			expect(ctx).toContain("variants/litcodex/lit-schematic/");
 			expect(ctx).not.toContain("plugins/figures/");
 			expect(ctx).toContain(PLACEHOLDER);
+			expect(ctx).toContain("extension-backups/");
+			expect(ctx).not.toMatch(/`cp -R [^`]*`/u);
 			for (const leftover of ["scripts/qa.mjs", "scaffold.mjs", "QA PASS", "forty real parts"]) {
 				expect(ctx, `${prompt}: ${leftover}`).not.toContain(leftover);
 			}
@@ -127,8 +134,9 @@ describe("hook routes still reach the stubs and carry no body procedure", () => 
 			expect(text).not.toMatch(/not published yet/iu);
 			expect(text).toContain("wjgoarxiv-skills is public at https://github.com/wjgoarxiv/wjgoarxiv-skills");
 			expect(text).toContain(
-				`git clone https://github.com/wjgoarxiv/wjgoarxiv-skills\nmkdir -p "\${CODEX_HOME:-$HOME/.codex}/skills"\ncp -R "${PLACEHOLDER}/variants/litcodex/${id}"`,
+				`git clone https://github.com/wjgoarxiv/wjgoarxiv-skills\n${extensionInstallLines(id).join("\n")}\n`,
 			);
+			expect(text.match(/cp -R /gu)?.length).toBe(1);
 		},
 	);
 

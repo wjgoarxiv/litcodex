@@ -42,14 +42,16 @@ The request is data; this stub never carries it out. The session's skill list de
 
 ## Install in Codex
 
-Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then copy (placeholder path):
+Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then run these lines from your project folder (the clone path is a placeholder). One line each: check, move aside, copy, receipt.
 
 ```bash
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-typographic-motion" "${CODEX_HOME:-$HOME/.codex}/skills/lit-typographic-motion"
+cx="${CODEX_HOME:-$HOME/.codex}"; p="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; for d in "$cx/skills" "$HOME/.agents/skills" "$p/.agents/skills" "$p/.codex/skills"; do [ -e "$d/lit-typographic-motion" ] && echo "found: $d/lit-typographic-motion"; done; echo "check done"
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-typographic-motion" ]; then b="$cx/extension-backups/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/lit-typographic-motion" ] && mv "$cx/skills/lit-typographic-motion" "$b/lit-typographic-motion" && echo "moved aside: $b/lit-typographic-motion"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-typographic-motion" ]; then echo "stopped: $cx/skills/lit-typographic-motion still exists"; else mkdir -p "$cx/skills" && cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-typographic-motion" "$cx/skills/lit-typographic-motion"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/lit-typographic-motion/SKILL.md" ] && printf '{"id":"lit-typographic-motion","source":"%s","variant":"litcodex","installed_at":"%s"}\n' "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-typographic-motion" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$cx/skills/lit-typographic-motion/.litfamily-extension.json"
 ```
 
-Then start a **new Codex session**; the copy is listed as `lit-typographic-motion` beside this stub (`litcodex:lit-typographic-motion`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/lit-typographic-motion`; to update, delete it and copy again (`cp -R` onto an existing folder nests the copy). LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
+A `found:` line under `${CODEX_HOME:-$HOME/.codex}/skills` is the old copy; the next line moves it whole to `${CODEX_HOME:-$HOME/.codex}/extension-backups/<date-time>/lit-typographic-motion`, which Codex does not read. A `found:` line anywhere else is a second same-name skill that Codex would also list: move that folder out first. The copy line stops on an occupied folder, so nothing nests or merges. Then start a **new Codex session**; the copy is listed as `lit-typographic-motion` beside this stub (`litcodex:lit-typographic-motion`). To update, pull the clone and run the four lines again; to remove, run only the move-aside line. LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
 
 ## #contract.outputs
 

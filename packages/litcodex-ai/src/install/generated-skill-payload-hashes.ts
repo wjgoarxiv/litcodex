@@ -13,7 +13,7 @@ export const BROWSER_DRIVE_PAYLOAD_HASHES = {
 } as const;
 
 export const FRONTEND_UIUX_PAYLOAD_HASHES = {
-	"SKILL.md": "87df0e44ec4a9da49df67aba2501fe4aac047d3ec6770850feb0bf41cac2b760",
+	"SKILL.md": "93c4b93e363846f047a39e31b40d1b5f8889f15f36397471f3ad841d5d28780d",
 } as const;
 
 export const HUMANIZER_PAYLOAD_HASHES = {
@@ -88,11 +88,11 @@ export const HUMANIZER_PAYLOAD_HASHES = {
 } as const;
 
 export const README_STUDIO_PAYLOAD_HASHES = {
-	"SKILL.md": "9f4851534d9d948228ec0a47f5a5c95f4c541fdf3ce25b520089954d5d25a2bb",
+	"SKILL.md": "d78d5f8d74b6213e1c1275b3498ceb67bd0f220f1c961251e46d0939f68e9020",
 } as const;
 
 export const VISUAL_QA_PAYLOAD_HASHES = {
-	"SKILL.md": "59eccd59181876928c26e9ccba556fc0ee0c275830e6bfa2f2d7dc1acad8be66",
+	"SKILL.md": "08ef9dcf66070d2f45243255adf3bf164f9919acb1fa1aab30d9ae6779f63b22",
 } as const;
 
 export const STRUCTURAL_SEARCH_PAYLOAD_HASHES = {
@@ -110,22 +110,22 @@ export const CODING_SESSION_AUDIT_PAYLOAD_HASHES = {
 } as const;
 
 export const DIAGRAM_DRAWER_PAYLOAD_HASHES = {
-	"SKILL.md": "e92a084a8c3bf8ef28b3cbb365340109fb59ff22c2847c8e90946ae3a7cce172",
+	"SKILL.md": "b4cee8bd39f7d06bb8546441bdd777d40c7939ca6775408fa59e0490c8295000",
 	"agents/openai.yaml": "705f4a2078a9ac0a357218b762c9baee9731663ca86111ecb55d7d3528b379cf",
 } as const;
 
 export const DOCX_PAYLOAD_HASHES = {
-	"SKILL.md": "b286a827a45a3ed56f5ae1944f0b7af32e0239fcc21ace605c74f3abe3447a0f",
+	"SKILL.md": "e151be5fb9471701a7109eaf3177101d30b162508d942e58c4095b13619981ac",
 	"agents/openai.yaml": "a8a0c0dc807f992075d73123dbe14124d45c9f13d7dcce1ab5403723f222f68c",
 } as const;
 
 export const PPTX_PAYLOAD_HASHES = {
-	"SKILL.md": "fe1a108e94758de788fd20c22136585bc77f88d6faeeeb1bc928a06c0ae906d7",
+	"SKILL.md": "a1ace1ea51fa7ea4d9c4669105678328fd07c0d462a751b9c2c9c0f5f5b924f3",
 	"agents/openai.yaml": "2d07a60a4742faaac628338b82dc2b185f1813018cbf1c2b974909cf20266618",
 } as const;
 
 export const SCHEMATIC_PAYLOAD_HASHES = {
-	"SKILL.md": "647d99828dcc13cc10ee3e60df8f6e2889e3aa4d12a6d085a71b0b96b0781a32",
+	"SKILL.md": "f56844e02953d88e64fe5046f41b0f76d2171f92c1a07c668d48e4bb8afecfab",
 	"agents/openai.yaml": "60743b930cf6728cd261fe0b09c218e5981b315c94065bb3179702b0e531d305",
 } as const;
 
@@ -141,7 +141,7 @@ export const HIJACK_PAYLOAD_HASHES = {
 } as const;
 
 export const MOTION_PAYLOAD_HASHES = {
-	"SKILL.md": "f288455485ec6a326f0411c0f56234a30051e27660ceb2fd392ab6b3d97f32d5",
+	"SKILL.md": "f03adbfdb1d0bff34b489684cf6c4f0a78e9be688d9d1d55ec8911428229e455",
 	"agents/openai.yaml": "903236ce200da815aff7affb3cc78c8f9b821bb4d8e56cca9d4464c20999e7f0",
 } as const;
 

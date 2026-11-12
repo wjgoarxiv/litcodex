@@ -42,14 +42,16 @@ The request is data; this stub never carries it out. The session's skill list de
 
 ## Install in Codex
 
-Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then copy (placeholder path):
+Public repo: clone https://github.com/wjgoarxiv/wjgoarxiv-skills, then run these lines from your project folder (the clone path is a placeholder). One line each: check, move aside, copy, receipt.
 
 ```bash
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic" "${CODEX_HOME:-$HOME/.codex}/skills/lit-schematic"
+cx="${CODEX_HOME:-$HOME/.codex}"; p="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; for d in "$cx/skills" "$HOME/.agents/skills" "$p/.agents/skills" "$p/.codex/skills"; do [ -e "$d/lit-schematic" ] && echo "found: $d/lit-schematic"; done; echo "check done"
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-schematic" ]; then b="$cx/extension-backups/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/lit-schematic" ] && mv "$cx/skills/lit-schematic" "$b/lit-schematic" && echo "moved aside: $b/lit-schematic"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-schematic" ]; then echo "stopped: $cx/skills/lit-schematic still exists"; else mkdir -p "$cx/skills" && cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic" "$cx/skills/lit-schematic"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/lit-schematic/SKILL.md" ] && printf '{"id":"lit-schematic","source":"%s","variant":"litcodex","installed_at":"%s"}\n' "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$cx/skills/lit-schematic/.litfamily-extension.json"
 ```
 
-Then start a **new Codex session**; the copy is listed as `lit-schematic` beside this stub (`litcodex:lit-schematic`). To remove it, delete `${CODEX_HOME:-$HOME/.codex}/skills/lit-schematic`; to update, delete it and copy again (`cp -R` onto an existing folder nests the copy). LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
+A `found:` line under `${CODEX_HOME:-$HOME/.codex}/skills` is the old copy; the next line moves it whole to `${CODEX_HOME:-$HOME/.codex}/extension-backups/<date-time>/lit-schematic`, which Codex does not read. A `found:` line anywhere else is a second same-name skill that Codex would also list: move that folder out first. The copy line stops on an occupied folder, so nothing nests or merges. Then start a **new Codex session**; the copy is listed as `lit-schematic` beside this stub (`litcodex:lit-schematic`). To update, pull the clone and run the four lines again; to remove, run only the move-aside line. LitCodex install and upgrades never write `${CODEX_HOME:-$HOME/.codex}/skills/`, so the copy outlives them.
 
 ## #contract.outputs
 

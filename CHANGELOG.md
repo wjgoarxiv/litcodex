@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The extension install lines no longer nest a copy inside an existing folder. Before, `cp -R` onto an
+  `~/.codex/skills/<id>` that already existed put the new copy inside the old one, and Codex then listed the skill
+  twice. The nine stubs, the schematic and scientific-visualization `lit` routes, the READMEs and the extensions
+  notice now give four lines, one per step, that work in bash and zsh:
+  1. a check that names any `<id>` folder in the places Codex reads skills from: `~/.codex/skills`,
+     `~/.agents/skills`, and the project's `.agents/skills` and `.codex/skills`;
+  2. a move-aside that moves an existing copy whole, with any files you added, to
+     `~/.codex/extension-backups/<date-time>/<id>`, which Codex does not read;
+  3. the copy, which stops if the folder is still there;
+  4. a receipt, `.litfamily-extension.json`, inside the installed folder.
+
+  Running the four lines again updates an extension. Running only the move-aside line removes one. Nothing is
+  deleted. The clone path in the lines stays a placeholder.
+
 ## [1.0.39] - 2026-11-11
 
 ### Added

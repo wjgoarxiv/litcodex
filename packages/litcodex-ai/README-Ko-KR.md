@@ -78,15 +78,21 @@ lit 회원가입 폼에 입력 검증을 추가해줘
 LitCodex에는 LitFamily 코어가 들어 있고, 이 코어는 혼자서도 완결되어 동작합니다. 파일을 만드는 스킬 아홉
 개(발표자료, 문서, 그림, 디자인, 영상과 커버)는 LitFamily 확장이며 확장 선반인
 [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills)에 있습니다. 쓰는 것만 LitCodex 옆에 설치하면
-LitFamily를 온전히 쓸 수 있습니다. `lit-docx`라면 이렇습니다.
+LitFamily를 온전히 쓸 수 있습니다. 선반을 한 번 받아 두고 프로젝트 폴더에서 네 줄을 실행하세요. 자리표시자 대신
+받아 둔 경로를 넣습니다. `lit-docx`라면 이렇습니다.
 
 ```bash
 git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R wjgoarxiv-skills/variants/litcodex/lit-docx "${CODEX_HOME:-$HOME/.codex}/skills/lit-docx"
+cx="${CODEX_HOME:-$HOME/.codex}"; p="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; for d in "$cx/skills" "$HOME/.agents/skills" "$p/.agents/skills" "$p/.codex/skills"; do [ -e "$d/lit-docx" ] && echo "found: $d/lit-docx"; done; echo "check done"
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-docx" ]; then b="$cx/extension-backups/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/lit-docx" ] && mv "$cx/skills/lit-docx" "$b/lit-docx" && echo "moved aside: $b/lit-docx"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-docx" ]; then echo "stopped: $cx/skills/lit-docx still exists"; else mkdir -p "$cx/skills" && cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-docx" "$cx/skills/lit-docx"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/lit-docx/SKILL.md" ] && printf '{"id":"lit-docx","source":"%s","variant":"litcodex","installed_at":"%s"}\n' "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-docx" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$cx/skills/lit-docx/.litfamily-extension.json"
 ```
 
-`$litcodex:lit-pptx` 같은 스텁마다 자기 복사 명령을 보여 줍니다. 업그레이드는 LitCodex 스킬 폴더에 추가하거나
+네 줄은 Codex가 읽는 모든 폴더에서 같은 이름의 스킬을 찾고, 예전 복사본을 통째로
+`~/.codex/extension-backups/<날짜-시각>/lit-docx`로 옮기고(Codex는 이곳을 읽지 않습니다), 빈 자리에 복사한 뒤
+폴더 안에 영수증을 남깁니다. 다시 실행하면 업데이트되고, 둘째 줄만 실행하면 확장이 백업 폴더로 빠집니다. `$litcodex:lit-pptx` 같은
+스텁마다 자기 네 줄을 보여 줍니다. 업그레이드는 LitCodex 스킬 폴더에 추가하거나
 고친 파일을 먼저 `~/.codex/litcodex-backups/<날짜>/`에 저장합니다. 1.0.38까지 쓰던 런타임은
 `~/.cache/litcodex/office`와 `~/.cache/litcodex/motion-runtime`에 남아 있으니, 확장을 설치하지 않는다면 지워도
 됩니다.

@@ -313,13 +313,24 @@ Nine skills that make files are LitFamily extensions: `lit-pptx` (decks), `lit-d
 `lit-diagram-drawer`, `lit-schematic` and `lit-scientific-visualization` (figures), `frontend-ui-ux` and
 `visual-qa` (design), and `lit-typographic-motion` and `readme-studio` (video and covers). They are kept in the
 extension shelf, [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills). Install the ones you use
-alongside LitCodex to get the full LitFamily experience. Each one is a folder you copy once, for example `lit-docx`:
+alongside LitCodex to get the full LitFamily experience. Each one is a folder you copy into Codex. Clone the shelf
+once, then run four lines from your project folder, with your clone path in place of the placeholder. For `lit-docx`:
 
 ```bash
 git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R wjgoarxiv-skills/variants/litcodex/lit-docx "${CODEX_HOME:-$HOME/.codex}/skills/lit-docx"
+cx="${CODEX_HOME:-$HOME/.codex}"; p="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; for d in "$cx/skills" "$HOME/.agents/skills" "$p/.agents/skills" "$p/.codex/skills"; do [ -e "$d/lit-docx" ] && echo "found: $d/lit-docx"; done; echo "check done"
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-docx" ]; then b="$cx/extension-backups/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/lit-docx" ] && mv "$cx/skills/lit-docx" "$b/lit-docx" && echo "moved aside: $b/lit-docx"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; if [ -e "$cx/skills/lit-docx" ]; then echo "stopped: $cx/skills/lit-docx still exists"; else mkdir -p "$cx/skills" && cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-docx" "$cx/skills/lit-docx"; fi
+cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/lit-docx/SKILL.md" ] && printf '{"id":"lit-docx","source":"%s","variant":"litcodex","installed_at":"%s"}\n' "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-docx" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$cx/skills/lit-docx/.litfamily-extension.json"
 ```
+
+The first line looks for a `lit-docx` folder in every place Codex reads skills from: `~/.codex/skills`,
+`~/.agents/skills`, and the project's `.agents/skills` and `.codex/skills`. If it finds your old copy in
+`~/.codex/skills`, the second line moves that folder whole to `~/.codex/extension-backups/<date-time>/lit-docx`,
+where Codex does not look. If it finds one anywhere else, Codex would list both, so move that folder out yourself.
+The third line copies into the now-empty folder and stops if the folder is still there, so a copy never lands
+inside an old one. The fourth leaves a small receipt, `.litfamily-extension.json`, inside the installed folder. To
+update, pull the clone and run the four lines again. To remove an extension, run only the second line.
 
 Start a new Codex session afterwards. Without an extension the name still works: `$litcodex:lit-pptx` and the
 other stubs say what the skill makes and print its own copy line. `litcodex install` and upgrades never write
