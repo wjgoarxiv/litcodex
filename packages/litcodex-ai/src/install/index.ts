@@ -35,11 +35,13 @@ import { codexSpawnInvocation, type ReadonlyFsLike, resolveCodexHome, type Spawn
 import { doctorScopeFor, renderDoctorText, runDoctor } from "./doctor.js";
 import { exitCodeForInstallError, InstallError, toErrorJson } from "./errors.js";
 import { type ExecuteDeps, executeInstallPlan } from "./execute.js";
+import { announceExtensions } from "./extensions-notice.js";
 import { listPayloadEntries, readRegularFileBuffer } from "./file-walk.js";
 import { promptModelRoute, renderModelRouteSummary, waitForModelRouteConfirmation } from "./install-model-prompt.js";
 import type { OutputStyleId } from "./install-options.js";
 import { hasExplicitModelRouteFlags, parseInstallOptions } from "./install-options.js";
 import { renderPlainInstallResult } from "./install-output.js";
+import type { MaterializeMarketplaceResult } from "./marketplace-payload.js";
 import { type MarketplaceSource, resolveBundledMarketplaceSource } from "./package-root.js";
 import { buildInstallPlan } from "./plan.js";
 import { renderInstallPlan } from "./render-plan.js";
@@ -311,6 +313,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 	let activeSpinner: Spinner | undefined;
 	let activityPending = false;
 	let marketplaceSource: MarketplaceSource | undefined;
+	let marketplacePayload: MaterializeMarketplaceResult | undefined;
 	try {
 		if (!args.includes("--repo")) marketplaceSource = resolveBundledMarketplaceSource();
 		const executeDeps: ExecuteDeps = {
@@ -332,6 +335,9 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 			reconfigure: opts.reconfigure,
 			enforceCapabilityPreflight: true,
 			...(decorate ? {} : { onWarning: (message: string) => io.stderr.write(`Warning: ${message}\n`) }),
+			onMarketplacePayload: (payload) => {
+				marketplacePayload = payload;
+			},
 			...(marketplaceSource === undefined ? {} : { marketplaceSourceDir: marketplaceSource.root }),
 		};
 		if (decorate) {
@@ -438,6 +444,14 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 			}),
 		);
 	} else io.stdout.write(renderPlainInstallResult(result));
+	if (result.ok) {
+		announceExtensions({
+			payload: marketplacePayload,
+			env: io.env,
+			json: opts.json,
+			write: (text) => io.stdout.write(text),
+		});
+	}
 	return result.ok ? 0 : 3;
 }
 

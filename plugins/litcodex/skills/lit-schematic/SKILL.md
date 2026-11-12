@@ -19,11 +19,11 @@ output_channels:
 
 When directly selected, the first visible line is `🔥 **LIT IGNITED · lit-schematic** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-This is a stub. lit-schematic makes a physical schematic of real equipment (P&ID, PFD, layout, apparatus figure, isometric cutaway) as SVG, PDF and PNG. It moved out of LitCodex into **wjgoarxiv-skills**, in the `figures` family; its self-contained Codex edition is `variants/litcodex/lit-schematic`. The id stays here so its routes still land: the `lit schematic` hook route, `$litcodex:lit-schematic` and the picker (explicit only).
+This is a stub. lit-schematic makes a physical schematic of real equipment (P&ID, PFD, layout, apparatus figure, isometric cutaway) as SVG, PDF and PNG. It is now a LitFamily extension, kept in **wjgoarxiv-skills** (`figures` family); its self-contained Codex edition is `variants/litcodex/lit-schematic`. The id stays here so its routes still land: the `lit schematic` hook route, `$litcodex:lit-schematic` and the picker (explicit only).
 
 ## #contract.inputs
 
-The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `lit-schematic` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/lit-schematic/SKILL.md`) means the moved skill is installed.
+The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `lit-schematic` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/lit-schematic/SKILL.md`) means the extension is installed.
 
 ## #contract.mode_matrix
 
@@ -37,7 +37,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 1. Print the banner when selected directly.
 2. If the installed copy is listed, read it fully and let it run the request.
-3. Otherwise say what lit-schematic makes, that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-schematic`), and give the lines below unchanged. Software diagrams and data plots moved to the same family.
+3. Otherwise say what lit-schematic makes, that it is a LitFamily extension in wjgoarxiv-skills (Codex edition `variants/litcodex/lit-schematic`), and give the lines below unchanged. Software diagrams and data plots moved to the same family.
 4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
 ## Install in Codex

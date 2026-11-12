@@ -77,6 +77,23 @@ Pick any skill in the Codex skill picker or mention it by scoped name, such as `
 - Upkeep: `litcodex-doctor`, `litcodex-report-bug` and `litcodex-contribute-bug-fix`. `rules`, `lsp`
   and `comment-checker` run on their own.
 
+## Extensions
+
+LitCodex carries the LitFamily core, which is complete and works on its own. Nine skills that make files (decks,
+documents, figures, design, video and covers) are LitFamily extensions, kept in the extension shelf
+[wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills). Install the ones you use alongside LitCodex to
+get the full LitFamily experience, for example `lit-docx`:
+
+```bash
+git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
+cp -R wjgoarxiv-skills/variants/litcodex/lit-docx "${CODEX_HOME:-$HOME/.codex}/skills/lit-docx"
+```
+
+Each stub, such as `$litcodex:lit-pptx`, prints its own copy line. An upgrade saves files you added or changed in
+LitCodex skill folders to `~/.codex/litcodex-backups/<date>/` first. Versions up to 1.0.38 left runtimes in
+`~/.cache/litcodex/office` and `~/.cache/litcodex/motion-runtime`; delete them if you do not install the extensions.
+
 ## What it changes
 
 - Codex gets the plugin, hooks and agents, plus the managed keys in `~/.codex/config.toml`. Your unrelated

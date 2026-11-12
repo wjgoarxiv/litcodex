@@ -19,11 +19,11 @@ output_channels:
 
 When directly selected, the first visible line is `🔥 **LIT IGNITED · frontend-ui-ux** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-This is a stub. frontend-ui-ux makes a web interface from one locked design direction, inspected across the responsive matrix. It moved out of LitCodex into **wjgoarxiv-skills**, in the `design` family; its self-contained Codex edition is `variants/litcodex/frontend-ui-ux`. The id stays here so its routes still land: `$litcodex:frontend-ui-ux`, the picker, implicit interface requests and the web page row of the bare `lit` table.
+This is a stub. frontend-ui-ux makes a web interface from one locked design direction, inspected across the responsive matrix. It is now a LitFamily extension, kept in **wjgoarxiv-skills** (`design` family); its self-contained Codex edition is `variants/litcodex/frontend-ui-ux`. The id stays here so its routes still land: `$litcodex:frontend-ui-ux`, the picker, implicit interface requests and the web page row of the bare `lit` table.
 
 ## #contract.inputs
 
-The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `frontend-ui-ux` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/frontend-ui-ux/SKILL.md`) means the moved skill is installed.
+The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `frontend-ui-ux` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/frontend-ui-ux/SKILL.md`) means the extension is installed.
 
 ## #contract.mode_matrix
 
@@ -37,7 +37,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 1. Print the banner when selected directly.
 2. If the installed copy is listed, read it fully and let it run the request.
-3. Otherwise say what frontend-ui-ux makes, that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/frontend-ui-ux`), and give the lines below unchanged. Checking a built page is visual-qa (same family).
+3. Otherwise say what frontend-ui-ux makes, that it is a LitFamily extension in wjgoarxiv-skills (Codex edition `variants/litcodex/frontend-ui-ux`), and give the lines below unchanged. Checking a built page is visual-qa (same family).
 4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
 ## Install in Codex

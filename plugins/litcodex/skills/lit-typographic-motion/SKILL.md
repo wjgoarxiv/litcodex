@@ -19,11 +19,11 @@ output_channels:
 
 When directly selected, the first visible line is `🔥 **LIT IGNITED · lit-typographic-motion** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-This is a stub. lit-typographic-motion makes a short film (MP4) or seamless README cover loop: treatment, stage or type path, score and QA gate. It moved out of LitCodex into **wjgoarxiv-skills**, in the `video-covers` family; its self-contained Codex edition is `variants/litcodex/lit-typographic-motion`. The id stays here so its routes still land: `$litcodex:lit-typographic-motion`, the picker, implicit film requests and the film row of the bare `lit` table, whose film note names this stub.
+This is a stub. lit-typographic-motion makes a short film (MP4) or seamless README cover loop: treatment, stage or type path, score and QA gate. It is now a LitFamily extension, kept in **wjgoarxiv-skills** (`video-covers` family); its self-contained Codex edition is `variants/litcodex/lit-typographic-motion`. The id stays here so its routes still land: `$litcodex:lit-typographic-motion`, the picker, implicit film requests and the film row of the bare `lit` table, whose film note names this stub.
 
 ## #contract.inputs
 
-The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `lit-typographic-motion` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/lit-typographic-motion/SKILL.md`) means the moved skill is installed.
+The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `lit-typographic-motion` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/lit-typographic-motion/SKILL.md`) means the extension is installed.
 
 ## #contract.mode_matrix
 
@@ -37,7 +37,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 1. Print the banner when selected directly.
 2. If the installed copy is listed, read it fully and let it run the request.
-3. Otherwise say what lit-typographic-motion makes, that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-typographic-motion`), and give the lines below unchanged. LitCodex no longer pre-warms a film runtime or holds the turn with a film check.
+3. Otherwise say what lit-typographic-motion makes, that it is a LitFamily extension in wjgoarxiv-skills (Codex edition `variants/litcodex/lit-typographic-motion`), and give the lines below unchanged. LitCodex no longer pre-warms a film runtime.
 4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
 ## Install in Codex

@@ -80,8 +80,8 @@ describe("materializeManagedMarketplace", () => {
 			writeFileSync(userSkill, "preserve user content");
 			// When: the unchanged-version package is installed again.
 			const result = materializeManagedMarketplace(paths);
-			// Then: the manifest and hashed tree replace the entire managed copy.
-			expect(result).toEqual({ changed: true, version: "0.4.8" });
+			// Then: the manifest and hashed tree replace the entire managed copy; the hand-written old SKILL.md is saved.
+			expect(result).toMatchObject({ changed: true, version: "0.4.8" });
 			expect(existsSync(oldSkill)).toBe(false);
 			expect(readFileSync(join(paths.targetRoot, "plugins", "litcodex", "skills", newId, "SKILL.md"), "utf8")).toBe(
 				body,
@@ -253,8 +253,8 @@ describe("materializeManagedMarketplace", () => {
 		// When
 		const result = materializeManagedMarketplace(paths);
 
-		// Then
-		expect(result).toEqual({ changed: true, version: "0.3.44" });
+		// Then: a stray file inside a skill folder is saved to the backup before the repair removes it.
+		expect(result).toMatchObject({ changed: true, version: "0.3.44" });
 		expect(readFileSync(join(paths.targetRoot, "plugins", "litcodex", "payload.txt"), "utf8")).toBe("canonical");
 		expect(readdirSync(join(paths.targetRoot, "plugins", "litcodex"))).not.toEqual(
 			expect.arrayContaining(["orphan.txt", "orphan-link", "broken-link", "empty-orphan"]),

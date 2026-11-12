@@ -16,15 +16,30 @@ import { dirname, join } from "node:path";
 import { InstallError } from "./errors.js";
 import { readRegularFileBuffer, walkDirectory } from "./file-walk.js";
 import { isSafeManagedMarketplaceRoot, managedMarketplaceRoot } from "./marketplace.js";
+import {
+	cachedPluginVersions,
+	createSkillBackup,
+	ownedSkillDigests,
+	pluginCacheRoot,
+	writeInstalledSkillRecord,
+} from "./skill-backup.js";
 
 export interface MaterializeMarketplaceOptions {
 	readonly sourceRoot: string;
 	readonly targetRoot: string;
+	/** Clock for the dated backup folder (defaults to Date.now). */
+	readonly now?: () => number;
+	/** Digests treated as shipped by earlier releases (defaults to the frozen pre-1.0.39 list). */
+	readonly legacySkillDigests?: readonly string[];
 }
 
 export interface MaterializeMarketplaceResult {
 	readonly changed: boolean;
 	readonly version: string;
+	/** The replaced payload's version, present only when it differs from `version`. */
+	readonly previousVersion?: string;
+	/** Where files the user added or changed in the replaced skill folders were saved. */
+	readonly backup?: { readonly dir: string; readonly files: number };
 	readonly warnings?: readonly string[];
 }
 
@@ -38,6 +53,7 @@ const LEGACY_SKILL_FILES = {
 	"references/quick-rules.md": "20adb2ba0326f78cb9af2ca3e2d5806144f8b6e4e3dfefaa83650217e6a53c9a",
 	"references/safety-checklist.md": "d352bf175dc286f8f18e4e3817e6b101e70e318931661380a1052ae74758a722",
 } as const;
+const SKILLS_RELATIVE = join("plugins", "litcodex", "skills");
 const LEGACY_SKILL_WARNING =
 	"LitCodex kept a modified lit-korean skill copy; review or remove it from the managed marketplace.";
 
@@ -61,6 +77,8 @@ export function materializeManagedMarketplace(opts: MaterializeMarketplaceOption
 		return { changed: false, version };
 	}
 
+	const previous = readVersionIfPresent(opts.targetRoot);
+	const saved = saveUserSkillFiles(codexHome, opts);
 	const parent = dirname(opts.targetRoot);
 	mkdirSync(parent, { recursive: true });
 	const stage = mkdtempSync(join(parent, ".litcodex-stage-"));
@@ -86,7 +104,18 @@ export function materializeManagedMarketplace(opts: MaterializeMarketplaceOption
 			renameSync(preservedLegacy, newLegacyPath);
 		}
 		if (backedUp) rmSync(backup, { recursive: true, force: true });
-		return preserved ? { changed: true, version, warnings: [LEGACY_SKILL_WARNING] } : { changed: true, version };
+		recordInstalledSkills(codexHome, version, opts.targetRoot);
+		const warnings = [
+			...(preserved ? [LEGACY_SKILL_WARNING] : []),
+			...(saved === undefined ? [] : [savedFilesWarning(saved)]),
+		];
+		return {
+			changed: true,
+			version,
+			...(previous !== null && previous !== version ? { previousVersion: previous } : {}),
+			...(saved === undefined ? {} : { backup: saved }),
+			...(warnings.length > 0 ? { warnings } : {}),
+		};
 	} catch (error) {
 		rmSync(stage, { recursive: true, force: true });
 		if (backedUp) {
@@ -98,6 +127,50 @@ export function materializeManagedMarketplace(opts: MaterializeMarketplaceOption
 			if (!existsSync(oldLegacyPath)) renameSync(preservedLegacy, oldLegacyPath);
 		}
 		throw payloadError("Failed to install the bundled LitCodex marketplace atomically.", opts.targetRoot, error);
+	}
+}
+
+/**
+ * Copy what the user added or changed in the replaced skill folders out of the plugin tree first: the managed
+ * marketplace this installer replaces next, and every Codex plugin cache version that `codex plugin add` will
+ * rebuild. The cache is only read. A failure here stops the install before anything is removed.
+ */
+function saveUserSkillFiles(
+	codexHome: string,
+	opts: MaterializeMarketplaceOptions,
+): { readonly dir: string; readonly files: number } | undefined {
+	try {
+		const owned = ownedSkillDigests(codexHome, join(opts.sourceRoot, SKILLS_RELATIVE), opts.legacySkillDigests);
+		const sink = createSkillBackup(codexHome, owned, (opts.now ?? Date.now)());
+		sink.save(
+			join(opts.targetRoot, SKILLS_RELATIVE),
+			"marketplace",
+			(relativePath) => relativePath === "lit-korean" || relativePath.startsWith("lit-korean/"),
+		);
+		for (const version of cachedPluginVersions(codexHome)) {
+			sink.save(join(pluginCacheRoot(codexHome), version, "skills"), `plugin-cache-${version}`);
+		}
+		return sink.dir === null ? undefined : { dir: sink.dir, files: sink.files };
+	} catch (error) {
+		throw payloadError(
+			"Could not save the files you added to LitCodex skill folders; nothing was replaced.",
+			opts.targetRoot,
+			error,
+		);
+	}
+}
+
+function savedFilesWarning(saved: { readonly dir: string; readonly files: number }): string {
+	const count = saved.files === 1 ? "1 file" : `${saved.files} files`;
+	return `LitCodex saved ${count} you added or changed in its skill folders to ${saved.dir} before replacing them.`;
+}
+
+/** Best effort: without the record, the next upgrade only saves more files than it needs to. */
+function recordInstalledSkills(codexHome: string, version: string, targetRoot: string): void {
+	try {
+		writeInstalledSkillRecord(codexHome, version, join(targetRoot, SKILLS_RELATIVE));
+	} catch {
+		// The frozen list and the next payload still cover most files.
 	}
 }
 

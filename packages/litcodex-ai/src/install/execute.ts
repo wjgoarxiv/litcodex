@@ -26,7 +26,7 @@ import { findCodexBinary, type ReadonlyFsLike, resolveCodexHome, type SpawnLike 
 import { InstallError } from "./errors.js";
 import { defaultVerifyHook } from "./hook-verifier.js";
 import { type HostCapabilities, modelContextsForWrites, probeHostCapabilities } from "./host-capabilities.js";
-import { materializeManagedMarketplace } from "./marketplace-payload.js";
+import { type MaterializeMarketplaceResult, materializeManagedMarketplace } from "./marketplace-payload.js";
 import { runRegistration } from "./registration.js";
 import type {
 	InstallPreflightResult,
@@ -67,6 +67,8 @@ export interface ExecuteDeps {
 	readonly onPreflightStart?: (stage: InstallPreflightStage) => void;
 	/** Optional callback fired after a preparation stage completes or is intentionally skipped. */
 	readonly onPreflightEnd?: (result: InstallPreflightResult) => void;
+	/** Optional callback with the bundled marketplace outcome (version change, saved user files). */
+	readonly onMarketplacePayload?: (payload: MaterializeMarketplaceResult) => void;
 	/** Optional callback for install warnings that must remain visible in non-interactive modes. */
 	readonly onWarning?: (message: string) => void;
 	readonly profile?: import("../config-migration/gpt56-policy.js").Gpt56Profile;
@@ -170,7 +172,12 @@ export async function executeInstallPlan(steps: readonly InstallStep[], deps: Ex
 	const payload =
 		deps.marketplaceSourceDir === undefined || marketplaceTarget === undefined
 			? undefined
-			: materializeManagedMarketplace({ sourceRoot: deps.marketplaceSourceDir, targetRoot: marketplaceTarget });
+			: materializeManagedMarketplace({
+					sourceRoot: deps.marketplaceSourceDir,
+					targetRoot: marketplaceTarget,
+					now: deps.now,
+				});
+	if (payload !== undefined) deps.onMarketplacePayload?.(payload);
 	for (const warning of payload?.warnings ?? []) deps.onWarning?.(warning);
 	deps.onPreflightEnd?.({
 		stage: "marketplace-payload",

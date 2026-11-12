@@ -47,7 +47,7 @@ This directive is an LLM-facing contract injected by the LitCodex Codex plugin, 
 
 1. Print the banner line above verbatim.
 2. Check the skill list for the installed copy; when present, read it completely and let it run the request.
-3. Otherwise tell the user what lit-scientific-visualization makes (publication-quality plots of measured data on the authored scientific-visualization source), that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-scientific-visualization/`, a self-contained folder), and give these lines unchanged:
+3. Otherwise tell the user what lit-scientific-visualization makes (publication-quality plots of measured data on the authored scientific-visualization source), that it is a LitFamily extension in wjgoarxiv-skills (Codex edition `variants/litcodex/lit-scientific-visualization/`, a self-contained folder), and give these lines unchanged:
 
 ```bash
 git clone https://github.com/wjgoarxiv/wjgoarxiv-skills

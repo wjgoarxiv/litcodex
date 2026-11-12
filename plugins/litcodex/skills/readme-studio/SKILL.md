@@ -19,11 +19,11 @@ output_channels:
 
 When directly selected, the first visible line is `🔥 **LIT IGNITED · readme-studio** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-This is a stub. readme-studio makes a factual project README with an inspected cover and an optional motion cover. It moved out of LitCodex into **wjgoarxiv-skills**, in the `video-covers` family; its self-contained Codex edition is `variants/litcodex/readme-studio`. The id stays here so its routes still land: `$litcodex:readme-studio`, the picker and implicit README requests.
+This is a stub. readme-studio makes a factual project README with an inspected cover and an optional motion cover. It is now a LitFamily extension, kept in **wjgoarxiv-skills** (`video-covers` family); its self-contained Codex edition is `variants/litcodex/readme-studio`. The id stays here so its routes still land: `$litcodex:readme-studio`, the picker and implicit README requests.
 
 ## #contract.inputs
 
-The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `readme-studio` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/readme-studio/SKILL.md`) means the moved skill is installed.
+The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `readme-studio` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/readme-studio/SKILL.md`) means the extension is installed.
 
 ## #contract.mode_matrix
 
@@ -37,7 +37,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 1. Print the banner when selected directly.
 2. If the installed copy is listed, read it fully and let it run the request.
-3. Otherwise say what readme-studio makes, that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/readme-studio`), and give the lines below unchanged. A motion cover is lit-typographic-motion's cover mode (same family).
+3. Otherwise say what readme-studio makes, that it is a LitFamily extension in wjgoarxiv-skills (Codex edition `variants/litcodex/readme-studio`), and give the lines below unchanged. A motion cover is lit-typographic-motion's cover mode (same family).
 4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
 ## Install in Codex

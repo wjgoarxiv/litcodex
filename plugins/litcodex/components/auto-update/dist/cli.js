@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { stdin as processStdin, stdout as processStdout } from "node:process";
 import { fileURLToPath } from "node:url";
 import { runForegroundAutoUpdate } from "./auto-update.js";
+import { takeExtensionsNotice } from "./extensions-notice.js";
 const packageManifest = createRequire(import.meta.url)("../package.json");
 const currentVersion = typeof packageManifest.version === "string" ? packageManifest.version : undefined;
 const effectiveCurrentVersion = process.env["LITCODEX_CURRENT_VERSION"] ?? currentVersion;
@@ -33,7 +34,7 @@ async function runSessionStartHook() {
         env: process.env,
         keepPluginRoot: pluginRoot,
     });
-    writeLifecycleResult(result, "SessionStart");
+    writeLifecycleResult(result, "SessionStart", takeExtensionsNotice(process.env));
 }
 function runManagementCommand() {
     const current = option("current-version") ?? effectiveCurrentVersion;
@@ -52,15 +53,23 @@ function runManagementCommand() {
     if (result.status === "failed" || result.status === "unknown-state")
         process.exitCode = 3;
 }
-function writeLifecycleResult(result, hookEventName) {
-    if (result.status !== "updated" && result.status !== "failed" && result.status !== "unknown-state")
+/** One JSON line: the update outcome for the model, the one-time extensions notice for the user. */
+function writeLifecycleResult(result, hookEventName, notice) {
+    const reported = result.status === "updated" || result.status === "failed" || result.status === "unknown-state";
+    if (!reported) {
+        if (notice !== undefined)
+            processStdout.write(`${JSON.stringify({ systemMessage: notice })}\n`);
         return;
+    }
     const detail = result.status === "updated"
         ? `Foreground update barrier applied ${result.packageName}@${result.latestVersion ?? "the latest stable release"} (version + doctor verified). This session keeps ${result.currentVersion ?? "the earlier version"}; the new version takes effect in the next Codex session.`
         : result.status === "unknown-state"
             ? `BLOCKED: Foreground update barrier left installation state unknown (${result.reason ?? "rollback failed"}); stop before using this host and run litcodex doctor.`
             : `Foreground update barrier failed (${result.reason ?? "unknown error"}); the current installation was preserved when possible.`;
-    processStdout.write(`${JSON.stringify({ hookSpecificOutput: { hookEventName, additionalContext: `LitCodex: ${detail}` } })}\n`);
+    processStdout.write(`${JSON.stringify({
+        ...(notice === undefined ? {} : { systemMessage: notice }),
+        hookSpecificOutput: { hookEventName, additionalContext: `LitCodex: ${detail}` },
+    })}\n`);
     if (result.status === "unknown-state")
         process.exitCode = 3;
 }

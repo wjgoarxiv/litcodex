@@ -262,6 +262,33 @@ lit notes.md로 월요일 회의용 열 장짜리 발표자료를 만들어줘
 화면, 그림, 영상 스킬은 `browser-drive`를 빼고 `lit-docx`, `lit-pptx`와 함께 wjgoarxiv-skills로 옮겼습니다.
 이름은 여기서도 그대로 쓸 수 있고, 각 이름은 스킬이 옮겨 간 곳과 `~/.codex/skills/`에 복사하는 방법을 알려 주는 짧은 스텁입니다.
 
+## 확장
+
+LitCodex에는 LitFamily 코어가 들어 있습니다. `lit` 루프, 계획, 리뷰, 조사, 핸드오프를 비롯한 작업 흐름
+전체입니다. 이 코어는 그 자체로 완결되어 있고 혼자서도 동작합니다.
+
+파일을 만드는 스킬 아홉 개는 LitFamily 확장입니다. `lit-pptx`(발표자료), `lit-docx`(문서),
+`lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`(그림), `frontend-ui-ux`, `visual-qa`(디자인),
+`lit-typographic-motion`, `readme-studio`(영상과 커버)는 확장 선반인
+[wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills)에 있습니다. 쓰는 것만 LitCodex 옆에 설치하면
+LitFamily를 온전히 쓸 수 있습니다. 확장 하나는 한 번 복사하는 폴더 하나입니다. `lit-docx`라면 이렇습니다.
+
+```bash
+git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
+cp -R wjgoarxiv-skills/variants/litcodex/lit-docx "${CODEX_HOME:-$HOME/.codex}/skills/lit-docx"
+```
+
+복사한 뒤에는 Codex 세션을 새로 여세요. 확장이 없어도 이름은 그대로 동작합니다. `$litcodex:lit-pptx` 같은
+스텁이 그 스킬이 무엇을 만드는지 알려 주고 자기 복사 명령을 보여 줍니다. `litcodex install`과 업그레이드는
+`~/.codex/skills/`에 쓰지 않으므로 복사본은 그대로 남습니다.
+
+LitCodex는 설치하거나 업그레이드할 때 이 내용을 한 번 알려 주고, 그다음 첫 Codex 세션에서 한 번 더 알려 줍니다.
+스킬 폴더 안에 파일을 추가하거나 고쳤다면 업그레이드가 먼저 그 파일을 `~/.codex/litcodex-backups/<날짜>/`에
+저장하고, 설치 출력에 그 폴더를 적습니다. 1.0.38까지는 오피스·영상 런타임을 `~/.cache/litcodex/office`와
+`~/.cache/litcodex/motion-runtime`에 두었습니다. 이제 LitCodex는 이 둘을 쓰지 않으므로, 확장을 설치하지 않는다면
+지워도 됩니다.
+
 ## 만들 수 있는 것
 
 스킬의 스크립트를 이 컴퓨터에서 직접 돌려 만든 그림 네 장입니다. 발표자료, 페이지, P&ID는 이제 wjgoarxiv-skills에 있는 스킬로 만든 것입니다. 그림 속 수치는 모두 예시 자료입니다.

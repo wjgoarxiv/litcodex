@@ -278,6 +278,33 @@ Apart from `browser-drive`, the screens, figures and film skills moved to wjgoar
 `lit-docx` and `lit-pptx`. Their names still work here; each one is a short stub that tells you where the
 skill went and how to copy it into `~/.codex/skills/`.
 
+## Extensions
+
+LitCodex carries the LitFamily core: the `lit` loop, plans, reviews, research, handoffs and the rest of the
+workflow. That core is complete and works on its own.
+
+Nine skills that make files are LitFamily extensions: `lit-pptx` (decks), `lit-docx` (documents),
+`lit-diagram-drawer`, `lit-schematic` and `lit-scientific-visualization` (figures), `frontend-ui-ux` and
+`visual-qa` (design), and `lit-typographic-motion` and `readme-studio` (video and covers). They are kept in the
+extension shelf, [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills). Install the ones you use
+alongside LitCodex to get the full LitFamily experience. Each one is a folder you copy once, for example `lit-docx`:
+
+```bash
+git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
+cp -R wjgoarxiv-skills/variants/litcodex/lit-docx "${CODEX_HOME:-$HOME/.codex}/skills/lit-docx"
+```
+
+Start a new Codex session afterwards. Without an extension the name still works: `$litcodex:lit-pptx` and the
+other stubs say what the skill makes and print its own copy line. `litcodex install` and upgrades never write
+`~/.codex/skills/`, so your copies stay.
+
+LitCodex says this once when it installs or upgrades, and once more in the first Codex session after that. If you
+added or changed files inside its skill folders, an upgrade first saves them to `~/.codex/litcodex-backups/<date>/`
+and the install output names that folder. Versions up to 1.0.38 kept office and film runtimes in
+`~/.cache/litcodex/office` and `~/.cache/litcodex/motion-runtime`. LitCodex no longer uses them, so you can delete
+them if you do not install the extensions.
+
 ## What you can make
 
 Four pictures, each made by running a skill's own scripts on this machine. The deck, the page and the P&ID come from skills that now live in wjgoarxiv-skills. Every figure in them is example data.

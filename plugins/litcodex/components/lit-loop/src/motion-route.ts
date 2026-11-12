@@ -61,5 +61,5 @@ export function motionRouteContext(litLoopSkillPath: string, prompt: string): st
 	if (!classifyFilmRequest(prompt)) return "";
 	const stub = resolve(join(dirname(litLoopSkillPath), "..", "lit-typographic-motion", "SKILL.md"));
 	if (!existsSync(stub)) return "";
-	return `Film context: this is a film request for lit-typographic-motion, which moved to wjgoarxiv-skills. Read the stub "${stub}": it hands over to an installed copy of the skill when the skill list has one, and otherwise gives the Codex install lines. Do not encode or render a film by other means.`;
+	return `Film context: this is a film request for lit-typographic-motion, now a LitFamily extension in wjgoarxiv-skills. Read the stub "${stub}": it hands over to an installed copy of the skill when the skill list has one, and otherwise gives the Codex install lines. Do not encode or render a film by other means.`;
 }

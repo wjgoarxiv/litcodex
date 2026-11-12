@@ -8,7 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.39] - 2026-11-11
 
+### Added
+
+- The LitFamily extensions notice. When `litcodex install` installs or upgrades the plugin, it says that LitCodex
+  carries the LitFamily core, which is complete and works on its own, and that the nine skills that make files are
+  now LitFamily extensions, kept in the extension shelf https://github.com/wjgoarxiv/wjgoarxiv-skills, to install
+  alongside LitCodex for the full LitFamily experience. It gives the Codex copy lines, and on an upgrade it names the
+  office and film runtime folders an earlier version left in `~/.cache/litcodex/`, which can be deleted if you do not
+  install the extensions. The first Codex session after that shows the same notice once, through the auto-update
+  SessionStart hook (the hook list itself is unchanged). `--json` output never carries it. The READMEs gained an
+  "Extensions" section in the same framing.
+
+### Fixed
+
+- An upgrade or same-version repair no longer deletes files you added or changed inside LitCodex skill folders.
+  Before the managed marketplace is replaced, each such file is copied to
+  `~/.codex/litcodex-backups/<date>/marketplace/<skill>/...`, and each one in the Codex plugin cache to
+  `.../plugin-cache-<version>/<skill>/...`; a warning in the install output names the folder. The plugin cache is
+  only read: Codex itself replaces it during `codex plugin add`. LitCodex tells its own files apart through a record
+  each install now writes (`~/.codex/litcodex/installed-skill-digests.json`) and, for installs from 1.0.38 and
+  earlier, a frozen list of the skill files those releases shipped. Edits outside the skill folders are still
+  replaced without a copy.
+
 ### Changed
+
+- The nine stubs, and the `lit` routes that speak for them, now call each moved skill a LitFamily extension kept in
+  wjgoarxiv-skills.
 
 - Nine content skills moved to wjgoarxiv-skills (https://github.com/wjgoarxiv/wjgoarxiv-skills), a separate
   public collection: `lit-pptx` (decks), `lit-docx`

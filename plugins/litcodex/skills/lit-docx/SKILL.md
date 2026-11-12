@@ -19,11 +19,11 @@ output_channels:
 
 When directly selected, the first visible line is `🔥 **LIT IGNITED · lit-docx** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-This is a stub. lit-docx makes a finished Word document (.docx) in a chosen direction or publisher profile, plus DOCX or PDF to Markdown and in-place edits. It moved out of LitCodex into **wjgoarxiv-skills**, in the `documents` family; its self-contained Codex edition is `variants/litcodex/lit-docx`. The id stays here so its routes still land: `$litcodex:lit-docx`, the picker, implicit document requests and the document row of the bare `lit` table.
+This is a stub. lit-docx makes a finished Word document (.docx) in a chosen direction or publisher profile, plus DOCX or PDF to Markdown and in-place edits. It is now a LitFamily extension, kept in **wjgoarxiv-skills** (`documents` family); its self-contained Codex edition is `variants/litcodex/lit-docx`. The id stays here so its routes still land: `$litcodex:lit-docx`, the picker, implicit document requests and the document row of the bare `lit` table.
 
 ## #contract.inputs
 
-The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `lit-docx` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/lit-docx/SKILL.md`) means the moved skill is installed.
+The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `lit-docx` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/lit-docx/SKILL.md`) means the extension is installed.
 
 ## #contract.mode_matrix
 
@@ -37,7 +37,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 1. Print the banner when selected directly.
 2. If the installed copy is listed, read it fully and let it run the request.
-3. Otherwise say what lit-docx makes, that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-docx`), and give the lines below unchanged. A deck is lit-pptx (decks family); LitCodex no longer prepares an Office runtime.
+3. Otherwise say what lit-docx makes, that it is a LitFamily extension in wjgoarxiv-skills (Codex edition `variants/litcodex/lit-docx`), and give the lines below unchanged. A deck is lit-pptx (decks family); LitCodex no longer prepares an Office runtime.
 4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
 ## Install in Codex

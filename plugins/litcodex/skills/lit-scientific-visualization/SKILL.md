@@ -19,11 +19,11 @@ output_channels:
 
 When directly selected, the first visible line is `🔥 **LIT IGNITED · lit-scientific-visualization** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-This is a stub. lit-scientific-visualization makes a publication-quality plot of measured data on the authored scientific-visualization source. It moved out of LitCodex into **wjgoarxiv-skills**, in the `figures` family; its self-contained Codex edition is `variants/litcodex/lit-scientific-visualization`. The id stays here so its routes still land: the exact bare `lit-scientific-visualization` hook route, `$litcodex:lit-scientific-visualization` and the picker.
+This is a stub. lit-scientific-visualization makes a publication-quality plot of measured data on the authored scientific-visualization source. It is now a LitFamily extension, kept in **wjgoarxiv-skills** (`figures` family); its self-contained Codex edition is `variants/litcodex/lit-scientific-visualization`. The id stays here so its routes still land: the exact bare `lit-scientific-visualization` hook route, `$litcodex:lit-scientific-visualization` and the picker.
 
 ## #contract.inputs
 
-The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `lit-scientific-visualization` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/lit-scientific-visualization/SKILL.md`) means the moved skill is installed.
+The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `lit-scientific-visualization` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/lit-scientific-visualization/SKILL.md`) means the extension is installed.
 
 ## #contract.mode_matrix
 
@@ -37,7 +37,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 1. Print the banner when selected directly.
 2. If the installed copy is listed, read it fully and let it run the request.
-3. Otherwise say what lit-scientific-visualization makes, that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-scientific-visualization`), and give the lines below unchanged. Its authored source ships inside that folder (`vendor/scientific-visualization`), so one copy is the whole install.
+3. Otherwise say what lit-scientific-visualization makes, that it is a LitFamily extension in wjgoarxiv-skills (Codex edition `variants/litcodex/lit-scientific-visualization`), and give the lines below unchanged. Its authored source ships inside that folder (`vendor/scientific-visualization`), so one copy is the whole install.
 4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
 ## Install in Codex

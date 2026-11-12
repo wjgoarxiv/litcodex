@@ -49,7 +49,7 @@ const LIT_LOOP = [
 	"| Word report or document (보고서, 기획서, docx, Word) | lit-docx |",
 	"| Slides or deck (발표자료, 슬라이드, 덱 N장, pptx) | lit-pptx |",
 	"Each skill above is a folder under `{skills}`: read its SKILL.md first. One this package does not ship comes from the Codex skill catalog.",
-	"All but lit-code moved to wjgoarxiv-skills; each folder here is a stub that gives the install lines.",
+	"All but lit-code are LitFamily extensions in wjgoarxiv-skills; the stubs here give the install lines.",
 	"Software work covers the core flow, input errors and executable checks; before finishing, test invalid and boundary inputs and check the usage docs against the commands that really run.",
 	"Under `lit`, write editable Markdown next to a DOCX or PPTX, use the default profiles, and inspect the rendered result.",
 	"",
@@ -238,7 +238,7 @@ const LIT_SCHEMATIC = [
 	BLOCKED,
 	"",
 	"1. Read the stub {skill:lit-schematic}. When the session's skill list has a separate `lit-schematic` copy (normally under `$CODEX_HOME/skills/`, where `$CODEX_HOME` defaults to `~/.codex`), open that file and let it handle the request.",
-	"2. Otherwise say what lit-schematic makes, that it moved to wjgoarxiv-skills, and give the stub's install lines unchanged, for example:",
+	"2. Otherwise say what lit-schematic makes, that it is a LitFamily extension in wjgoarxiv-skills, and give the stub's install lines unchanged, for example:",
 	'   `cp -R "<path to your wjgoarxiv-skills clone>/variants/litcodex/lit-schematic" "$CODEX_HOME/skills/lit-schematic"`, then a new Codex session.',
 	"3. Draw nothing by hand and do not imitate the moved procedure. Stop after the notice.",
 ];

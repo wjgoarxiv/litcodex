@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -134,6 +134,36 @@ describe("auto-update management fail-closed boundary", () => {
 				expect(processError.status).toBe(3);
 				expect(processError.stdout).toContain("BLOCKED");
 			}
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it("shows the LitFamily extensions notice once, in the first session after an install or upgrade", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-auto-update-cli-extensions-"));
+		const dataRoot = join(root, "data");
+		mkdirSync(dataRoot, { recursive: true });
+		const message =
+			"LitFamily extensions\nLitCodex carries the LitFamily core, which is complete and works on its own.";
+		writeFileSync(
+			join(dataRoot, "extensions-notice.json"),
+			JSON.stringify({ schemaVersion: 1, version: "1.0.39", message }),
+		);
+		const session = (): string =>
+			execFileSync(process.execPath, [distCli, "hook", "session-start"], {
+				input: JSON.stringify({ hook_event_name: "SessionStart", cwd: process.cwd() }),
+				encoding: "utf8",
+				env: {
+					PATH: "",
+					LITCODEX_DATA_ROOT: dataRoot,
+					LITCODEX_AUTO_UPDATE_STATE_ROOT: join(root, "state"),
+					LITCODEX_NO_AUTO_UPDATE: "1",
+				},
+			});
+		try {
+			expect(JSON.parse(session().trim())).toEqual({ systemMessage: message });
+			expect(existsSync(join(dataRoot, "extensions-notice.json"))).toBe(false);
+			expect(session()).toBe("");
 		} finally {
 			rmSync(root, { recursive: true, force: true });
 		}

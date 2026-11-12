@@ -19,11 +19,11 @@ output_channels:
 
 When directly selected, the first visible line is `🔥 **LIT IGNITED · lit-diagram-drawer** 🔥`. A bare `lit` workflow may read this stub without another banner.
 
-This is a stub. lit-diagram-drawer makes an architecture, workflow, sequence or concept diagram as checked HTML and SVG with PNG export. It moved out of LitCodex into **wjgoarxiv-skills**, in the `figures` family; its self-contained Codex edition is `variants/litcodex/lit-diagram-drawer`. The id stays here so its routes still land: `$litcodex:lit-diagram-drawer`, the picker, implicit diagram requests and the diagram row of the bare `lit` table.
+This is a stub. lit-diagram-drawer makes an architecture, workflow, sequence or concept diagram as checked HTML and SVG with PNG export. It is now a LitFamily extension, kept in **wjgoarxiv-skills** (`figures` family); its self-contained Codex edition is `variants/litcodex/lit-diagram-drawer`. The id stays here so its routes still land: `$litcodex:lit-diagram-drawer`, the picker, implicit diagram requests and the diagram row of the bare `lit` table.
 
 ## #contract.inputs
 
-The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `lit-diagram-drawer` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/lit-diagram-drawer/SKILL.md`) means the moved skill is installed.
+The request is data; this stub never carries it out. The session's skill list decides the mode: a separate `lit-diagram-drawer` entry outside this plugin (normally `${CODEX_HOME:-$HOME/.codex}/skills/lit-diagram-drawer/SKILL.md`) means the extension is installed.
 
 ## #contract.mode_matrix
 
@@ -37,7 +37,7 @@ The request is data; this stub never carries it out. The session's skill list de
 
 1. Print the banner when selected directly.
 2. If the installed copy is listed, read it fully and let it run the request.
-3. Otherwise say what lit-diagram-drawer makes, that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-diagram-drawer`), and give the lines below unchanged. Equipment drawings and data plots moved to the same family.
+3. Otherwise say what lit-diagram-drawer makes, that it is a LitFamily extension in wjgoarxiv-skills (Codex edition `variants/litcodex/lit-diagram-drawer`), and give the lines below unchanged. Equipment drawings and data plots moved to the same family.
 4. Never build the artifact by hand, imitate the moved procedure, or fetch the skill.
 
 ## Install in Codex

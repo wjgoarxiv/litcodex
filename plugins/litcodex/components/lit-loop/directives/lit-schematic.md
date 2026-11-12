@@ -61,7 +61,7 @@ This directive is an LLM-facing contract injected by the LitCodex Codex plugin, 
 
 1. Print the banner line above verbatim.
 2. For the selected route, read relevant `.litcodex` state only when the user points at earlier drawing work; the stub keeps none of its own. Check the skill list for the installed copy; when present, read it completely and let it run the request.
-3. Otherwise tell the user what lit-schematic makes (P&IDs, PFDs and BFDs, equipment layouts, apparatus figures and isometric cutaways as millimetre-sized SVG with PDF and 600 dpi PNG), that it moved to wjgoarxiv-skills (Codex edition `variants/litcodex/lit-schematic/`, a self-contained folder), and give these lines unchanged:
+3. Otherwise tell the user what lit-schematic makes (P&IDs, PFDs and BFDs, equipment layouts, apparatus figures and isometric cutaways as millimetre-sized SVG with PDF and 600 dpi PNG), that it is a LitFamily extension in wjgoarxiv-skills (Codex edition `variants/litcodex/lit-schematic/`, a self-contained folder), and give these lines unchanged:
 
 ```bash
 git clone https://github.com/wjgoarxiv/wjgoarxiv-skills
