@@ -15,7 +15,7 @@ today's stopped.
 <a href="https://github.com/wjgoarxiv/litcodex/stargazers"><img src="https://img.shields.io/github/stars/wjgoarxiv/litcodex?color=A3E635" alt="GitHub stars" /></a>
 </p>
 
-[한국어](./README-Ko-KR.md) · [Install](#install) · [First task](#start-with-lit) · [What you get](#what-you-get) · [Commands](#commands) · [Learn more](#learn-more)
+[한국어](./README-Ko-KR.md) · [Install](#install) · [First task](#start-with-lit) · [What you get](#what-you-get) · [Commands](#commands) · [Update](#update-and-uninstall) · [Learn more](#learn-more)
 
 > [!TIP]
 > Run the one line under [Install](#install), approve the LitCodex hooks when Codex asks, then type `lit` and your
@@ -30,18 +30,13 @@ before Codex says the turn is done.
 
 Codex CLI is quick at the next step, and the trouble starts when a piece of work is bigger than one conversation.
 The context fills up or the session ends, and the next session has to work out again what was decided, what was
-checked and what was left half done. Somewhere along the way, a change that nobody actually verified gets called finished.
+checked and what was left half done. LitCodex is a plugin for Codex CLI that keeps those records where any later
+session can read them, and the single word `handoff` before you stop leaves a written note of where you were.
 
-LitCodex is a plugin for Codex CLI that keeps that thread. A `lit` request becomes a goal that counts as finished only
-when every check has recorded evidence, and any later session can read those records. Send the single word `handoff`
-before you stop, and the next session starts from a written note of where you were.
-
-Around that loop come more than forty skills for planning, code review, research, debugging, Word and PowerPoint
-files, and English or Korean prose. The work runs inside Codex on your machine, with your own sign-in and models.
-
-It is built for people who already use Codex CLI on work that outlasts one sitting: a feature that takes a few days,
-a refactor you want planned before anyone edits, research you need with sources, a report or deck that has to end up
-as a real file. In one line: Codex stops calling unchecked work done, and you stop explaining the same project twice.
+It also brings more than forty skills for planning, code review, research, debugging, Word and PowerPoint files, and
+English or Korean prose, all running inside Codex on your machine with your own sign-in and models. It is built for
+people whose Codex CLI work outlasts one sitting: a feature that takes a few days, a refactor you want planned before
+anyone edits, research you need with sources, or a report or deck that has to end up as a real file.
 
 ## Pick your path
 
@@ -52,7 +47,8 @@ as a real file. In one line: Codex stops calling unchecked work done, and you st
 | See what it does | Read the features and the gallery | [What you get](#what-you-get) |
 | Add decks, documents or figures | Install an extension | [Extensions](#extensions) |
 | Look something up | Prompt routes and CLI commands | [Commands](#commands) |
-| Fix or remove it | Doctor, troubleshooting, uninstall | [Troubleshooting](#troubleshooting) |
+| Update or remove it | Rerun install with a newer version, or uninstall | [Update and uninstall](#update-and-uninstall) |
+| Fix a problem | Doctor, then troubleshooting | [Troubleshooting](#troubleshooting) |
 
 ## Install
 
@@ -62,11 +58,11 @@ You need Node.js 22 or later and Codex CLI. Run from any folder:
 npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex install
 ```
 
-The installer asks three questions (which model leads, which model helps, and which output style you like), and
-pressing Enter keeps the recommended models and your current output style. It then shows the route it is about to
-write and waits for one more Enter before it registers the plugin, its hooks and its agent roles, changing only the
-keys it manages in `~/.codex/config.toml`. When the receipt says `Status Ready for Codex`, the doctor check has
-already passed.
+The installer asks which model leads, which model helps, and which output style you like; Enter keeps the recommended
+models and your current output style. It then shows the route it will write and waits for one more Enter. Only then
+does it register the plugin, its hooks and its agent roles, changing only the keys it manages in `~/.codex/config.toml`.
+
+A receipt that says `Status Ready for Codex` means the doctor check has already passed.
 
 | You want | Run | What changes |
 | --- | --- | --- |
@@ -80,11 +76,11 @@ A global install fetches a few pinned downloads for those rendering tools; the
 > Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex doctor`.
 
 The [install guide](./docs/install.md) also covers trying LitCodex in a home of its own, Windows, and pictures of
-every screen the installer shows. Coming from the old unscoped package? The [migration guide](./docs/npm-migration.md)
-covers the move.
+every screen the installer shows. Coming from the old unscoped package (`litcodex-ai`)? The
+[migration guide](./docs/npm-migration.md) covers the move.
 
 The installer also offers a short LitFamily block for your global `~/.codex/AGENTS.md`, the file Codex reads at the
-start of every session, and you can switch it, and a no-attribution request inside it, on or off later.
+start of every session. You can turn the block on or off later, and the same goes for a no-attribution request inside it.
 
 <details>
 <summary>The global AGENTS.md block and commit attribution</summary>
@@ -237,23 +233,30 @@ and in the next one ask Codex to read that packet and the project goals first.
 
 ## What you get
 
-- **Work that finishes for real.** `lit` turns a request into a goal with checks; a goal can be completed only once
-  every check has passing evidence, and anything Codex could not verify is written down where you will see it.
-  Try `lit fix the flaky login test and show me the run that proves it`.
-- **A plan before the edits.** `lit plan` writes a plan with numbered steps and success criteria into
-  `.litcodex/plans/` and edits nothing else. Once you approve it, `lit start work <plan-name>` runs each step through
-  five gates (re-read, automated checks, manual QA, adversarial QA, cleanup) and finishes only after all five review
-  lanes pass. Try `lit plan move the settings page to the new form library`.
+- **Work that finishes for real.** A goal completes only once every check has passing evidence, and anything Codex
+  could not verify is written down where you will see it.
+- **A plan before the edits.** `lit plan` writes numbered steps and success criteria into `.litcodex/plans/` and edits
+  nothing else; `lit start work <plan-name>` then runs the approved plan.
 - **Reviews that can say no.** `lit review` runs five separate reviews of a plan or a finished change, and any one of
   them can hold back approval.
 - **Research with sources.** `lit research` gathers evidence in parallel and writes a cited synthesis that keeps facts,
-  hypotheses and open questions apart. Try `lit research which Node 22 OAuth libraries support PKCE, with sources`.
-- **Word and PowerPoint files.** Ask for a report or slides with `lit` and the matching skill (`lit-docx` or
-  `lit-pptx`) reads your material, picks a design direction, names it with two alternatives, and builds an editable
-  file with its Markdown source next to it. Try `lit turn notes.md into a ten-slide deck for the Monday review`; both
-  skills are now [extensions](#extensions).
+  hypotheses and open questions apart.
+- **Word and PowerPoint files.** The `lit-docx` and `lit-pptx` [extensions](#extensions) pick a design direction for
+  your material and build an editable file with its Markdown source next to it.
 - **Cleaner prose, in English or Korean.** `$litcodex:lit-humanizer` rewrites stiff model writing while keeping facts
-  and hedges. Before a file is written, its hook stops a few clear drafting tells.
+  and hedges, and its hook stops a few clear drafting tells before a file is written.
+
+<details>
+<summary>Prompts to try, and what each feature does in detail</summary>
+
+| Feature | Try | In detail |
+| --- | --- | --- |
+| Work that finishes | `lit fix the flaky login test and show me the run that proves it` | `lit` turns the request into a goal with checks |
+| A plan first | `lit plan move the settings page to the new form library` | Once you approve it, `lit start work <plan-name>` runs each step through five gates (re-read, automated checks, manual QA, adversarial QA, cleanup) and finishes only after all five review lanes pass |
+| Research | `lit research which Node 22 OAuth libraries support PKCE, with sources` | Evidence is gathered in parallel |
+| Word and PowerPoint | `lit turn notes.md into a ten-slide deck for the Monday review` | Ask with `lit`; the matching skill reads your material, picks a design direction and names it with two alternatives |
+
+</details>
 
 ### Also in the box
 
@@ -269,9 +272,8 @@ Every skill can be picked in the Codex skill picker or mentioned by name, such a
 | Keeping LitCodex healthy | `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix` |
 | Running on their own | `rules`, `lsp` and `comment-checker`: project rules on each prompt, LSP and comment checks after edits |
 
-Apart from `browser-drive`, the screens, figures and film skills moved to wjgoarxiv-skills, a separate collection of content
-skills, along with `lit-docx` and `lit-pptx`. Their names still work here: each one is a short stub that tells you where the skill went and how to copy
-it into `~/.codex/skills/`, and until you copy it, it answers with the one-line Codex install command.
+Apart from `browser-drive`, the screens, figures and film skills are now [extensions](#extensions), like `lit-docx`
+and `lit-pptx`.
 
 ## Extensions
 
@@ -285,14 +287,15 @@ That core is complete and works on its own.
   </picture>
 </p>
 
-Nine skills that make files are LitFamily extensions: `lit-pptx` (decks), `lit-docx` (documents),
-`lit-diagram-drawer`, `lit-schematic` and `lit-scientific-visualization` (figures), `frontend-ui-ux` and
-`visual-qa` (design), and `lit-typographic-motion` and `readme-studio` (video and covers). They are kept in the
-extension shelf, [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills); install the ones you use
-alongside LitCodex to get the full LitFamily experience.
+The nine skills that make files (decks, documents, figures, design, and video and covers) are LitFamily extensions.
+They moved to the extension shelf, [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills), a separate
+collection of content skills; install the ones you use alongside LitCodex to get the full LitFamily experience.
 
-Each one is a folder that goes into Codex's own skills folder, and LitCodex can put it there for you. Every command
-below only prints its plan until you add `--yes`:
+Until you copy one in, its name still works here as a short stub. `$litcodex:lit-pptx` and the other stubs say what the
+skill makes and where it went, and print the one-line Codex command that copies it into `~/.codex/skills/`.
+
+Each extension is a folder that goes into Codex's own skills folder, and LitCodex can put it there for you. Every
+command below only prints its plan until you add `--yes`:
 
 ```bash
 litcodex extensions list
@@ -303,7 +306,11 @@ litcodex extensions update --yes
 ```
 
 <details>
-<summary>What each extensions command does</summary>
+<summary>The nine extensions, and what each extensions command does</summary>
+
+The nine by family: `lit-pptx` (decks), `lit-docx` (documents), `lit-diagram-drawer`, `lit-schematic` and
+`lit-scientific-visualization` (figures), `frontend-ui-ux` and `visual-qa` (design), and `lit-typographic-motion` and
+`readme-studio` (video and covers).
 
 | Command | What it does |
 | --- | --- |
@@ -347,9 +354,7 @@ yourself. To update, pull the clone and run the four lines again. To remove an e
 
 </details>
 
-Start a new Codex session afterwards. Without an extension the name still works: `$litcodex:lit-pptx` and the
-other stubs say what the skill makes and print its own copy line. `litcodex install` and upgrades never write
-`~/.codex/skills/`, so your copies stay.
+Start a new Codex session afterwards. `litcodex install` and upgrades never write `~/.codex/skills/`, so your copies stay.
 
 <details>
 <summary>What an upgrade tells you, keeps and leaves behind</summary>
@@ -423,7 +428,17 @@ next context starts from the handoff that was just saved.
 The [automatic handoff guide](./docs/auto-handoff.md) covers the environment variables, the doctor line and what
 happens in a project you have not trusted yet.
 
-## Watch LIT work in the Codex app
+## See the LIT card
+
+Where the live card shows up depends on where you run Codex.
+
+| Where you run Codex | What shows the card |
+| --- | --- |
+| The Codex desktop app | A card in the thread |
+| The terminal `codex`, with a second window | `litcodex hud` in that window |
+| The terminal `codex`, in one window | `litcodex run`, or the hook card in colour |
+
+### In the Codex app
 
 In the Codex desktop app, LitCodex can show a small LIT card in the thread: which LIT skill is running, the workflow
 map with the stage it is on, and the tool working right now with a clock beside it. The card updates by itself while
@@ -448,7 +463,7 @@ following them.
 
 </details>
 
-## Watch LIT in a second window
+### In a second window
 
 The terminal `codex` has no room for a card, so LitCodex can draw it next door instead. Open a second terminal
 window or tab, in any folder, and run:
@@ -476,7 +491,7 @@ Colour follows `NO_COLOR`. Tested on macOS; Linux and Windows terminals are not 
 
 </details>
 
-## Colour the LIT card
+### In colour
 
 The LIT card the hooks print is plain text by default. The terminal `codex` (0.162 or newer) can draw it in colour:
 finished stages in green, the current stage in bold orange, later stages dimmed.
@@ -502,7 +517,7 @@ status line. Codex itself cannot run one yet.
 
 </details>
 
-## Keep LIT under Codex in one terminal
+### Under Codex in one terminal
 
 ```bash
 litcodex run
@@ -697,7 +712,7 @@ edits your config.
 
 </details>
 
-## Updates
+## Update and uninstall
 
 With the `npm exec` form, run the install command again with the newer version number. A global install can update
 itself after an interactive command, and an interactive `litcodex doctor` may mention a newer version; set
@@ -706,6 +721,13 @@ itself after an interactive command, and an interactive `litcodex doctor` may me
 Inside Codex the check also runs when a session starts, about once a day, but only after you approve the LitCodex
 hooks in its hook review, which `codex exec` never shows. A new version takes effect in the next Codex session, and
 `litcodex doctor` shows the update state and what to do about it.
+
+To remove LitCodex, run this from any folder. It removes the plugin and the config LitCodex manages, and leaves your
+other settings alone.
+
+```sh
+npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex uninstall
+```
 
 ## Troubleshooting
 
@@ -717,14 +739,6 @@ hooks in its hook review, which `codex exec` never shows. A new version takes ef
   your `PATH`.
 - **A native goal is paused or blocked.** Run `/goal resume`, confirm the goal is active, then retry with
   `litcodex loop run --retry-failed`. Keep the unfinished goal. [Recovery details](./docs/usage.md#troubleshooting).
-
-## Uninstall
-
-```sh
-npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex uninstall
-```
-
-`litcodex uninstall` removes the plugin and the config LitCodex manages, and leaves your other settings alone.
 
 ## Learn more
 

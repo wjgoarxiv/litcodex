@@ -14,7 +14,7 @@
 <a href="https://github.com/wjgoarxiv/litcodex/stargazers"><img src="https://img.shields.io/github/stars/wjgoarxiv/litcodex?color=A3E635" alt="GitHub 스타" /></a>
 </p>
 
-[English](./README.md) · [설치](#설치) · [첫 작업](#lit으로-시작하기) · [할 수 있는 일](#할-수-있는-일) · [명령어](#명령어) · [더 알아보기](#더-알아보기)
+[English](./README.md) · [설치](#설치) · [첫 작업](#lit으로-시작하기) · [할 수 있는 일](#할-수-있는-일) · [명령어](#명령어) · [업데이트](#업데이트와-제거) · [더 알아보기](#더-알아보기)
 
 > [!TIP]
 > [설치](#설치)의 명령 한 줄을 실행하고, Codex가 요청하면 LitCodex 훅을 승인한 뒤
@@ -29,18 +29,13 @@
 
 Codex CLI는 바로 다음 한 걸음을 빨리 내딛지만, 작업이 대화 한 번보다 커지면 곤란해집니다. 컨텍스트가 차거나
 세션이 끝나면, 다음 세션은 무엇을 정했고 무엇을 확인했고 무엇이 반쯤 남았는지를 처음부터 다시 짚어야 합니다.
-그러다 보면 아무도 실제로 확인하지 않은 변경이 어느새 끝난 일로 처리되기도 합니다.
+LitCodex는 그 기록을 나중에 어느 세션에서든 읽을 수 있게 남기는 Codex CLI 플러그인이고, 멈추기 전에 `handoff` 한
+단어만 보내 두면 어디까지 왔는지 적힌 메모가 남습니다.
 
-LitCodex는 그 흐름을 붙잡아 두는 Codex CLI 플러그인입니다. `lit` 요청은 모든 기준에 증거가 기록돼야 끝난 것으로
-인정되는 목표가 되고, 그 기록은 나중에 어느 세션에서든 읽을 수 있습니다. 멈추기 전에 `handoff` 한 단어만 보내 두면,
-다음 세션은 어디까지 왔는지 적힌 메모에서 출발합니다.
-
-이 루프와 함께 계획, 코드 리뷰, 조사, 디버깅, Word·PowerPoint 파일, 영어·한국어 글 다듬기를 맡는 스킬이 마흔
-개 넘게 들어 있습니다. 작업은 내 컴퓨터의 Codex 안에서, 내 로그인과 내 모델로 돌아갑니다.
-
-이미 Codex CLI를 쓰고 있고, 한 번에 끝나지 않는 일을 맡기는 분께 잘 맞습니다. 며칠 걸리는 기능 개발, 손대기
-전에 계획부터 세우고 싶은 리팩터링, 출처가 꼭 필요한 조사, 실제 파일로 나와야 하는 보고서나 발표자료 같은
-일이 그렇습니다. 한 줄로 말하면, Codex가 확인하지 않은 일을 끝났다고 하지 않고 같은 프로젝트를 두 번 설명할 필요도 없습니다.
+계획, 코드 리뷰, 조사, 디버깅, Word·PowerPoint 파일, 영어·한국어 글 다듬기를 맡는 스킬도 마흔 개 넘게 들어 있고,
+모두 내 컴퓨터의 Codex 안에서 내 로그인과 내 모델로 돌아갑니다. 한 번에 끝나지 않는 일을 Codex CLI에 맡기는 분께
+잘 맞습니다. 며칠 걸리는 기능 개발, 손대기 전에 계획부터 세우고 싶은 리팩터링, 출처가 꼭 필요한 조사, 실제 파일로
+나와야 하는 보고서나 발표자료 같은 일입니다.
 
 ## 경로 고르기
 
@@ -51,7 +46,8 @@ LitCodex는 그 흐름을 붙잡아 두는 Codex CLI 플러그인입니다. `lit
 | 무엇을 하는지 보기 | 기능과 갤러리 읽기 | [할 수 있는 일](#할-수-있는-일) |
 | 발표자료·문서·그림 더하기 | 확장 설치 | [확장](#확장) |
 | 찾아보기 | 프롬프트 경로와 CLI 명령 | [명령어](#명령어) |
-| 고치거나 지우기 | doctor, 문제 해결, 제거 | [문제 해결](#문제-해결) |
+| 업데이트하거나 지우기 | 새 버전으로 설치 명령 다시 실행, 또는 제거 | [업데이트와 제거](#업데이트와-제거) |
+| 문제 고치기 | doctor 실행 후 문제 해결 | [문제 해결](#문제-해결) |
 
 ## 설치
 
@@ -61,9 +57,10 @@ Node.js 22 이상과 Codex CLI가 필요합니다. 아무 폴더에서나 실행
 npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex install
 ```
 
-설치기는 어떤 모델이 작업을 이끌지, 어떤 모델이 거들지, 답변을 어떤 스타일로 받을지 세 가지를 묻고, Enter만 누르면
-권장 모델과 지금 쓰는 출력 스타일이 그대로 골라집니다. 이어서 쓰려는 경로를 보여 주고, Enter를 한 번 더 누를 때까지
-기다렸다가 플러그인과 훅, 에이전트 역할을 등록하며, `~/.codex/config.toml`에서는 자기가 관리하는 항목만 고칩니다.
+설치기는 어떤 모델이 작업을 이끌지, 어떤 모델이 거들지, 답변을 어떤 스타일로 받을지 묻습니다. Enter만 누르면 권장
+모델과 지금 쓰는 출력 스타일이 그대로 골라집니다. 이어서 쓸 경로를 보여 주고 Enter를 한 번 더 기다린 뒤에야 플러그인과
+훅, 에이전트 역할을 등록하며, `~/.codex/config.toml`에서는 자기가 관리하는 항목만 고칩니다.
+
 영수증에 `Status Ready for Codex`가 보이면 doctor 검사까지 이미 통과한 것입니다.
 
 | 원하는 것 | 실행 | 바뀌는 것 |
@@ -78,11 +75,11 @@ npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex install
 > 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex doctor`.
 
 [설치 안내](./docs/install-Ko-KR.md)에는 기존 설정과 떼어 놓고 써 보는 법, Windows, 설치기가 보여 주는 화면
-사진도 모두 있습니다. 예전 패키지 이름(`litcodex-ai`)으로 설치했다면 [기존 설치 이전 안내](./docs/npm-migration.md)를
-먼저 읽어 주세요.
+사진도 모두 있습니다. 범위 없는 예전 패키지(`litcodex-ai`)로 설치했다면 [기존 설치 이전 안내](./docs/npm-migration.md)가
+옮기는 법을 설명합니다.
 
-설치기는 Codex가 매 세션 시작에 읽는 전역 `~/.codex/AGENTS.md`에 넣어 쓸 짧은 LitFamily 블록도 제공합니다. 이 블록과
-그 안의 AI 표기 금지 부탁은 나중에도 언제든 켜고 끌 수 있습니다.
+설치기는 Codex가 매 세션 시작에 읽는 전역 `~/.codex/AGENTS.md`에 넣어 쓸 짧은 LitFamily 블록도 제공합니다. 이 블록은
+나중에 켜고 끌 수 있고, 그 안의 AI 표기 금지 부탁도 마찬가지입니다.
 
 <details>
 <summary>전역 AGENTS.md 블록과 커밋 표기</summary>
@@ -232,22 +229,30 @@ lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외�
 
 ## 할 수 있는 일
 
-- **정말로 끝나는 작업.** `lit`은 요청을 확인 기준이 붙은 목표로 바꿉니다. 모든 기준에 통과 증거가 있어야 목표를
-  완료할 수 있고, Codex가 확인하지 못한 부분은 눈에 띄는 곳에 적어 둡니다.
-  예: `lit 자꾸 깨지는 로그인 테스트를 고치고, 고쳐졌다는 실행 결과도 보여줘`.
-- **고치기 전에 계획부터.** `lit plan`은 번호 붙은 단계와 성공 기준을 담은 계획을 `.litcodex/plans/`에 쓰고, 그
-  밖에는 아무것도 고치지 않습니다. 계획을 승인하면 `lit start work <계획 이름>`이 각 단계를 다섯 관문(계획 재확인,
-  자동 검증, 수동 QA, 적대적 QA, 정리)에 통과시키고, 다섯 리뷰가 모두 통과해야 마칩니다.
-  예: `lit plan 설정 페이지를 새 폼 라이브러리로 옮기기`.
-- **거절할 줄 아는 리뷰.** `lit review`는 계획이나 끝난 변경을 놓고 리뷰 다섯 개를 따로 돌립니다. 하나라도
-  통과하지 못하면 승인이 나지 않습니다.
-- **출처가 붙는 조사.** `lit research`는 여러 갈래로 증거를 모은 뒤 출처를 단 종합을 씁니다. 사실과 가설, 아직
-  풀리지 않은 질문은 따로 적습니다. 예: `lit research Node 22에서 PKCE를 지원하는 OAuth 라이브러리를 출처와 함께 정리해줘`.
-- **Word와 PowerPoint 파일.** `lit`으로 보고서나 발표자료를 부탁하면 맞는 스킬(`lit-docx`, `lit-pptx`)이 자료를
-  읽고 디자인 방향을 고릅니다. 고른 방향과 대안 두 가지를 밝힌 뒤, 편집할 수 있는 파일을 Markdown 원본과 함께
-  만듭니다. 예: `lit notes.md로 월요일 회의용 열 장짜리 발표자료를 만들어줘`. 두 스킬은 이제 [확장](#확장)입니다.
-- **영어·한국어 글 다듬기.** `$litcodex:lit-humanizer`는 사실과 단서는 남기고 딱딱한 AI 문장을 다시 씁니다. 파일에
+- **정말로 끝나는 작업.** 모든 기준에 통과 증거가 있어야 목표를 완료할 수 있고, Codex가 확인하지 못한 부분은 눈에
+  띄는 곳에 적어 둡니다.
+- **고치기 전에 계획부터.** `lit plan`은 번호 붙은 단계와 성공 기준을 `.litcodex/plans/`에 쓰고 그 밖에는 아무것도
+  고치지 않으며, 승인한 계획은 `lit start work <계획 이름>`이 실행합니다.
+- **거절할 줄 아는 리뷰.** `lit review`는 계획이나 끝난 변경을 놓고 리뷰 다섯 개를 따로 돌리고, 하나라도 통과하지
+  못하면 승인이 나지 않습니다.
+- **출처가 붙는 조사.** `lit research`는 여러 갈래로 증거를 모아 출처를 단 종합을 쓰고, 사실과 가설, 아직 풀리지
+  않은 질문은 따로 적습니다.
+- **Word와 PowerPoint 파일.** `lit-docx`와 `lit-pptx` [확장](#확장)이 자료에 맞는 디자인 방향을 고르고, 편집할 수
+  있는 파일을 Markdown 원본과 함께 만듭니다.
+- **영어·한국어 글 다듬기.** `$litcodex:lit-humanizer`는 사실과 단서는 남기고 딱딱한 AI 문장을 다시 쓰며, 파일에
   쓰기 직전에는 훅이 누가 봐도 초안 티가 나는 표현 몇 가지를 막아 줍니다.
+
+<details>
+<summary>해 볼 프롬프트와 기능별 자세한 내용</summary>
+
+| 기능 | 해 볼 프롬프트 | 자세히 |
+| --- | --- | --- |
+| 정말로 끝나는 작업 | `lit 자꾸 깨지는 로그인 테스트를 고치고, 고쳐졌다는 실행 결과도 보여줘` | `lit`은 요청을 확인 기준이 붙은 목표로 바꿈 |
+| 계획부터 | `lit plan 설정 페이지를 새 폼 라이브러리로 옮기기` | 계획을 승인하면 `lit start work <계획 이름>`이 각 단계를 다섯 관문(계획 재확인, 자동 검증, 수동 QA, 적대적 QA, 정리)에 통과시키고, 다섯 리뷰가 모두 통과해야 마침 |
+| 조사 | `lit research Node 22에서 PKCE를 지원하는 OAuth 라이브러리를 출처와 함께 정리해줘` | 증거를 여러 갈래로 동시에 모음 |
+| Word와 PowerPoint | `lit notes.md로 월요일 회의용 열 장짜리 발표자료를 만들어줘` | `lit`으로 부탁하면 맞는 스킬이 자료를 읽고 디자인 방향을 고른 뒤, 고른 방향과 대안 두 가지를 밝힘 |
+
+</details>
 
 ### 그 밖의 스킬
 
@@ -263,9 +268,7 @@ lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외�
 | LitCodex 관리 | `litcodex-doctor`, `litcodex-report-bug`, `litcodex-contribute-bug-fix` |
 | 알아서 도는 검사 | `rules`, `lsp`, `comment-checker`: 프롬프트마다 프로젝트 규칙을 넣고, 수정 뒤에는 LSP와 주석을 확인 |
 
-화면, 그림, 영상 스킬은 `browser-drive`를 빼고 `lit-docx`, `lit-pptx`와 함께 콘텐츠 스킬을 따로 모은
-wjgoarxiv-skills로 옮겼습니다. 이름은 여기서도 그대로 쓸 수 있습니다. 각 이름은 스킬이 옮겨 간 곳과
-`~/.codex/skills/`에 복사하는 방법을 알려 주는 짧은 스텁이고, 복사하기 전까지는 Codex 설치 명령 한 줄로 답합니다.
+화면, 그림, 영상 스킬은 `browser-drive`를 빼면 `lit-docx`, `lit-pptx`처럼 이제 [확장](#확장)입니다.
 
 ## 확장
 
@@ -279,11 +282,12 @@ LitCodex에는 LitFamily 코어가 들어 있습니다. `lit` 루프, 계획, �
   </picture>
 </p>
 
-파일을 만드는 스킬 아홉 개는 LitFamily 확장입니다. `lit-pptx`(발표자료), `lit-docx`(문서),
-`lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`(그림), `frontend-ui-ux`, `visual-qa`(디자인),
-`lit-typographic-motion`, `readme-studio`(영상과 커버)는 확장 선반인
-[wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills)에 있고, 쓰는 것만 LitCodex 옆에 설치하면
-LitFamily를 온전히 쓸 수 있습니다.
+파일을 만드는 스킬 아홉 개(발표자료, 문서, 그림, 디자인, 영상과 커버)는 LitFamily 확장입니다. 콘텐츠 스킬을 따로
+모은 확장 선반 [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills)로 옮겼고, 쓰는 것만 LitCodex 옆에
+설치하면 LitFamily를 온전히 쓸 수 있습니다.
+
+복사해 넣기 전에도 이름은 여기서 짧은 스텁으로 그대로 동작합니다. `$litcodex:lit-pptx` 같은 스텁이 그 스킬이 무엇을
+만드는지, 어디로 옮겨 갔는지 알려 주고, `~/.codex/skills/`에 복사하는 Codex 명령 한 줄을 보여 줍니다.
 
 확장 하나는 Codex 자체 스킬 폴더에 들어가는 폴더 하나이고, 그 일은 LitCodex가 대신 해 줄 수 있습니다. 아래 명령은
 모두 `--yes`를 붙이기 전까지 할 일만 보여 줍니다.
@@ -297,7 +301,11 @@ litcodex extensions update --yes
 ```
 
 <details>
-<summary>extensions 명령별로 하는 일</summary>
+<summary>확장 아홉 개와 extensions 명령별로 하는 일</summary>
+
+패밀리별 아홉 개: `lit-pptx`(발표자료), `lit-docx`(문서), `lit-diagram-drawer`, `lit-schematic`,
+`lit-scientific-visualization`(그림), `frontend-ui-ux`, `visual-qa`(디자인), `lit-typographic-motion`,
+`readme-studio`(영상과 커버).
 
 | 명령 | 하는 일 |
 | --- | --- |
@@ -342,9 +350,8 @@ cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/lit-docx/SKILL.md" ] && print
 
 </details>
 
-복사한 뒤에는 Codex 세션을 새로 여세요. 확장이 없어도 이름은 그대로 동작합니다. `$litcodex:lit-pptx` 같은
-스텁이 그 스킬이 무엇을 만드는지 알려 주고 자기 복사 명령을 보여 줍니다. `litcodex install`과 업그레이드는
-`~/.codex/skills/`에 쓰지 않으므로 복사본은 그대로 남습니다.
+복사한 뒤에는 Codex 세션을 새로 여세요. `litcodex install`과 업그레이드는 `~/.codex/skills/`에 쓰지 않으므로 복사본은
+그대로 남습니다.
 
 <details>
 <summary>업그레이드가 알려 주는 것, 지켜 주는 것, 남기는 것</summary>
@@ -416,7 +423,17 @@ Codex가 스스로 압축하지 않는 경우라면 그 한 줄이 `/compact`를
 환경 변수, doctor 줄, 아직 신뢰하지 않은 프로젝트에서 일어나는 일은 [자동 핸드오프 안내](./docs/auto-handoff-Ko-KR.md)에
 있습니다.
 
-## Codex 앱에서 LIT 진행 보기
+## LIT 카드 보기
+
+실시간 카드가 어디에 뜨는지는 Codex를 어디서 쓰는지에 따라 다릅니다.
+
+| Codex를 쓰는 곳 | 카드를 보여 주는 것 |
+| --- | --- |
+| Codex 데스크톱 앱 | 스레드 안의 카드 |
+| 터미널 `codex`, 두 번째 창이 있을 때 | 그 창의 `litcodex hud` |
+| 터미널 `codex`, 창 하나 | `litcodex run`, 또는 색을 넣은 훅 카드 |
+
+### Codex 앱에서
 
 Codex 데스크톱 앱에서는 LitCodex가 스레드 안에 작은 LIT 카드를 보여 줄 수 있습니다. 카드에는 지금 돌아가는 LIT 스킬,
 워크플로 지도와 현재 단계, 그리고 지금 실행 중인 도구와 경과 시간이 나옵니다. 에이전트가 일하는 동안 카드는 저절로
@@ -441,7 +458,7 @@ Codex 데스크톱 앱에서는 LitCodex가 스레드 안에 작은 LIT 카드�
 
 </details>
 
-## 두 번째 창에서 LIT 지켜보기
+### 두 번째 창에서
 
 터미널 `codex`를 쓰는 동안에도 LIT 카드를 옆 창에 띄워 둘 수 있습니다. 터미널 창이나 탭을 하나 더 열고, 아무 폴더에서나
 이렇게 실행하세요.
@@ -467,7 +484,7 @@ HUD는 LIT가 카드용으로 남겨 두는 작은 기록만 읽습니다. 파�
 
 </details>
 
-## LIT 카드에 색 넣기
+### 색 넣기
 
 훅이 찍는 LIT 카드는 기본으로 색 없이 나옵니다. 터미널 `codex`(0.162 이상)는 카드를 색으로 그릴 수 있습니다. 끝난 단계는
 초록, 지금 단계는 굵은 주황, 남은 단계는 흐리게 보입니다.
@@ -490,7 +507,7 @@ litcodex screen-status on
 
 </details>
 
-## 한 터미널에서 Codex 아래에 LIT 띄우기
+### 한 터미널에서 Codex 아래에
 
 ```bash
 litcodex run
@@ -682,7 +699,7 @@ Codex 안에서 `/statusline`과 `/title`로 직접 고를 수도 있습니다. 
 
 </details>
 
-## 업데이트
+## 업데이트와 제거
 
 `npm exec` 형식으로 설치했다면 새 버전 번호를 넣어 설치 명령을 다시 실행하세요. 전역 설치는 대화형 명령 뒤에
 스스로 업데이트할 수 있고 대화형으로 실행한 `litcodex doctor`가 새 버전을 알려 줄 수도 있는데, 둘 다 끄려면
@@ -691,6 +708,13 @@ Codex 안에서 `/statusline`과 `/title`로 직접 고를 수도 있습니다. 
 Codex 안에서는 세션을 시작할 때도 하루에 한 번 정도 확인하는데, Codex 훅 검토에서 LitCodex 훅을 승인한 뒤에만 돌고
 `codex exec`는 그 검토 화면을 띄우지 않습니다. 새 버전은 다음 Codex 세션부터 적용되고, 지금 어떤 상태인지와 무엇을
 하면 되는지는 `litcodex doctor`가 알려 줍니다.
+
+LitCodex를 지우려면 아무 폴더에서나 아래 명령을 실행하세요. 플러그인과 LitCodex가 관리하는 설정을 지우고, 관련 없는
+설정은 그대로 둡니다.
+
+```sh
+npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex uninstall
+```
 
 ## 문제 해결
 
@@ -701,14 +725,6 @@ Codex 안에서는 세션을 시작할 때도 하루에 한 번 정도 확인하
 - **Codex 목표가 멈췄거나(paused) 막혔습니다(blocked).** `/goal resume`으로 재개하고 활성 상태인지 확인한 뒤
   `litcodex loop run --retry-failed`로 다시 시도하세요. 미완료 목표는 지우지 말고 남겨 두세요. 자세한 내용은
   [복구 참고서](./docs/usage-Ko-KR.md#문제-해결)에 있습니다.
-
-## 제거
-
-```sh
-npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex uninstall
-```
-
-`litcodex uninstall`은 플러그인과 LitCodex가 관리하는 설정을 지우고, 관련 없는 설정은 그대로 둡니다.
 
 ## 더 알아보기
 
