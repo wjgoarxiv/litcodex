@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import {
+	cpSync,
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
@@ -10,7 +11,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { dispatch } from "../cli.js";
 import {
@@ -20,6 +21,7 @@ import {
 	EXTENSION_IDS,
 	type ExtensionsDeps,
 	extensionsDoctorLine,
+	extensionsNoticeLine,
 	RECEIPT_NAME,
 	runExtensionsCli,
 } from "./extensions.js";
@@ -400,5 +402,111 @@ describe("litcodex extensions", () => {
 			repoRoot: w.project,
 		});
 		expect(out).toContain("LitFamily extensions: none installed; `litcodex extensions list` shows the nine");
+	});
+	it("refuses a source id folder that is a symbolic link and writes nothing through it", () => {
+		const w = world();
+		const src = join(w.clone, "variants", "litcodex", "lit-docx");
+		const elsewhere = join(w.root, "realdocx");
+		writeSkill(elsewhere, "lit-docx", "linked source");
+		rmSync(src, { recursive: true });
+		symlinkSync(elsewhere, src);
+		const result = run(w, ["install", "lit-docx", "--from", w.clone, "--yes"]);
+		expect(result.code).toBe(1);
+		expect(result.err).toContain(`${src} is a symbolic link`);
+		expect(existsSync(live(w, "lit-docx"))).toBe(false);
+		expect(existsSync(join(elsewhere, RECEIPT_NAME))).toBe(false);
+	});
+
+	it("update's dry run fetches nothing and says it compared with the cached copy", () => {
+		const w = world();
+		const cache = join(w.home, ".cache", "litcodex", "extensions-src");
+		cpSync(join(w.clone, "variants"), join(cache, "variants"), { recursive: true });
+		expect(run(w, ["install", "lit-docx", "--yes"]).code).toBe(0);
+		const calls: string[][] = [];
+		const git = (args: readonly string[]) => {
+			calls.push([...args]);
+			return { status: 0, stderr: "" };
+		};
+		const dry = run(w, ["update"], { git });
+		expect(dry.code, dry.err).toBe(0);
+		expect(calls).toEqual([]);
+		expect(dry.out).toContain("cached copy");
+		expect(dry.out).toContain("--yes fetches first");
+		expect(dry.out).toMatch(/lit-docx: current/u);
+	});
+
+	it("update's dry run with no cache yet says the comparison waits for the fetch", () => {
+		const w = world();
+		expect(run(w, ["install", "lit-docx", "--from", w.clone, "--yes"]).code).toBe(0);
+		const dry = run(w, ["update"], { git: () => ({ status: 0, stderr: "" }) });
+		expect(dry.code, dry.err).toBe(0);
+		expect(dry.out).toContain("after the fetch");
+		expect(dry.out).not.toMatch(/lit-docx: (copy|source changed)/u);
+		expect(existsSync(join(w.home, ".cache", "litcodex"))).toBe(false);
+	});
+
+	it("install stops on a same-name skill in Codex's own skills folder under another folder name", () => {
+		const w = world();
+		const renamed = join(w.codexHome, "skills", "old-docx");
+		writeSkill(renamed, "lit-docx", "renamed copy");
+		const stopped = run(w, ["install", "lit-docx", "--from", w.clone, "--yes"]);
+		expect(stopped.code).toBe(1);
+		expect(stopped.err).toContain(renamed);
+		expect(existsSync(live(w, "lit-docx"))).toBe(false);
+		const allowed = run(w, ["install", "lit-docx", "--from", w.clone, "--yes", "--allow-shadow"]);
+		expect(allowed.code, allowed.err).toBe(0);
+		expect(allowed.err).toContain(renamed);
+		expect(readFileSync(join(renamed, "SKILL.md"), "utf8")).toContain("renamed copy");
+	});
+
+	it("a personal skill with the extension's name under another folder name counts as competing", () => {
+		const w = world();
+		const personal = join(w.home, ".agents", "skills", "my-pptx");
+		writeSkill(personal, "lit-pptx", "personal");
+		expect(run(w, ["list"]).out).toContain(`competing: ${personal}`);
+		expect(check(w).findings.map((f) => [f.kind, f.path])).toEqual([["competing", personal]]);
+		const stopped = run(w, ["install", "lit-pptx", "--from", w.clone, "--yes"]);
+		expect(stopped.code).toBe(1);
+		expect(stopped.err).toContain(personal);
+	});
+
+	it("the duplicate fix line moves the copy into a dated backup set that prune-backups lists", () => {
+		const w = world();
+		writeSkill(join(w.codexHome, "skills", "old-docx"), "lit-docx", "renamed copy");
+		const [finding] = check(w).findings;
+		expect(finding?.kind).toBe("duplicate");
+		expect(finding?.fix).not.toContain("manual");
+		const ran = spawnSync("/bin/bash", ["-c", finding?.fix ?? "false"], { encoding: "utf8" });
+		expect(ran.status, ran.stderr).toBe(0);
+		expect(check(w).findings).toEqual([]);
+		const listed = run(w, ["prune-backups"]);
+		expect(listed.out).toMatch(/\d{8}-\d{6}\s.*old-docx/u);
+		expect(check(w).backups.count).toBe(1);
+	});
+
+	it("the notice's check line leaves out the stale notice that the same install replaces", () => {
+		const w = world();
+		const notice = join(w.home, ".litcodex", "extensions-notice.json");
+		mkdirSync(dirname(notice), { recursive: true });
+		writeFileSync(notice, `${JSON.stringify({ schemaVersion: 1, version: "0.0.1", message: "old" })}\n`);
+		expect(check(w).findings.map((f) => f.kind)).toEqual(["stale-notice"]);
+		expect(extensionsNoticeLine({ env: w.env, cwd: w.project })).toBeUndefined();
+	});
+
+	it("a source that only moved reports current and rewrites just the receipt's source", () => {
+		const w = world();
+		expect(run(w, ["install", "lit-docx", "--from", w.clone, "--yes"]).code).toBe(0);
+		const before = receipt(w, "lit-docx");
+		const moved = join(w.root, "clone-2");
+		cpSync(w.clone, moved, { recursive: true });
+		const dry = run(w, ["update", "--from", moved]);
+		expect(dry.out).toMatch(/lit-docx: current/u);
+		expect(receipt(w, "lit-docx")).toEqual(before);
+		const result = run(w, ["update", "--from", moved, "--yes"], { now: () => new Date(2026, 10, 13, 10, 0, 0) });
+		expect(result.code, result.err).toBe(0);
+		expect(result.out).toMatch(/lit-docx: current/u);
+		expect(receipt(w, "lit-docx")).toEqual({ ...before, source: join(moved, "variants", "litcodex", "lit-docx") });
+		expect(backupCopies(w, "lit-docx")).toEqual([]);
+		expect(readdirSync(live(w, "lit-docx")).filter((name) => name.includes(".tmp"))).toEqual([]);
 	});
 });

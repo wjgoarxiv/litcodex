@@ -16,10 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     a receipt, receipts whose source is gone, an unshown old notice and the runtimes 1.0.38 left behind, with a fix
     line for each, and the size of the backups. It exits 1 when something needs action.
   - `install <id...>`, `--family <name>` or `--all` stops when a same-name skill sits in `~/.agents/skills` or the
-    project's `.agents/skills` or `.codex/skills` (`--allow-shadow` installs anyway and warns), moves an old copy
+    project's `.agents/skills` or `.codex/skills`, or under another folder name in `~/.codex/skills`; a folder counts
+    when its name or its SKILL.md `name:` matches (`--allow-shadow` installs anyway and warns). It moves an old copy
     whole to `~/.codex/extension-backups/<date-time>/<id>`, copies a fresh one and writes a receipt with the
-    source's sha256. A symbolic link or file in the way stops it, and every id is checked before anything is written.
+    source's sha256. A symbolic link or file in the way, or as the source folder, stops it, and every id is checked
+    before anything is written.
   - `update` fetches the source and reinstalls only the extensions whose source changed; the rest are "current".
+    When only the source path moved, it rewrites the receipt's source and copies nothing. Its dry run fetches
+    nothing: it says it compared with the cached copy, or that the comparison waits for the first fetch.
   - `remove <id...>` moves an installed copy to the backups and refuses a folder without a LitCodex receipt.
   - `prune-backups [--older-than <days>]` lists backups with sizes and deletes them only with `--yes`, only inside
     `extension-backups`.

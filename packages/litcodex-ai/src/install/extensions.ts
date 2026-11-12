@@ -188,11 +188,22 @@ function otherRoots(ctx: ExtensionsContext, paths: Paths): string[] {
 	].filter((dir, index, all) => all.indexOf(dir) === index && resolve(dir) !== resolve(paths.skills));
 }
 
+/** Folders in `dir` named `id`, or whose SKILL.md says `name: <id>`. */
+function sameNameIn(dir: string, id: string): string[] {
+	let names: string[];
+	try {
+		names = readdirSync(dir).sort();
+	} catch {
+		return [];
+	}
+	return names
+		.filter((name) => name === id || skillName(join(dir, name, "SKILL.md")) === id)
+		.map((name) => join(dir, name));
+}
+
 function entryFor(id: string, ctx: ExtensionsContext, paths: Paths): ListEntry {
 	const path = join(paths.skills, id);
-	const competing = otherRoots(ctx, paths)
-		.map((dir) => join(dir, id))
-		.filter((candidate) => lstat(candidate) !== undefined);
+	const competing = otherRoots(ctx, paths).flatMap((dir) => sameNameIn(dir, id));
 	const stat = lstat(path);
 	const base = { id, family: familyOf(id), path, competing };
 	if (stat === undefined) return { ...base, state: "not-installed" };
@@ -233,6 +244,29 @@ function listBackups(paths: Paths): BackupSet[] {
 			const [y = 0, mo = 1, d = 1, h = 0, mi = 0, s = 0] = match.slice(1, 7).map(Number);
 			return [{ name, path, bytes: dirBytes(path), takenAt: new Date(y, mo - 1, d, h, mi, s) }];
 		});
+}
+
+interface Duplicate {
+	readonly id: string;
+	readonly name: string;
+	readonly path: string;
+}
+
+/** Other folders in Codex's own skills folder whose SKILL.md names an extension id. */
+function duplicatesIn(paths: Paths): Duplicate[] {
+	if (lstat(paths.skills)?.isDirectory() !== true) return [];
+	return readdirSync(paths.skills)
+		.sort()
+		.flatMap((name) => {
+			if (EXTENSION_IDS.includes(name)) return [];
+			const id = skillName(join(paths.skills, name, "SKILL.md"));
+			return id !== undefined && EXTENSION_IDS.includes(id) ? [{ id, name, path: join(paths.skills, name) }] : [];
+		});
+}
+
+/** A shell line that moves a folder into a dated backup set, the way the manual move-aside line does. */
+function moveAsideLine(paths: Paths, path: string, name: string): string {
+	return `b="${paths.backups}/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/${name}" ] && mv "${path}" "$b/${name}"`;
 }
 
 export function checkExtensions(ctx: ExtensionsContext): CheckReport {
@@ -288,21 +322,14 @@ export function checkExtensions(ctx: ExtensionsContext): CheckReport {
 			});
 		}
 	}
-	const skillsStat = lstat(paths.skills);
-	if (skillsStat?.isDirectory() === true) {
-		for (const name of readdirSync(paths.skills).sort()) {
-			if (EXTENSION_IDS.includes(name)) continue;
-			const named = skillName(join(paths.skills, name, "SKILL.md"));
-			if (named === undefined || !EXTENSION_IDS.includes(named)) continue;
-			const path = join(paths.skills, name);
-			findings.push({
-				kind: "duplicate",
-				id: named,
-				path,
-				message: `${named}: ${path} is a second copy under another folder name, and Codex lists both`,
-				fix: `mkdir -p "${join(paths.backups, "manual")}" && mv "${path}" "${join(paths.backups, "manual", name)}"`,
-			});
-		}
+	for (const { id, name, path } of duplicatesIn(paths)) {
+		findings.push({
+			kind: "duplicate",
+			id,
+			path,
+			message: `${id}: ${path} is a second copy under another folder name, and Codex lists both`,
+			fix: moveAsideLine(paths, path, name),
+		});
 	}
 	const notice = extensionsNoticePath(ctx.env);
 	try {
@@ -355,7 +382,8 @@ export function extensionsDoctorLine(ctx: ExtensionsContext): string {
 /** One notice line for existing users, or undefined when check is clean. */
 export function extensionsNoticeLine(ctx: ExtensionsContext): string | undefined {
 	try {
-		const count = checkExtensions(ctx).findings.length;
+		// The install that prints this line also rewrites the notice, so a stale one is not counted.
+		const count = checkExtensions(ctx).findings.filter((finding) => finding.kind !== "stale-notice").length;
 		return count === 0
 			? undefined
 			: `${count} thing${count === 1 ? "" : "s"} about your extension folders need a look: run \`litcodex extensions check\`. Nothing was changed.`;
@@ -682,6 +710,7 @@ function preflight(
 	assertRealDir(paths.backups);
 	const items: InstallPlanItem[] = [];
 	const problems: string[] = [];
+	const duplicates = duplicatesIn(paths);
 	for (const id of ids) {
 		const entry = entryFor(id, ctx, paths);
 		const src = join(source.root === undefined ? variantRoot(paths.cache) : variantRoot(source.root), id);
@@ -692,6 +721,11 @@ function preflight(
 			continue;
 		}
 		if (source.root !== undefined) {
+			const srcStat = lstat(src);
+			if (srcStat !== undefined && (srcStat.isSymbolicLink() || !srcStat.isDirectory())) {
+				problems.push(`${id}: ${src} is a symbolic link or a file; the source must be a plain folder.`);
+				continue;
+			}
 			if (lstat(join(src, "SKILL.md"))?.isFile() !== true) {
 				problems.push(`${id}: the source ${src} has no SKILL.md. Pull your clone, or check the --from path.`);
 				continue;
@@ -709,6 +743,15 @@ function preflight(
 			else {
 				problems.push(
 					`stopped: ${path} is a same-name ${id} that Codex would list beside the extension. Move it out of that folder yourself, or pass --allow-shadow to install anyway.`,
+				);
+			}
+		}
+		for (const twin of duplicates.filter((duplicate) => duplicate.id === id)) {
+			if (allowShadow)
+				out.warnings.push(`warning: Codex will also list ${twin.path}, a second ${id} in its skills folder.`);
+			else {
+				problems.push(
+					`stopped: ${twin.path} is a second ${id} in Codex's skills folder under another folder name. Move it aside with \`${moveAsideLine(paths, twin.path, twin.name)}\`, or pass --allow-shadow to install anyway.`,
 				);
 			}
 		}
@@ -817,29 +860,52 @@ function runUpdate(parsed: Parsed, ctx: ExtensionsContext, deps: ExtensionsDeps,
 		out.lines.push("No installed extension to update. `litcodex extensions install <id>` adds one.");
 		return 0;
 	}
+	// A dry run never fetches: it compares with the cached copy, or with nothing when no cache exists yet.
 	const source = resolveSource(parsed.from, paths, { apply: parsed.yes, refresh: true }, deps);
+	if (source.root === undefined) {
+		out.lines.push(
+			`litcodex extensions update (dry run: nothing was changed): no cached shelf yet, so --yes clones it into ${paths.cache} and compares ${installed.map((entry) => entry.id).join(", ")} after the fetch.`,
+		);
+		return 0;
+	}
+	if (!parsed.yes && source.kind === "cache") {
+		out.lines.push(`Compared with the cached copy in ${paths.cache}; --yes fetches first, so the result may differ.`);
+	}
 	const changed: string[] = [];
 	for (const entry of installed) {
-		if (source.root === undefined) {
+		const src = join(variantRoot(source.root), entry.id);
+		if (lstat(src)?.isSymbolicLink() === true) {
 			changed.push(entry.id);
 			continue;
 		}
-		const src = join(variantRoot(source.root), entry.id);
 		if (lstat(join(src, "SKILL.md")) === undefined) {
 			out.warnings.push(`${entry.id}: the source ${src} is gone; kept the installed copy`);
 			continue;
 		}
 		const was = entry.receipt?.sha256 ?? folderHash(entry.path);
 		const sourceMoved = resolve(entry.receipt?.source ?? "") !== resolve(src);
-		if (folderHash(src) === was && !sourceMoved) out.lines.push(`${entry.id}: current`);
-		else {
+		if (folderHash(src) !== was) {
 			out.lines.push(`${entry.id}: source changed`);
 			changed.push(entry.id);
+		} else if (!sourceMoved) out.lines.push(`${entry.id}: current`);
+		else if (!parsed.yes) out.lines.push(`${entry.id}: current; --yes points its receipt at ${src}`);
+		else {
+			rewriteReceiptSource(entry.path, entry.receipt as Receipt, src);
+			out.lines.push(`${entry.id}: current; its receipt now points at ${src}`);
+			out.actions.push({ id: entry.id, action: "receipt-source", detail: src });
 		}
 	}
 	if (changed.length === 0) return 0;
 	const items = preflight(changed, ctx, paths, source, parsed.allowShadow, out);
 	return applyInstall(items, parsed, paths, source, deps, out);
+}
+
+/** Same content, new source path: only the receipt's source changes, written to a temp file and renamed over it. */
+function rewriteReceiptSource(dir: string, receipt: Receipt, source: string): void {
+	const path = join(dir, RECEIPT_NAME);
+	const temporary = `${path}.tmp-${process.pid}`;
+	writeFileSync(temporary, `${JSON.stringify({ ...receipt, source })}\n`, { flag: "wx" });
+	renameSync(temporary, path);
 }
 
 function runRemove(parsed: Parsed, ctx: ExtensionsContext, deps: ExtensionsDeps, out: Out): number {
