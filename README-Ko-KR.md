@@ -112,6 +112,25 @@ litcodex install
 사진도 모두 있습니다. 예전 패키지 이름(`litcodex-ai`)으로 설치했다면 [기존 설치 이전 안내](./docs/npm-migration.md)를
 먼저 읽어 주세요.
 
+### 설치기가 쓰는 곳
+
+설치하기 전에 내 Codex 설정에 무엇이 바뀌는지 묻는 분이 많은데, 답은 그림 한 장에 들어갑니다. 쓸 경로를 확인하고
+Enter를 누르면 설치기는 LitCodex 마켓플레이스를 추가하고, 거기서 플러그인을 설치하고, 플러그인에 들어 있는 훅을
+등록합니다. 이어서 에이전트 역할 일곱 개를 내 역할 파일 옆에 두고, `config.toml`에서 자기가 관리하는 키만 고친 뒤
+doctor로 마무리합니다. 전역 `AGENTS.md` 블록만은 따로 물어보고 씁니다.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/diagrams/install-map.ko.dark.png">
+    <img src="./docs/assets/readme/diagrams/install-map.ko.light.png" width="900" alt="설치 여섯 단계가 순서대로 이어지고, 각 단계가 쓰는 곳을 가리킨다. 마켓플레이스 추가는 $CODEX_HOME/marketplaces/litcodex/, 플러그인 설치는 litcodex@litcodex를 $CODEX_HOME/plugins/cache/litcodex/에, 훅 등록은 번들 hooks.json(8개 이벤트에 훅 명령 27개), 에이전트 역할 설치는 ~/.codex/agents/litcodex-*.toml 일곱 개(기존 파일은 보존), config.toml 갱신은 관리하는 키만, doctor 확인은 영수증의 Status Ready for Codex로 끝난다. ~/.codex/AGENTS.md 블록은 물어본 뒤에만 쓴다. Codex를 다시 켜면 첫 세션에서 LitCodex 훅을 승인하고, 그때부터 lit이 동작한다. 건드리지 않는 것: ~/.codex/skills/, config.toml의 다른 키, ChatGPT 계정의 Git 설정.">
+  </picture>
+</p>
+
+첫날 가장 중요한 건 맨 아래 줄입니다. Codex가 LitCodex 훅 검토를 띄우고 내가 승인하기 전까지는 `lit`을 써도 아무
+일이 일어나지 않습니다. 설치가 끝나면 Codex를 다시 켜고 그 검토에 답하세요. 빨간 띠는 설치기가 손대지 않는
+곳입니다. `~/.codex/skills/` 아래에 복사해 둔 확장, `config.toml`의 나머지 설정, 그리고 ChatGPT 계정 쪽에 있는
+Git 표기 설정이 여기에 해당합니다.
+
 ### 코딩 에이전트에게 설치 맡기기
 
 Codex 같은 코딩 에이전트에게 설치를 맡길 수도 있습니다. 아래 프롬프트를 에이전트에 붙여 넣으세요. 에이전트는
@@ -266,6 +285,13 @@ lit notes.md로 월요일 회의용 열 장짜리 발표자료를 만들어줘
 
 LitCodex에는 LitFamily 코어가 들어 있습니다. `lit` 루프, 계획, 리뷰, 조사, 핸드오프를 비롯한 작업 흐름
 전체입니다. 이 코어는 그 자체로 완결되어 있고 혼자서도 동작합니다.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/diagrams/core-extensions.ko.dark.png">
+    <img src="./docs/assets/readme/diagrams/core-extensions.ko.light.png" width="900" alt="왼쪽은 LitCodex 코어 스킬 38개를 여섯 묶음으로 나눈 것이다. 코드, 계획·실행·리뷰, 조사와 지식, 세션과 문장, LitCodex 관리, 알아서 도는 검사. 그 아래에 무엇을 만드는지와 복사 명령을 알려 주는 같은 이름의 스텁 아홉 개가 있다. 오른쪽은 wjgoarxiv-skills의 확장 다섯 패밀리다. decks의 lit-pptx, documents의 lit-docx, figures의 lit-diagram-drawer·lit-schematic·lit-scientific-visualization, design의 frontend-ui-ux·visual-qa, video-covers의 lit-typographic-motion·readme-studio이며, 스킬마다 variants/litcodex/&lt;id&gt;/ 폴더 하나다. 아래는 세 단계다. 저장소를 한 번 클론하고, 폴더 하나를 ~/.codex/skills/&lt;id&gt;로 복사하고, 새 세션을 열면 스텁이 그 복사본에 요청을 넘긴다.">
+  </picture>
+</p>
 
 파일을 만드는 스킬 아홉 개는 LitFamily 확장입니다. `lit-pptx`(발표자료), `lit-docx`(문서),
 `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`(그림), `frontend-ui-ux`, `visual-qa`(디자인),
@@ -440,27 +466,43 @@ Codex를 평소처럼 띄웁니다. macOS에서 확인했고, Linux와 Windows �
 
 ## 어떻게 동작하나요
 
-Codex가 플러그인을 불러오고 훅을 실행합니다. 훅은 요청이 어떤 모드에 속하는지 가리고 맥락을 보태며,
-스킬은 에이전트가 일하는 절차를 안내합니다. 루프 CLI는 프로젝트 기록을 관리하고, Codex의 native goal 도구를
-쓸 때 따를 지침을 출력합니다.
+실행은 전부 Codex가 맡고, LitCodex는 훅과 스킬, 작은 CLI를 보탭니다. 프롬프트를 보내면 모델이 읽기 전에 Codex가
+`UserPromptSubmit` 훅 네 개를 먼저 돌립니다. `lit-loop`은 `lit`이라는 단어를 알아보고 LIT 마크와 모드를 붙이고,
+Start Work 훅은 진행 중인 `lit start work`를 이어받습니다. `rules`는 해당하는 프로젝트 규칙을,
+`wikify-knowledge`는 내가 승인한 로컬 지식을 보탭니다. 그러면 에이전트가 그 모드의 스킬(예: `$litcodex:lit-loop`)과
+LitCodex 에이전트 역할을 읽고 일을 시작합니다. 도구를 부를 때마다 도구 훅도 함께 돕니다. Git 안전 검사, 문장 검사,
+주석 검사, LSP 진단이 여기에 들어갑니다.
 
-```mermaid
-flowchart TD
-    P["설치된 LitCodex 플러그인"] --> H["Codex 훅: UserPromptSubmit 및 생명주기"]
-    P --> S["번들 스킬"]
-    U["Codex에 입력한 요청"] --> H
-    H --> A["Codex 에이전트"]
-    S --> A
-    A --> L["lit-loop CLI: 목표·증거·체크포인트"]
-    L --> R["프로젝트 기록: .litcodex/lit-loop/"]
-    L -. "목표 도구 사용 지침" .-> A
-    A -. "호스트가 제공할 때 사용" .-> G["Codex native /goal"]
-    R -. "작업을 이어갈 때 읽기" .-> A
-```
+에이전트가 확인을 하나 마칠 때마다 `litcodex loop record-evidence`로 기록이 남고, `litcodex loop checkpoint`는
+확인이 모두 통과해야만 목표를 닫습니다. 이 기록이 `.litcodex/lit-loop/`에 쌓이기 때문에 다음 `lit`이 어디서
+멈췄는지 압니다. `lit review`를 부르면 `review-work`가 리뷰 다섯 개로 판정하고, `lit start work` 계획은 언제나
+이 리뷰로 끝납니다. 턴이 끝나면 Stop 훅이 LIT 카드를 그립니다.
 
-Codex 목표 도구로 이어지는 점선은 도구가 있을 때 에이전트가 따르는 지침이고, LitCodex가 그 도구를 직접 부르는
-일은 없습니다. 로그인, 모델 접근, 권한, 모든 실행은 내 컴퓨터의 Codex 안에서 일어납니다. 그러니 작업은
-결과물과 실제로 돌린 확인을 보고 판단하세요. 더 자세한 내용은 [실행·상태 참고서](./docs/usage-Ko-KR.md)에 있습니다.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/diagrams/lit-route.ko.dark.png">
+    <img src="./docs/assets/readme/diagrams/lit-route.ko.light.png" width="900" alt="번호가 붙은 여덟 단계. 1: 내 프롬프트, lit add input validation to the signup form. 2: UserPromptSubmit 훅 네 개(Start Work 이어받기, lit-loop, rules, wikify-knowledge)가 컨텍스트를 더한다. 3: Codex 에이전트가 $litcodex:lit-loop 스킬과 에이전트 역할을 읽는다. 4: 도구 호출마다 PreToolUse와 PostToolUse 훅이 돈다. 5: litcodex loop의 record-evidence와 checkpoint가 확인마다 pass, fail, blocked를 기록한다. 6: 기록은 .litcodex/lit-loop/의 brief.md, goals.json, ledger.jsonl, evidence/에 쌓이고 다음 lit이 다시 읽는다. 7: lit review를 부르거나 계획이 끝나면 review-work가 goal, quality, security, qa, context 리뷰 다섯 개로 판정한다. 8: Stop 훅이 LIT 카드를 그린다.">
+  </picture>
+</p>
+
+같은 흐름을 작은 공정 플랜트로 그리면 이렇습니다. 왼쪽에서 `lit` 프롬프트가 들어와 훅을 지납니다. 그냥 `lit`은
+위쪽 우회관을 타고 곧장 작업 루프로 가고, `lit plan`은 계획 용기를 먼저 거치며, `lit start work`가 승인된 계획을
+루프로 보냅니다. 샘플 라인은 확인 결과를 하나씩 모두 원장 탱크로 실어 보냅니다. 위 그림의 `.litcodex/lit-loop/`
+폴더가 바로 이 탱크이고, 여기서 다음 `lit`과 `handoff`가 쓰는 `HANDOFF.md`로 이어집니다. 리뷰 컬럼의 트레이
+다섯 단은 리뷰 하나씩입니다. 승인된 작업은 오른쪽으로 나가고, 리뷰 하나라도 떨어지면 전환 밸브가 작업을 루프로
+돌려보냅니다.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/schematic/lit-plant.ko.dark.png">
+    <img src="./docs/assets/readme/schematic/lit-plant.ko.light.png" width="900" alt="Codex CLI의 lit 흐름을 그린 공정 흐름도. lit 프롬프트가 훅 네 개가 든 UserPromptSubmit 용기로 들어간다. 그냥 lit은 lit plan 용기를 우회해 작업 루프로 가고, lit plan은 그 용기를 거친다. 작업 라인은 분석계 AIC-101(record-evidence)을 지나며, 샘플 라인이 pass, fail, blocked를 .litcodex/lit-loop 원장 탱크로 보낸다. 원장은 다음 lit과 HANDOFF.md로 이어진다. 라인은 트레이 다섯 단의 review-work 컬럼으로 들어가고, 분석계 AIC-102가 리뷰 판정을 읽어 전환 밸브를 움직인다. 승인된 작업은 완료로, 재작업은 루프로 돌아간다. 아래 스트림 표는 줄마다 실어 나르는 것과 남는 곳을 적는다.">
+  </picture>
+</p>
+
+루프 CLI는 Codex의 native goal 도구를 쓸 때 따를 지침도 출력합니다. 도구가 있으면 에이전트가 그 지침을 따르고,
+LitCodex가 그 도구를 직접 부르지는 않습니다. 로그인, 모델 접근, 권한, 모든 실행은 내 컴퓨터의 Codex 안에서
+일어납니다. 그러니 작업은 결과물과 실제로 돌린 확인을 보고 판단하세요. 더 자세한 내용은
+[실행·상태 참고서](./docs/usage-Ko-KR.md)에 있습니다.
 
 ## 명령어
 

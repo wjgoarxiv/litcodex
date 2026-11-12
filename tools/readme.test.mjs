@@ -154,7 +154,29 @@ describe("readme content invariants", () => {
 			"ignition-readme.gif": "0be7badaee33df26a5a200c4f664273a21e9f2513fc066571f579f235220ca81",
 		};
 		const assets = join(REPO_ROOT, "docs/assets/readme");
-		assert.deepEqual(readdirSync(assets).sort(), [...Object.keys(assetPins), "README.md"].sort());
+		assert.deepEqual(
+			readdirSync(assets).sort(),
+			[...Object.keys(assetPins), "README.md", "diagrams", "schematic"].sort(),
+		);
+		// The landing READMEs' explainer pictures: one light and one dark copy per language, plus the moving plant.
+		const pictures = {
+			diagrams: ["core-extensions", "install-map", "lit-route"].flatMap((name) =>
+				["en", "ko"].flatMap((lang) => ["dark", "light"].map((theme) => `${name}.${lang}.${theme}.png`)),
+			),
+			schematic: [
+				"lit-plant-loop.en.dark.webp",
+				...["en", "ko"].flatMap((lang) => ["dark", "light"].map((theme) => `lit-plant.${lang}.${theme}.png`)),
+			],
+		};
+		for (const [dir, names] of Object.entries(pictures)) {
+			assert.deepEqual(readdirSync(join(assets, dir)).sort(), names.sort(), `${dir} holds only the README pictures`);
+			for (const name of names) {
+				const size = readFileSync(join(assets, dir, name)).length;
+				assert.ok(size <= 1_048_576, `${dir}/${name} stays under 1 MiB`);
+			}
+			for (const source of [PKG_README, PKG_README_KO])
+				assert.ok(!source.includes(`readme/${dir}/`), `npm cards do not show the ${dir} pictures`);
+		}
 		for (const [name, expected] of Object.entries(assetPins)) {
 			assert.equal(
 				createHash("sha256")

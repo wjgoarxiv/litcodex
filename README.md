@@ -119,6 +119,25 @@ The [install guide](./docs/install.md) also covers trying LitCodex in a home of 
 pictures of every screen the installer shows. Coming from the old unscoped package? The
 [migration guide](./docs/npm-migration.md) covers the move.
 
+### What the installer writes
+
+People ask what an install does to their Codex setup before they run it, and the answer fits on one page. Once you
+confirm the route, the installer adds the LitCodex marketplace, installs the plugin from it, registers the hooks that
+come bundled with the plugin, puts seven agent roles next to your own, changes the keys it manages in `config.toml`,
+and ends with a doctor run. The global `AGENTS.md` block is the one thing it asks about separately.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/diagrams/install-map.en.dark.png">
+    <img src="./docs/assets/readme/diagrams/install-map.en.light.png" width="900" alt="The six install steps in order, each pointing to the place it writes: add the marketplace to $CODEX_HOME/marketplaces/litcodex/, install the plugin, litcodex@litcodex, into $CODEX_HOME/plugins/cache/litcodex/, register the bundled hooks.json with 27 hook commands on 8 events, install 7 agent roles as ~/.codex/agents/litcodex-*.toml while keeping existing files, update only the managed keys of ~/.codex/config.toml, and verify with doctor until the receipt says Status Ready for Codex. The ~/.codex/AGENTS.md block is written only after asking. After a restart, the first Codex session asks you to approve the LitCodex hooks, and then lit works. Left alone: ~/.codex/skills/, every other key in config.toml, and the Git setting in your ChatGPT account.">
+  </picture>
+</p>
+
+The bottom row matters most on the first day. Nothing happens on a `lit` prompt until Codex has asked you to review
+the LitCodex hooks and you have approved them, so restart Codex after the install and answer that review. The red band
+is what the installer leaves alone: your extension copies under `~/.codex/skills/`, the rest of your `config.toml`,
+and the Git attribution setting that lives in your ChatGPT account.
+
 ### Let a coding agent install it
 
 You can also hand the install to a coding agent such as Codex itself. Paste the prompt below into it. The agent
@@ -282,6 +301,13 @@ skill went and how to copy it into `~/.codex/skills/`.
 
 LitCodex carries the LitFamily core: the `lit` loop, plans, reviews, research, handoffs and the rest of the
 workflow. That core is complete and works on its own.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/diagrams/core-extensions.en.dark.png">
+    <img src="./docs/assets/readme/diagrams/core-extensions.en.light.png" width="900" alt="Left, the LitCodex core of 38 skills in six groups: code, plan run and review, research and knowledge, sessions and prose, keeping LitCodex healthy, and running on their own. Below them, nine same-name stubs that say what the skill makes and how to copy it. Right, the extensions in wjgoarxiv-skills in five families: decks with lit-pptx, documents with lit-docx, figures with lit-diagram-drawer, lit-schematic and lit-scientific-visualization, design with frontend-ui-ux and visual-qa, and video-covers with lit-typographic-motion and readme-studio, each in its own folder under variants/litcodex/&lt;id&gt;/. Bottom, three steps: clone the repository once, copy one folder into ~/.codex/skills/&lt;id&gt;, start a new session, after which the stub opens your copy.">
+  </picture>
+</p>
 
 Nine skills that make files are LitFamily extensions: `lit-pptx` (decks), `lit-docx` (documents),
 `lit-diagram-drawer`, `lit-schematic` and `lit-scientific-visualization` (figures), `frontend-ui-ux` and
@@ -461,28 +487,44 @@ not tested yet.
 
 ## How it works
 
-Codex hosts the plugin and runs its hooks. The hooks work out which mode a request belongs to and add
-context; the skills tell the agent how to do the work. The loop CLI keeps the project records and prints
-instructions for Codex's native goal tools.
+Codex runs everything here; LitCodex only adds hooks, skills and a small CLI. When you send a prompt, Codex runs four
+`UserPromptSubmit` hooks before the model sees it. `lit-loop` notices the word `lit` and adds the LIT mark and the
+mode, the Start Work hook picks up a `lit start work` run, `rules` adds the project rules that apply, and
+`wikify-knowledge` adds the local knowledge you have accepted. The agent then reads the skill for that mode, for
+example `$litcodex:lit-loop`, with the LitCodex agent roles, and gets on with the work. Every tool call passes the tool
+hooks on its way: Git safety, the prose check, comment checks and LSP diagnostics.
 
-```mermaid
-flowchart TD
-    P["Installed LitCodex plugin"] --> H["Codex hooks: UserPromptSubmit and lifecycle"]
-    P --> S["Bundled skills"]
-    U["Your request in Codex"] --> H
-    H --> A["Codex agent"]
-    S --> A
-    A --> L["lit-loop CLI: goals, evidence, checkpoints"]
-    L --> R["Project records: .litcodex/lit-loop/"]
-    L -. "goal instructions" .-> A
-    A -. "native tools, when available" .-> G["Codex native /goal"]
-    R -. "read when continuing" .-> A
-```
+Each check the agent finishes goes through `litcodex loop record-evidence`, and `litcodex loop checkpoint` closes a goal
+only when all of its checks pass. Those records land in `.litcodex/lit-loop/`, which is how the next `lit` knows where
+you stopped. `lit review` runs `review-work` with its five lanes, and every `lit start work` plan ends there. When the
+turn ends, the Stop hook draws the LIT card.
 
-The dotted line to Codex's goal tools is an instruction the agent follows when those tools are there;
-LitCodex itself never calls them. Sign-in, model access, permissions and every run happen in Codex on
-your machine, so judge a piece of work by what it produced and which checks ran. The
-[usage reference](./docs/usage.md) goes deeper.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/diagrams/lit-route.en.dark.png">
+    <img src="./docs/assets/readme/diagrams/lit-route.en.light.png" width="900" alt="Eight numbered steps. 1: your prompt, lit add input validation to the signup form. 2: four UserPromptSubmit hooks, the Start Work continuation, lit-loop, rules and wikify-knowledge, add context. 3: the Codex agent reads $litcodex:lit-loop and its agent roles. 4: PreToolUse and PostToolUse hooks run on each tool call. 5: litcodex loop record-evidence and checkpoint record pass, fail or blocked per check. 6: they write brief.md, goals.json, ledger.jsonl and evidence/ under .litcodex/lit-loop/, which the next lit reads again. 7: lit review, and the end of a plan, runs review-work with the lanes goal, quality, security, qa and context. 8: the Stop hook draws the LIT card.">
+  </picture>
+</p>
+
+Here is the same route drawn as a small process plant. A `lit` prompt comes in on the left and passes the hooks. A plain
+`lit` goes over the top, straight into the work loop; `lit plan` goes through the plan vessel first, and `lit start work`
+feeds the approved plan in. A sample line draws every check off into the ledger tank, the same `.litcodex/lit-loop/`
+folder as above, which feeds the next `lit` and the `HANDOFF.md` a `handoff` writes. The review column has five trays,
+one per lane. Approved work leaves on the right, and when a lane fails, the diverter sends the work back to the loop.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark) and (prefers-reduced-motion: reduce)" srcset="./docs/assets/readme/schematic/lit-plant.en.dark.png">
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/schematic/lit-plant-loop.en.dark.webp">
+    <img src="./docs/assets/readme/schematic/lit-plant.en.light.png" width="900" alt="Process flow diagram of the lit workflow in Codex CLI. A lit prompt enters the UserPromptSubmit vessel with its four hooks. A plain lit bypasses the lit plan vessel into the work loop, and lit plan passes through it. The work line runs down past analyser AIC-101, record-evidence, where a sample line carries pass, fail or blocked into the .litcodex/lit-loop ledger tank, which feeds the next lit and HANDOFF.md. The line enters the review-work column with five trays; analyser AIC-102 reads the lane verdicts and drives a diverter valve that sends approved work to Done or sends rework back to the loop. A stream table lists what each line carries and where it is kept.">
+  </picture>
+</p>
+
+<p align="center"><sub>Still pictures: <a href="./docs/assets/readme/schematic/lit-plant.en.light.png">light</a> · <a href="./docs/assets/readme/schematic/lit-plant.en.dark.png">dark</a></sub></p>
+
+The loop CLI also prints instructions for Codex's native goal tools, and the agent follows them when those tools are
+there; LitCodex itself never calls them. Sign-in, model access, permissions and every run stay in Codex on your
+machine, so judge a piece of work by what it produced and which checks ran. The [usage reference](./docs/usage.md) goes deeper.
 
 ## Commands
 

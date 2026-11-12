@@ -37,3 +37,8 @@ The static seven-machine armory WebP at `../cover.webp`
 (SHA-256 `90099f77838a47c26ebd52fdec8c25a67071345a6c3b2bcbe7324d35d7ebb086`)
 and the editable `../cover.svg` remain in the repository but are no longer
 shown on the landing pages.
+
+The `diagrams/` and `schematic/` folders hold the explainer pictures on the landing READMEs: what
+the installer writes, the route a `lit` prompt takes, the core and the extensions, and the same
+route drawn as a process plant. Each comes in a light and a dark copy per language, and the plant
+also has a moving dark copy. They stay in the repository and are not packed into npm.
