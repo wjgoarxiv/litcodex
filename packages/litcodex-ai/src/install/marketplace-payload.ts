@@ -31,6 +31,8 @@ export interface MaterializeMarketplaceOptions {
 	readonly now?: () => number;
 	/** Digests treated as shipped by earlier releases (defaults to the frozen pre-1.0.39 list). */
 	readonly legacySkillDigests?: readonly string[];
+	/** `codex plugin add` will rebuild the plugin cache even though the payload is current (`--force`). */
+	readonly pluginCacheRebuilt?: boolean;
 }
 
 export interface MaterializeMarketplaceResult {
@@ -74,7 +76,11 @@ export function materializeManagedMarketplace(opts: MaterializeMarketplaceOption
 		legacySkillState(opts.targetRoot) !== "unmodified" &&
 		payloadTreesMatch(opts.sourceRoot, opts.targetRoot)
 	) {
-		return { changed: false, version };
+		if (opts.pluginCacheRebuilt !== true) return { changed: false, version };
+		const saved = saveUserSkillFiles(codexHome, opts);
+		return saved === undefined
+			? { changed: false, version }
+			: { changed: false, version, backup: saved, warnings: [savedFilesWarning(saved)] };
 	}
 
 	const previous = readVersionIfPresent(opts.targetRoot);

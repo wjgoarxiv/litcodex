@@ -122,6 +122,35 @@ describe("an upgrade keeps what the user put in LitCodex skill folders", () => {
 		expect(existsSync(join(paths.codexHome, "litcodex-backups"))).toBe(false);
 	});
 
+	it("saves the plugin cache before --force rebuilds it, even when the payload is already current", () => {
+		const paths = home();
+		marketplace(paths.sourceRoot, "1.0.39", { "lit-pptx/SKILL.md": STUB });
+		materializeManagedMarketplace({ ...paths, now: () => NOW, legacySkillDigests: [] });
+		const cache = join(paths.codexHome, "plugins", "cache", "litcodex", "litcodex", "1.0.39", "skills");
+		write(join(cache, "lit-pptx", "SKILL.md"), STUB);
+		write(join(cache, "lit-loop", "my-notes.md"), "notes in the current cache\n");
+
+		const plain = materializeManagedMarketplace({ ...paths, now: () => NOW, legacySkillDigests: [] });
+		expect(plain).toEqual({ changed: false, version: "1.0.39" });
+		expect(existsSync(join(paths.codexHome, "litcodex-backups"))).toBe(false);
+
+		const forced = materializeManagedMarketplace({
+			...paths,
+			now: () => NOW,
+			legacySkillDigests: [],
+			pluginCacheRebuilt: true,
+		});
+		const backup = join(paths.codexHome, "litcodex-backups", "2026-11-12");
+		expect(forced).toMatchObject({ changed: false, version: "1.0.39", backup: { dir: backup, files: 1 } });
+		expect(forced.warnings).toEqual([
+			`LitCodex saved 1 file you added or changed in its skill folders to ${backup} before replacing them.`,
+		]);
+		expect(readFileSync(join(backup, "plugin-cache-1.0.39", "lit-loop", "my-notes.md"), "utf8")).toBe(
+			"notes in the current cache\n",
+		);
+		expect(existsSync(join(backup, "plugin-cache-1.0.39", "lit-pptx"))).toBe(false);
+	});
+
 	it("uses a new folder for a second upgrade on the same day", () => {
 		const paths = home();
 		mkdirSync(join(paths.codexHome, "litcodex-backups", "2026-11-12"), { recursive: true });

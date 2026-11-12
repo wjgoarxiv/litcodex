@@ -25,7 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Before the managed marketplace is replaced, each such file is copied to
   `~/.codex/litcodex-backups/<date>/marketplace/<skill>/...`, and each one in the Codex plugin cache to
   `.../plugin-cache-<version>/<skill>/...`; a warning in the install output names the folder. The plugin cache is
-  only read: Codex itself replaces it during `codex plugin add`. LitCodex tells its own files apart through a record
+  only read: Codex itself replaces it during `codex plugin add`. `litcodex install --force` rebuilds that cache even
+  when the payload is already current, so it saves the cache files the same way first. LitCodex tells its own files apart through a record
   each install now writes (`~/.codex/litcodex/installed-skill-digests.json`) and, for installs from 1.0.38 and
   earlier, a frozen list of the skill files those releases shipped. Edits outside the skill folders are still
   replaced without a copy.

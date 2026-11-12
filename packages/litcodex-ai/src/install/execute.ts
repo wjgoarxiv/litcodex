@@ -176,6 +176,7 @@ export async function executeInstallPlan(steps: readonly InstallStep[], deps: Ex
 					sourceRoot: deps.marketplaceSourceDir,
 					targetRoot: marketplaceTarget,
 					now: deps.now,
+					pluginCacheRebuilt: deps.force === true,
 				});
 	if (payload !== undefined) deps.onMarketplacePayload?.(payload);
 	for (const warning of payload?.warnings ?? []) deps.onWarning?.(warning);
