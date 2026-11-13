@@ -9,7 +9,7 @@ This page has the whole install story: the variants, what a global install downl
 You need Node.js 22 or later and Codex CLI. Then run:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.40 -- litcodex install
 ```
 
 The installer sets LitCodex up inside Codex. It registers the plugin, its hooks and its agents, and
@@ -26,8 +26,8 @@ Codex sign-in and model access once real model work starts.
 
 Two variants are worth knowing:
 
-- If you want to see what would change before anything does, run `npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex --dry-run install`.
-- If you are setting up a machine without anyone at the keyboard, run `npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex install --yes`. A `--style <id>` you pass is still used.
+- If you want to see what would change before anything does, run `npm exec --yes --package @litfamily/litcodex@1.0.40 -- litcodex --dry-run install`.
+- If you are setting up a machine without anyone at the keyboard, run `npm exec --yes --package @litfamily/litcodex@1.0.40 -- litcodex install --yes`. A `--style <id>` you pass is still used.
 
 Want to see what the installer prints before you run it? [What you will see on screen](#what-you-will-see-on-screen) shows the questions, the receipt and the doctor check.
 
@@ -46,7 +46,7 @@ A global install also runs a short setup script. Unless `CI` is set, it prints a
 steps. It downloads nothing. Add `--ignore-scripts` to `npm install -g`, or set `CI=1` for that one
 command, to leave it out.
 
-> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.39 -- litcodex doctor`.
+> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.40 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.40 -- litcodex doctor`.
 
 ### Trying it apart from your setup
 

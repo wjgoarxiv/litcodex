@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.40] - 2026-11-14
+
 ### Added
 
 - `litcodex extensions`, so LitCodex installs and looks after the nine LitFamily extensions itself. It does in code
@@ -33,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `litcodex doctor` prints a one-line summary of `check`, the help lists the verbs, the stubs and READMEs name them
   beside the manual lines, and the install notice now shows the verbs. When `check` finds something on an install
   or upgrade, the notice adds one line pointing at `litcodex extensions check`; nothing changes on its own.
+
+### Changed
+
+- The READMEs, English and Korean, are shorter and easier to scan. The landing page keeps the pitch, the install
+  and the first run; reference detail moved into collapsed blocks or the docs pages.
 
 ### Fixed
 
