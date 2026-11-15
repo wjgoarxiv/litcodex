@@ -1,17 +1,17 @@
-# Automatic handoff (optional)
+# Automatic handoff
 
 [README](../README.md) · [한국어](./auto-handoff-Ko-KR.md)
 
 A long session eventually runs out of room, and the next context starts without what this one learned. A
-handoff file carries that knowledge across. This option writes the handoff for you when the conversation
-reaches a size you choose, so you never have to watch the context meter.
+handoff file carries that knowledge across. This feature writes the handoff for you when the conversation
+reaches a size, so you never have to watch the context meter.
 
-It is off until you turn it on, and you choose the percent of the context window at which it acts. LitCodex
-has no default percent. Once the conversation reaches your percent, the Stop hook has the model save a handoff
-and start no other work in that turn. The conversation is then compacted, by Codex itself or by you with
-`/compact`, and the next context opens with the handoff that was just saved.
+It is on by default, at 80% of the context window, and `lit-handoff auto off` turns it off. Once the
+conversation reaches the percent in force, the Stop hook has the model save a handoff and start no other work in
+that turn. The conversation is then compacted, by Codex itself or by you with `/compact`, and the next context
+opens with the handoff that was just saved. In a project that never gets that far, nothing is written.
 
-## Turn it on
+## Choose another percent
 
 Send this as your whole prompt. 60 is only an example; any whole number from 1 to 99 works:
 
@@ -41,20 +41,23 @@ When the project file already sets that key by hand, LitCodex leaves your line a
 
 ## Check it and turn it off
 
-`lit-handoff auto status` tells you what is set, where the setting came from and how the compaction will
-happen. `lit-handoff auto off` turns the option off and keeps your number for next time; sending
-`lit-handoff auto on` with no number later brings that number back.
+`lit-handoff auto status` tells you what is set, where the setting came from (the default, your command or the
+environment) and how the compaction will happen. `lit-handoff auto off` turns the feature off and keeps your number
+for next time; sending `lit-handoff auto on` with no number later brings that number back, or 80 when you never
+chose one.
 
 <p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/auto-handoff/auto-handoff-status-off-dark.webp" /><img src="./assets/auto-handoff/auto-handoff-status-off-light.webp" width="764" alt="A Codex terminal window with two prompts. &quot;lit-handoff auto status&quot; is followed by &quot;Blocked by hook&quot; and &quot;Automatic handoff is ON at 60% (set by command). Codex compacts the conversation as soon as the turn that saved the handoff ends.&quot; Then &quot;lit-handoff auto off&quot; is followed by &quot;Blocked by hook&quot; and &quot;Automatic handoff is OFF. Your last percent (60%) is kept for next time.&quot;" /></picture></p>
 
 Turning it off removes only the marked block from `.codex/config.toml`, and the file goes away when nothing else
-was in it. The same cleanup happens when the option ends up off some other way, such as
-`LITCODEX_AUTO_HANDOFF=0` or a deleted settings file: the next hook run or `lit-handoff auto` prompt removes the
-block, and `litcodex doctor` warns while it is still there.
+was in it. The same cleanup happens when the feature ends up off some other way, such as
+`LITCODEX_AUTO_HANDOFF=0`: the next hook run or `lit-handoff auto` prompt removes the block, and `litcodex doctor`
+warns while it is still there. A deleted settings file puts the feature back on its default percent, which that
+block no longer matches, so the block goes too.
 
-If you send `lit-handoff auto on` before you have ever chosen a number, LitCodex asks for one. A number outside
-1 to 99, or one that is not a whole number, changes nothing, and any other words after `lit-handoff auto` get the
-usage line back.
+On the default alone `.codex/config.toml` stays as you wrote it. You run `/compact` yourself after the handoff, or
+send `lit-handoff auto on` to have Codex do it. Only a whole number from 1 to 99 is accepted; anything else leaves
+the setting as it was, and other words after `lit-handoff auto` get the usage line back. When LitCodex cannot read
+the settings file, your choice is unknown and the feature stays off.
 
 ## When the conversation reaches your percent
 
@@ -87,15 +90,16 @@ LITCODEX_AUTO_HANDOFF=1 LITCODEX_AUTO_HANDOFF_PERCENT=60 codex
 ```
 
 While they are set they take priority over the command, and `lit-handoff auto on` says so in its reply.
-`LITCODEX_AUTO_HANDOFF=0` turns the option off. The environment never writes the project's `.codex/config.toml`,
+`LITCODEX_AUTO_HANDOFF=0` turns the feature off. The environment never writes the project's `.codex/config.toml`,
 so unless that file already asks Codex to compact, you run `/compact` yourself after the handoff. A percent outside
-1 to 99, or one that is not a whole number, leaves the option off, and `litcodex doctor` says why.
+1 to 99, or one that is not a whole number, leaves the feature off, and `litcodex doctor` says why.
 
 ## Check it from the shell
 
-`litcodex doctor` prints one `automatic handoff` line that matches what the prompts report. Below are three runs
-in the same project: before the option was turned on, after `lit-handoff auto on 60` in a trusted project, and
-with the environment variables after it was turned off again.
+`litcodex doctor` prints one `automatic handoff` line that matches what the prompts report; on the default it
+reads `on at 80% (default; you run /compact after the handoff)`. Below are three runs in the same project, from
+an earlier version in which the feature started off: before it was turned on, after `lit-handoff auto on 60` in a
+trusted project, and with the environment variables after it was turned off again.
 
 <p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/auto-handoff/auto-handoff-doctor-dark.webp" /><img src="./assets/auto-handoff/auto-handoff-doctor-light.webp" width="836" alt="A terminal window with three runs of litcodex doctor, each cut down to one line: &quot;automatic handoff: off&quot;, then &quot;automatic handoff: on at 60% (command; Codex compacts after the handoff turn)&quot;, then, run as LITCODEX_AUTO_HANDOFF=1 LITCODEX_AUTO_HANDOFF_PERCENT=60 litcodex doctor, &quot;automatic handoff: on at 60% (environment; you run /compact after the handoff)&quot;." /></picture></p>
 

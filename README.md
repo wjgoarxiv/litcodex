@@ -401,8 +401,9 @@ Prompt: `lit draw a P&ID of a sodium hypochlorite dosing skid on one A3 sheet`. 
 ## Let LitCodex save the handoff for you
 
 A long session fills the context window, and the next context starts without what this one learned. Sending
-`handoff` by hand works only if you notice in time, so the automatic handoff notices for you. It stays off until you
-turn it on with a percent of the context window, sent as your whole prompt:
+`handoff` by hand works only if you notice in time, so the automatic handoff notices for you. It is on by default at
+80% of the context window; to choose another percent, send it as your whole prompt, and `lit-handoff auto off`
+turns the feature off:
 
 ```text
 lit-handoff auto on 60
@@ -746,7 +747,7 @@ npm exec --yes --package @litfamily/litcodex@1.0.40 -- litcodex uninstall
 | --- | --- |
 | [Install guide](./docs/install.md) | Every install variant, what a global install downloads, Windows, each installer screen, what installing changes |
 | [Skills](./docs/skills.md) | Every bundled skill with a picture, and which ones are worth knowing by name |
-| [Automatic handoff](./docs/auto-handoff.md) | Writes the handoff for you at a context percent you choose; off by default |
+| [Automatic handoff](./docs/auto-handoff.md) | Writes the handoff for you at a context percent (80% by default; `lit-handoff auto off` turns it off) |
 | [Usage reference](./docs/usage.md) | Every route, model configuration, platform limits and recovery |
 | [Privacy and network behavior](./docs/privacy.md) · [migration guide](./docs/npm-migration.md) | Registry traffic, updates and the move from the old package |
 | [Media and brand](./docs/media.md) | The films, the logo and the story behind the name |

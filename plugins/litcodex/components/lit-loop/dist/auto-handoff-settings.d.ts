@@ -2,6 +2,8 @@ export declare const AUTO_HANDOFF_FLAG_ENV = "LITCODEX_AUTO_HANDOFF";
 export declare const AUTO_HANDOFF_PERCENT_ENV = "LITCODEX_AUTO_HANDOFF_PERCENT";
 export declare const AUTO_HANDOFF_DIR = ".litcodex/auto-handoff";
 export declare const AUTO_HANDOFF_SETTINGS_FILE = "settings.json";
+/** Chosen below Codex's own automatic compaction point, so the handoff is written before the host compacts. */
+export declare const DEFAULT_AUTO_HANDOFF_PERCENT = 80;
 export declare const HOST_COMPACT_KEY = "model_post_turn_compact_threshold_percent";
 export declare const HOST_COMPACT_BEGIN = "# litcodex automatic handoff (managed by `lit-handoff auto`; `lit-handoff auto off` removes it)";
 export interface StoredAutoHandoff {
@@ -24,7 +26,7 @@ export declare function parsePercent(raw: string | undefined): number | null;
 export declare function settingsPath(repoRoot: string): string;
 /** Read a small regular file; null when missing, a symlink, too large, or unreadable. */
 export declare function readSmallFile(path: string): string | null;
-/** The stored choice; a missing, malformed or hand-edited file reads as "off, no percent". */
+/** The stored choice; a missing file reads as the default (on), a malformed or hand-edited one as "off, no percent". */
 export declare function readStoredAutoHandoff(repoRoot: string): {
     stored: StoredAutoHandoff;
     warning: string | null;
@@ -32,7 +34,7 @@ export declare function readStoredAutoHandoff(repoRoot: string): {
 /**
  * Combine the environment with the stored choice. The environment wins when it is set: `=1` turns the
  * feature on and `=0` turns it off. The percent comes from its variable first, then from the stored
- * value. Nothing is active without a valid percent.
+ * value, then from the default. An invalid percent variable keeps the feature off.
  */
 export declare function resolveAutoHandoff(env: NodeJS.ProcessEnv, stored: StoredAutoHandoff, storedWarning?: string | null): AutoHandoffState;
 export declare function loadAutoHandoffState(repoRoot: string, env: NodeJS.ProcessEnv): AutoHandoffState;
@@ -65,8 +67,9 @@ export declare function writeProjectCompaction(repoRoot: string, percent: number
 export declare function removeProjectCompaction(repoRoot: string): ProjectConfigResult;
 /**
  * Remove the managed block when the feature is effectively off, however it got there: `lit-handoff auto
- * off`, `LITCODEX_AUTO_HANDOFF=0`, a deleted settings file, or a percent that is not valid. Without this the
- * block outlives the switch and Codex keeps compacting at that percent with no handoff. Only the marked
+ * off`, `LITCODEX_AUTO_HANDOFF=0`, or a percent that is not valid. A deleted settings file puts the feature
+ * back on its default percent, which the block no longer matches, so it goes too. Without this the block
+ * outlives the switch and Codex keeps compacting at that percent with no handoff. Only the marked
  * block goes; a key the user wrote by hand is never touched. Never throws.
  */
 export declare function clearManagedCompactionWhenOff(repoRoot: string, env: NodeJS.ProcessEnv): ProjectConfigResult;

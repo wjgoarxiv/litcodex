@@ -121,8 +121,8 @@ LitCodex skill folders to `~/.codex/litcodex-backups/<date>/` first. Versions up
 - Codex gets the plugin, hooks and agents, plus the managed keys in `~/.codex/config.toml`. Your unrelated
   Codex settings stay as they are.
 - Each project gets local records under `.litcodex/lit-loop/`, kept out of Git and packages.
-- [Automatic handoff](https://github.com/wjgoarxiv/litcodex/blob/main/docs/auto-handoff.md) is optional and
-  off by default.
+- [Automatic handoff](https://github.com/wjgoarxiv/litcodex/blob/main/docs/auto-handoff.md) is on by default
+  at 80% of the context window; `lit-handoff auto off` turns it off.
 - Tests, fixtures, test helpers and the Vitest configuration live only in the repository. Neither the npm
   package nor the installed marketplace plugin includes them.
 

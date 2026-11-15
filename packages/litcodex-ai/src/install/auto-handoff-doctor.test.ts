@@ -23,10 +23,31 @@ const settings = (value: unknown): Record<string, string> => ({
 });
 
 describe("doctor: automatic handoff", () => {
-	it("is off by default and says nothing", () => {
+	it("is on at the default percent with no setting and says nothing more", () => {
 		const report = inspectAutoHandoff(fsOf({}), {}, PROJECT, codexHome);
-		expect(report).toEqual({ state: "off", percent: null, source: "default", compaction: null, warnings: [] });
-		expect(autoHandoffLine(report)).toBe("off");
+		expect(report).toEqual({ state: "on", percent: 80, source: "default", compaction: "run-compact", warnings: [] });
+		expect(autoHandoffLine(report)).toBe("on at 80% (default; you run /compact after the handoff)");
+	});
+
+	it("is off after `lit-handoff auto off`, the environment off switch, or a settings file it cannot read", () => {
+		const stored = inspectAutoHandoff(
+			fsOf(settings({ version: 1, enabled: false, percent: null })),
+			{},
+			PROJECT,
+			codexHome,
+		);
+		expect(stored).toMatchObject({ state: "off", percent: null, warnings: [] });
+		expect(autoHandoffLine(stored)).toBe("off");
+		const env = inspectAutoHandoff(fsOf({}), { LITCODEX_AUTO_HANDOFF: "0" }, PROJECT, codexHome);
+		expect(env.state).toBe("off");
+		const unreadable = inspectAutoHandoff(
+			fsOf({ [`${PROJECT}/.litcodex/auto-handoff/settings.json`]: "{not json" }),
+			{},
+			PROJECT,
+			codexHome,
+		);
+		expect(unreadable.state).toBe("off");
+		expect(unreadable.warnings.join(" ")).toContain("could not be read");
 	});
 
 	it("shows the environment-chosen percent and the manual compaction it leaves to the user", () => {
@@ -137,8 +158,13 @@ describe("doctor: automatic handoff", () => {
 			expect(report.warnings.join(" ")).toContain("lit-handoff auto off");
 		});
 
-		it("warns when the settings file is gone", () => {
-			const report = inspectAutoHandoff(fsOf(config), {}, PROJECT, codexHome);
+		it("warns when the settings are stored off", () => {
+			const report = inspectAutoHandoff(
+				fsOf({ ...settings({ version: 1, enabled: false, percent: 60 }), ...config }),
+				{},
+				PROJECT,
+				codexHome,
+			);
 			expect(report.state).toBe("off");
 			expect(report.warnings.join(" ")).toContain("keeps compacting at 60%");
 		});
@@ -148,7 +174,7 @@ describe("doctor: automatic handoff", () => {
 			expect(on.warnings.join(" ")).not.toContain("keeps compacting");
 			const mine = inspectAutoHandoff(
 				fsOf({ [`${PROJECT}/.codex/config.toml`]: "model_post_turn_compact_threshold_percent = 60\n" }),
-				{},
+				{ LITCODEX_AUTO_HANDOFF: "0" },
 				PROJECT,
 				codexHome,
 			);

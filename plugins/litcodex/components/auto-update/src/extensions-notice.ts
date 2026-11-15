@@ -3,10 +3,13 @@
 // `litcodex install` writes the notice to <LITCODEX_DATA_ROOT or ~/.litcodex>/extensions-notice.json when it lands a
 // new payload. This SessionStart hook claims the file with a rename, so two sessions starting together cannot both
 // show it, deletes it, and returns the text for the hook's user-visible systemMessage. Anything malformed is dropped.
+// Every later install writes the same text again, so the hash of each text that was shown goes into the "already
+// shown" record (shown-notices.ts) and the same text is claimed and dropped without being shown a second time.
 
 import { readFileSync, renameSync, rmSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { markShown, noticeHash, wasShown } from "./shown-notices.js";
 
 const NOTICE_SCHEMA_VERSION = 1;
 const MAX_NOTICE_CHARS = 2000;
@@ -28,7 +31,13 @@ export function takeExtensionsNotice(env: NodeJS.ProcessEnv = process.env): stri
 		const parsed = JSON.parse(readFileSync(claimed, "utf8")) as { schemaVersion?: unknown; message?: unknown };
 		if (parsed.schemaVersion !== NOTICE_SCHEMA_VERSION || typeof parsed.message !== "string") return undefined;
 		const message = parsed.message.replace(/[^\P{Cc}\n]/gu, "").trim();
-		return message.length === 0 ? undefined : message.slice(0, MAX_NOTICE_CHARS);
+		if (message.length === 0) return undefined;
+		const text = message.slice(0, MAX_NOTICE_CHARS);
+		const dataRoot = dirname(path);
+		const hash = noticeHash(text);
+		if (wasShown(dataRoot, hash)) return undefined;
+		markShown(dataRoot, hash);
+		return text;
 	} catch {
 		return undefined;
 	} finally {

@@ -3,9 +3,9 @@
 // The flow across Codex hooks, each step reading and writing one small per-session record under
 // `.litcodex/auto-handoff/<session>.json`:
 //
-//   Stop            reads the context percent from the session transcript. At or above the user's
-//                   percent, once per crossing, it blocks the stop with an instruction to write the
-//                   handoff now and to tell the user one plain line.
+//   Stop            reads the context percent from the session transcript. At or above the percent in
+//                   force (the user's, else the default), once per crossing, it blocks the stop with an
+//                   instruction to write the handoff now and to tell the user one plain line.
 //   PostCompact     marks the session as compacted (Codex compacts after the handoff turn when the
 //                   project config asks for it, or the user runs /compact).
 //   SessionStart    source "compact" (compaction inside a turn) and the next UserPromptSubmit (compaction
@@ -196,7 +196,7 @@ export function buildHandoffInstruction(
 ): string {
 	const line = hostCompacts ? SAVED_LINE_HOST_COMPACTS : SAVED_LINE_RUN_COMPACT;
 	return [
-		`Automatic handoff: this conversation has used ${percentText(percent)}% of the context window, past the ${threshold}% the user chose.`,
+		`Automatic handoff: this conversation has used ${percentText(percent)}% of the context window, past the ${threshold}% set for automatic handoff.`,
 		"Save the handoff now, before anything else:",
 		`1. Read ${resolveSkillPath("lit-handoff")} in full and follow it to create or refresh the handoff file. Its destination rules pick the file.`,
 		`2. Put this exact line in the handoff file so the next context can find it: ${HANDOFF_MARKER_LABEL} ${sessionId}`,
@@ -224,7 +224,10 @@ export function evaluateAutoHandoffStop(input: AutoHandoffStopInput): AutoHandof
 		if (input.stopHookActive) return PASS;
 		if (reading.percent < state.percent) {
 			if (session.phase === "idle" || session.phase === "compacted") {
-				if (session.lastPercent !== seen.lastPercent) writeSession(input.repoRoot, path, seen);
+				// On the default alone nothing is written below the percent, so a project that never gets there stays untouched.
+				if (session.lastPercent !== seen.lastPercent && state.source !== "default") {
+					writeSession(input.repoRoot, path, seen);
+				}
 				return PASS;
 			}
 			writeSession(input.repoRoot, path, { ...seen, phase: "idle", firedAt: null, firedPercent: null });

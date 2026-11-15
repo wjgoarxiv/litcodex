@@ -6,6 +6,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Automatic handoff is now on by default, at 80% of the context window, so a long conversation saves its handoff
+  before it is compacted without any setup. `lit-handoff auto off` (or `LITCODEX_AUTO_HANDOFF=0`) is the one switch
+  that turns it off, `lit-handoff auto on <percent>` still picks another percent, and `lit-handoff auto on` with no
+  number takes the stored percent or 80. A settings file that cannot be read still keeps it off. On the default alone
+  nothing is written into a project below the percent, `litcodex doctor` shows `on at 80% (default; ...)`, and the
+  project `.codex/config.toml` is left as it is until you run `lit-handoff auto on`.
+
+### Added
+
+- LitCodex now remembers which notices it has already shown. The extensions notice, which every install writes again
+  with the same text, is shown once per distinct text: its hash and the time go into
+  `<LITCODEX_DATA_ROOT or ~/.litcodex>/shown-notices.jsonl`, never the text. A missing, corrupt, oversized or
+  unwritable record changes nothing; the notice then appears as before.
+- The Stop hook of a LIT turn records how the run ended in `.litcodex/run-end/outcomes.jsonl`: `sent` (the turn closed
+  with its summary card), `waiting` (the last message asks you something or reports BLOCKED) or `nothing`. A run that
+  the continuation hook keeps going is not an end, and a session that never ignited LIT writes nothing.
+
 ## [1.0.40] - 2026-11-14
 
 ### Added

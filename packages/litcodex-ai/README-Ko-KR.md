@@ -118,8 +118,8 @@ cx="${CODEX_HOME:-$HOME/.codex}"; [ -f "$cx/skills/lit-docx/SKILL.md" ] && print
 - Codex에 플러그인·훅·에이전트가 등록되고 `~/.codex/config.toml`의 관리 항목이 갱신됩니다. 관련 없는 Codex
   설정은 그대로 둡니다.
 - 프로젝트마다 `.litcodex/lit-loop/` 아래에 로컬 기록이 생기며, Git과 패키지에서는 제외됩니다.
-- [자동 핸드오프](https://github.com/wjgoarxiv/litcodex/blob/main/docs/auto-handoff-Ko-KR.md)는 선택 기능이며
-  기본값은 꺼짐입니다.
+- [자동 핸드오프](https://github.com/wjgoarxiv/litcodex/blob/main/docs/auto-handoff-Ko-KR.md)는 기본으로 켜져 있고
+  컨텍스트 창의 80%에서 동작하며, `lit-handoff auto off`로 끌 수 있습니다.
 - 테스트, 픽스처, 테스트 헬퍼, Vitest 설정은 저장소에만 있습니다. npm 패키지와 설치된 마켓플레이스 플러그인에는
   들어가지 않습니다.
 

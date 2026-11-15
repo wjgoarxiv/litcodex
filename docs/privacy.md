@@ -45,11 +45,11 @@ package, or prevent an external tool from making network requests.
 
 ## Automatic handoff
 
-The [automatic handoff](./auto-handoff.md) is off by default and sends nothing anywhere. It
+The [automatic handoff](./auto-handoff.md) is on by default and sends nothing anywhere. It
 uses four local files and no network:
 
-- `.litcodex/auto-handoff/settings.json` holds your choice: a format version, whether the option is on, and the
-  percent you picked.
+- `.litcodex/auto-handoff/settings.json` holds your choice once you make one with `lit-handoff auto`: a format
+  version, whether the option is on, and the percent you picked. Without it the default (on, 80%) applies.
 - `.litcodex/auto-handoff/<session id>.json` is a per-session record. It holds the session id, which step the
   session is in (idle, asked for a handoff, compacted, reloaded), the time of the request, the percent that
   triggered it, and the last percent seen. It holds no prompt text and no handoff content. LitCodex does not read
@@ -65,6 +65,15 @@ uses four local files and no network:
 After a compaction, the hook reads the project's `.handoff/HANDOFF.md` or `HANDOFF.md`, and only when the file
 was written after the trigger and names this session. It passes the first 3,000 characters to the model in the
 same session. Project `.litcodex/` state is gitignored and excluded from npm and marketplace payloads.
+
+## Remembering what was shown
+
+Two small local files keep LitCodex from repeating itself. `<LITCODEX_DATA_ROOT or ~/.litcodex>/shown-notices.jsonl`
+holds one line per notice text LitCodex has shown, a short hash and a time, never the text, so the extensions
+notice appears once. `.litcodex/run-end/outcomes.jsonl` in a project holds one line per finished LIT run: the time,
+the session id, the skill and one word, `sent`, `nothing` or `waiting`. Neither file is read or written through a
+symlink, both are capped in size, and deleting either one only brings back the earlier behaviour. Nothing leaves
+your machine.
 
 ## Card colour
 

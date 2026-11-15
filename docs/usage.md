@@ -243,12 +243,12 @@ For report or proposal output, bare `lit` loads `lit-docx`; for slide or present
 
 ## Automatic handoff
 
-Automatic handoff is opt-in. The [automatic handoff page](./auto-handoff.md) explains it in plain
-words; this section lists the pieces for anyone reading the hook setup.
+Automatic handoff is on by default, at 80% of the context window. The [automatic handoff page](./auto-handoff.md)
+explains it in plain words; this section lists the pieces for anyone reading the hook setup.
 
 | Piece | Where it lives | What it does |
 | --- | --- | --- |
-| Switch | prompt `lit-handoff auto on <percent>`, `off`, `status`; or `LITCODEX_AUTO_HANDOFF=1` with `LITCODEX_AUTO_HANDOFF_PERCENT` | Chooses the percent (1 to 99). No default percent exists; the command blocks the prompt so the model never sees it. |
+| Switch | prompt `lit-handoff auto off`, `on <percent>`, `status`; or `LITCODEX_AUTO_HANDOFF=0` / `=1` with `LITCODEX_AUTO_HANDOFF_PERCENT` | On at 80% unless turned off; chooses another percent (1 to 99). The command blocks the prompt so the model never sees it. |
 | Watch and ask | Stop hook, `litcodex hook stop` | Reads the last token count from the session transcript and, at or above the percent, blocks the stop once per crossing with the instruction to save the handoff. `stop_hook_active` never triggers it. |
 | Compact | project `.codex/config.toml` key `model_post_turn_compact_threshold_percent`, or the user's `/compact` | Codex compacts after the handoff turn when the key is set and the project is trusted in the Codex config (Codex CLI 0.158 or newer); otherwise the model asks the user to run `/compact`. |
 | Note the compaction | PostCompact hook, `litcodex hook post-compact` | Marks a session that asked for a handoff as compacted. |

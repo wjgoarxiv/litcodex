@@ -1,10 +1,12 @@
 // src/auto-handoff-settings.ts — the user-controlled switch for automatic handoff.
 //
-// Off by default. The user turns it on with the exact prompt `lit-handoff auto on <percent>` (or sets
-// `LITCODEX_AUTO_HANDOFF=1` plus `LITCODEX_AUTO_HANDOFF_PERCENT`), turns it off with
-// `lit-handoff auto off`, and reads the state with `lit-handoff auto status`. The percent is never
-// hard-coded: `on` without a number reuses the last value the user stored and asks for one when there
-// is none. A percent that is not a whole number from 1 to 99 keeps the feature off and is reported.
+// On by default at DEFAULT_AUTO_HANDOFF_PERCENT of the context window, so a long conversation saves its
+// handoff before it is compacted without anyone setting anything up. The one off switch is the exact prompt
+// `lit-handoff auto off` (or `LITCODEX_AUTO_HANDOFF=0`); `lit-handoff auto on <percent>` (or
+// `LITCODEX_AUTO_HANDOFF=1` plus `LITCODEX_AUTO_HANDOFF_PERCENT`) chooses another percent, and
+// `lit-handoff auto status` reads the state. `on` without a number reuses the last value the user stored,
+// else the default. A percent that is not a whole number from 1 to 99 keeps the feature off and is reported,
+// and so does a settings file that cannot be read: the user's choice is unknown, so nothing is assumed.
 //
 // Command-set values live in `.litcodex/auto-handoff/settings.json` under the project folder. When the
 // feature is turned on by command, the same percent is written to the PROJECT `.codex/config.toml` as
@@ -20,11 +22,16 @@ export const AUTO_HANDOFF_FLAG_ENV = "LITCODEX_AUTO_HANDOFF";
 export const AUTO_HANDOFF_PERCENT_ENV = "LITCODEX_AUTO_HANDOFF_PERCENT";
 export const AUTO_HANDOFF_DIR = ".litcodex/auto-handoff";
 export const AUTO_HANDOFF_SETTINGS_FILE = "settings.json";
+/** Chosen below Codex's own automatic compaction point, so the handoff is written before the host compacts. */
+export const DEFAULT_AUTO_HANDOFF_PERCENT = 80;
 export const HOST_COMPACT_KEY = "model_post_turn_compact_threshold_percent";
 export const HOST_COMPACT_BEGIN = "# litcodex automatic handoff (managed by `lit-handoff auto`; `lit-handoff auto off` removes it)";
 const NO_FOLLOW = constants.O_NOFOLLOW ?? 0;
 const MAX_FILE_BYTES = 256 * 1024;
-const DEFAULT_STORED = Object.freeze({ enabled: false, percent: null });
+/** No settings file: the product default. */
+const DEFAULT_STORED = Object.freeze({ enabled: true, percent: null });
+/** A settings file that cannot be read: the user's choice is unknown, so the feature stays off. */
+const UNREADABLE_STORED = Object.freeze({ enabled: false, percent: null });
 /** A whole number from 1 to 99 written as plain digits, else null. */
 export function parsePercent(raw) {
     const text = raw?.trim() ?? "";
@@ -61,7 +68,7 @@ export function readSmallFile(path) {
         closeSync(fd);
     }
 }
-/** The stored choice; a missing, malformed or hand-edited file reads as "off, no percent". */
+/** The stored choice; a missing file reads as the default (on), a malformed or hand-edited one as "off, no percent". */
 export function readStoredAutoHandoff(repoRoot) {
     if (!isAbsolute(repoRoot))
         return { stored: DEFAULT_STORED, warning: null };
@@ -80,7 +87,7 @@ export function readStoredAutoHandoff(repoRoot) {
     }
     catch {
         return {
-            stored: DEFAULT_STORED,
+            stored: UNREADABLE_STORED,
             warning: `${AUTO_HANDOFF_DIR}/${AUTO_HANDOFF_SETTINGS_FILE} could not be read, so automatic handoff stays off.`,
         };
     }
@@ -92,7 +99,7 @@ function shown(raw) {
 /**
  * Combine the environment with the stored choice. The environment wins when it is set: `=1` turns the
  * feature on and `=0` turns it off. The percent comes from its variable first, then from the stored
- * value. Nothing is active without a valid percent.
+ * value, then from the default. An invalid percent variable keeps the feature off.
  */
 export function resolveAutoHandoff(env, stored, storedWarning = null) {
     const warnings = [];
@@ -110,11 +117,13 @@ export function resolveAutoHandoff(env, stored, storedWarning = null) {
     if (envPercentInvalid) {
         warnings.push(`${AUTO_HANDOFF_PERCENT_ENV}=${shown(rawPercent)} is not a whole number from 1 to 99, so automatic handoff stays off.`);
     }
-    const percent = envPercentInvalid ? null : (envPercent ?? stored.percent);
-    const source = envDecision !== null || envPercent !== null ? "environment" : enabled ? "command" : "default";
-    if (enabled && !envPercentInvalid && percent === null) {
-        warnings.push(`Automatic handoff is on but has no percent. Run "lit-handoff auto on <percent>" or set ${AUTO_HANDOFF_PERCENT_ENV}.`);
-    }
+    const fallback = enabled ? DEFAULT_AUTO_HANDOFF_PERCENT : null;
+    const percent = envPercentInvalid ? null : (envPercent ?? stored.percent ?? fallback);
+    let source = "command";
+    if (envDecision !== null || envPercent !== null)
+        source = "environment";
+    else if (enabled && stored.percent === null)
+        source = "default";
     return { active: enabled && percent !== null, percent, source, warnings };
 }
 export function loadAutoHandoffState(repoRoot, env) {
@@ -315,13 +324,17 @@ export function removeProjectCompaction(repoRoot) {
 }
 /**
  * Remove the managed block when the feature is effectively off, however it got there: `lit-handoff auto
- * off`, `LITCODEX_AUTO_HANDOFF=0`, a deleted settings file, or a percent that is not valid. Without this the
- * block outlives the switch and Codex keeps compacting at that percent with no handoff. Only the marked
+ * off`, `LITCODEX_AUTO_HANDOFF=0`, or a percent that is not valid. A deleted settings file puts the feature
+ * back on its default percent, which the block no longer matches, so it goes too. Without this the block
+ * outlives the switch and Codex keeps compacting at that percent with no handoff. Only the marked
  * block goes; a key the user wrote by hand is never touched. Never throws.
  */
 export function clearManagedCompactionWhenOff(repoRoot, env) {
     try {
-        if (!isAbsolute(repoRoot) || loadAutoHandoffState(repoRoot, env).active)
+        if (!isAbsolute(repoRoot))
+            return "nothing-to-remove";
+        const state = loadAutoHandoffState(repoRoot, env);
+        if (state.active && state.source !== "default")
             return "nothing-to-remove";
         return removeProjectCompaction(repoRoot);
     }
@@ -354,8 +367,14 @@ function compactionSentence(repoRoot, percent, env) {
 export function describeAutoHandoff(repoRoot, state, env) {
     const lines = [];
     if (state.active && state.percent !== null) {
-        const origin = state.source === "environment" ? "set by environment variables" : "set by command";
+        const origin = state.source === "environment"
+            ? "set by environment variables"
+            : state.source === "default"
+                ? "default"
+                : "set by command";
         lines.push(`Automatic handoff is ON at ${state.percent}% (${origin}).`);
+        if (state.source === "default")
+            lines.push('Run "lit-handoff auto off" to turn it off.');
         lines.push(compactionSentence(repoRoot, state.percent, env));
     }
     else {
@@ -388,10 +407,7 @@ export function applyAutoHandoffRoute(repoRoot, env, route) {
             const kept = stored.percent === null ? "" : ` Your last percent (${stored.percent}%) is kept for next time.`;
             return `Automatic handoff is OFF.${kept}${envNote}`;
         }
-        const percent = route.argument === null ? stored.percent : parsePercent(route.argument);
-        if (route.argument === null && percent === null) {
-            return "Which percent should trigger the handoff? Run: lit-handoff auto on <percent from 1 to 99> (for example 60).";
-        }
+        const percent = route.argument === null ? (stored.percent ?? DEFAULT_AUTO_HANDOFF_PERCENT) : parsePercent(route.argument);
         if (percent === null)
             return `"${shown(route.argument ?? "")}" is not a whole number from 1 to 99. Nothing changed.`;
         if (!writeStoredAutoHandoff(repoRoot, { enabled: true, percent })) {

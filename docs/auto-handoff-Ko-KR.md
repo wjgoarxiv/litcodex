@@ -1,4 +1,4 @@
-# 자동 핸드오프 (선택)
+# 자동 핸드오프
 
 [README](../README-Ko-KR.md) · [English](./auto-handoff.md)
 
@@ -6,12 +6,12 @@
 내용을 다음 컨텍스트로 넘겨 줍니다. 이 기능은 대화가 정해 둔 크기에 이르면 핸드오프를 대신 써 주므로, 컨텍스트
 사용량을 계속 지켜보지 않아도 됩니다.
 
-직접 켜기 전까지는 꺼져 있고, 컨텍스트 창의 몇 퍼센트에서 동작할지도 직접 고릅니다. LitCodex에는 기본 퍼센트가
-없습니다. 대화가 정한 퍼센트에 이르면 Stop 훅이 모델에게 핸드오프를 저장하게 하고, 그 턴에는 다른 일을 시작하지
-않게 합니다. 그다음 Codex가 스스로, 또는 사용자가 `/compact`로 대화를 압축하고, 다음 컨텍스트는 방금 저장한
-핸드오프를 들고 시작합니다.
+기본으로 켜져 있고 컨텍스트 창의 80%에서 동작하며, `lit-handoff auto off`로 끌 수 있습니다. 대화가 적용 중인
+퍼센트에 이르면 Stop 훅이 모델에게 핸드오프를 저장하게 하고, 그 턴에는 다른 일을 시작하지 않게 합니다. 그다음
+Codex가 스스로, 또는 사용자가 `/compact`로 대화를 압축하고, 다음 컨텍스트는 방금 저장한 핸드오프를 들고
+시작합니다. 그 지점까지 가지 않는 프로젝트에는 아무것도 쓰지 않습니다.
 
-## 켜기
+## 다른 퍼센트로 바꾸기
 
 아래 문장을 프롬프트 전체로 보내세요. 60은 예시이며 1에서 99 사이의 정수면 됩니다.
 
@@ -40,18 +40,21 @@ until then you will be asked to run /compact yourself." 프로젝트 파일에 �
 
 ## 상태 보기와 끄기
 
-`lit-handoff auto status`는 지금 설정, 그 설정이 어디서 왔는지, 압축이 어떻게 일어날지를 알려 줍니다.
-`lit-handoff auto off`는 기능을 끄고 숫자는 다음을 위해 남겨 둡니다. 나중에 숫자 없이 `lit-handoff auto on`을
-보내면 그 숫자로 다시 켜집니다.
+`lit-handoff auto status`는 지금 설정, 그 설정이 어디서 왔는지(기본값, 명령, 환경 변수), 압축이 어떻게 일어날지를
+알려 줍니다. `lit-handoff auto off`는 기능을 끄고 숫자는 다음을 위해 남겨 둡니다. 나중에 숫자 없이
+`lit-handoff auto on`을 보내면 그 숫자로, 숫자를 고른 적이 없다면 80으로 다시 켜집니다.
 
 <p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/auto-handoff/auto-handoff-status-off-dark.webp" /><img src="./assets/auto-handoff/auto-handoff-status-off-light.webp" width="764" alt="프롬프트 두 개가 있는 Codex 터미널 창입니다. &quot;lit-handoff auto status&quot; 아래에 &quot;Blocked by hook&quot;과 &quot;Automatic handoff is ON at 60% (set by command). Codex compacts the conversation as soon as the turn that saved the handoff ends.&quot;가 나오고, 이어서 &quot;lit-handoff auto off&quot; 아래에 &quot;Blocked by hook&quot;과 &quot;Automatic handoff is OFF. Your last percent (60%) is kept for next time.&quot;가 나옵니다." /></picture></p>
 
 끄면 `.codex/config.toml`에서 표시가 붙은 블록만 지우고, 파일에 다른 내용이 없었다면 파일도 지웁니다.
-`LITCODEX_AUTO_HANDOFF=0`이나 삭제된 설정 파일처럼 다른 이유로 꺼진 경우에도 같은 정리가 일어납니다. 다음 훅
-실행이나 `lit-handoff auto` 프롬프트가 블록을 지우며, 블록이 남아 있는 동안에는 `litcodex doctor`가 경고합니다.
+`LITCODEX_AUTO_HANDOFF=0`처럼 다른 이유로 꺼진 경우에도 같은 정리가 일어납니다. 다음 훅 실행이나
+`lit-handoff auto` 프롬프트가 블록을 지우며, 블록이 남아 있는 동안에는 `litcodex doctor`가 경고합니다. 설정 파일을
+지우면 기능이 기본 퍼센트로 돌아가는데 그 블록은 더 이상 맞지 않으므로 블록도 함께 지워집니다.
 
-숫자를 한 번도 정하지 않은 채 `lit-handoff auto on`을 보내면 LitCodex가 숫자를 물어봅니다. 1에서 99를 벗어나거나
-정수가 아닌 숫자는 아무것도 바꾸지 않고, `lit-handoff auto` 뒤에 다른 말을 붙이면 사용법 한 줄이 돌아옵니다.
+기본값만 쓸 때는 `.codex/config.toml`이 사용자가 적은 그대로 남습니다. 핸드오프 뒤에 `/compact`를 직접 실행하거나,
+`lit-handoff auto on`을 보내 Codex가 압축하게 할 수 있습니다. 1에서 99 사이의 정수만 받아들이고, 그 밖의 값은 설정을
+그대로 두며, `lit-handoff auto` 뒤에 다른 말을 붙이면 사용법 한 줄이 돌아옵니다. LitCodex가 설정 파일을 읽을 수
+없으면 사용자의 선택을 알 수 없으므로 기능은 꺼진 채로 둡니다.
 
 ## 정한 퍼센트에 이르면
 
@@ -89,8 +92,9 @@ LITCODEX_AUTO_HANDOFF=1 LITCODEX_AUTO_HANDOFF_PERCENT=60 codex
 
 ## 셸에서 확인하기
 
-`litcodex doctor`는 프롬프트가 알려 주는 상태와 같은 `automatic handoff` 줄을 하나 출력합니다. 아래는 같은
-프로젝트에서 세 번 실행한 결과입니다. 기능을 켜기 전, 신뢰한 프로젝트에서 `lit-handoff auto on 60`을 보낸 뒤,
+`litcodex doctor`는 프롬프트가 알려 주는 상태와 같은 `automatic handoff` 줄을 하나 출력하며, 기본값에서는
+`on at 80% (default; you run /compact after the handoff)`로 나옵니다. 아래는 기능이 꺼진 채 시작하던 이전 버전에서
+같은 프로젝트로 세 번 실행한 결과입니다. 기능을 켜기 전, 신뢰한 프로젝트에서 `lit-handoff auto on 60`을 보낸 뒤,
 다시 끈 다음 환경 변수를 붙였을 때입니다.
 
 <p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/auto-handoff/auto-handoff-doctor-dark.webp" /><img src="./assets/auto-handoff/auto-handoff-doctor-light.webp" width="836" alt="litcodex doctor를 세 번 실행하고 각각 한 줄만 남긴 터미널 창입니다. &quot;automatic handoff: off&quot;, 이어서 &quot;automatic handoff: on at 60% (command; Codex compacts after the handoff turn)&quot;, 마지막으로 LITCODEX_AUTO_HANDOFF=1 LITCODEX_AUTO_HANDOFF_PERCENT=60 litcodex doctor로 실행한 &quot;automatic handoff: on at 60% (environment; you run /compact after the handoff)&quot;가 보입니다." /></picture></p>

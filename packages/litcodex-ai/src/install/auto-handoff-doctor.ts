@@ -1,6 +1,7 @@
-// Doctor view of the opt-in automatic handoff. The hook side lives in the lit-loop component
+// Doctor view of the automatic handoff, which is on by default. The hook side lives in the lit-loop component
 // (`auto-handoff-settings.ts`); this file reads the same environment variables and the same
-// `.litcodex/auto-handoff/settings.json`, and mirrors its rules so the installer never imports hook code.
+// `.litcodex/auto-handoff/settings.json`, and mirrors its rules (and its default percent) so the installer never
+// imports hook code.
 
 import { join } from "node:path";
 import { readRootSettings } from "../config-migration/root-settings.js";
@@ -9,6 +10,8 @@ import type { AutoHandoffDoctorReport } from "./types.js";
 
 const FLAG_ENV = "LITCODEX_AUTO_HANDOFF";
 const PERCENT_ENV = "LITCODEX_AUTO_HANDOFF_PERCENT";
+/** Mirror of DEFAULT_AUTO_HANDOFF_PERCENT in the lit-loop component. */
+const DEFAULT_PERCENT = 80;
 const HOST_KEY = "model_post_turn_compact_threshold_percent";
 const KEY_LINE = new RegExp(`^\\s*${HOST_KEY}\\s*=\\s*(\\d+)\\s*(?:#.*)?$`, "mu");
 /** The marker line `lit-handoff auto on` writes directly above the key; only a key under it is managed. */
@@ -71,7 +74,7 @@ export function inspectAutoHandoff(
 	codexHome: string | null,
 ): AutoHandoffDoctorReport {
 	const warnings: string[] = [];
-	let storedEnabled = false;
+	let storedEnabled = true;
 	let storedPercent: number | null = null;
 	const rawSettings = readIfPresent(fs, join(projectRoot, ".litcodex", "auto-handoff", "settings.json"));
 	if (rawSettings !== null) {
@@ -84,6 +87,8 @@ export function inspectAutoHandoff(
 				warnings.push("The stored automatic handoff percent is not a whole number from 1 to 99 and was ignored.");
 			}
 		} catch {
+			storedEnabled = false;
+			storedPercent = null;
 			warnings.push(".litcodex/auto-handoff/settings.json could not be read, so automatic handoff stays off.");
 		}
 	}
@@ -101,13 +106,10 @@ export function inspectAutoHandoff(
 			`${PERCENT_ENV}=${shown(rawPercent)} is not a whole number from 1 to 99, so automatic handoff stays off.`,
 		);
 	}
-	const percent = envInvalid ? null : (envPercent ?? storedPercent);
-	const source = flag === "1" || flag === "0" || envPercent !== null ? "environment" : enabled ? "command" : "default";
-	if (enabled && !envInvalid && percent === null) {
-		warnings.push(
-			`Automatic handoff is on but has no percent. Run "lit-handoff auto on <percent>" or set ${PERCENT_ENV}.`,
-		);
-	}
+	const percent = envInvalid ? null : (envPercent ?? storedPercent ?? (enabled ? DEFAULT_PERCENT : null));
+	let source: AutoHandoffDoctorReport["source"] = "command";
+	if (flag === "1" || flag === "0" || envPercent !== null) source = "environment";
+	else if (enabled && storedPercent === null) source = "default";
 	const active = enabled && percent !== null;
 	const projectConfig = readIfPresent(fs, join(projectRoot, ".codex", "config.toml"));
 	if (!active || percent === null) {

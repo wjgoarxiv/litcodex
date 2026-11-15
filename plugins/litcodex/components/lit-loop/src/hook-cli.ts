@@ -42,6 +42,7 @@ import {
 	recordActiveRoute,
 } from "./reentry.js";
 import { isBoundaryAnswer, isGoPrompt, takeGo } from "./rewind-go.js";
+import { outcomeFor, recordRunEnd } from "./run-end.js";
 import { workflowCard } from "./screen-card.js";
 import { screenColor } from "./screen-status.js";
 import { recordLiveness } from "./session-liveness.js";
@@ -468,6 +469,12 @@ export async function runStopPlanPersistenceHookCli(
 		const turn = line === null ? null : workflowTurn(scope.cwd, scope.sessionId);
 		const card =
 			turn === null ? null : workflowCard(scope.cwd, scope.sessionId, turn.mode, line, { color: screenColor(env) });
+		// The end of a LIT run: remember whether it reported, had nothing to report, or waits on the user.
+		const opened = workflowTurn(scope.cwd, scope.sessionId);
+		const outcome = opened === null ? null : outcomeFor(line, detectWaitReason(lastMsg));
+		if (opened !== null && outcome !== null) {
+			recordRunEnd(scope.cwd, scope.sessionId, { mode: opened.mode, outcome }, auto.now);
+		}
 		// Codex puts a hook label before the first row, so the card starts on the next one.
 		if (card !== null) stdout.write(`${JSON.stringify({ systemMessage: `\n${card}` })}\n`);
 	}

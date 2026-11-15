@@ -1,4 +1,4 @@
-// src/auto-handoff.test.ts — opt-in automatic handoff: switch, crossing, reload, hook wiring.
+// src/auto-handoff.test.ts — automatic handoff (on by default): switch, crossing, reload, hook wiring.
 
 import {
 	appendFileSync,
@@ -24,6 +24,7 @@ import {
 } from "./auto-handoff.js";
 import {
 	applyAutoHandoffRoute,
+	DEFAULT_AUTO_HANDOFF_PERCENT,
 	HOST_COMPACT_BEGIN,
 	HOST_COMPACT_KEY,
 	hostCompactsAt,
@@ -54,6 +55,7 @@ function workspace(): string {
 }
 
 const NO_ENV: NodeJS.ProcessEnv = {};
+const OFF_ENV: NodeJS.ProcessEnv = { LITCODEX_AUTO_HANDOFF: "0" };
 
 /** An isolated CODEX_HOME whose config marks `project` as `level` (nothing when level is null). */
 function codexHomeFor(project: string, level: "trusted" | "untrusted" | null): NodeJS.ProcessEnv {
@@ -204,15 +206,29 @@ function context(result: Result): string {
 	return parsed.hookSpecificOutput?.additionalContext ?? "";
 }
 
-describe("the switch: off by default, percent chosen by the user", () => {
-	it("is off with no environment and no stored choice", () => {
+describe("the switch: on by default, one command or variable turns it off", () => {
+	it("is on at the default percent with no environment and no stored choice", () => {
 		const root = workspace();
+		expect(DEFAULT_AUTO_HANDOFF_PERCENT).toBe(80);
 		expect(loadAutoHandoffState(root, NO_ENV)).toEqual({
-			active: false,
-			percent: null,
+			active: true,
+			percent: DEFAULT_AUTO_HANDOFF_PERCENT,
 			source: "default",
 			warnings: [],
 		});
+	});
+
+	it("is turned off by the stored choice, by the environment, and by a settings file it cannot read", () => {
+		const root = workspace();
+		applyAutoHandoffRoute(root, NO_ENV, { action: "off" });
+		expect(loadAutoHandoffState(root, NO_ENV)).toMatchObject({ active: false });
+		const other = workspace();
+		expect(loadAutoHandoffState(other, OFF_ENV)).toMatchObject({ active: false });
+		mkdirSync(join(other, ".litcodex", "auto-handoff"), { recursive: true });
+		writeFileSync(join(other, ".litcodex", "auto-handoff", "settings.json"), "{not json");
+		const unreadable = loadAutoHandoffState(other, NO_ENV);
+		expect(unreadable.active).toBe(false);
+		expect(unreadable.warnings.join(" ")).toContain("could not be read");
 	});
 
 	it("turns on from the two environment variables", () => {
@@ -220,10 +236,9 @@ describe("the switch: off by default, percent chosen by the user", () => {
 		expect(state).toMatchObject({ active: true, percent: 60, source: "environment", warnings: [] });
 	});
 
-	it("needs a percent: on without one stays off and says so", () => {
+	it("takes the default percent when the flag is on and none is given", () => {
 		const state = resolveAutoHandoff({ LITCODEX_AUTO_HANDOFF: "1" }, { enabled: false, percent: null });
-		expect(state.active).toBe(false);
-		expect(state.warnings.join(" ")).toContain("has no percent");
+		expect(state).toMatchObject({ active: true, percent: DEFAULT_AUTO_HANDOFF_PERCENT, warnings: [] });
 	});
 
 	it.each(["0", "100", "abc", "5.5", "-3", "60%", "1e1", "007"])(
@@ -326,10 +341,12 @@ describe("the route: on, off, status, and the project compaction setting", () =>
 		expect(existsSync(join(root, ".codex", "config.toml"))).toBe(false);
 	});
 
-	it("on without a number reuses the last value, and asks when there is none", () => {
+	it("on without a number reuses the last value, and takes the default when there is none", () => {
 		const root = workspace();
-		expect(applyAutoHandoffRoute(root, NO_ENV, { action: "on", argument: null })).toContain("Which percent");
+		applyAutoHandoffRoute(root, NO_ENV, { action: "off" });
 		expect(loadAutoHandoffState(root, NO_ENV).active).toBe(false);
+		expect(applyAutoHandoffRoute(root, NO_ENV, { action: "on", argument: null })).toContain("ON at 80%");
+		expect(loadAutoHandoffState(root, NO_ENV)).toMatchObject({ active: true, percent: 80, source: "command" });
 		applyAutoHandoffRoute(root, NO_ENV, { action: "on", argument: "45" });
 		applyAutoHandoffRoute(root, NO_ENV, { action: "off" });
 		expect(applyAutoHandoffRoute(root, NO_ENV, { action: "on", argument: null })).toContain("ON at 45%");
@@ -359,7 +376,9 @@ describe("the route: on, off, status, and the project compaction setting", () =>
 
 	it("status reports the state and any warning; the environment note appears when it overrides", () => {
 		const root = workspace();
-		expect(applyAutoHandoffRoute(root, NO_ENV, { action: "status" })).toBe("Automatic handoff is OFF.");
+		const first = applyAutoHandoffRoute(root, NO_ENV, { action: "status" });
+		expect(first).toContain("ON at 80% (default)");
+		expect(first).toContain("lit-handoff auto off");
 		applyAutoHandoffRoute(root, NO_ENV, { action: "on", argument: "60" });
 		const env = { LITCODEX_AUTO_HANDOFF_PERCENT: "banana" };
 		const status = applyAutoHandoffRoute(root, env, { action: "status" });
@@ -421,10 +440,35 @@ describe("Stop: one handoff instruction per crossing", () => {
 			runStopPlanPersistenceHookCli,
 			{ hook_event_name: "Stop", session_id: "sess-a", transcript_path: path, cwd: root, stop_hook_active: false },
 			root,
-			{ env: NO_ENV },
+			{ env: OFF_ENV },
 		);
 		expect(result.stdout).toBe("");
 		expect(existsSync(join(root, ".litcodex", "auto-handoff"))).toBe(false);
+	});
+
+	it("saves at the default percent with no setting and no environment", async () => {
+		const root = workspace();
+		const path = transcript(root, 81_000);
+		const result = await stop(root, path, {}, "sess-a", NO_ENV);
+		const output = JSON.parse(result.stdout) as { decision: string; reason: string };
+		expect(output.decision).toBe("block");
+		expect(output.reason).toContain("80%");
+		expect(output.reason).toContain(`${HANDOFF_MARKER_LABEL} sess-a`);
+		expect((await stop(root, path, {}, "sess-a", NO_ENV)).stdout).toBe("");
+	});
+
+	it("leaves a project that never gets near the default percent untouched", async () => {
+		const root = workspace();
+		const result = await stop(root, transcript(root, 30_000), {}, "sess-a", NO_ENV);
+		expect(result.stdout).toBe("");
+		expect(existsSync(join(root, ".litcodex"))).toBe(false);
+	});
+
+	it("stays silent at the default percent after `lit-handoff auto off`", async () => {
+		const root = workspace();
+		applyAutoHandoffRoute(root, NO_ENV, { action: "off" });
+		const result = await stop(root, transcript(root, 90_000), {}, "sess-a", NO_ENV);
+		expect(result.stdout).toBe("");
 	});
 
 	it("does nothing below the percent", async () => {
@@ -503,7 +547,7 @@ describe("Stop: one handoff instruction per crossing", () => {
 });
 
 describe("the project compaction setting follows the effective switch", () => {
-	const OFF_BY_ENV: NodeJS.ProcessEnv = { LITCODEX_AUTO_HANDOFF: "0" };
+	const OFF_BY_ENV = OFF_ENV;
 	const configPath = (root: string): string => join(root, ".codex", "config.toml");
 
 	function turnedOn(root: string): void {
@@ -667,7 +711,7 @@ describe("reload after compaction", () => {
 		expect((await submit(root, "go", ON_60)).stdout).toBe("");
 		await fire(root);
 		await postCompact(root);
-		expect((await submit(root, "go", NO_ENV)).stdout).toBe("");
+		expect((await submit(root, "go", OFF_ENV)).stdout).toBe("");
 	});
 
 	it("bounds the excerpt", async () => {

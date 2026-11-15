@@ -592,6 +592,8 @@ function continuingWork(repoRoot, sessionId, turnId, stop) {
         return null;
     return { done, total: rows.length, next: rows.find((row) => !row.done)?.label ?? null };
 }
+/** The Stop line of a turn that start-work keeps running starts with this mark; it is not the end of the run. */
+export const CONTINUING_MARK = "⏳";
 function counted(n, unit) {
     return `${n} ${unit}${n === 1 ? "" : "s"} ✓`;
 }
@@ -610,7 +612,7 @@ export function workflowStopLine(repoRoot, sessionId, turnId, stop = NO_STOP_CON
     const continuing = continuingWork(repoRoot, sessionId, turnId, stop);
     if (continuing !== null) {
         const next = continuing.next === null ? null : safeTitle(continuing.next);
-        const status = `⏳ ${continuing.done}/${continuing.total} tasks ✓ · continuing`;
+        const status = `${CONTINUING_MARK} ${continuing.done}/${continuing.total} tasks ✓ · continuing`;
         return next === null ? status : `${status} ▸ ${next}`;
     }
     const signals = readWorkflowSignals(repoRoot, sessionId);

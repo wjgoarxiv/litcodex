@@ -87,6 +87,8 @@ export declare function workflowTurn(repoRoot: string, sessionId: string): {
     mode: string;
     startedAt: number;
 } | null;
+/** The Stop line of a turn that start-work keeps running starts with this mark; it is not the end of the run. */
+export declare const CONTINUING_MARK = "\u23F3";
 /**
  * The Stop line for a LIT turn, or null when this turn was not a LIT activation. At a start-work
  * checkpoint the continuation hook keeps the turn going, so the line says so instead of "turn done".

@@ -28,10 +28,10 @@ lit-typographic-motion stub without holding the turn.
 
 ## Automatic handoff
 
-This component also carries the opt-in automatic handoff (off by default). The exact prompt
-`lit-handoff auto on <percent>` (or `off`, `status`) sets it without reaching the model. The Stop hook then
-reads the context percent from the session transcript and, once per crossing, asks the model to save a
-handoff. The PostCompact hook, the SessionStart hook (source `compact`) and the next prompt bring the fresh
+This component also carries the automatic handoff, on by default at 80% of the context window. The exact prompt
+`lit-handoff auto off` turns it off, and `lit-handoff auto on <percent>` (or `status`) changes or shows it without
+reaching the model. The Stop hook reads the context percent from the session transcript and, once per crossing,
+asks the model to save a handoff. The PostCompact hook, the SessionStart hook (source `compact`) and the next prompt bring the fresh
 handoff back once. `src/auto-handoff-settings.ts` holds the switch and the project `.codex/config.toml`
 line, `src/auto-handoff.ts` holds the crossing and reload logic, and the
 [automatic handoff page](../../../../docs/auto-handoff.md) explains it for users.
