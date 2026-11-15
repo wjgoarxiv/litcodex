@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.41] - 2026-11-16
+
 ### Changed
 
 - Automatic handoff is now on by default, at 80% of the context window, so a long conversation saves its handoff
