@@ -39,7 +39,9 @@ export function resolveLitCodexInvocation(
 	const platform = deps.platform ?? process.platform;
 	const binNames = platform === "win32" ? ["litcodex.cmd", "litcodex.exe", "litcodex"] : ["litcodex"];
 	const pathDelimiter = platform === "win32" ? ";" : ":";
-	const pathEntries = (env["PATH"] ?? "").split(pathDelimiter).filter((entry) => entry.trim().length > 0);
+	// A copied Windows env keeps only the `Path` spelling; `process.env` hides that, a plain object does not.
+	const pathValue = env["PATH"] ?? (platform === "win32" ? env["Path"] : undefined) ?? "";
+	const pathEntries = pathValue.split(pathDelimiter).filter((entry) => entry.trim().length > 0);
 	for (const pathEntry of pathEntries) {
 		for (const binName of binNames) {
 			if (fileExists(join(pathEntry, binName))) return "litcodex";

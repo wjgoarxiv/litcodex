@@ -96,7 +96,9 @@ function pathDirectories(): readonly string[] {
 
 function resolveExecutable(command: string): string | null {
 	const extensions =
-		process.platform === "win32" ? (process.env["PATHEXT"]?.split(";") ?? [".EXE", ".CMD", ".BAT"]) : [""]
+		process.platform === "win32"
+			? (process.env["PATHEXT"] ?? ".EXE;.CMD;.BAT").split(";").map((ext: string) => ext.trim()).filter((ext: string) => ext.length > 0)
+			: [""]
 	const bases = command.includes("/") || command.includes(sep) ? [command] : pathDirectories().map((dir: string) => join(dir, command))
 
 	for (const base of bases) {

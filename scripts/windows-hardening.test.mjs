@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -48,5 +50,19 @@ describe("user-installed CLIs run without cmd.exe", async () => {
 			command: "/usr/bin/agent-browser",
 			args: ["--version"],
 		});
+	});
+
+	it("the browser-drive probe skips the extensionless npm sh shim and empty PATHEXT entries", () => {
+		const dir = mkdtempSync(join(tmpdir(), "litcodex-pathext-"));
+		try {
+			for (const name of ["agent-browser", "agent-browser.CMD"]) {
+				writeFileSync(join(dir, name), "");
+				chmodSync(join(dir, name), 0o755);
+			}
+			assert.equal(probe.resolveExecutable(dir, "win32", ".EXE;.CMD;"), join(dir, "agent-browser.CMD"));
+			assert.equal(probe.resolveExecutable(dir, "win32", ";.EXE;"), null);
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
 	});
 });

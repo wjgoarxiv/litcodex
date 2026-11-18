@@ -290,10 +290,14 @@ function runVersionCommand(command, args, environment, timeoutMs) {
 	}
 }
 
-function resolveExecutable(searchPath) {
+export function resolveExecutable(searchPath, platform = process.platform, pathext = process.env.PATHEXT) {
 	if (typeof searchPath !== "string" || searchPath.length === 0) return null;
 	if (hasRawPathControl(searchPath) || containsCredentialShape(searchPath)) return null;
-	const extensions = process.platform === "win32" ? process.env.PATHEXT?.split(";") ?? [".EXE", ".CMD", ".BAT"] : [""];
+	// On Windows an empty PATHEXT entry would try the bare name: npm's extensionless sh shim, which cannot run there.
+	const extensions =
+		platform === "win32"
+			? (pathext ?? ".EXE;.CMD;.BAT").split(";").map((ext) => ext.trim()).filter((ext) => ext.length > 0)
+			: [""];
 	for (const directory of searchPath.split(delimiter)) {
 		if (directory.length === 0) continue;
 		const base = join(directory, DRIVER_COMMAND);

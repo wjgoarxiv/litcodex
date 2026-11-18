@@ -151,6 +151,21 @@ describe("findCodex", () => {
 		expect(findCodex({ PATH: `${join(home, "nothing")}:${bin}` })).toBe(join(bin, "codex"));
 		expect(findCodex({ PATH: join(home, "nothing") })).toBeNull();
 	});
+
+	it("on Windows skips the extensionless npm sh shim and empty PATHEXT entries", () => {
+		const home = tempHome();
+		const bin = fakeCodexDir(home);
+		const platform = Object.getOwnPropertyDescriptor(process, "platform");
+		Object.defineProperty(process, "platform", { value: "win32" });
+		try {
+			expect(findCodex({ PATH: bin, PATHEXT: ".EXE;.CMD;" })).toBeNull();
+			writeFileSync(join(bin, "codex.cmd"), "");
+			chmodSync(join(bin, "codex.cmd"), 0o755);
+			expect(findCodex({ PATH: bin, PATHEXT: ".EXE;.CMD;" })).toBe(join(bin, "codex.cmd"));
+		} finally {
+			if (platform !== undefined) Object.defineProperty(process, "platform", platform);
+		}
+	});
 });
 
 describe("runCommand fallback", () => {

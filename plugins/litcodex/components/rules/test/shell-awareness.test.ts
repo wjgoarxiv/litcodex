@@ -326,3 +326,21 @@ describe("Codex Shell awareness", () => {
 		expect(parseAdditionalContext(output)).toContain("## Shell Runtime");
 	});
 });
+
+describe("resolveLitCodexInvocation on a copied Windows env", () => {
+	it("reads the Windows `Path` spelling when the env object holds no `PATH` key", async () => {
+		const { resolveLitCodexInvocation } = await import("../src/shell-awareness.js");
+		const seen: string[] = [];
+		const resolved = resolveLitCodexInvocation(
+			{ Path: "C:\\tools\\bin" },
+			{
+				platform: "win32",
+				fileExists: (file: string) => {
+					seen.push(file);
+					return file.includes("tools") && file.endsWith("litcodex.cmd");
+				},
+			},
+		);
+		expect(resolved).toBe("litcodex");
+	});
+});

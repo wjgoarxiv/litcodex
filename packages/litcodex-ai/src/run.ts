@@ -130,7 +130,12 @@ export interface RunIo {
 export function findCodex(env: NodeJS.ProcessEnv): string | null {
 	const names =
 		process.platform === "win32"
-			? ["codex", ...(env["PATHEXT"] ?? ".EXE;.CMD;.BAT").split(";").map((ext) => `codex${ext.toLowerCase()}`)]
+			? // No bare "codex" on Windows: that is npm's extensionless sh shim, which cannot be spawned there.
+				(env["PATHEXT"] ?? ".EXE;.CMD;.BAT")
+					.split(";")
+					.map((ext) => ext.trim())
+					.filter((ext) => ext.length > 0)
+					.map((ext) => `codex${ext.toLowerCase()}`)
 			: ["codex"];
 	for (const dir of (env["PATH"] ?? "").split(delimiter)) {
 		if (dir === "") continue;
