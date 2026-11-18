@@ -177,6 +177,8 @@ export interface RewindResult {
 	readonly scope: { readonly sinceMs: number; readonly worktrees: number };
 	readonly sources: { readonly sessions: SourceState; readonly git: SourceState; readonly state: SourceState };
 	readonly budget: { readonly limit: number; readonly used: number; readonly exhausted: boolean };
+	/** Session records in the window that were not read, by reason, for the verdict card's coverage line. */
+	readonly coverage: { readonly budget: number; readonly limit: number; readonly unreadable: number };
 }
 
 /** Runs git in a folder and returns its stdout, or null when it fails. Injectable for tests. */
@@ -714,14 +716,22 @@ export function collectRewind(options: RewindOptions): RewindResult {
 	const budget: ByteBudget = newBudget(limit);
 
 	let sessionsState: SourceState = codexHome === null ? "unknown" : "ok";
+	const coverage = { budget: 0, limit: 0, unreadable: 0 };
 	const sessions: RewindSession[] = [];
 	if (codexHome !== null) {
 		const files = listRollouts(codexHome).filter((file) => now - file.mtimeMs <= sinceMs);
-		for (const file of files) {
-			if (sessions.length >= max) break;
+		for (const [index, file] of files.entries()) {
+			if (sessions.length >= max) {
+				coverage.limit = files.length - index;
+				break;
+			}
 			const facts = readRollout(file, budget);
 			if (facts === null) {
-				if (budget.exhausted) break;
+				if (budget.exhausted) {
+					coverage.budget = files.length - index;
+					break;
+				}
+				coverage.unreadable += 1;
 				continue;
 			}
 			if (facts.subagent) continue;
@@ -902,6 +912,7 @@ export function collectRewind(options: RewindOptions): RewindResult {
 		scope: { sinceMs, worktrees: worktrees.length },
 		sources: { sessions: sessionsState, git: gitState, state: "ok" },
 		budget: { limit, used: limit - budget.remaining, exhausted: budget.exhausted },
+		coverage,
 	});
 }
 
@@ -1068,7 +1079,7 @@ const LANE_LABELS = 3;
 
 /**
  * Other lanes at work in this repository, each once: a session that runs or waits on the user, a session whose
- * liveness record says it is working, and, under herdr, a working or blocked agent of this workspace or repo.
+ * liveness record says it is working, and, under herdr, a working or blocked agent whose folder is inside this repo.
  * The asking session and its own pane never count.
  */
 function lanesOf(
@@ -1119,15 +1130,12 @@ function lanesOf(
 		}
 	}
 	const ownPane = env["HERDR_PANE_ID"];
-	const ownWorkspace = env["HERDR_WORKSPACE_ID"];
 	for (const agent of herdr.agents) {
 		if (agent.status !== "working" && agent.status !== "blocked") continue;
 		if (agent.pane !== null && agent.pane === ownPane) continue;
 		if (own(agent.session)) continue;
-		const here =
-			(typeof ownWorkspace === "string" && ownWorkspace !== "" && agent.workspace === ownWorkspace) ||
-			inRepo(agent.cwd) ||
-			inRepo(agent.foregroundCwd);
+		// Only an agent whose folder is inside this repo is a lane of it; a shared herdr workspace is machine-wide.
+		const here = inRepo(agent.cwd) || inRepo(agent.foregroundCwd);
 		if (!here) continue;
 		const id = agent.session === null ? null : normalizeSessionId(agent.session);
 		const seen = lanes.find(

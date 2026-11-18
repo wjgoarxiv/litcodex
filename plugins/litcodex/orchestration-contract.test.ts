@@ -20,7 +20,6 @@ const ORDINARY_MODE_DIRECTIVES = [
 		"lit-hijack.md",
 		"lit-adhd.md",
 		"lit-plan.md",
-		"lit-recap.md",
 		"litgoal.md",
 		"litresearch.md",
 		"litwork.md",

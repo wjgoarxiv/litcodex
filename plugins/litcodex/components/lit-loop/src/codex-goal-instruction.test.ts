@@ -107,12 +107,12 @@ describe("buildCodexGoalInstruction #given/#when/#then", () => {
 		expect(result.text).not.toContain("Run `/goal clear`");
 	});
 
-	it("documents durable-state fallback when native goal tools are unavailable", () => {
+	it("drives the native goal tools without an 'if they are missing' fallback", () => {
 		const g = goal({ id: "G001" });
 		const result = buildCodexGoalInstruction({ plan: plan([g]), goal: g });
-		expect(result.text).toContain("If get_goal/create_goal/update_goal are not exposed");
-		expect(result.text).toContain("continue with .litcodex/lit-loop");
-		expect(result.text).toContain("native-goal-unavailable");
+		expect(result.text).not.toContain("are not exposed");
+		expect(result.text).not.toContain("native-goal-unavailable");
+		expect(result.text).toContain("First call get_goal");
 	});
 
 	it("includes plan and ledger paths", () => {

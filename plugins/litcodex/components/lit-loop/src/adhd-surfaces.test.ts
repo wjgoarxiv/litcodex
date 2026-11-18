@@ -459,9 +459,9 @@ describe("the quiet way back", () => {
 		expect(await start(cwd, "compact")).toBe("");
 	});
 
-	it("the handoff and recap routes point to lit adhd without running it", () => {
+	it("the handoff route points to lit adhd without running it", () => {
 		const directives = fileURLToPath(new URL("../directives/", import.meta.url));
-		for (const name of ["lit-handoff.md", "lit-recap.md"]) {
+		for (const name of ["lit-handoff.md"]) {
 			const text = readFileSync(join(directives, name), "utf8");
 			expect(text).toContain("`lit adhd`");
 			expect(text).toMatch(/do not run it/u);

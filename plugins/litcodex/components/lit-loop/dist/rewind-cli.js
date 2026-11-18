@@ -1,12 +1,19 @@
 // src/rewind-cli.ts — `cli.js rewind` and `cli.js stage`, the two commands the lit-adhd skill and a running
-// loop call. `rewind` prints the KPI board (`--lang en|ko`; the per-session detail list under it on `--detail`;
-// JSON with the ready board text and its structured fields on `--json`) and writes
-// the next-step note and the session's rewind look; `stage` records the stage and k/n of the work on top of the session's stack.
-import { collectRewind, DEFAULT_MAX, DEFAULT_SINCE_MS, parseSince, renderBrief } from "./rewind.js";
+// loop call. `rewind` prints the verdict card by default (`--lang en|ko`), today's KPI board with the per-session
+// detail list on `--detail`, and the per-session recap cards on `--recap [session]` (the old lit-recap view);
+// `--json` carries the ready text and its structured fields. It writes the next-step note, the session's rewind
+// look and, for the card, the person's last-look cursor; `stage` records the stage and k/n of the work on top of
+// the session's stack.
+import { existsSync, mkdirSync } from "node:fs";
+import { isAbsolute, join } from "node:path";
+import { plainDirsOrMissing, readSmallJson, readThreadPointer, writeFileAtomic } from "./live-step.js";
+import { ADHD_DIR, collectRewind, DEFAULT_MAX, DEFAULT_SINCE_MS, parseSince, renderBrief } from "./rewind.js";
 import { renderBoard } from "./rewind-board.js";
 import { markRewindLook } from "./rewind-look.js";
+import { nextCursor, parseCursor, renderVerdict } from "./rewind-verdict.js";
 import { resolveLoopScope } from "./state-paths.js";
 import { frameLabel, normalizeStage, recordStackEvent } from "./workflow-stack.js";
+export const RECAP_MOVED_NOTE = "lit-recap moved into lit-adhd (lit adhd recap).";
 function flagValue(argv, name) {
     const index = argv.indexOf(name);
     const next = index === -1 ? undefined : argv[index + 1];
@@ -48,15 +55,45 @@ export function rewindCommand(argv, io) {
     // Whichever route ran the brief, the session that ran it gets the rewind look.
     if (sessionId !== null)
         markRewindLook(cwd, sessionId, env, io.now);
-    // The KPI board is the default; the per-session detail list appears under it only on `--detail`.
-    const board = renderBoard(result.kpi, lang);
-    const detail = argv.includes("--detail") ? renderBrief(result, width) : null;
-    if (argv.includes("--json")) {
-        io.stdout.write(`${JSON.stringify({ ok: true, ...result, board, ...(detail === null ? {} : { detail }) })}\n`);
+    const json = argv.includes("--json");
+    if (argv.includes("--recap")) {
+        // The recap view: the per-session cards, or one session's when an id prefix follows the flag.
+        const wanted = flagValue(argv, "--recap")?.toLowerCase() ?? null;
+        const sessions = wanted === null
+            ? result.sessions
+            : result.sessions.filter((item) => item.id.toLowerCase().startsWith(wanted) || item.shortId === wanted);
+        // After an old lit-recap word, the moved note is the first line of the view itself.
+        const moved = argv.includes("--moved") ? `${RECAP_MOVED_NOTE}\n\n` : "";
+        const recap = `${moved}${renderBrief({ ...result, sessions }, width)}`;
+        io.stdout.write(json ? `${JSON.stringify({ ok: true, view: "recap", recap, sessions })}\n` : `${recap}\n`);
+        return 0;
     }
-    else {
-        io.stdout.write(detail === null ? `${board}\n` : `${board}\n\n${detail}\n`);
+    if (argv.includes("--detail")) {
+        // Today's KPI board with the per-session detail list under it.
+        const board = renderBoard(result.kpi, lang);
+        const detail = renderBrief(result, width);
+        io.stdout.write(json
+            ? `${JSON.stringify({ ok: true, view: "detail", ...result, board, detail })}\n`
+            : `${board}\n\n${detail}\n`);
+        return 0;
     }
+    // The verdict card is the default; the cursor says what the person already saw. It lives in the workspace the
+    // session's pointer names (the run's own folder without one), and only a run inside a session moves it.
+    const pointed = sessionId === null ? undefined : readThreadPointer(env, sessionId)?.cwd;
+    const root = pointed !== undefined && isAbsolute(pointed) && existsSync(pointed) ? pointed : cwd;
+    const cursorPath = isAbsolute(root) ? join(root, ADHD_DIR, "cursor.json") : null;
+    const cursor = cursorPath === null ? null : parseCursor(readSmallJson(cursorPath));
+    const card = renderVerdict(result, { lang, cursor });
+    try {
+        if (sessionId !== null && cursorPath !== null && plainDirsOrMissing(root, ADHD_DIR)) {
+            mkdirSync(join(root, ADHD_DIR), { recursive: true });
+            writeFileAtomic(cursorPath, `${JSON.stringify(nextCursor(card.verdict, io.now ?? Date.now()))}\n`);
+        }
+    }
+    catch {
+        // Without the cursor the next card starts from "first look".
+    }
+    io.stdout.write(json ? `${JSON.stringify({ ok: true, view: "card", card: card.text, verdict: card.verdict })}\n` : card.text);
     return 0;
 }
 /** Record the stage and counts of the top frame: `stage --family loop --stage RED --n 2 --total 5`. */

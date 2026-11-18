@@ -41,7 +41,7 @@ describe("lit-adhd directive and skill", () => {
 
 	it("keeps the read-only boundary, the collector and the no-guess rule in the directive and the route head", () => {
 		for (const text of [directive, ROUTE_HEADS["lit-adhd"]]) {
-			expect(text).toContain("rewind --json");
+			expect(text).toContain("rewind --lang <ko|en>");
 			expect(text).toContain("BLOCKED:");
 			expect(text).toMatch(/read-only/iu);
 			expect(text).toContain("go");
@@ -86,8 +86,8 @@ describe("lit-adhd is reachable from its own repo surfaces", () => {
 		expect(flat(loopSkill)).toMatch(/workflow stack/u);
 	});
 
-	it("is distinguished from lit-recap in both directions and defers a boundary answer to start-work", () => {
-		expect(skill).toContain("lit-recap");
+	it("holds the former lit-recap as its recap view and defers a boundary answer to start-work", () => {
+		expect(skill).toContain("lit-recap moved into lit-adhd (lit adhd recap).");
 		expect(flat(skill)).toMatch(/lit approve/u);
 		expect(startWorkSkill).toContain("lit approve");
 		expect(startWorkSkill).toContain("lit deny");

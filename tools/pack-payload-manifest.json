@@ -350,6 +350,7 @@
         "marketplace/plugins/litcodex/skills/lit-adhd/SKILL.md",
         "marketplace/plugins/litcodex/skills/lit-adhd/agents/openai.yaml",
         "marketplace/plugins/litcodex/skills/lit-adhd/references/card-examples.md",
+        "marketplace/plugins/litcodex/skills/lit-adhd/references/recap.md",
         "marketplace/plugins/litcodex/skills/lit-adhd/references/status-taxonomy.md",
         "marketplace/plugins/litcodex/skills/lit-hijack/SKILL.md",
         "marketplace/plugins/litcodex/skills/lit-hijack/agents/openai.yaml",
@@ -364,7 +365,14 @@
         "marketplace/plugins/litcodex/skills/lit-schematic/SKILL.md",
         "marketplace/plugins/litcodex/skills/lit-schematic/agents/openai.yaml",
         "marketplace/plugins/litcodex/skills/lit-typographic-motion/SKILL.md",
-        "marketplace/plugins/litcodex/skills/lit-typographic-motion/agents/openai.yaml"
+        "marketplace/plugins/litcodex/skills/lit-typographic-motion/agents/openai.yaml",
+        "marketplace/plugins/litcodex/skills/ultra-brainstorm/SKILL.md",
+        "marketplace/plugins/litcodex/skills/ultra-brainstorm/agents/openai.yaml",
+        "marketplace/plugins/litcodex/skills/ultra-brainstorm/references/agent-messages.md",
+        "marketplace/plugins/litcodex/skills/ultra-brainstorm/references/lenses.md",
+        "marketplace/plugins/litcodex/skills/ultra-brainstorm/scripts/estimate.mjs",
+        "marketplace/plugins/litcodex/skills/ultra-brainstorm/scripts/launch-answer.mjs",
+        "node_modules/@litcodex/lit-loop/skills/ultra-brainstorm/SKILL.md"
       ],
       "requiredFuture": [
         "marketplace/.agents/plugins/marketplace.json",
@@ -409,7 +417,6 @@
         "node_modules/@litcodex/lit-loop/skills/review-work/SKILL.md",
         "node_modules/@litcodex/lit-loop/skills/litresearch/SKILL.md",
         "node_modules/@litcodex/lit-loop/skills/start-work/SKILL.md",
-        "node_modules/@litcodex/lit-loop/skills/lit-recap/SKILL.md",
         "node_modules/@litcodex/lit-loop/skills/lit-comprehend/SKILL.md",
         "node_modules/@litcodex/lit-loop/skills/lit-brainstorm/SKILL.md",
         "node_modules/@litcodex/lit-loop/skills/lit-schematic/SKILL.md",
@@ -426,7 +433,6 @@
         "marketplace/plugins/litcodex/components/lit-loop/directives/lit-crucible.md",
         "marketplace/plugins/litcodex/components/lit-loop/directives/lit-handoff.md",
         "marketplace/plugins/litcodex/components/lit-loop/directives/lit-init.md",
-        "marketplace/plugins/litcodex/components/lit-loop/directives/lit-recap.md",
         "marketplace/plugins/litcodex/components/lit-loop/directives/lit-scientific-visualization.md",
         "marketplace/plugins/litcodex/components/lit-loop/directives/litgoal.md",
         "marketplace/plugins/litcodex/components/lit-loop/directives/litresearch.md",
@@ -440,7 +446,6 @@
         "marketplace/plugins/litcodex/skills/lit-hijack/SKILL.md",
         "marketplace/plugins/litcodex/skills/lit-adhd/SKILL.md",
         "marketplace/plugins/litcodex/skills/lit-plan/SKILL.md",
-        "marketplace/plugins/litcodex/skills/lit-recap/SKILL.md",
         "marketplace/plugins/litcodex/skills/litgoal/SKILL.md",
         "marketplace/plugins/litcodex/skills/litresearch/SKILL.md",
         "marketplace/plugins/litcodex/skills/litwork/SKILL.md",
@@ -560,6 +565,7 @@
             "SKILL.md",
             "agents/openai.yaml",
             "references/card-examples.md",
+            "references/recap.md",
             "references/status-taxonomy.md"
           ]
         },
@@ -912,7 +918,8 @@
         "skills/lit-humanizer/scripts/test-fixtures.mjs",
         "skills/lit-humanizer/scripts/test-ko-metrics.mjs",
         "skills/lit-fetch/SKILL.md",
-        "skills/lit-code/SKILL.md"
+        "skills/lit-code/SKILL.md",
+        "skills/ultra-brainstorm/SKILL.md"
       ],
       "requiredFuture": [
         "directive.md",
@@ -942,7 +949,6 @@
         "skills/review-work/SKILL.md",
         "skills/litresearch/SKILL.md",
         "skills/start-work/SKILL.md",
-        "skills/lit-recap/SKILL.md",
         "skills/lit-comprehend/SKILL.md",
         "skills/lit-brainstorm/SKILL.md",
         "skills/lit-schematic/SKILL.md",
@@ -969,7 +975,6 @@
         "directives/lit-adhd.md",
         "directives/lit-crucible.md",
         "directives/lit-init.md",
-        "directives/lit-recap.md",
         "skills/deep-interview/SKILL.md"
       ],
       "allowedGlobs": [

@@ -97,11 +97,10 @@ describe("accepts", () => {
 		expect(matchLitTrigger("review-work this diff")?.token).toBe("review-work");
 	});
 
-	it("routes recap surface forms to lit-recap", () => {
-		expect(matchLitTrigger("recap")?.token).toBe("lit-recap");
-		expect(matchLitTrigger("리캡")?.token).toBe("lit-recap");
-		expect(matchLitTrigger("lit recap")?.token).toBe("lit-recap");
-		expect(matchLitTrigger("litrecap")?.token).toBe("lit-recap");
+	it("routes recap surface forms to lit-adhd (lit-recap moved into its recap view)", () => {
+		for (const prompt of ["recap", "리캡", "lit recap", "litrecap", "lit-recap"]) {
+			expect(matchLitTrigger(prompt)?.token).toBe("lit-adhd");
+		}
 	});
 
 	it("accepts slash litresearch as the only slash-command mode trigger", () => {
@@ -308,7 +307,6 @@ describe("token set hygiene", () => {
 			"start-work",
 			"review-work",
 			"litresearch",
-			"lit-recap",
 			"lit-loop",
 			"lit-plan",
 			"litcodex",

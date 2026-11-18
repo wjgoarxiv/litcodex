@@ -22,6 +22,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { EXPLICIT_SKILL_ROUTES } from "@litcodex/lit-loop/dist/codex-hook.js";
 import { isExactBareHandoffPrompt } from "@litcodex/lit-loop/dist/handoff-route.js";
 import { modeForToken } from "@litcodex/lit-loop/dist/modes.js";
 import { isExactBareScientificVisualizationPrompt } from "@litcodex/lit-loop/dist/scientific-visualization-route.js";
@@ -368,6 +369,8 @@ function extractPublicHookRouteRows(text) {
 function nativeHookModeForForm(form) {
 	if (isExactBareHandoffPrompt(form)) return "lit-handoff";
 	if (isExactBareScientificVisualizationPrompt(form)) return "lit-scientific-visualization";
+	const explicit = EXPLICIT_SKILL_ROUTES.find(({ route }) => route.test(form));
+	if (explicit !== undefined) return explicit.skill;
 	const match = matchLitTrigger(form);
 	return match === null ? null : modeForToken(match.token).mode;
 }

@@ -9,7 +9,7 @@ export const BROWSER_DRIVE_PAYLOAD_HASHES = {
 	"SKILL.md": "731b28ebd1b0d46881dfca1ec76a4210839d46697e9b559be9019c148d90190f",
 	"agents/openai.yaml": "1b9a859e2da403ffc3a526b3d36e9bd6bfd95af087b7ec4ae71f6b615ced7828",
 	"references/snapshot-act-loop.md": "7aff2f4145413d61aaac577c2e551e3ed11a14b78dd46d047409c91a522ece1f",
-	"scripts/capability-probe.mjs": "086a19a5df2d1a5887d2df0c130eb4baf228ac00429248e90775f289e181e633",
+	"scripts/capability-probe.mjs": "e5ac90570da5f935c8c51447e18855ca79fe32c5a5907b9483486a37b42e7584",
 } as const;
 
 export const FRONTEND_UIUX_PAYLOAD_HASHES = {

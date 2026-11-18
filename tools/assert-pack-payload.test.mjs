@@ -949,7 +949,7 @@ test("seed manifest pins load-bearing forbidden segments and excludes hooks/CHAN
 		["marketplace/plugins/litcodex/skills/browser-drive/", 4],
 		["marketplace/plugins/litcodex/skills/coding-session-audit/", 4],
 		["marketplace/plugins/litcodex/skills/frontend-ui-ux/", 1],
-		["marketplace/plugins/litcodex/skills/lit-adhd/", 4],
+		["marketplace/plugins/litcodex/skills/lit-adhd/", 5],
 		["marketplace/plugins/litcodex/skills/lit-diagram-drawer/", 2],
 		["marketplace/plugins/litcodex/skills/lit-docx/", 2],
 		["marketplace/plugins/litcodex/skills/lit-hijack/", 8],

@@ -161,7 +161,7 @@ describe("applyPreToolUseCreateGoalGuard #given/#when/#then", () => {
 		if (out.kind !== "deny") throw new Error("expected deny");
 		expect(out.stdout).toContain("permissionDecision");
 		expect(out.stdout).toContain("objective only");
-		expect(out.stdout).toContain("native-goal-unavailable");
+		expect(out.stdout).not.toContain("native-goal-unavailable");
 	});
 
 	it("allows objective-only create_goal payloads", () => {

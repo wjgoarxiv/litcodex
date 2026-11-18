@@ -323,10 +323,6 @@ Call `get_goal` first. Apply the result as follows:
 `/goal clear` is a user-only action. Neither the package runtime nor the agent executes it
 automatically or presents it as an automatic completion step.
 
-If those native goal tools are not exposed in the current Codex session, do not pretend
-they ran and do not block the loop. Continue with `.litcodex/lit-loop` as the durable
-source of truth, and record `native-goal-unavailable` in your handoff or ledger evidence.
-
 # Continue or stop
 
 Keep going: continue until every success criterion is proven complete. After each

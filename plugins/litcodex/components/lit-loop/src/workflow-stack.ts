@@ -26,13 +26,7 @@ export const MAX_STACK_BYTES = 64 * 1024;
 /** A frame nobody touched for this long is dropped on the next event. */
 export const STACK_DROP_MS = 24 * 60 * 60 * 1000;
 /** Disciplines that only read: they neither pause the work under them nor appear as a frame. */
-export const READ_ONLY_DISCIPLINES: readonly string[] = [
-	"lit-recap",
-	"lit-comprehend",
-	"lit-handoff",
-	"lit-adhd",
-	"lit-rewind",
-];
+export const READ_ONLY_DISCIPLINES: readonly string[] = ["lit-comprehend", "lit-handoff", "lit-adhd", "lit-rewind"];
 
 export const WORKFLOW_FAMILIES: Readonly<Record<string, readonly string[]>> = {
 	main: ["interview", "plan", "work", "review", "done"],

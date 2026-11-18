@@ -135,18 +135,31 @@ function collect(s: Scratch, extra: Partial<Parameters<typeof collectRewind>[0]>
 
 const notePath = (cwd: string, sid: string): string => join(cwd, `.litcodex/adhd/next-${sid}.json`);
 
+describe("R2: only lanes whose folder is inside this repo count", () => {
+	it("leaves out a working herdr agent of the same workspace whose folder is elsewhere", () => {
+		const s = scratch();
+		withPlan(s.workspace);
+		const result = collect(s, {
+			env: { HOME: s.home, CODEX_HOME: s.codexHome, ...HERDR_ENV },
+			herdr: herdrList([agent("w1:p7", "working", { workspace_id: "w1" })]),
+		});
+		expect(result.lanes.count).toBe(0);
+		expect(result.next.kind).not.toBe("wait-lanes");
+	});
+});
+
 describe("S1: no go while other lanes work", () => {
-	it("counts working and blocked herdr agents of this workspace or repo, never the own pane or an idle one", () => {
+	it("counts working and blocked herdr agents inside this repo, never the own pane or an idle one", () => {
 		const s = scratch();
 		withPlan(s.workspace);
 		const result = collect(s, {
 			env: { HOME: s.home, CODEX_HOME: s.codexHome, ...HERDR_ENV },
 			herdr: herdrList([
-				agent("w1:p1", "working", { workspace_id: "w1" }),
-				agent("w1:p2", "working", { workspace_id: "w1" }),
+				agent("w1:p1", "working", { workspace_id: "w1", cwd: s.workspace }),
+				agent("w1:p2", "working", { workspace_id: "w1", cwd: s.workspace }),
 				agent("w2:p1", "working", { workspace_id: "w2", cwd: join(s.workspace, "sub") }),
-				agent("w1:p3", "idle", { workspace_id: "w1" }),
-				agent("w1:p4", "done", { workspace_id: "w1" }),
+				agent("w1:p3", "idle", { workspace_id: "w1", cwd: s.workspace }),
+				agent("w1:p4", "done", { workspace_id: "w1", cwd: s.workspace }),
 				agent("w3:p1", "working"),
 			]),
 		});
@@ -163,7 +176,7 @@ describe("S1: no go while other lanes work", () => {
 		withPlan(s.workspace);
 		const result = collect(s, {
 			env: { HOME: s.home, CODEX_HOME: s.codexHome, ...HERDR_ENV },
-			herdr: herdrList([agent("w1:p2", "blocked", { workspace_id: "w1" })]),
+			herdr: herdrList([agent("w1:p2", "blocked", { workspace_id: "w1", cwd: s.workspace })]),
 		});
 		expect(result.next.kind).toBe("wait-lanes");
 		expect(result.next.text).toMatch(/^answer .*w1:p2.*waits on you/u);
@@ -177,7 +190,9 @@ describe("S1: no go while other lanes work", () => {
 		withPlan(s.workspace);
 		const result = collect(s, {
 			env: { HOME: s.home, CODEX_HOME: s.codexHome, ...HERDR_ENV },
-			herdr: herdrList([agent("w1:p2", "working", { workspace_id: "w1", agent_session: { value: SESSION_B } })]),
+			herdr: herdrList([
+				agent("w1:p2", "working", { workspace_id: "w1", cwd: s.workspace, agent_session: { value: SESSION_B } }),
+			]),
 		});
 		// A waits on the user, B runs and is the same lane as the herdr agent.
 		expect(result.lanes.count).toBe(2);
@@ -201,7 +216,7 @@ describe("S1: no go while other lanes work", () => {
 		withPlan(s.workspace);
 		const result = collect(s, {
 			env: { HOME: s.home, CODEX_HOME: s.codexHome, ...HERDR_ENV },
-			herdr: herdrList([agent("w1:p2", "idle", { workspace_id: "w1" })]),
+			herdr: herdrList([agent("w1:p2", "idle", { workspace_id: "w1", cwd: s.workspace })]),
 		});
 		expect(result.lanes.count).toBe(0);
 		expect(result.next.kind).toBe("start-plan");
@@ -303,7 +318,7 @@ describe("S4: the handoff note", () => {
 		writeFileSync(join(s.workspace, "HANDOFF.md"), "# H\n## Next\n- the handoff step\n");
 		const result = collect(s, {
 			env: { HOME: s.home, CODEX_HOME: s.codexHome, ...HERDR_ENV },
-			herdr: herdrList([agent("w1:p2", "working", { workspace_id: "w1" })]),
+			herdr: herdrList([agent("w1:p2", "working", { workspace_id: "w1", cwd: s.workspace })]),
 		});
 		expect(result.next.kind).toBe("wait-lanes");
 	});
@@ -324,7 +339,7 @@ describe("S6: this session's own resume and run hold while lanes work", () => {
 	function withLaneAtWork(s: Scratch) {
 		return {
 			env: { HOME: s.home, CODEX_HOME: s.codexHome, ...HERDR_ENV },
-			herdr: herdrList([agent("w1:p2", "working", { workspace_id: "w1" })]),
+			herdr: herdrList([agent("w1:p2", "working", { workspace_id: "w1", cwd: s.workspace })]),
 		};
 	}
 
@@ -396,5 +411,19 @@ describe("S5: go re-checks the recorded run", () => {
 		withWork(s.workspace, [`codex:${ME}`]);
 		writeNext(s.workspace, ME, chooseNext(s.workspace, ME), NOW);
 		expect(takeGo(s.workspace, ME, NOW + MIN)).toMatchObject({ kind: "run", prompt: "lit continue" });
+	});
+});
+
+describe("R4: a finished start-work run never reads as active", () => {
+	it("reads the run's own plan: plan A all ticked while plan B is open is finished, with no continue", () => {
+		const s = scratch();
+		mkdirSync(join(s.workspace, ".litcodex/plans"), { recursive: true });
+		writeFileSync(join(s.workspace, ".litcodex/plans/ship.md"), "## Todos\n- [x] one\n- [x] two\n");
+		writeFileSync(join(s.workspace, ".litcodex/plans/next.md"), "## Todos\n- [ ] three\n");
+		withWork(s.workspace, [`codex:${ME}`]);
+		const next = chooseNext(s.workspace, ME);
+		expect(next.kind).not.toBe("continue-work");
+		expect(next.text).not.toMatch(/continue the/u);
+		expect(collect(s).kpi.now.kind).not.toBe("continue");
 	});
 });

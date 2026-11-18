@@ -46,7 +46,7 @@ describe("runUserPromptSubmitHook lit-adhd routing #given/#when/#then", () => {
 		const ctx = parseInject(runUserPromptSubmitHook(ups("lit adhd")));
 		expect(ctx).toMatch(/^skill lit-adhd: \/\S+\/skills\/lit-adhd\/SKILL\.md$/mu);
 		expect(ctx).toMatch(/^directive lit-adhd: \/\S+\/directives\/lit-adhd\.md$/mu);
-		expect(ctx).toMatch(/components\/lit-loop\/dist\/cli\.js rewind --json/u);
+		expect(ctx).toMatch(/components\/lit-loop\/dist\/cli\.js rewind --lang/u);
 	});
 
 	it.each([

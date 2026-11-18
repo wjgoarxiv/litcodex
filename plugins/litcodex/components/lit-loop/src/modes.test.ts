@@ -16,8 +16,6 @@ import {
 	LIT_LOOP_DIRECTIVE_MARKER,
 	LIT_PLAN_DIRECTIVE_CLOSE,
 	LIT_PLAN_DIRECTIVE_MARKER,
-	LIT_RECAP_DIRECTIVE_CLOSE,
-	LIT_RECAP_DIRECTIVE_MARKER,
 	LIT_SCHEMATIC_DIRECTIVE_CLOSE,
 	LIT_SCHEMATIC_DIRECTIVE_MARKER,
 	LITGOAL_DIRECTIVE_CLOSE,
@@ -65,14 +63,6 @@ describe("MODE_BY_TOKEN routing table", () => {
 		expect(spec.openMarker).toBe(LITGOAL_DIRECTIVE_MARKER);
 		expect(spec.closeMarker).toBe(LITGOAL_DIRECTIVE_CLOSE);
 		expect(spec.directivePath.endsWith("/directives/litgoal.md")).toBe(true);
-	});
-
-	it("maps lit-recap → lit-recap mode + directives/lit-recap.md", () => {
-		const spec = modeForToken("lit-recap");
-		expect(spec.mode).toBe("lit-recap");
-		expect(spec.openMarker).toBe(LIT_RECAP_DIRECTIVE_MARKER);
-		expect(spec.closeMarker).toBe(LIT_RECAP_DIRECTIVE_CLOSE);
-		expect(spec.directivePath.endsWith("/directives/lit-recap.md")).toBe(true);
 	});
 
 	it("maps lit-crucible → lit-crucible mode + directives/lit-crucible.md", () => {
@@ -167,6 +157,6 @@ describe("MODE_BY_TOKEN routing table", () => {
 			seen.add(openMarker);
 		}
 		// 16 modes → 16 distinct markers (lit/litcodex/lit-loop share one).
-		expect(seen.size).toBe(16);
+		expect(seen.size).toBe(15);
 	});
 });

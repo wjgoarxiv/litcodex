@@ -109,7 +109,6 @@
         "lit-loop",
         "lit-plan",
         "lit-pptx",
-        "lit-recap",
         "lit-scientific-visualization",
         "lit-team",
         "lit-typographic-motion",
@@ -132,7 +131,7 @@
       ],
       "inventory": {
         "count": 47,
-        "sha256": "2752c7d0f9b74453f46f9ba3d84156d6b7ec28eedae7c25a1f54c1227c163441"
+        "sha256": "716264b08a00b7898abad5c6edc542b02e6b49ef0b34c505d856d7e65311b77f"
       }
     },
     "p32": {
@@ -414,7 +413,6 @@
       "closures": {
         "p27": 1,
         "p28": 1,
-        "p31": 2,
         "p32": 1,
         "p33": 1
       }

@@ -35,12 +35,12 @@ export const HOOK_SKILL_NAMES = Object.freeze([
 	"review-work",
 	"litresearch",
 	"start-work",
-	"lit-recap",
 	"lit-comprehend",
 	"lit-brainstorm",
 	"lit-schematic",
 	"lit-hijack",
 	"lit-adhd",
+	"ultra-brainstorm",
 	"browser-drive",
 ]);
 

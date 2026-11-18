@@ -6,7 +6,7 @@ export const PROMPTS = Object.freeze({
 	"lit-init": "lit-init --max-depth=2",
 	"lit-comprehend": "lit-comprehend",
 	"lit-plan": "lit plan this",
-	"lit-recap": "lit-recap --brief",
+	"lit-adhd": "lit adhd recap",
 	"lit-scientific-visualization": "lit-scientific-visualization",
 	litgoal: "litgoal bind release readiness",
 	"review-work": "review-work this diff",

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // src/cli.ts — M06-owned component bin dispatcher (A2 §3/§6.4, A3 addendum A1).
 //
 // Bin `litcodex-lit-loop` → dist/cli.js, the target the aggregate hooks.json invokes. Knows four route
@@ -15,6 +16,7 @@
 // `main` NEVER calls process.exit (the shebang wrapper does); it resolves exactly one integer, so
 // the dispatcher is unit-testable with an injected argv array.
 
+import { goalCommand } from "./goal-pipeline.js";
 import {
 	runPostCompactHookCli,
 	runPostToolUseLiveHookCli,
@@ -66,6 +68,8 @@ export async function main(
 	// `rewind` prints the lit-adhd brief data; `stage` records the stage and k/n of the work on top of the stack.
 	if (command === "rewind") return rewindCommand(argv.slice(3), { stdout, stderr });
 	if (command === "stage") return stageCommand(argv.slice(3), { stdout, stderr });
+	// `goal propose <plan>` compiles a lit-plan's Done when block into the one goal question (S4).
+	if (command === "goal") return goalCommand(argv.slice(3), { stdout, stderr });
 
 	stderr.write(UNKNOWN_COMMAND);
 	return 1;

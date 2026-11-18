@@ -29,12 +29,46 @@ import { continueContext, enterRoute, entryNotes, NO_REENTRY } from "./reentry.j
 import { loadRouteContext, loadSkillInvocationContext } from "./route-context.js";
 import { classifySchematicRequest } from "./schematic-route.js";
 import { isExactBareScientificVisualizationPrompt, isScientificVisualizationWhitespaceNearMiss, shouldSuppressScientificVisualizationInjection, } from "./scientific-visualization-route.js";
+import { skillPlanFor } from "./skill-plan.js";
 import { matchRenamedSkillInvocation, skillRenameNote } from "./skill-renames.js";
 import { maskMarkdownCode, matchLitTrigger } from "./trigger.js";
 const HOOK_EVENT_NAME = "UserPromptSubmit";
 const PRE_TOOL_USE_EVENT_NAME = "PreToolUse";
 const CREATE_GOAL_TOOL_NAME = "create_goal";
-const CREATE_GOAL_DENY_REASON = "Use create_goal with objective only. Omit token_budget, status, metadata, and all other keys so the Codex goal stays unlimited; record native-goal-unavailable if the host goal tools are not available.";
+const CREATE_GOAL_DENY_REASON = "Use create_goal with objective only. Omit token_budget, status, metadata, and all other keys so the Codex goal stays unlimited.";
+/**
+ * Skills a leading route phrase names directly, checked before the bounded tokens: `ultra-brainstorm`,
+ * `lit ultra-brainstorm` (hyphen or space) and `$litcodex:ultra-brainstorm` name the fan-out brainstorm, so
+ * `lit … brainstorm` never takes it; `lit team <goal>` and `lit team mode <goal>` name the team orchestrator.
+ */
+export const EXPLICIT_SKILL_ROUTES = [
+    {
+        skill: "ultra-brainstorm",
+        route: /^\s*(?:lit\s+ultra[\s-]?brainstorm(?:ing)?|ultra-brainstorm|\$litcodex:ultra-brainstorm)(?![\p{L}\p{N}_-])/iu,
+    },
+    { skill: "lit-team", route: /^\s*lit\s+team(?:\s+mode)?(?![\p{L}\p{N}_-])/iu },
+];
+/**
+ * Which lit-adhd view the prompt asked for. The old lit-recap words (`lit recap`, `litrecap`, `recap`, `리캡`,
+ * `lit-recap`) open the recap view with the one-line moved note; `lit adhd recap [session]` opens it without;
+ * `자세히` / `detail` opens the KPI board; anything else gets the verdict card.
+ */
+export function adhdViewLine(prompt, raw) {
+    const text = maskMarkdownCode(prompt);
+    // Korean unless the user asked for English in so many words (R5): the code picks, the model passes the flag.
+    const lang = /(?:^|\s)--en(?:glish)?\b|\bin english\b|영어로/iu.test(text) ? "en" : "ko";
+    const session = /\brecap\s+([0-9a-f]{4,36})\b/iu.exec(text)?.[1]?.toLowerCase();
+    const recap = session === undefined ? "--recap" : `--recap ${session}`;
+    const view = (name, flags) => `lit-adhd view: ${name}. Run the collector with exactly these flags: \`${flags} --lang ${lang}\`.`;
+    // The old lit-recap words get the moved note as the first line the collector prints.
+    if (/recap|리캡/iu.test(raw))
+        return view("recap", `${recap} --moved`);
+    if (/(?:^|\s)(?:lit[\s-]+)?(?:adhd|rewind)\s+(?:recap|리캡)(?![\p{L}\p{N}_-])/iu.test(text))
+        return view("recap", recap);
+    if (/자세히|\bdetail(?:ed|s)?\b|--detail/iu.test(text))
+        return view("detail", "--detail");
+    return view("card", "--card");
+}
 /** Narrow to a plain (non-null, non-array) record. */
 function isRecord(value) {
     return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -165,6 +199,22 @@ export function runUserPromptSubmitHook(input, reentry = () => NO_REENTRY) {
     }
     // `input` is a narrowed record here; re-read the transcript key (either casing) as a raw value.
     const transcriptPath = readGuardTranscriptPath(input);
+    const masked = maskMarkdownCode(input.prompt);
+    const explicit = EXPLICIT_SKILL_ROUTES.find(({ route }) => route.test(masked))?.skill;
+    if (explicit !== undefined) {
+        if (hasContextPressureMarker(input.prompt) || transcriptHasContextPressureMarker(transcriptPath))
+            return { kind: "noop" };
+        try {
+            const context = loadSkillInvocationContext(explicit, resolveSkillPath(explicit));
+            const stdout = formatAdditionalContextOutput(context, explicit);
+            return stdout === "" ? { kind: "noop" } : { kind: "inject", stdout, mode: explicit };
+        }
+        catch (error) {
+            if (error instanceof LitLoopDirectiveError)
+                return { kind: "noop" };
+            throw error;
+        }
+    }
     const match = matchLitTrigger(input.prompt);
     const renamed = matchRenamedSkillInvocation(maskMarkdownCode(input.prompt), match?.index ?? Infinity);
     if (renamed !== null) {
@@ -233,9 +283,12 @@ export function runUserPromptSubmitHook(input, reentry = () => NO_REENTRY) {
     const route = entry.kind === "first" ? mode.mode : entry.route;
     const context = keeps ? continueContext(route, entry) : loadDirectiveForModeFailSilent(mode);
     const film = mode.skillName === "lit-loop" ? motionRouteContext(mode.skillPath, input.prompt) : "";
+    const view = route === "lit-adhd" && !keeps ? adhdViewLine(input.prompt, match.raw) : "";
+    // Only a prompt that reached its route through the word `lit` (or `litwork`) gets a skill plan.
+    const plan = !keeps && /^lit(?:work)?$/iu.test(match.raw.split(/\s/u)[0] ?? "") ? skillPlanFor(input.prompt, route) : "";
     const stdout = context === ""
         ? ""
-        : formatAdditionalContextOutput([context, ...(keeps ? [] : entryNotes(entry)), film, skillRenameNote(match.raw)]
+        : formatAdditionalContextOutput([context, ...(keeps ? [] : entryNotes(entry)), view, film, plan, skillRenameNote(match.raw)]
             .filter(Boolean)
             .join("\n"), route);
     if (stdout === "") {

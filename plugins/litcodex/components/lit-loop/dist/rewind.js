@@ -514,16 +514,22 @@ export function collectRewind(options) {
     const limit = options.budgetBytes ?? TOTAL_BYTES;
     const budget = newBudget(limit);
     let sessionsState = codexHome === null ? "unknown" : "ok";
+    const coverage = { budget: 0, limit: 0, unreadable: 0 };
     const sessions = [];
     if (codexHome !== null) {
         const files = listRollouts(codexHome).filter((file) => now - file.mtimeMs <= sinceMs);
-        for (const file of files) {
-            if (sessions.length >= max)
+        for (const [index, file] of files.entries()) {
+            if (sessions.length >= max) {
+                coverage.limit = files.length - index;
                 break;
+            }
             const facts = readRollout(file, budget);
             if (facts === null) {
-                if (budget.exhausted)
+                if (budget.exhausted) {
+                    coverage.budget = files.length - index;
                     break;
+                }
+                coverage.unreadable += 1;
                 continue;
             }
             if (facts.subagent)
@@ -692,6 +698,7 @@ export function collectRewind(options) {
         scope: { sinceMs, worktrees: worktrees.length },
         sources: { sessions: sessionsState, git: gitState, state: "ok" },
         budget: { limit, used: limit - budget.remaining, exhausted: budget.exhausted },
+        coverage,
     });
 }
 // ── Board inputs ─────────────────────────────────────────────────────────────
@@ -828,7 +835,7 @@ function laneRootsOf(cwd, git) {
 const LANE_LABELS = 3;
 /**
  * Other lanes at work in this repository, each once: a session that runs or waits on the user, a session whose
- * liveness record says it is working, and, under herdr, a working or blocked agent of this workspace or repo.
+ * liveness record says it is working, and, under herdr, a working or blocked agent whose folder is inside this repo.
  * The asking session and its own pane never count.
  */
 function lanesOf(sessions, roots, sessionId, env, herdr, now, homed) {
@@ -873,7 +880,6 @@ function lanesOf(sessions, roots, sessionId, env, herdr, now, homed) {
         }
     }
     const ownPane = env["HERDR_PANE_ID"];
-    const ownWorkspace = env["HERDR_WORKSPACE_ID"];
     for (const agent of herdr.agents) {
         if (agent.status !== "working" && agent.status !== "blocked")
             continue;
@@ -881,9 +887,8 @@ function lanesOf(sessions, roots, sessionId, env, herdr, now, homed) {
             continue;
         if (own(agent.session))
             continue;
-        const here = (typeof ownWorkspace === "string" && ownWorkspace !== "" && agent.workspace === ownWorkspace) ||
-            inRepo(agent.cwd) ||
-            inRepo(agent.foregroundCwd);
+        // Only an agent whose folder is inside this repo is a lane of it; a shared herdr workspace is machine-wide.
+        const here = inRepo(agent.cwd) || inRepo(agent.foregroundCwd);
         if (!here)
             continue;
         const id = agent.session === null ? null : normalizeSessionId(agent.session);

@@ -1,5 +1,5 @@
 /** The accepted bounded lit-family tokens, longest-first (ordering is load-bearing — see below). */
-export type LitTriggerToken = "lit-comprehend" | "lit-brainstorm" | "lit-schematic" | "lit-hijack" | "lit-adhd" | "deep-interview" | "lit-crucible" | "lit-init" | "start-work" | "review-work" | "litresearch" | "lit-recap" | "lit-loop" | "lit-plan" | "litcodex" | "litgoal" | "litwork" | "lit";
+export type LitTriggerToken = "lit-comprehend" | "lit-brainstorm" | "lit-schematic" | "lit-hijack" | "lit-adhd" | "deep-interview" | "lit-crucible" | "lit-init" | "start-work" | "review-work" | "litresearch" | "lit-loop" | "lit-plan" | "litcodex" | "litgoal" | "litwork" | "lit";
 /**
  * Frozen tuple of the accepted tokens in match-priority (longest-first) order.
  * Exported so tests and the mode router (modes.ts) can enumerate without re-deriving.
@@ -18,8 +18,8 @@ export declare const LIT_TRIGGER_TOKENS: readonly LitTriggerToken[];
  * (`lit-comprehend|lit-brainstorm|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit`)
  * guarantees a longer family token wins over a bare `lit` at the same start; the trailing-`-`
  * lookahead means `lit work` (space) is a bare `lit` while `litwork` (glued) is the work mode.
- * The `litrecap` / `recap` / `리캡` alternatives are ROUTING ALIASES normalized to the canonical
- * `lit-recap` token, and bare `comprehend` normalizes to `lit-comprehend`, by `matchLitTrigger`
+ * The `litrecap` / `recap` / `리캡` / `lit-recap` alternatives are ROUTING ALIASES normalized to the
+ * `lit-adhd` token (its recap view), and bare `comprehend` normalizes to `lit-comprehend`, by `matchLitTrigger`
  * (they are not members of the token union).
  * No nested quantifiers / no backreferences ⇒ ReDoS-free.
  */

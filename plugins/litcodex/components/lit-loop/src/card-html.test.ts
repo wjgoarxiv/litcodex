@@ -593,7 +593,7 @@ describe("LIT card rewind look", () => {
 		expect(adhd.card.classList.contains("rewind")).toBe(true);
 		for (const poll of [
 			working(),
-			working({ mode: "lit-recap" }),
+			working({ mode: "lit-comprehend" }),
 			{ ...working({ mode: "lit-adhd" }), state: "ready" },
 		]) {
 			const host = bootCard({ bridge: "mcp", poll, now: T0 });

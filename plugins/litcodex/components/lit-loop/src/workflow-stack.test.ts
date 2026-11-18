@@ -110,7 +110,7 @@ describe("applyStackEvent", () => {
 	});
 
 	it("never stacks a read-only discipline", () => {
-		for (const skill of ["lit-recap", "lit-comprehend", "lit-handoff", "lit-adhd", "lit-rewind"]) {
+		for (const skill of ["lit-comprehend", "lit-handoff", "lit-adhd", "lit-rewind"]) {
 			const { stack } = run([
 				{ type: "start", skill: "lit-loop" },
 				{ type: "start", skill },

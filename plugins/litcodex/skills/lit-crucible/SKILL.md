@@ -1,6 +1,7 @@
 ---
 name: lit-crucible
 description: "Pressure-test planning decisions and hand verified insights to lit-plan. Use Lit Crucible for ambiguous or high-stakes work."
+goal: never
 ---
 
 > [!IMPORTANT]

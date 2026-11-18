@@ -19,6 +19,7 @@ import { join } from "node:path";
 import { after, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 
+import { EXPLICIT_SKILL_ROUTES } from "@litcodex/lit-loop/dist/codex-hook.js";
 import { isExactBareHandoffPrompt } from "@litcodex/lit-loop/dist/handoff-route.js";
 import { LOOP_SUBCOMMANDS } from "@litcodex/lit-loop/dist/loop-cli.js";
 import { modeForToken } from "@litcodex/lit-loop/dist/modes.js";
@@ -84,6 +85,8 @@ function documentedRouteRows(text) {
 function hookModeForForm(form) {
 	if (isExactBareHandoffPrompt(form)) return "lit-handoff";
 	if (isExactBareScientificVisualizationPrompt(form)) return "lit-scientific-visualization";
+	const explicit = EXPLICIT_SKILL_ROUTES.find(({ route }) => route.test(form));
+	if (explicit !== undefined) return explicit.skill;
 	const match = matchLitTrigger(form);
 	return match === null ? null : modeForToken(match.token).mode;
 }
@@ -201,7 +204,7 @@ describe("docs-audit repo-derived facts", () => {
 		const korean = readFileSync(join(REPO_ROOT, "README-Ko-KR.md"), "utf8");
 		const englishRoutes = documentedRouteRows(english);
 		const koreanRoutes = documentedRouteRows(korean);
-		assert.equal(englishRoutes.length, 16, "English README declares the complete public hook route table");
+		assert.equal(englishRoutes.length, 17, "English README declares the complete public hook route table");
 		assert.deepEqual(koreanRoutes, englishRoutes, "Korean route table must have exact English route parity");
 		for (const { mode: documentedMode, forms } of englishRoutes) {
 			for (const form of forms) {

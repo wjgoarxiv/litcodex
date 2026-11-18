@@ -1,6 +1,6 @@
 ---
 name: lit-team
-description: "Coordinate a Codex team with explicit ownership and verified results. Use Lit Team for independent local work lanes."
+description: "Type lit team <goal>; this session becomes the orchestrator: it splits the work, runs sub-agents, herdr panes or worktrees, and returns one verified report."
 ---
 
 When this skill activates, begin the reply with exactly one line `🔥 **LIT IGNITED · lit-team** 🔥` before any other user-visible text.
@@ -81,7 +81,7 @@ Treat this SKILL.md as an LLM contract artifact, not a casual help page. Activat
 | Mode | Trigger | Required behavior |
 | --- | --- | --- |
 | Skill body | `$litcodex:lit-team` or host skill selection | Emit the required banner, parse inputs, and execute only this skill's scope. |
-| Hook route | Explicit leading bare invocation | Follow the installed body; print any accompanying rename note once after the activation banner. |
+| Hook route | A leading `lit team <goal>`, `lit-team <goal>` or `teammode <goal>` | Follow the installed body as the orchestrator; print any accompanying rename note once after the activation banner. |
 | Non-route text | Slash-form names or names inside ordinary prose | Do not claim hook activation. |
 | Documentation/reference use | Another skill reads this file for policy facts | Extract durable facts, cite paths, and do not self-activate. |
 | Unsupported scope | Request conflicts with this skill, repo rules, or safety limits | Stop with a precise blocker or route to the correct LitCodex surface. |
@@ -143,48 +143,80 @@ Treat this SKILL.md as an LLM contract artifact, not a casual help page. Activat
 - Do not replace this contract with human-friendly prose that hides inputs, modes, outputs, or stop rules.
 - Do not copy sibling-repo wording into LitCodex; re-express behavior using Codex skill discovery, component hooks where applicable, marketplace, and docs-audit vocabulary.
 - Do not claim package or marketplace readiness from a raw markdown diff.
-- Do not invent subagent tools when Codex does not expose them; describe direct fallback and record the limitation.
+- Do not invent a distribution surface the session does not have: a herdr pane without `HERDR_ENV=1` and `herdr` on PATH, or a sub-agent id `spawn_agent` did not return.
 - Do not let legacy carry-forward notes below override the schema above.
 
 ## Operational reference
 
-Read [Team orchestration](references/team-orchestration.md) before initializing local team state,
-assigning members, binding Codex threads, choosing isolation, accepting reports, or cleaning up.
-The reference is the leader's end-to-end runbook for the bundled state CLI.
+Read [Team orchestration](references/team-orchestration.md) for the state CLI's full command set,
+isolation table, message cadence and cleanup. This file is the orchestrator's procedure.
 
 # LitCodex Lit Team
 
-Use this skill only when the user wants coordinated multi-thread work. Prefer plain subagents for
-perfectly isolated one-shot tasks, and prefer lit-plan when the objective is still unclear.
+Type `lit team <goal>`; this session becomes the orchestrator and runs the team for you. The user
+gives the goal and nothing else: no roster to fill in, no setup questions. Ask one question only
+when the goal itself is unclear (two readings would give two different teams); otherwise start.
 
-## State model
+## 1. Pick the distribution, and say it in one line
 
-The bundled script owns all durable state. Do not hand-write `team.json`.
+Read the goal, split it into slices, then choose how the slices run. Print the choice as one line,
+for example `Team: 3 sub-agents (parser, docs, tests), shared checkout`.
+
+| The slices are | Run them as |
+| --- | --- |
+| 2-6 independent slices with separate files | Codex sub-agents: one `spawn_agent` per slice, each with its own brief |
+| Many similar items, or a review/verify fan-out | Batched sub-agents: spawn up to the session's concurrency cap, `wait_agent` on the batch, `close_agent`, next batch |
+| Long-running parallel sessions, another harness, or work the user wants to watch | herdr panes, only when `HERDR_ENV=1` and `command -v herdr` succeeds; otherwise sub-agents |
+| Slices that edit the same files | One git worktree per slice (`git worktree add` under the repo's worktree folder), then sub-agents or panes inside them |
+
+Codex has no separate workflow engine, so a fan-out is the same `spawn_agent` call in batches. A
+read-only review or verification slice gets `fork_context: false` and a self-contained brief.
+
+## 2. Write the team packet, then launch
+
+The bundled state CLI owns `.litcodex/teams/<session>/` (`team.json`, `guide.md`, `artifacts/`):
 
 ```text
-node "<skill-root>/scripts/team.mjs" init --name "<team>" --session-name "<session>" [--session <leader_session_id>] [--worktree] [--base-branch main]
-node "<skill-root>/scripts/team.mjs" add-member --team <session_id> --id A --focus "<concrete slice>" --lens area|ownership|perspective --deliverable "<artifact>" [--branch <branch>]
-node "<skill-root>/scripts/team.mjs" bind-thread --team <session_id> --id A --thread <thread_id> [--cwd <path>]
-node "<skill-root>/scripts/team.mjs" member-prompt --team <session_id> --id A
-node "<skill-root>/scripts/team.mjs" set-status --team <session_id> --id A --status pending|active|reported|blocked|archived [--note "<note>"]
-node "<skill-root>/scripts/team.mjs" status --team <session_id>
-node "<skill-root>/scripts/team.mjs" archive --team <session_id> [--id A] [--note "<note>"]
-node "<skill-root>/scripts/team.mjs" delete --team <session_id> [--force]
+node "<skill-root>/scripts/team.mjs" init --name "<team>" --session-name "<session>" [--worktree]
+node "<skill-root>/scripts/team.mjs" add-member --team <session> --id A --focus "<slice>" --lens area|ownership|perspective --deliverable "<artifact>"
+node "<skill-root>/scripts/team.mjs" member-prompt --team <session> --id A
 ```
 
-`init` creates `.litcodex/teams/<session_id>/team.json`, `guide.md`, and `artifacts/`.
-Every mutating command rewrites `guide.md` so members can read a current field manual.
+Every member brief starts with `TASK:` and carries `DELIVERABLE`, `SCOPE` (its paths only) and
+`VERIFY` (the exact command or probe). Add the member's own scratch directory
+(`.litcodex/teams/<session>/artifacts/<id>/`), the dirty files it must leave alone, and the rule that
+it never commits, pushes, tags or publishes. Launch, then bind only the id the host returned:
+
+```text
+node "<skill-root>/scripts/team.mjs" bind-thread --team <session> --id A --thread <id from spawn_agent or the herdr pane id> [--cwd <worktree>]
+```
+
+## 3. Monitor and wake
+
+- Sub-agents: `wait_agent` with a timeout; a member silent past two waits gets one `send_message`
+  asking for a `WORKING:` line, then a `followup_task` restating its brief.
+- herdr panes: read the pane's last lines and the newest mtime under its scratch directory; idle for
+  more than ten minutes with no report means stalled: wake it with one line in the pane.
+- Record each change with `set-status` (`active`, `reported`, `blocked`). Never mark a member active
+  on a binding the host did not confirm.
+
+## 4. Merge, re-verify, report
+
+Take each member's report as a claim. Read its diff or findings, merge worktree slices in the
+leader's checkout without committing, then rerun every member's VERIFY command yourself. Filter the
+members' prose before replying: the user gets one reader-mode report with what is done, the material
+risks, and what needs the user. Archive the team (`archive --team <session>`), close every finished
+sub-agent, and remove worktrees you created once their changes are merged.
 
 ## Hard boundaries
 
-- A team needs at least two distinct members before any thread can be bound.
-- Member `focus` values must be concrete and non-overlapping.
-- Use Codex thread tools only when the host exposes them. If `codex_app.create_thread`, thread
-  messaging, or archive tools are unavailable, stop and report that native thread control is unavailable.
-- Never add network telemetry. All state is local under `.litcodex/teams`.
-- Archive or delete finished teams; a forgotten active team is a cleanup leak.
+- At least two members with concrete, non-overlapping focus before any binding.
+- No member commits, pushes, tags or publishes; each writes only inside its scope and scratch directory.
+- All team state is local under `.litcodex/teams`; no network telemetry.
+- A forgotten active team, an open sub-agent or a leftover worktree is a cleanup leak.
 
 ## Done claim
 
-The leader may call team work done only after every required member reports changed files or findings,
-exact tests or probes, real-surface evidence, residual risks, and a cleanup receipt.
+Done only after every member reported changed files or findings, its VERIFY command passed when the
+orchestrator reran it, residual risks are named, and the cleanup receipt (agents closed, team
+archived, worktrees removed) is in the report.

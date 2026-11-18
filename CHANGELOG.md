@@ -6,6 +6,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A bare `lit` request now gets a skill plan. The hook collects every skill the request needs, at most three with
+  the primary first, and opens the context with one `Skill plan: 1 lit-loop (primary) → 2 …` line plus a catalog
+  of the installed skills only. An extension that is not installed is named once with its install line, lit-crucible
+  joins large or risky design asks, a read-only route never gains a companion that writes, and quoted or fenced text
+  routes nothing. `lit +viz +diagram <request>` forces the plan.
+- `ultra-brainstorm`: `lit ultra-brainstorm <topic>`, `ultra-brainstorm <topic>` and `$litcodex:ultra-brainstorm`
+  ask one question (how many idea agents: 100 suggested, 300, or a number) with a cost line, then fan out cheap
+  low-effort Codex agents with one of 32 lenses and a seed each, reduce once per 30 ideators, judge with a
+  sensitivity check, and save the top ten under `.litcodex/brainstorm/<slug>/`. The cost line is a range
+  (`≈ 4.0M–9.3M tokens` for 100 agents) because every spawned agent first pays Codex's ~31k-token first-turn
+  prompt. The user's answer goes to a bundled reader on stdin through a quoted heredoc and is never evaluated; it
+  reads a count from a typed number or a picked option's full label, asks again on two numbers, and a plain `no`
+  ends the run at once.
+- lit-plan writes a `## Done when` block, and `cli.js goal propose <plan>` compiles it into one bounded Codex goal
+  condition (``Every row in <plan> is ticked and `<cmd>` exits 0 [lit:<id>]``, 500 characters at most). The
+  condition is linted for judgment words, push- or publish-only checks and unlisted commands, its check must fail
+  today, and the question is `Approve plan, start work and set goal: /goal <condition>? (yes / edit / no)`. An
+  exact `yes` bound to that consent's hash starts the plan's Start Work run through the same route as typing the
+  Start Work command for that plan, and arms the native `create_goal`; when the run cannot start, no goal is armed and one line
+  says why. Without a usable goal the question is `Approve plan and start work? (yes / no)` under its one reason
+  line. `lit cancel` gives the clear line only for a goal LitCodex set. Read-only skills carry `goal: never`.
+
+### Changed
+
+- `lit adhd` now answers with a six-line verdict card: what changed since your last look (from a durable cursor,
+  proven finishes only), one action with a fingerprint and its exact input, why and what happens if not, at most
+  two waiting items, and a coverage line. A versioned rule table (`adhd-verdict.v1`) picks the action, a push or
+  publish appears only as `네 확인 필요:`, and `지금 할 일 없음` needs full coverage. `lit adhd detail` keeps the KPI
+  board. The card answers in Korean unless you ask for English (`--en`, "in English" or 영어로); the hook picks
+  the language and hands the collector the exact flag.
+- Other lanes on the lit-adhd card count only sessions and herdr agents whose folder is inside this repo. A herdr
+  agent that merely shares the workspace is no longer counted.
+- A Start Work run whose own plan has every row ticked reads as finished, even when another plan in the folder is
+  still open.
+- lit-team is redesigned so this session orchestrates. `lit team <goal>` picks sub-agents, a fan-out, herdr panes
+  (only inside herdr) or worktrees, writes the packet, launches, watches and wakes stalled members, merges,
+  re-verifies and sends one report. No member commits, and every member has its own scratch folder.
+- The goal tools are always present in current Codex, so every "continue without the goal tools" sentence is gone.
+
+### Removed
+
+- The lit-recap skill and route. `lit adhd recap [session]` is the recap view now, and `lit recap`, `litrecap`,
+  `리캡` and `lit-recap` open it with a one-line moved note, which the collector prints as the first line.
+
 ## [1.0.41] - 2026-11-16
 
 ### Changed

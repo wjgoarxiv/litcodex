@@ -183,13 +183,6 @@
 			"maxFiles": 3,
 			"maxBytes": 6000
 		},
-		"lit-recap": {
-			"minSkillBytes": 12300,
-			"maxSkillBytes": 19000,
-			"minFiles": 2,
-			"maxFiles": 3,
-			"maxBytes": 19000
-		},
 		"lit-schematic": {
 			"minSkillBytes": 3600,
 			"maxSkillBytes": 6000,
@@ -316,6 +309,13 @@
 			"maxFiles": 6,
 			"maxBytes": 71000
 		},
+		"ultra-brainstorm": {
+			"minSkillBytes": 11100,
+			"maxSkillBytes": 17000,
+			"minFiles": 5,
+			"maxFiles": 8,
+			"maxBytes": 27000
+		},
 		"visual-qa": {
 			"minSkillBytes": 3400,
 			"maxSkillBytes": 6000,
@@ -356,8 +356,8 @@
 				"sha256": "731b28ebd1b0d46881dfca1ec76a4210839d46697e9b559be9019c148d90190f"
 			},
 			"files": 5,
-			"bytes": 61010,
-			"sha256": "11ddd1d2871471c9c90657d753716d786c8e4d255f6b6c1d2db6b48677943a82"
+			"bytes": 61231,
+			"sha256": "af31a6ccad18519db65d47bb9bc76eba674b3a69fb33d9632158ab938d9f1de1"
 		},
 		"coding-session-audit": {
 			"skillMd": {
@@ -406,21 +406,21 @@
 		},
 		"lit-adhd": {
 			"skillMd": {
-				"bytes": 27144,
-				"sha256": "1062916143738bbaba74e44dcd1d5d5f1bb13f18659116f878b3ad6cc5863241"
+				"bytes": 30956,
+				"sha256": "33b5ec432fed87806546219aa6347b8cd1fa8a514704e3ba927c584e63fbbd9d"
 			},
-			"files": 4,
-			"bytes": 43785,
-			"sha256": "7977b499dd7b23acc671d9f82efc93f47383ed6d63621c8eb889126b98feb3ae"
+			"files": 5,
+			"bytes": 49057,
+			"sha256": "72ad96d2b4a4ee8f8a3ee6bd34b5bbaf8ba83dcf26af36bb884c502fb65f9300"
 		},
 		"lit-brainstorm": {
 			"skillMd": {
-				"bytes": 19366,
-				"sha256": "56e8cd124185536d0c30c45106cc319cd7c9dce740757157c21fbe853c6e2d1d"
+				"bytes": 19378,
+				"sha256": "5f2013ae6e27ca1782487edc8dc57e815a32a007d4f21fd7399ce285f76c2832"
 			},
 			"files": 2,
-			"bytes": 19614,
-			"sha256": "a4124210eef19fa75104db14d432ac929fb2b7198d795debd7bed86ae0880fea"
+			"bytes": 19626,
+			"sha256": "f84829380eb8cdd90d7a8b6614d5d80b85f0ccabb993446098b1e5031c00b8a0"
 		},
 		"lit-burnoff": {
 			"skillMd": {
@@ -460,21 +460,21 @@
 		},
 		"lit-comprehend": {
 			"skillMd": {
-				"bytes": 25190,
-				"sha256": "79d7c117e620e85574590a61c7cb5eba2773705e3b2cfe2fe4bbba6a43c4cf5b"
+				"bytes": 25238,
+				"sha256": "d16c9a52e22e0378361a0197c4851233aa8d6c47e22383234130204603a03366"
 			},
 			"files": 6,
-			"bytes": 63660,
-			"sha256": "e27f24b4a642f285d81d7873abe23897f81d0d0b458d6706857f0eec2550da52"
+			"bytes": 63708,
+			"sha256": "e998bd9c779e3efb9ffe67077758de2f7c06dae6f0f7f078c80149709899d852"
 		},
 		"lit-crucible": {
 			"skillMd": {
-				"bytes": 17599,
-				"sha256": "dc67975d8ffc1d1e691c85b0fe46220b29a23c3bfad0f3c24f1c2f147480b7ca"
+				"bytes": 17611,
+				"sha256": "381e5eec04f41760a690ed2c63ab14d6aa6a665b59ec8922f4db5d082e07497f"
 			},
 			"files": 3,
-			"bytes": 23515,
-			"sha256": "8145245e532d9b265b777a77f131f6b61b80bcf2bd6e5a48c76e7d7dd5c53a1d"
+			"bytes": 23527,
+			"sha256": "4878cdd627cfca7a6b863d819d01a3fe7fe93aecaa01c82ffb6dfccb23e2d1cc"
 		},
 		"lit-diagram-drawer": {
 			"skillMd": {
@@ -550,12 +550,12 @@
 		},
 		"lit-plan": {
 			"skillMd": {
-				"bytes": 24834,
-				"sha256": "052830add11de8eae34c42ac11371ce1d68f9fc43b67de82987b9c8d759509e0"
+				"bytes": 26577,
+				"sha256": "3e4ebaf8b3b7336cbf4022d83846ffa2cc13069be6b3320ca4002a29975cd2b0"
 			},
 			"files": 5,
-			"bytes": 41138,
-			"sha256": "608950fa2e92f62137ca94b03dbf0964b0dd5d62bd5095efe847d2f3b4bdb1d6"
+			"bytes": 42881,
+			"sha256": "c52456c506bdd2b1956713b7c4843ba108e872182028d7d219e97ace0d0d6d70"
 		},
 		"lit-pptx": {
 			"skillMd": {
@@ -565,15 +565,6 @@
 			"files": 2,
 			"bytes": 5647,
 			"sha256": "8b17945d71a0160447fc33e39f4f204b49723456001cd4681b6f25cd3dec1dc4"
-		},
-		"lit-recap": {
-			"skillMd": {
-				"bytes": 12341,
-				"sha256": "a1599cf5c27309173e341a27a9bdb538e87e02f4480424121510f6c0754fe0a4"
-			},
-			"files": 2,
-			"bytes": 12573,
-			"sha256": "5c6943570ee6a3c0e4d4827649612bb7ac0f659449deb64755cefaa13378f703"
 		},
 		"lit-schematic": {
 			"skillMd": {
@@ -595,12 +586,12 @@
 		},
 		"lit-team": {
 			"skillMd": {
-				"bytes": 11105,
-				"sha256": "887eb7b24b9cd3d1c86e4e43f769fa22c7eac5e0196764b10c33a784b1851dfb"
+				"bytes": 13127,
+				"sha256": "9dd192f3a867b3d2603f2ac90bccb6fe9d8061b917a89f1095ff11520af98685"
 			},
 			"files": 6,
-			"bytes": 39873,
-			"sha256": "1d71fdde858af211cddc0f80ef00a662b86a1f7a9b5b8e8186338dfe40fc2e08"
+			"bytes": 41895,
+			"sha256": "56fcb4a72917c3399fbbae839912801108886e680d4cce9bb47b6bb34a810261"
 		},
 		"lit-typographic-motion": {
 			"skillMd": {
@@ -649,12 +640,12 @@
 		},
 		"litresearch": {
 			"skillMd": {
-				"bytes": 37710,
-				"sha256": "482f9c88897098f76d46817ae694df876d86edded468753e38a18d6c2a08d44e"
+				"bytes": 37722,
+				"sha256": "33148a2b43b1a023537ef94233a4267904d8fec6b5c3126963f3cf7dcadc1f8d"
 			},
 			"files": 2,
-			"bytes": 44732,
-			"sha256": "9a37d62b4fa521cf6c47be9c8913526b04523f8eb91f18f882d25eda8b11ba45"
+			"bytes": 44744,
+			"sha256": "7926fd028bfff4bd5fcbec50edb1a32b2519fa526757100ebbc9e409144c0fca"
 		},
 		"litwork": {
 			"skillMd": {
@@ -680,8 +671,8 @@
 				"sha256": "dba062bc1cdaf5d96c8a1c206e7793e142299e8a0723ce953a17df91c9bf5633"
 			},
 			"files": 25,
-			"bytes": 87361,
-			"sha256": "4ca29b01d00a10a9b40bc6d0f8e3940699b7b3e02a9df9b1e84ec5a36a4af59e"
+			"bytes": 87431,
+			"sha256": "5b858558b4c877806dd1a9e20192a2ca399f49b8d4e3c87e679a8b2100f8f0c6"
 		},
 		"readme-studio": {
 			"skillMd": {
@@ -703,12 +694,12 @@
 		},
 		"review-work": {
 			"skillMd": {
-				"bytes": 45083,
-				"sha256": "1f18460fa493ccf36d41790f307a51e5ca2a7a5a4c5b121c9942d3c89e3490fb"
+				"bytes": 45095,
+				"sha256": "cf503d06c03a662c14b613c051c52f15d4d8359ca3904cef7dd977907f05c4c3"
 			},
 			"files": 3,
-			"bytes": 50337,
-			"sha256": "33c2cafc50c7b1b78dea9edc2b4f1617db572eb6db9b56808001235fc2df78d1"
+			"bytes": 50349,
+			"sha256": "7a486f88de213f377f5df1a065b0bf93c47d0f37eb389e2b0f4745e8ea02eb31"
 		},
 		"rules": {
 			"skillMd": {
@@ -736,6 +727,15 @@
 			"files": 4,
 			"bytes": 47115,
 			"sha256": "866d367ad47d75c49e97736155b1afc06fb43dd578ec8a227122112f493fadab"
+		},
+		"ultra-brainstorm": {
+			"skillMd": {
+				"bytes": 12342,
+				"sha256": "74a32e2ed272ab50ebb71f8ed5d7fc0317a409c57dd12b92cee99d0bf6c2c681"
+			},
+			"files": 6,
+			"bytes": 21113,
+			"sha256": "9552e02cc674e3b783d6df48a30486e356c6b66a50269768b8c8c226aaa38a81"
 		},
 		"visual-qa": {
 			"skillMd": {
@@ -839,7 +839,6 @@
 		"packages/litcodex-ai/readme-assets/skills/lit-loop.webp",
 		"packages/litcodex-ai/readme-assets/skills/lit-plan.webp",
 		"packages/litcodex-ai/readme-assets/skills/lit-pptx.webp",
-		"packages/litcodex-ai/readme-assets/skills/lit-recap.webp",
 		"packages/litcodex-ai/readme-assets/skills/lit-schematic.webp",
 		"packages/litcodex-ai/readme-assets/skills/lit-scientific-visualization.webp",
 		"packages/litcodex-ai/readme-assets/skills/lit-team.webp",
@@ -856,6 +855,7 @@
 		"packages/litcodex-ai/readme-assets/skills/review-work.webp",
 		"packages/litcodex-ai/readme-assets/skills/start-approved-plan.webp",
 		"packages/litcodex-ai/readme-assets/skills/structural-search.webp",
+		"packages/litcodex-ai/readme-assets/skills/ultra-brainstorm.webp",
 		"packages/litcodex-ai/readme-assets/skills/visual-qa.webp",
 		"packages/litcodex-ai/readme-assets/skills/wikify.webp",
 		"packages/litcodex-ai/src/auto-update.ts",
@@ -1099,7 +1099,6 @@
 		"plugins/litcodex/components/lit-loop/directives/lit-hijack.md",
 		"plugins/litcodex/components/lit-loop/directives/lit-init.md",
 		"plugins/litcodex/components/lit-loop/directives/lit-plan.md",
-		"plugins/litcodex/components/lit-loop/directives/lit-recap.md",
 		"plugins/litcodex/components/lit-loop/directives/lit-schematic.md",
 		"plugins/litcodex/components/lit-loop/directives/lit-scientific-visualization.md",
 		"plugins/litcodex/components/lit-loop/directives/litgoal.md",
@@ -1137,6 +1136,8 @@
 		"plugins/litcodex/components/lit-loop/dist/control-chars.js",
 		"plugins/litcodex/components/lit-loop/dist/directive.d.ts",
 		"plugins/litcodex/components/lit-loop/dist/directive.js",
+		"plugins/litcodex/components/lit-loop/dist/goal-pipeline.d.ts",
+		"plugins/litcodex/components/lit-loop/dist/goal-pipeline.js",
 		"plugins/litcodex/components/lit-loop/dist/goal-status.d.ts",
 		"plugins/litcodex/components/lit-loop/dist/goal-status.js",
 		"plugins/litcodex/components/lit-loop/dist/guards.d.ts",
@@ -1205,6 +1206,8 @@
 		"plugins/litcodex/components/lit-loop/dist/rewind-redact.js",
 		"plugins/litcodex/components/lit-loop/dist/rewind-rollout.d.ts",
 		"plugins/litcodex/components/lit-loop/dist/rewind-rollout.js",
+		"plugins/litcodex/components/lit-loop/dist/rewind-verdict.d.ts",
+		"plugins/litcodex/components/lit-loop/dist/rewind-verdict.js",
 		"plugins/litcodex/components/lit-loop/dist/rewind.d.ts",
 		"plugins/litcodex/components/lit-loop/dist/rewind.js",
 		"plugins/litcodex/components/lit-loop/dist/route-context.d.ts",
@@ -1229,6 +1232,8 @@
 		"plugins/litcodex/components/lit-loop/dist/session-liveness.js",
 		"plugins/litcodex/components/lit-loop/dist/skill-mention-scope.d.ts",
 		"plugins/litcodex/components/lit-loop/dist/skill-mention-scope.js",
+		"plugins/litcodex/components/lit-loop/dist/skill-plan.d.ts",
+		"plugins/litcodex/components/lit-loop/dist/skill-plan.js",
 		"plugins/litcodex/components/lit-loop/dist/skill-renames.d.ts",
 		"plugins/litcodex/components/lit-loop/dist/skill-renames.js",
 		"plugins/litcodex/components/lit-loop/dist/stack-hook.d.ts",
@@ -1277,6 +1282,7 @@
 		"plugins/litcodex/components/lit-loop/src/codex-hook-hijack.test.ts",
 		"plugins/litcodex/components/lit-loop/src/codex-hook-recap.test.ts",
 		"plugins/litcodex/components/lit-loop/src/codex-hook-schematic.test.ts",
+		"plugins/litcodex/components/lit-loop/src/codex-hook-ultra-brainstorm.test.ts",
 		"plugins/litcodex/components/lit-loop/src/codex-hook.test.ts",
 		"plugins/litcodex/components/lit-loop/src/codex-hook.ts",
 		"plugins/litcodex/components/lit-loop/src/comprehend-content.test.ts",
@@ -1289,6 +1295,8 @@
 		"plugins/litcodex/components/lit-loop/src/fixtures/lit-mark-round6-generator.mjs",
 		"plugins/litcodex/components/lit-loop/src/fixtures/lit-mark-round6-sheet.json",
 		"plugins/litcodex/components/lit-loop/src/fixtures/lit-mark-round6.json",
+		"plugins/litcodex/components/lit-loop/src/goal-pipeline.test.ts",
+		"plugins/litcodex/components/lit-loop/src/goal-pipeline.ts",
 		"plugins/litcodex/components/lit-loop/src/goal-status.test.ts",
 		"plugins/litcodex/components/lit-loop/src/goal-status.ts",
 		"plugins/litcodex/components/lit-loop/src/guards.performance.test.ts",
@@ -1316,7 +1324,6 @@
 		"plugins/litcodex/components/lit-loop/src/lit-mark.ts",
 		"plugins/litcodex/components/lit-loop/src/lit-plan-litgoal-content.test.ts",
 		"plugins/litcodex/components/lit-loop/src/lit-plan-start-work-contract.test.ts",
-		"plugins/litcodex/components/lit-loop/src/lit-recap-content.test.ts",
 		"plugins/litcodex/components/lit-loop/src/litresearch-scientific-contract.test.ts",
 		"plugins/litcodex/components/lit-loop/src/litwork-content.test.ts",
 		"plugins/litcodex/components/lit-loop/src/live-step.test.ts",
@@ -1362,6 +1369,8 @@
 		"plugins/litcodex/components/lit-loop/src/rewind-parity.test.ts",
 		"plugins/litcodex/components/lit-loop/src/rewind-redact.ts",
 		"plugins/litcodex/components/lit-loop/src/rewind-rollout.ts",
+		"plugins/litcodex/components/lit-loop/src/rewind-verdict.test.ts",
+		"plugins/litcodex/components/lit-loop/src/rewind-verdict.ts",
 		"plugins/litcodex/components/lit-loop/src/rewind.test.ts",
 		"plugins/litcodex/components/lit-loop/src/rewind.ts",
 		"plugins/litcodex/components/lit-loop/src/route-context-budget.test.ts",
@@ -1386,6 +1395,8 @@
 		"plugins/litcodex/components/lit-loop/src/skill-loop-removal.test.ts",
 		"plugins/litcodex/components/lit-loop/src/skill-mention-scope.test.ts",
 		"plugins/litcodex/components/lit-loop/src/skill-mention-scope.ts",
+		"plugins/litcodex/components/lit-loop/src/skill-plan.test.ts",
+		"plugins/litcodex/components/lit-loop/src/skill-plan.ts",
 		"plugins/litcodex/components/lit-loop/src/skill-renames.test.ts",
 		"plugins/litcodex/components/lit-loop/src/skill-renames.ts",
 		"plugins/litcodex/components/lit-loop/src/stack-hook.ts",
@@ -1862,6 +1873,7 @@
 		"plugins/litcodex/skills/lit-adhd/SKILL.md",
 		"plugins/litcodex/skills/lit-adhd/agents/openai.yaml",
 		"plugins/litcodex/skills/lit-adhd/references/card-examples.md",
+		"plugins/litcodex/skills/lit-adhd/references/recap.md",
 		"plugins/litcodex/skills/lit-adhd/references/status-taxonomy.md",
 		"plugins/litcodex/skills/lit-brainstorm/SKILL.md",
 		"plugins/litcodex/skills/lit-brainstorm/agents/openai.yaml",
@@ -2074,8 +2086,6 @@
 		"plugins/litcodex/skills/lit-plan/references/intent-unclear.md",
 		"plugins/litcodex/skills/lit-pptx/SKILL.md",
 		"plugins/litcodex/skills/lit-pptx/agents/openai.yaml",
-		"plugins/litcodex/skills/lit-recap/SKILL.md",
-		"plugins/litcodex/skills/lit-recap/agents/openai.yaml",
 		"plugins/litcodex/skills/lit-schematic/SKILL.md",
 		"plugins/litcodex/skills/lit-schematic/agents/openai.yaml",
 		"plugins/litcodex/skills/lit-scientific-visualization/SKILL.md",
@@ -2145,6 +2155,12 @@
 		"plugins/litcodex/skills/structural-search/references/diagnostics.md",
 		"plugins/litcodex/skills/structural-search/references/patterns-and-rules.md",
 		"plugins/litcodex/skills/structural-search/references/rewrite-safety.md",
+		"plugins/litcodex/skills/ultra-brainstorm/SKILL.md",
+		"plugins/litcodex/skills/ultra-brainstorm/agents/openai.yaml",
+		"plugins/litcodex/skills/ultra-brainstorm/references/agent-messages.md",
+		"plugins/litcodex/skills/ultra-brainstorm/references/lenses.md",
+		"plugins/litcodex/skills/ultra-brainstorm/scripts/estimate.mjs",
+		"plugins/litcodex/skills/ultra-brainstorm/scripts/launch-answer.mjs",
 		"plugins/litcodex/skills/visual-qa/SKILL.md",
 		"plugins/litcodex/skills/wikify/LICENSE",
 		"plugins/litcodex/skills/wikify/PROVENANCE.md",

@@ -12,6 +12,7 @@ import { adhdSuggestion } from "./adhd-suggest.js";
 import { claimReloadContext, evaluateAutoHandoffStop, recordCompaction, takeReloadContext } from "./auto-handoff.js";
 import { applyAutoHandoffRoute, clearManagedCompactionWhenOff, parseAutoHandoffRoute, } from "./auto-handoff-settings.js";
 import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
+import { goalCancelContext, planAnswer, sweepGoalState } from "./goal-pipeline.js";
 import { laneScope, subagentEvent, toolLaneEvents } from "./lane-events.js";
 import { recordLaneEvent } from "./lane-state.js";
 import { detectWaitReason, endLiveStep, recordLiveStepEnd, recordLiveStepStart, recordTurnStart, writeThreadPointer, } from "./live-step.js";
@@ -111,10 +112,40 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
     clearManagedCompactionWhenOff(hookCwd(parsed, repoRoot), auto.env ?? process.env);
     // `lit approve` / `lit deny` settle parked start-work steps and `lit cancel` ends the run; the lifecycle hook
     // owns all three, so this one stays out.
+    // `yes` / `edit` / `no` right after lit-plan's goal question answer it (S4); `lit cancel` also hands the user
+    // the `/goal clear` line for a goal LitCodex armed.
+    let planNote = null;
+    if (isLitUserPromptSubmitInput(parsed)) {
+        const cwd = hookCwd(parsed, repoRoot);
+        if (isBoundaryAnswer(parsed.prompt)) {
+            const cancel = /cancel|취소/u.test(parsed.prompt) ? goalCancelContext(cwd) : null;
+            if (cancel !== null) {
+                stdout.write(withReloadContext("", cancel) ?? "");
+                return 0;
+            }
+        }
+        else {
+            const answer = planAnswer({
+                cwd,
+                prompt: parsed.prompt,
+                sessionId: hookSessionScope(parsed, repoRoot)?.sessionId ?? null,
+                now: auto.now ?? Date.now(),
+            });
+            if (answer !== null && answer.start === null) {
+                stdout.write(withReloadContext("", answer.context) ?? "");
+                return 0;
+            }
+            // R1: `yes` starts the plan through the same start-work route as typing `start-work <slug>`.
+            if (answer !== null && answer.start !== null) {
+                parsed = { ...parsed, prompt: answer.start };
+                planNote = answer.context;
+            }
+        }
+    }
     if (isLitUserPromptSubmitInput(parsed) && isBoundaryAnswer(parsed.prompt))
         return 0;
     // `go` after a lit-adhd brief runs the one step the brief named, as if the user had typed that step.
-    let goNote = null;
+    let goNote = planNote;
     if (isLitUserPromptSubmitInput(parsed) && isGoPrompt(parsed.prompt)) {
         const scope = hookSessionScope(parsed, repoRoot);
         const go = scope === null ? null : takeGo(scope.cwd, scope.sessionId, auto.now ?? Date.now());
@@ -429,6 +460,7 @@ export async function runSessionStartHookCli(stdin, stdout, stderr, repoRoot = p
     if (event.exit !== null)
         return event.exit;
     clearManagedCompactionWhenOff(hookCwd(event.parsed, repoRoot), auto.env ?? process.env);
+    sweepGoalState(hookCwd(event.parsed, repoRoot), auto.now ?? Date.now());
     const record = event.parsed;
     if (typeof record === "object" &&
         record !== null &&

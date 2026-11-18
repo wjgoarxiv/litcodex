@@ -30,7 +30,6 @@ function buildText(plan, goal, payload, isFinal) {
         "- Use the create_goal payload exactly as rendered: objective only.",
         "- LitCodex also installs a PreToolUse guard that denies create_goal calls carrying token_budget, status, metadata, or any non-objective key.",
         "- Goals are unlimited. Do not add numeric limits.",
-        "- If get_goal/create_goal/update_goal are not exposed by this Codex session, continue with .litcodex/lit-loop durable state as the source of truth and record `native-goal-unavailable` in your handoff or ledger evidence; do not claim native /goal sync.",
         ...nativeGoalModeLines(mode),
         ...finalLines(goal, isFinal, mode),
         ...checkpointLines(),

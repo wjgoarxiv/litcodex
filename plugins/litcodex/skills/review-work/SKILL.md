@@ -1,6 +1,7 @@
 ---
 name: review-work
 description: "Review a plan or completed implementation against blocking evidence lanes. Use for review work, QA, or verification."
+goal: never
 ---
 
 > [!IMPORTANT]

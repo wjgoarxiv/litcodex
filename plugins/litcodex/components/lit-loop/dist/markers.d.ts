@@ -12,8 +12,6 @@ export declare const LITRESEARCH_DIRECTIVE_MARKER: "<litresearch-mode>";
 export declare const LITRESEARCH_DIRECTIVE_CLOSE: "</litresearch-mode>";
 export declare const START_WORK_DIRECTIVE_MARKER: "<start-work-mode>";
 export declare const START_WORK_DIRECTIVE_CLOSE: "</start-work-mode>";
-export declare const LIT_RECAP_DIRECTIVE_MARKER: "<lit-recap-mode>";
-export declare const LIT_RECAP_DIRECTIVE_CLOSE: "</lit-recap-mode>";
 export declare const LIT_CRUCIBLE_DIRECTIVE_MARKER: "<lit-crucible-mode>";
 export declare const LIT_CRUCIBLE_DIRECTIVE_CLOSE: "</lit-crucible-mode>";
 export declare const LIT_INIT_DIRECTIVE_MARKER: "<lit-init-mode>";

@@ -3,6 +3,7 @@ name: lit-brainstorm
 description: "Brainstorm many different options, cluster them and converge on a short list. Use for open name, idea or what-could-we-do asks."
 metadata:
   short-description: Diverge on many options, then converge to a short list and a hand-off
+goal: never
 ---
 
 > [!IMPORTANT]

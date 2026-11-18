@@ -57,7 +57,7 @@ function tokenForSkillName(skillName: string): LitTriggerToken | null {
 		case "litresearch":
 			return "litresearch";
 		case "lit-recap":
-			return "lit-recap";
+			return "lit-adhd";
 		case "lit-comprehend":
 			return "lit-comprehend";
 		case "lit-brainstorm":

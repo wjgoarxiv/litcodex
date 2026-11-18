@@ -227,7 +227,16 @@ with bullets, tables, nested checkboxes, or prose-only task descriptions.
 
 ## Final verification wave
 - [ ] F1. <verification title>
+
+## Done when
+- check: `<one allowlisted test command, such as npm test>`
 ```
+
+The `## Done when` block is machine-read. Its single `check:` line names a test command that exits 0 only
+when the work is done (an `npm test` / `npm run <script>`, `node --test`, `pytest`, `cargo test`, `go test`,
+`make test|check|verify` or a `bash scripts/<name>.sh` the plan creates). A judgment phrase ("works", "looks
+good", "잘 동작"), a push or publish, or anything longer than one command cannot become a goal. A plan that
+must never set one carries `goal: never` on its own line.
 
 After approval, publish the completed Markdown through the create-only component route:
 
@@ -238,6 +247,23 @@ node <plugin-root>/components/start-work-continuation/dist/cli.js publish-plan -
 Pipe the plan text on stdin. The route reuses `analyzePlanProgress`, rejects malformed plans, and
 atomically creates `.litcodex/plans/<slug>.md`. It treats plan text as inert data and writes no
 start-work lifecycle authority state. Do not write the target directly.
+
+Then ask once whether to start the plan and let Codex's native `/goal` drive it. Run
+
+```text
+node <plugin-root>/components/lit-loop/dist/cli.js goal propose .litcodex/plans/<slug>.md
+```
+
+It compiles the `## Done when` check into one condition, rejects a judgment, outward-only or over-long one,
+runs the check once (read-only, time-boxed) to prove the condition is false now, and prints the closing
+question. End the reply with it unchanged: `Approve plan, start work and set goal: /goal <condition>? (yes /
+edit / no)`, or, when no goal can be set, the `No goal set: <reason>` line above `Approve plan and start work?
+(yes / no)`. Never call `create_goal` or start the work from lit-plan. The user's next prompt, exactly `yes`,
+does both in one step: the hook routes it as `start-work <slug>` (the same start path as typing it) and tells
+the session how to set the goal with `create_goal`. When the run cannot start (another run is active, the plan
+is gone or already ticked), nothing starts and no goal is armed, and one `Work not started and no goal set:
+<reason>` line says why. `edit` re-asks after the plan is fixed; `no` or any other reply starts and sets
+nothing.
 
 Before `lit start work <plan-name>`, pass the completed Markdown to the bundled
 `node <plugin-root>/components/start-work-continuation/dist/cli.js analyze-plan` command on stdin. Here

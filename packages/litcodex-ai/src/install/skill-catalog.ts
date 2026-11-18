@@ -55,7 +55,6 @@ export const CANONICAL_SKILL_IDS = [
 	"lit-loop",
 	"lit-plan",
 	"lit-pptx",
-	"lit-recap",
 	"lit-schematic",
 	"lit-scientific-visualization",
 	"lit-team",
@@ -74,6 +73,7 @@ export const CANONICAL_SKILL_IDS = [
 	"rules",
 	"start-work",
 	"structural-search",
+	"ultra-brainstorm",
 	"visual-qa",
 	"wikify",
 ] as const;

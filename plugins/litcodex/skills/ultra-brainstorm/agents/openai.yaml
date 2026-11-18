@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ultra Brainstorm"
+  short_description: "Hundreds of cheap idea agents, then a judged top list"
+  default_prompt: "Use $litcodex:ultra-brainstorm to ideate widely on a hard question."
+policy:
+  allow_implicit_invocation: false

@@ -32,7 +32,7 @@ const directSkillRoutes = [
 	"lit-code",
 	"litwork",
 	"review-work",
-	"lit-recap",
+	"lit-adhd",
 	"lit-handoff",
 	"lit-plan",
 ] as const;
@@ -40,7 +40,7 @@ const hookSkillRoutes = [
 	["start-work approved-plan", "start-work"],
 	["litwork repair this", "litwork"],
 	["review-work this", "review-work"],
-	["lit-recap", "lit-recap"],
+	["lit-recap", "lit-adhd"],
 	["handoff", "lit-handoff"],
 	["lit-plan this", "lit-plan"],
 ] as const;
@@ -143,7 +143,7 @@ describe("reader-facing communication contract scenarios A-J", () => {
 			expect(alwaysOnContext, protectedSurface).toContain(protectedSurface);
 		}
 		expect(alwaysOnContext).toContain("Never rewrite or normalize their required bytes or schemas");
-		expect(skill("lit-recap")).toContain("reader-facing communication");
+		expect(skill("lit-adhd")).toContain("reader-facing communication");
 	});
 
 	it("J: only authoritative request state selects a mode, with reader fallback and no elevation or persistence", () => {

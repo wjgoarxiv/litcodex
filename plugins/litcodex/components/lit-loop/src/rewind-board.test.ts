@@ -314,11 +314,12 @@ describe("the rewind command shows the board, and the detail list only on reques
 		return { out, code };
 	};
 
-	it("prints the board by default, without the per-session cards", () => {
+	it("prints the verdict card by default, and neither the board nor the per-session cards", () => {
 		const s = fixture();
 		const { out, code } = run(s, []);
 		expect(code).toBe(0);
-		expect(out.startsWith("**🎯 Do this now**")).toBe(true);
+		expect(out).toMatch(/^Do now: /mu);
+		expect(out).not.toContain("**🎯 Do this now**");
 		expect(out).not.toContain("Recommended next step");
 		expect(out).not.toContain("Ended ·");
 	});
@@ -332,15 +333,16 @@ describe("the rewind command shows the board, and the detail list only on reques
 		expect(detail).toBeGreaterThan(board);
 	});
 
-	it("emits the ready board text and its structured fields in the JSON, the detail only on request", () => {
+	it("emits the card by default and the ready board, its structured fields and the detail on `--detail`", () => {
 		const s = fixture();
 		const plain = JSON.parse(run(s, ["--json", "--lang", "ko"]).out) as Record<string, unknown>;
-		expect(typeof plain["board"]).toBe("string");
-		expect(String(plain["board"]).startsWith("**🎯 지금 할 일**")).toBe(true);
-		expect(plain["kpi"]).toMatchObject({ counts: { done: 11, total: 20 } });
+		expect(plain["view"]).toBe("card");
+		expect(String(plain["card"])).toMatch(/^지금 할 일: /mu);
+		expect(plain["board"]).toBeUndefined();
 		expect(plain["detail"]).toBeUndefined();
-		expect(plain["brief"]).toBeUndefined();
-		const detailed = JSON.parse(run(s, ["--json", "--detail"]).out) as Record<string, unknown>;
+		const detailed = JSON.parse(run(s, ["--json", "--detail", "--lang", "ko"]).out) as Record<string, unknown>;
+		expect(String(detailed["board"]).startsWith("**🎯 지금 할 일**")).toBe(true);
+		expect(detailed["kpi"]).toMatchObject({ counts: { done: 11, total: 20 } });
 		expect(String(detailed["detail"])).toContain("Recommended next step");
 		expect(renderBrief(collect(s, () => null))).toContain("Recommended next step");
 	});

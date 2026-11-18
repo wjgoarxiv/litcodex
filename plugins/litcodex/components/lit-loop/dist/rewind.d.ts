@@ -129,6 +129,12 @@ export interface RewindResult {
         readonly used: number;
         readonly exhausted: boolean;
     };
+    /** Session records in the window that were not read, by reason, for the verdict card's coverage line. */
+    readonly coverage: {
+        readonly budget: number;
+        readonly limit: number;
+        readonly unreadable: number;
+    };
 }
 /** Runs git in a folder and returns its stdout, or null when it fails. Injectable for tests. */
 export type GitRunner = (cwd: string, args: readonly string[]) => string | null;

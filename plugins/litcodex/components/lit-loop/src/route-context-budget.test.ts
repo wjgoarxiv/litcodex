@@ -40,7 +40,7 @@ const ROUTES = [
 	["litwork", "litwork fix the typo in README.md", "litwork"],
 	["lit-plan", "lit-plan fix the typo in README.md", "lit-plan"],
 	["litgoal", "litgoal show", "litgoal"],
-	["lit-recap", "lit recap", "lit-recap"],
+	["lit-adhd recap", "lit recap", "lit-adhd"],
 	["deep-interview", "deep-interview a mobile app idea", "deep-interview"],
 	["lit-comprehend", "comprehend this repo", "lit-comprehend"],
 	["lit-brainstorm", "lit brainstorm a name for my app", "lit-brainstorm"],

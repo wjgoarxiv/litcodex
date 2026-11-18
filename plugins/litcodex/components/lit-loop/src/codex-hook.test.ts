@@ -205,7 +205,7 @@ describe("runUserPromptSubmitHook activation #given/#when/#then", () => {
 			["review-work this diff", "review-work"],
 			["litresearch current dir", "litresearch"],
 			["start-work approved-plan", "start-work"],
-			["lit-recap --brief", "lit-recap"],
+			["lit-recap --brief", "lit-adhd"],
 			["lit-crucible this release", "lit-crucible"],
 			["lit-init --max-depth=2", "lit-init"],
 			["deep-interview clarify this request", "deep-interview"],

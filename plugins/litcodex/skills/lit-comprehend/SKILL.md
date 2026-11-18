@@ -3,6 +3,7 @@ name: lit-comprehend
 description: "Build a clear explainer that gives readers an understanding of complex work and helps them choose the next step."
 metadata:
   short-description: Explainer artifact — intuition, walkthrough, optional micro-world, quiz
+goal: never
 ---
 
 > [!IMPORTANT]
@@ -169,12 +170,12 @@ document is only its packaging.
 
 | The user needs | Use | Because |
 | --- | --- | --- |
-| *What happened? Where are we?* | `lit-recap` | Status, chronology, blockers — fast, in-terminal, read-only. |
+| *What happened? Where are we?* | `lit adhd` (`lit adhd recap` for the recap view) | Status, chronology, blockers — fast, in-terminal, read-only. |
 | *I don't understand what was built.* | `lit-comprehend` | Intuition, mental model, verified understanding. |
 | *Is this correct / safe to ship?* | `review-work` | Judgment against criteria, not comprehension. |
 | *Continue this in a fresh session.* | `lit-handoff` | Machine-resumable state, not human intuition. |
 
-`lit-recap` answers questions about the work. `lit-comprehend` gives the reader the
+`lit adhd` answers questions about the work. `lit-comprehend` gives the reader the
 mental model they need to ask better questions. When the user asks for a recap but
 their real complaint is bewilderment, say so and offer `lit-comprehend`.
 
@@ -294,8 +295,8 @@ attribute on the `<pre>` tag to name the file the code came from:
 
 ```html
 <pre data-src="plugins/litcodex/components/lit-loop/src/trigger.ts">
-	| "comprehend"
-	| "lit-recap"</pre>
+	| "litresearch"
+	| "lit-loop"</pre>
 ```
 
 Optionally append a line anchor: `data-src="src/hooks.ts:88-104"`. This is not

@@ -14,6 +14,7 @@
 //
 // `main` NEVER calls process.exit (the shebang wrapper does); it resolves exactly one integer, so
 // the dispatcher is unit-testable with an injected argv array.
+import { goalCommand } from "./goal-pipeline.js";
 import { runPostCompactHookCli, runPostToolUseLiveHookCli, runPreToolUseCreateGoalGuardCli, runPreToolUseLiveHookCli, runSessionStartHookCli, runStopPlanPersistenceHookCli, runSubagentHookCli, runUserPromptSubmitHookCli, } from "./hook-cli.js";
 import { loopCommand } from "./loop-cli.js";
 import { rewindCommand, stageCommand } from "./rewind-cli.js";
@@ -57,6 +58,9 @@ export async function main(argv, stdin, stdout, stderr) {
         return rewindCommand(argv.slice(3), { stdout, stderr });
     if (command === "stage")
         return stageCommand(argv.slice(3), { stdout, stderr });
+    // `goal propose <plan>` compiles a lit-plan's Done when block into the one goal question (S4).
+    if (command === "goal")
+        return goalCommand(argv.slice(3), { stdout, stderr });
     stderr.write(UNKNOWN_COMMAND);
     return 1;
 }

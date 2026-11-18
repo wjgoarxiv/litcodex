@@ -1,6 +1,7 @@
 ---
 name: litresearch
 description: "Run exhaustive litresearch with parallel evidence gathering and cited synthesis. Use only on explicit lit research triggers."
+goal: never
 ---
 
 > [!IMPORTANT]

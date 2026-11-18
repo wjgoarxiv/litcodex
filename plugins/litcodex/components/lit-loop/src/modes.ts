@@ -39,8 +39,6 @@ import {
 	LIT_LOOP_DIRECTIVE_MARKER,
 	LIT_PLAN_DIRECTIVE_CLOSE,
 	LIT_PLAN_DIRECTIVE_MARKER,
-	LIT_RECAP_DIRECTIVE_CLOSE,
-	LIT_RECAP_DIRECTIVE_MARKER,
 	LIT_SCHEMATIC_DIRECTIVE_CLOSE,
 	LIT_SCHEMATIC_DIRECTIVE_MARKER,
 	LITGOAL_DIRECTIVE_CLOSE,
@@ -75,9 +73,9 @@ export type LitMode =
 	| "review-work"
 	| "litresearch"
 	| "start-work"
-	| "lit-recap"
 	| "lit-comprehend"
 	| "lit-brainstorm"
+	| "ultra-brainstorm"
 	| "lit-schematic"
 	| "lit-hijack"
 	| "lit-adhd";
@@ -228,14 +226,6 @@ export const MODE_BY_TOKEN: Readonly<Record<LitTriggerToken, LitModeSpec>> = Obj
 		directivePath: resolveFromHere("../directives/start-work.md"),
 		skillName: "start-work",
 		skillPath: resolveSkillPath("start-work"),
-	}),
-	"lit-recap": Object.freeze({
-		mode: "lit-recap",
-		openMarker: LIT_RECAP_DIRECTIVE_MARKER,
-		closeMarker: LIT_RECAP_DIRECTIVE_CLOSE,
-		directivePath: resolveFromHere("../directives/lit-recap.md"),
-		skillName: "lit-recap",
-		skillPath: resolveSkillPath("lit-recap"),
 	}),
 	"lit-comprehend": Object.freeze({
 		mode: "lit-comprehend",

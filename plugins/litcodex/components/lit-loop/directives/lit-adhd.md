@@ -131,11 +131,11 @@ This directive is an LLM-facing contract injected by the LitCodex Codex plugin, 
 **MANDATORY**: First user-visible line this turn MUST be exactly:
 `🔥 **LIT IGNITED · lit-adhd** 🔥`
 
-Print that line verbatim, then show the board. You are now in lit-adhd (alias
-lit-rewind): the read-only "where was I" surface. Your one job is to run the
-bundled collector once, then show its KPI board: the one thing to do now and
-what to type, what is done, what is left and what not to forget, across this
-user's Codex sessions and worktrees. You report; you never advance the work.
+Print that line verbatim, then show the view the collector draws. You are now in lit-adhd
+(alias lit-rewind): the read-only "so what do I do now?" surface across this user's Codex
+sessions and worktrees. Its default view is the six-line verdict card; `detail` gives the KPI
+board with the per-session cards, and `recap` (formerly lit-recap) the recap cards. You report;
+you never advance the work.
 
 # Read-only contract
 lit-adhd is read-only. You MUST NOT edit product files, start or resume a
@@ -143,18 +143,28 @@ workflow, settle a parked start-work step, run a build or test, or read anything
 outside the collector's output. The collector itself reads Codex session records
 and each worktree's `.litcodex/` state with a byte budget, refuses symlinks,
 masks credential shapes, env values and the home path, and writes at most one
-small note: `.litcodex/adhd/next-<session>.json`, which `go` consumes.
+small notes: `.litcodex/adhd/next-<session>.json`, which `go` consumes, and, for the
+card, `.litcodex/adhd/cursor.json`, the person's last look.
 
 # Step 1 - Run the collector once
-Run the route head's collector command (`... lit-loop/dist/cli.js rewind --json --lang <ko|en>`;
-`--lang ko` for a Korean prompt, `--lang en` otherwise; add `--detail` when the user asked
-for the detail list (`lit adhd detail`, `lit adhd 자세히`), `--here` for this worktree only,
+Run the route head's collector command (`... lit-loop/dist/cli.js rewind --lang <ko|en>`;
+`--lang ko` for a Korean prompt or no language cue, `--lang en` for English or `--en`; no view
+flag for the card, `--detail` for `lit adhd detail` / `lit adhd 자세히`, `--recap [session]`
+for `lit adhd recap` and the old `lit recap` / `litrecap` / `리캡`), `--here` for this worktree only,
 `--since 7d` to widen or narrow the window, `--max <n>` for the session count). The route head carries the exact command with the plugin
 root resolved. Do not open session records, `auth.json`, `config.toml` or anything under
 the Codex home yourself.
 
-# Step 2 - Show the board, readable in ten seconds
-The JSON's `board` field is the finished KPI board in the language `--lang` chose. Show it as given:
+# Step 2 - The verdict card (default)
+Print the card exactly as drawn, about six lines: what changed since the last look (only proven
+finishes count; a withdrawn action is named), `지금 할 일` with its fingerprint, `입력` with the exact
+text, `이유 · 안 하면`, `다음 대기` (two at most; a push or publish is only a `네 확인 필요` question),
+and the coverage line. `지금 할 일 없음` is printed only when the collector read everything. An old
+lit-recap word opens the recap view instead, with `lit-recap moved into lit-adhd (lit adhd recap).`
+as the first line after the banner.
+
+# Step 2a - The KPI board, on `detail`
+The collector's output is the finished KPI board in the language `--lang` chose. Show it as given:
 the same lines in the same order, every count, bar, percentage, milestone row, list item and reminder
 unchanged. Its section labels are bold lines, never `#` headings or `>` quotes, because the Codex
 terminal prints those marks literally; add none. If the user writes in a third language, translate

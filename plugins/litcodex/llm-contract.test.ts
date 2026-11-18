@@ -6,7 +6,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { CANONICAL_SKILL_IDS } from "../../packages/litcodex-ai/src/install/skill-catalog.js";
-import { runUserPromptSubmitHook } from "./components/lit-loop/src/codex-hook.js";
+import { EXPLICIT_SKILL_ROUTES, runUserPromptSubmitHook } from "./components/lit-loop/src/codex-hook.js";
 import {
 	BROWSER_DRIVE_MODE_SPEC,
 	HANDOFF_MODE_SPEC,
@@ -47,6 +47,7 @@ const USER_PROMPT_SUBMIT_SKILL_IDS = new Set([
 	BROWSER_DRIVE_MODE_SPEC.skillName,
 	HANDOFF_MODE_SPEC.skillName,
 	SCIENTIFIC_VISUALIZATION_MODE_SPEC.skillName,
+	...EXPLICIT_SKILL_ROUTES.map((route) => route.skill),
 ]);
 
 const CLEAN_ROOM_SKILL_IDS = ["lit-burnoff", "review-work", "start-work"] as const;

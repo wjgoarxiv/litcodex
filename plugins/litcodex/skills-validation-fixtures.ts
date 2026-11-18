@@ -36,13 +36,13 @@ export const EXPLICIT_ONLY_CANDIDATES = new Set([
 	"lit-comprehend",
 	"lit-handoff",
 	"lit-plan",
-	"lit-recap",
 	"lit-schematic",
 	"lit-hijack",
 	"lit-adhd",
 	"lit-scientific-visualization",
 	"litgoal",
 	"review-work",
+	"ultra-brainstorm",
 ]);
 export const PINNED_IMPLICIT = new Set(["lit-loop", "litwork", "litresearch", "start-work", "wikify"]);
 export const CATALOG_TRIGGER_LEXEMES: Readonly<Record<string, readonly string[]>> = {
@@ -67,10 +67,9 @@ export const CATALOG_TRIGGER_LEXEMES: Readonly<Record<string, readonly string[]>
 	"lit-plan": ["planning", "plan"],
 	"lit-pptx": ["slides", "presentation"],
 	"lit-typographic-motion": ["film", "typography"],
-	"lit-recap": ["recap", "status"],
 	"lit-schematic": ["schematic", "p&id"],
 	"lit-hijack": ["hijack", "technique"],
-	"lit-adhd": ["sessions", "brief"],
+	"lit-adhd": ["sessions", "verdict"],
 	"lit-scientific-visualization": ["scientific", "figures"],
 	"litcodex-contribute-bug-fix": ["bug-fix", "pr"],
 	"litcodex-doctor": ["diagnose", "install"],
@@ -78,6 +77,7 @@ export const CATALOG_TRIGGER_LEXEMES: Readonly<Record<string, readonly string[]>
 	litgoal: ["goal", "success criteria"],
 	litresearch: ["research", "litresearch"],
 	litwork: ["implementation", "evidence"],
+	"ultra-brainstorm": ["ideate", "agents"],
 	lsp: ["lsp", "hook"],
 	"lsp-setup": ["language-server", "diagnostics"],
 	"lit-code": ["typescript", "tdd"],
@@ -90,7 +90,7 @@ export const CATALOG_TRIGGER_LEXEMES: Readonly<Record<string, readonly string[]>
 	rules: ["rules", "injected"],
 	"start-work": ["approved", "plan"],
 	"structural-search": ["syntax", "search"],
-	"lit-team": ["team", "codex"],
+	"lit-team": ["team", "orchestrator"],
 	"visual-qa": ["visual", "evidence"],
 	wikify: ["markdown", "wiki"],
 };

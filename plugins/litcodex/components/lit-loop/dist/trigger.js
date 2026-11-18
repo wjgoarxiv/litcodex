@@ -5,7 +5,8 @@
 // and `litcodex` (case-insensitive), plus sibling mode tokens that are safe to inject directly.
 // Explicit leading `start-work ...` routes execute with the installed skill body, while ordinary
 // discussion stays inert and scoped mentions such as `$litcodex:start-work ...` stay native.
-// Recap aliases (`litrecap` / `recap` / `리캡`) normalize to the single `lit-recap` token.
+// Recap aliases (`litrecap` / `recap` / `리캡` / the old `lit-recap`) normalize to the `lit-adhd` token: lit-recap moved
+// into lit-adhd as its recap view (`lit adhd recap`), and the hook names that view from the raw text.
 // The bare `comprehend` alias normalizes to the `lit-comprehend` token. `lit` followed by an ideation
 // word (brainstorm, brainstorming, ideation, ideate, idea, ideas) routes to `lit-brainstorm`; those words
 // never route without the `lit` in front. `lit schematic` and the glued `lit-schematic` route to the drawing
@@ -39,7 +40,6 @@ export const LIT_TRIGGER_TOKENS = Object.freeze([
     "start-work",
     "review-work",
     "litresearch",
-    "lit-recap",
     "lit-loop",
     "lit-plan",
     "litcodex",
@@ -60,8 +60,8 @@ export const LIT_TRIGGER_TOKENS = Object.freeze([
  * (`lit-comprehend|lit-brainstorm|lit-crucible|lit-init|hyperplan|init-deep|start-work|review-work|litresearch|comprehend|lit-recap|lit-loop|lit-plan|litcodex|litrecap|litgoal|litwork|recap|리캡|lit`)
  * guarantees a longer family token wins over a bare `lit` at the same start; the trailing-`-`
  * lookahead means `lit work` (space) is a bare `lit` while `litwork` (glued) is the work mode.
- * The `litrecap` / `recap` / `리캡` alternatives are ROUTING ALIASES normalized to the canonical
- * `lit-recap` token, and bare `comprehend` normalizes to `lit-comprehend`, by `matchLitTrigger`
+ * The `litrecap` / `recap` / `리캡` / `lit-recap` alternatives are ROUTING ALIASES normalized to the
+ * `lit-adhd` token (its recap view), and bare `comprehend` normalizes to `lit-comprehend`, by `matchLitTrigger`
  * (they are not members of the token union).
  * No nested quantifiers / no backreferences ⇒ ReDoS-free.
  */
@@ -107,9 +107,9 @@ export function matchLitTrigger(prompt) {
         }
         const index = (m.index ?? 0) + m[0].length - raw.length;
         const lowered = raw.toLowerCase();
-        // Canonicalize routing aliases: litrecap / recap / 리캡 → lit-recap; comprehend → lit-comprehend.
-        const token = lowered === "litrecap" || lowered === "recap" || lowered === "리캡"
-            ? "lit-recap"
+        // Canonicalize routing aliases: litrecap / recap / 리캡 / lit-recap → lit-adhd; comprehend → lit-comprehend.
+        const token = lowered === "litrecap" || lowered === "recap" || lowered === "리캡" || lowered === "lit-recap"
+            ? "lit-adhd"
             : lowered === "comprehend"
                 ? "lit-comprehend"
                 : lowered === "lit-rewind"
@@ -224,7 +224,7 @@ function naturalPhraseAfterLit(prompt, searchable, index, rawLength) {
         review: "review-work",
         research: "litresearch",
         goal: "litgoal",
-        recap: "lit-recap",
+        recap: "lit-adhd",
     };
     const token = tokenByPhrase[normalized];
     if (token === undefined) {

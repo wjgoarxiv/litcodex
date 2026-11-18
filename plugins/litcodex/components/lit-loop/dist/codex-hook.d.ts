@@ -31,6 +31,21 @@ export type PreToolUseCreateGoalDecision = {
     readonly kind: "noop";
 };
 /**
+ * Skills a leading route phrase names directly, checked before the bounded tokens: `ultra-brainstorm`,
+ * `lit ultra-brainstorm` (hyphen or space) and `$litcodex:ultra-brainstorm` name the fan-out brainstorm, so
+ * `lit … brainstorm` never takes it; `lit team <goal>` and `lit team mode <goal>` name the team orchestrator.
+ */
+export declare const EXPLICIT_SKILL_ROUTES: readonly {
+    readonly skill: "ultra-brainstorm" | "lit-team";
+    readonly route: RegExp;
+}[];
+/**
+ * Which lit-adhd view the prompt asked for. The old lit-recap words (`lit recap`, `litrecap`, `recap`, `리캡`,
+ * `lit-recap`) open the recap view with the one-line moved note; `lit adhd recap [session]` opens it without;
+ * `자세히` / `detail` opens the KPI board; anything else gets the verdict card.
+ */
+export declare function adhdViewLine(prompt: string, raw: string): string;
+/**
  * Type-guard. True iff `value` is a record whose accepted event-name key (snake `hook_event_name`
  * primary, camel `hookEventName` fallback) === "UserPromptSubmit", `prompt` is a string, and the
  * transcript-path key (either casing) is undefined | null | string (A3 C12). This is a runtime
