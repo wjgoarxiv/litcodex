@@ -228,7 +228,7 @@ Check adding and completing a task, and record anything you could not verify.
 ```
 
 When it finishes, look at three things: the page itself (open it and add a task), the checks that actually ran, and
-what is still open. `lit recap` reads back what was recorded. Send `handoff` on its own before you close the session,
+what is still open. `lit adhd recap` reads back what was recorded. Send `handoff` on its own before you close the session,
 and in the next one ask Codex to read that packet and the project goals first.
 
 ## What you get
@@ -621,9 +621,10 @@ machine, so judge a piece of work by what it produced and which checks ran. The 
 | `lit brainstorm`, `lit ideation` or `lit idea` | **lit-brainstorm** | Many different options, narrowed to a short list you pick from; nothing is built |
 | `lit schematic` or `lit-schematic` | **lit-schematic** | Draws real equipment as SVG, PDF and PNG |
 | `lit hijack` or `lit-hijack` | **lit-hijack** | Ports a technique someone else published into your own skill |
-| `lit adhd` or `lit rewind` | **lit-adhd** | Read-only "where was I" as a KPI board across your recent Codex sessions |
+| `lit adhd` or `lit rewind` | **lit-adhd** | Read-only "so what do I do now?" card across your recent Codex sessions; `lit adhd detail` gives the KPI board and `lit adhd recap` the recap |
 | `litgoal` or `lit goal` | **litgoal** | Sets and keeps the finish line for lit-loop and Start Work |
-| `lit-recap` or `lit recap` | **lit-recap** | A read-only recap from the `.litcodex` ledgers |
+| `lit ultra-brainstorm <topic>` | **ultra-brainstorm** | Asks how many cheap idea agents to run (100 suggested), then fans them out and returns a judged top ten; nothing is built |
+| `lit team <goal>` | **lit-team** | This session orchestrates: it splits the work, runs sub-agents, herdr panes or worktrees, and returns one verified report |
 | `lit-comprehend` or `comprehend` | **lit-comprehend** | Builds a self-contained explainer outside the worktree |
 | `review-work` or `lit review` | **review-work** | A read-only review of a plan or of finished work |
 | `litresearch`, `/litresearch`, or `lit research` | **litresearch** | A research journal that keeps facts, hypotheses, sources and uncertainty apart |
@@ -632,16 +633,22 @@ machine, so judge a piece of work by what it produced and which checks ran. The 
 | exact bare `lit-scientific-visualization` | **lit-scientific-visualization** | Loads the publication plotting adapter through the hook |
 
 <details>
-<summary>More on five of these modes</summary>
+<summary>More on six of these modes</summary>
 
 - **`lit-schematic`:** draws a P&ID, PFD, apparatus figure or isometric cutaway; a bare `lit` with such a request
   reaches it too.
 - **`lit-hijack`:** takes a post, article, repo or PDF; provenance and licence come first, then a spec without the
   source wording, a separate build, and a before and after proof. Korean 하이재킹 and 하이잭 work after `lit`.
-- **`lit-adhd`:** shows the one thing to do now and what to type (`go` runs it), done and remaining milestones with
-  ten-cell bars, and up to five reminders such as a session waiting on you, uncommitted work or a stalled plan.
-  `lit adhd detail` adds the per-session list. `lit continue` brings a paused loop back at its stage.
+- **`lit-adhd`:** answers "so what do I do now?" in about six lines: what changed since you last looked (only
+  proven finishes count), the one action with its exact input, why and what happens if you skip it, at most two
+  other things that wait on you, and how much it could read. A push or a publish only ever shows up as a question
+  for you. `lit adhd detail` gives the full KPI board, and `lit adhd recap` the recap that used to be `lit recap`
+  (the old words still open it). `lit continue` brings a paused loop back at its stage.
 - **`litgoal`:** binds an objective and its criteria into the loop state that lit-loop and Start Work run toward.
+- **`lit-plan`:** every plan ends with a `## Done when` check. When you approve the plan, LitCodex turns that check
+  into one Codex `/goal` line and asks `Approve plan, start work and set goal: /goal <condition>? (yes / edit / no)`.
+  An exact `yes` starts the work and sets the goal in one step; a check that already passes is never offered, and
+  then the question only asks whether to start the work.
 - **`review-work`:** plan review before Start Work, work review after it; it picks the mode from what exists, or you
   force one with `lit review plan` or `lit review work`.
 

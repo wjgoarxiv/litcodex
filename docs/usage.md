@@ -59,7 +59,7 @@ The same plugin provides planning, review, research, recap, comprehension, hando
 surfaces. The Codex skill picker exposes the bundled library, including `autoconference`, `autoresearch`,
 `browser-drive`, `coding-session-audit`, `comment-checker`, `debugging`, `frontend-ui-ux`, `lit-brainstorm`, `lit-commit`, `lit-crucible`, `lit-init`, `lit-korean`, `lit-fetch`,
 `litcodex-contribute-bug-fix`, `litcodex-doctor`, `litcodex-report-bug`, `lsp`, `lsp-setup`, `lit-code`,
-`refactor`, `lit-burnoff`, `lit-schematic`, `lit-hijack`, `lit-adhd`, `readme-studio`, `structural-search`, `lit-team`, `visual-qa`, and `wikify`.
+`refactor`, `lit-burnoff`, `lit-schematic`, `lit-hijack`, `lit-adhd`, `readme-studio`, `structural-search`, `lit-team`, `ultra-brainstorm`, `visual-qa`, and `wikify`.
 
 Release history belongs in [CHANGELOG.md](../CHANGELOG.md). The package carries the runtime marketplace
 payload and stages it at `~/.codex/marketplaces/litcodex`; installation does not clone GitHub or require
@@ -172,7 +172,7 @@ Check adding and completing a task, and record anything you could not verify.
 ```
 
 Look for the result, the checks actually performed, and the unfinished work. A status mark confirms
-routing; it does not prove the page works. Ask for `lit recap` to read the recorded state. Before
+routing; it does not prove the page works. Ask for `lit adhd recap` to read the recorded state. Before
 leaving the session, send exact bare `handoff` as its own message. In the next session, ask Codex
 to read that packet and the project goals before continuing.
 
@@ -198,9 +198,11 @@ blocked native goal needs the documented recovery step below; a handoff does not
 | `lit brainstorm`, `lit ideation` or `lit idea` | **lit-brainstorm** | Many different options, then a short list to pick from; nothing is built |
 | `lit schematic` or `lit-schematic` | **lit-schematic** | Draw real equipment as SVG, PDF and PNG: P&ID, PFD, apparatus figure or isometric cutaway; a bare `lit` with such a request reaches it too |
 | `lit hijack` or `lit-hijack` | **lit-hijack** | Port a technique someone else published (post, article, repo, PDF) into your own skill: provenance and licence first, a spec without the source wording, a separate build, a before and after proof |
-| `lit adhd` or `lit rewind` | **lit-adhd** | Read-only KPI board across recent Codex sessions, in six sections: do this now (one plain action, one reason and what to type), at a glance (done, in progress, waiting on you and left, with an overall bar), milestones (one row per plan with its bar), done lately, still to do, and up to five reminders shaped `thing → what to do`. `lit adhd detail` adds the per-session list: what each session asked, which are running, idle, done or waiting on you, the gauges and paused work. A finished session is offered for review, and with nothing else to do the step comes from the `## Next` list of this worktree's HANDOFF note. `lit continue` resumes a paused loop at its stage |
+| `lit adhd` or `lit rewind` | **lit-adhd** | Read-only verdict card across recent Codex sessions, about six lines: what changed since your last look (proven finishes only), the one action with its fingerprint and exact input, why and what happens if not, at most two waiting items (a push or publish only as `네 확인 필요` / `Your call`), and a coverage line; `지금 할 일 없음` only when every record was read. `lit adhd detail` is the KPI board, in six sections: do this now (one plain action, one reason and what to type), at a glance (done, in progress, waiting on you and left, with an overall bar), milestones (one row per plan with its bar), done lately, still to do, and up to five reminders shaped `thing → what to do`. `lit adhd detail` adds the per-session list: what each session asked, which are running, idle, done or waiting on you, the gauges and paused work. A finished session is offered for review, and with nothing else to do the step comes from the `## Next` list of this worktree's HANDOFF note. `lit continue` resumes a paused loop at its stage |
 | `litgoal` or `lit goal` | **litgoal** | Set and keep the finish line: bind an objective and criteria into the loop state that lit-loop and Start Work run toward |
-| `lit-recap` or `lit recap` | **lit-recap** | Read-only recap from `.litcodex` ledgers |
+| `lit adhd recap [session]` (also `lit recap`) | **lit-adhd** | The recap view: per-session recap cards; the old lit-recap words open it with a one-line moved note |
+| `lit ultra-brainstorm <topic>` | **ultra-brainstorm** | Ask how many cheap idea agents to run (100 suggested, with a cost line), fan them out with one lens each, reduce, judge and return a top ten saved under `.litcodex/brainstorm/` |
+| `lit team <goal>` | **lit-team** | This session orchestrates sub-agents, a fan-out, herdr panes or worktrees, wakes stalled members, merges, re-verifies and sends one report; no member commits |
 | `lit-comprehend` or `comprehend` | **lit-comprehend** | Build a self-contained explainer outside the worktree |
 | `review-work` or `lit review` | **review-work** | Read-only plan review before Start Work and work review after it; auto-picked from what exists, or forced with `lit review plan` or `lit review work` |
 | `litresearch`, `/litresearch`, or `lit research` | **litresearch** | Research journal separating facts, hypotheses, sources, and uncertainty |

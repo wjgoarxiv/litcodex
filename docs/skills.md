@@ -44,11 +44,6 @@ short LitCodex stub that says where the skill went and gives the copy command.
 <td>Sets one goal, with criteria you can observe, and keeps it in the lit-loop state that the loop and Start Work run toward, across sessions.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/lit-recap.webp" width="240" alt="A read-only summary: done, in progress, blocked, where the evidence is, what comes next." /></td>
-<td><code>lit-recap</code><br /><sub><code>lit recap</code> · <code>$litcodex:lit-recap</code></sub></td>
-<td>A read-only summary: done, in progress, blocked, where the evidence is, what comes next.</td>
-</tr>
-<tr>
 <td><img src="./assets/skills/lit-handoff.webp" width="240" alt="Type handoff to get a continuation file the next session can read and resume from." /></td>
 <td><code>lit-handoff</code><br /><sub><code>handoff</code> · <code>/lit-handoff</code></sub></td>
 <td>Type <code>handoff</code> to get a continuation file the next session can read and resume from.</td>
@@ -62,6 +57,11 @@ short LitCodex stub that says where the skill went and gives the copy command.
 <td><img src="./assets/skills/lit-brainstorm.webp" width="240" alt="Many different options first, then a short list with trade-offs for you to pick from. Ideas only; nothing is built." /></td>
 <td><code>lit-brainstorm</code><br /><sub><code>lit brainstorm</code> · <code>$litcodex:lit-brainstorm</code></sub></td>
 <td>Many different options first, then a short list with trade-offs for you to pick from. Ideas only; nothing is built.</td>
+</tr>
+<tr>
+<td><img src="./assets/skills/ultra-brainstorm.webp" width="240" alt="Asks how many cheap idea agents to run, fans them out with one lens each, reduces and judges them, and shows a top ten. Nothing is built." /></td>
+<td><code>ultra-brainstorm</code><br /><sub><code>lit ultra-brainstorm</code> · <code>$litcodex:ultra-brainstorm</code></sub></td>
+<td>Asks how many cheap idea agents to run, fans them out with one lens each, reduces and judges them, and shows a top ten. Nothing is built.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/litresearch.webp" width="240" alt="Parallel evidence gathering and a cited synthesis, only when you ask for research." /></td>
@@ -131,7 +131,7 @@ short LitCodex stub that says where the skill went and gives the copy command.
 <tr>
 <td><img src="./assets/skills/lit-team.webp" width="240" alt="Coordinates several workers with separate slices, each reporting back with evidence." /></td>
 <td><code>lit-team</code><br /><sub><code>lit team</code> · <code>$litcodex:lit-team</code></sub></td>
-<td>Coordinates several workers with separate slices, each reporting back with evidence.</td>
+<td>Type <code>lit team &lt;goal&gt;</code> and this session orchestrates: it splits the work, runs sub-agents, herdr panes or worktrees, wakes stalled members, re-verifies and returns one report.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/litcodex-doctor.webp" width="240" alt="Checks LitCodex and Codex install health after an update, drift or a failed setup." /></td>
@@ -257,10 +257,26 @@ A few skills are worth knowing by name:
   work too. It records where each source came from and under which licence, takes mechanisms and never wording,
   checks the spec against the captures for shared text, builds from the spec in a fresh agent context, and
   closes with a parity run and a report. Nothing is committed for you.
-- **Where was I.** After a break, `lit adhd` (or `lit rewind`) shows a KPI board: the one thing to do now and the
-  exact word to type, done and remaining work in four buckets with ten-cell bars, milestones, and up to five
-  reminders such as a session that waits on you, uncommitted work or a plan stalled for a week. `lit adhd detail`
-  adds the per-session list with what each was asked, what waits on you, a gauge such as `[▉▉▉░░] 3/5` only when both numbers are real (otherwise the
+- **Many skills at once.** A bare `lit` request often needs more than one skill: a short film about a chart needs
+  the film skill and the figure skill, a risky redesign needs a pressure test before the plan. The hook now reads the
+  whole request and opens the reply with one `Skill plan: 1 lit-loop (primary) → 2 …` line of at most three skills,
+  the primary first. A skill you have not installed appears once with its install line instead of failing quietly,
+  and a read-only route never gains a companion that writes. `lit +viz +diagram <request>` picks the plan yourself.
+- **Ideas at scale.** `lit ultra-brainstorm <topic>` (or `ultra-brainstorm <topic>`) asks one question first: how many
+  idea agents to run, 100 suggested, with the token cost beside it. Each agent runs the cheapest model at low
+  effort with one of 32 lenses and returns five ideas at most; reducers merge them, a judge scores the survivors and
+  checks how stable the order is, and the top ten land in `.litcodex/brainstorm/<topic>/`. Nothing is built.
+- **Plans that set their own goal.** A `lit-plan` plan ends with a `## Done when` check, such as `npm test`. When you
+  approve it, LitCodex compiles the plan and its check into one Codex `/goal` line, makes sure the check fails today,
+  and asks `Approve plan, start work and set goal: /goal <condition>? (yes / edit / no)`. An exact `yes` starts the
+  work and sets the goal together; if the work cannot start, no goal is set either. `lit cancel` tells you how to
+  clear a goal LitCodex set. Read-only skills never set one.
+- **Where was I.** After a break, `lit adhd` (or `lit rewind`) answers "so what do I do now?" in about six lines:
+  what changed since your last look, the one action and its exact input, why and what happens if you skip it, at
+  most two other things that wait on you, and what it could not read. Only proven finishes count, and a push or
+  publish is only ever a question for you. `lit adhd recap` is the recap that used to be `lit recap`. `lit adhd detail`
+  shows the KPI board (done and remaining work in four buckets with ten-cell bars, milestones and up to five
+  reminders) and adds the per-session list with what each was asked, what waits on you, a gauge such as `[▉▉▉░░] 3/5` only when both numbers are real (otherwise the
   known facts in words, such as `12 steps · 4m · last: apply_patch`), paused work, a roadmap of done, now and later
   with dates, and one next step. On the desktop card the look turns rainbow while it runs; the card and the session
   start offer `lit adhd` quietly after a break. Say `go` within 30 minutes to run that step. If you started a side discipline in

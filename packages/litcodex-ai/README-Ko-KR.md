@@ -50,7 +50,7 @@ lit 회원가입 폼에 입력 검증을 추가해줘
 ```
 
 답변이 `🔥 **LIT IGNITED · <discipline>** 🔥` 한 줄로 시작하고, 그때부터 요청은 확인 기준이 붙은 목표가 됩니다.
-모든 기준에 통과 증거가 있어야 완료되고, 기록은 프로젝트의 `.litcodex/lit-loop/` 아래에 남아 `lit recap`으로 다시
+모든 기준에 통과 증거가 있어야 완료되고, 기록은 프로젝트의 `.litcodex/lit-loop/` 아래에 남아 `lit adhd recap`으로 다시
 읽을 수 있습니다. 세션을 마치기 전에 `handoff`만 따로 보내면 다음 세션이 시작할 인수인계 문서가 생깁니다. 출판용
 그래프가 필요할 때 `lit-scientific-visualization`만 보내면 시각화 어댑터를 불러오고, Python 패키지는 설치하지 않습니다.
 
@@ -61,7 +61,7 @@ lit 회원가입 폼에 입력 검증을 추가해줘
 [스킬 안내](https://github.com/wjgoarxiv/litcodex/blob/main/docs/skills-Ko-KR.md)에 있습니다.
 
 - 루프와 계획: `lit-loop`(`lit`), `litwork`, `lit-plan`, Start Work(`lit start work <승인된 계획>`), `litgoal`,
-  `deep-interview`, `lit-brainstorm`, `lit-crucible`, `lit-team`, `lit-recap`, `lit-handoff`.
+  `deep-interview`, `lit-brainstorm`, `lit-crucible`, `lit-team`, `ultra-brainstorm`, `lit-handoff`.
 - 검토와 조사: `review-work`, `litresearch`, `autoresearch`, `autoconference`, `lit-fetch`, `wikify`,
   `coding-session-audit`, `lit-comprehend`, `lit-hijack`, `lit-adhd`.
 - 문서, 그림, 화면: `lit-docx`, `lit-pptx`, `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`,

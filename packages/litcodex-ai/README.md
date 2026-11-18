@@ -53,7 +53,7 @@ lit add input validation to the signup form
 
 The reply opens with `🔥 **LIT IGNITED · <discipline>** 🔥`, and from there the request is a goal with
 checks. It counts as done once every check has passing evidence. The records live under
-`.litcodex/lit-loop/` in your project, and `lit recap` reads them back. Before you leave, send
+`.litcodex/lit-loop/` in your project, and `lit adhd recap` reads them back. Before you leave, send
 exact bare `handoff` and the next session gets a continuation packet to start from. When you need
 publication plots, send the exact bare `lit-scientific-visualization` hook route; it loads the plotting
 adapter and does not install Python dependencies.
@@ -65,7 +65,7 @@ Pick any skill in the Codex skill picker or mention it by scoped name, such as `
 [skills page](https://github.com/wjgoarxiv/litcodex/blob/main/docs/skills.md) has a picture of each one.
 
 - Loop and planning: `lit-loop` (`lit`), `litwork`, `lit-plan`, Start Work (`lit start work <approved-plan>`),
-  `litgoal`, `deep-interview`, `lit-brainstorm`, `lit-crucible`, `lit-team`, `lit-recap` and `lit-handoff`.
+  `litgoal`, `deep-interview`, `lit-brainstorm`, `lit-crucible`, `lit-team`, `ultra-brainstorm` and `lit-handoff`.
 - Review and research: `review-work`, `litresearch`, `autoresearch`, `autoconference`, `lit-fetch`,
   `wikify`, `coding-session-audit`, `lit-comprehend`, `lit-hijack` and `lit-adhd`.
 - Documents, figures and screens: `lit-docx`, `lit-pptx`, `lit-diagram-drawer`,

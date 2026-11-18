@@ -43,11 +43,6 @@
 <td>눈으로 확인할 수 있는 기준을 단 목표 하나를 정해 lit-loop 상태에 보관하고, 루프와 Start Work가 그 기준을 향해 실행합니다. 세션이 바뀌어도 이어집니다.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/lit-recap.webp" width="240" alt="읽기 전용 요약입니다. 끝난 일, 진행 중인 일, 막힌 곳, 증거 위치, 다음 단계를 보여줍니다." /></td>
-<td><code>lit-recap</code><br /><sub><code>lit recap</code> · <code>$litcodex:lit-recap</code></sub></td>
-<td>읽기 전용 요약입니다. 끝난 일, 진행 중인 일, 막힌 곳, 증거 위치, 다음 단계를 보여줍니다.</td>
-</tr>
-<tr>
 <td><img src="./assets/skills/lit-handoff.webp" width="240" alt="handoff라고 치면 다음 세션이 읽고 이어갈 인수인계 파일이 생깁니다." /></td>
 <td><code>lit-handoff</code><br /><sub><code>handoff</code> · <code>/lit-handoff</code></sub></td>
 <td><code>handoff</code>라고 치면 다음 세션이 읽고 이어갈 인수인계 파일이 생깁니다.</td>
@@ -61,6 +56,11 @@
 <td><img src="./assets/skills/lit-brainstorm.webp" width="240" alt="서로 다른 선택지를 먼저 많이 내고, 고를 수 있도록 장단점이 붙은 짧은 목록으로 좁힙니다. 아이디어만 다루며 만들지는 않습니다." /></td>
 <td><code>lit-brainstorm</code><br /><sub><code>lit brainstorm</code> · <code>$litcodex:lit-brainstorm</code></sub></td>
 <td>서로 다른 선택지를 먼저 많이 내고, 고를 수 있도록 장단점이 붙은 짧은 목록으로 좁힙니다. 아이디어만 다루며 만들지는 않습니다.</td>
+</tr>
+<tr>
+<td><img src="./assets/skills/ultra-brainstorm.webp" width="240" alt="값싼 아이디어 에이전트를 몇 개 띄울지 묻고, 관점을 하나씩 주어 펼친 뒤 모으고 심사해 상위 10개를 보여 줍니다. 만들지는 않습니다." /></td>
+<td><code>ultra-brainstorm</code><br /><sub><code>lit ultra-brainstorm</code> · <code>$litcodex:ultra-brainstorm</code></sub></td>
+<td>값싼 아이디어 에이전트를 몇 개 띄울지 묻고, 관점을 하나씩 주어 펼친 뒤 모으고 심사해 상위 10개를 보여 줍니다. 만들지는 않습니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/litresearch.webp" width="240" alt="조사를 요청할 때만 움직입니다. 여러 갈래로 증거를 모아 출처와 함께 종합합니다." /></td>
@@ -130,7 +130,7 @@
 <tr>
 <td><img src="./assets/skills/lit-team.webp" width="240" alt="여러 작업자에게 겹치지 않는 몫을 나누고, 각자 증거와 함께 보고하게 합니다." /></td>
 <td><code>lit-team</code><br /><sub><code>lit team</code> · <code>$litcodex:lit-team</code></sub></td>
-<td>여러 작업자에게 겹치지 않는 몫을 나누고, 각자 증거와 함께 보고하게 합니다.</td>
+<td><code>lit team &lt;목표&gt;</code>라고 쓰면 이 세션이 지휘합니다. 일을 나누고 서브에이전트, herdr 창 또는 worktree로 돌리고, 멈춘 멤버를 깨우고, 다시 검증한 보고 하나를 돌려줍니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/litcodex-doctor.webp" width="240" alt="업데이트나 설정 실패 뒤에 LitCodex와 Codex 설치 상태를 점검합니다." /></td>
@@ -255,9 +255,24 @@
   `lit hijack`을 쓰거나 `lit-hijack`을 고르세요. `lit` 뒤에 하이재킹이나 하이잭이라고 써도 됩니다. 출처마다 원본 위치와
   라이선스를 적고, 표현이 아니라 메커니즘만 가져오며, 명세가 원문과 겹치는 문장이 없는지 검사합니다. 구현은
   명세만 가진 새 에이전트 맥락에서 하고, 전후 비교 실행과 보고서로 마칩니다. 커밋은 대신 하지 않습니다.
-- **나 어디까지 했지.** 쉬었다 돌아오면 `lit adhd`(또는 `lit rewind`)가 KPI 보드를 보여 줍니다. 지금 할 일 하나와
-  입력할 말, 끝남·진행 중·나를 기다림·남음 네 칸과 10칸 막대, 마일스톤, 나를 기다리는 세션·커밋 안 된 변경·일주일 넘게
-  멈춘 계획 같은 알림 최대 5개가 나옵니다. `lit adhd 자세히`를 붙이면 세션마다 요청, 나를 기다리는 것, `[▉▉▉░░] 3/5` 같은 게이지(두 숫자를 모두 알 때만, 아니면 `12 steps · 4m · last: apply_patch` 같은
+- **스킬 여러 개를 한 번에.** 단독 `lit` 요청에는 스킬이 둘 이상 필요할 때가 많습니다. 그래프를 설명하는 짧은 영상에는
+  영상 스킬과 그림 스킬이, 위험한 재설계에는 계획 전에 압력 시험이 필요합니다. 이제 훅이 요청 전체를 읽고 답의 첫머리에
+  `Skill plan: 1 lit-loop (primary) → 2 …` 한 줄을 붙입니다. 스킬은 최대 세 개이고 주 스킬이 맨 앞입니다. 설치하지 않은
+  스킬은 설치 명령과 함께 한 번만 나오고, 읽기 전용 경로에는 무언가를 쓰는 스킬이 붙지 않습니다. `lit +viz +diagram <요청>`으로
+  직접 고를 수도 있습니다.
+- **아이디어를 대량으로.** `lit ultra-brainstorm <주제>`(또는 `ultra-brainstorm <주제>`)는 먼저 하나만 묻습니다. 아이디어
+  에이전트를 몇 개 띄울지(100개 권장)와 그 토큰 비용입니다. 에이전트마다 가장 싼 모델을 낮은 노력으로, 32개 관점 중 하나로
+  돌려 아이디어를 최대 다섯 개 받습니다. 리듀서가 합치고, 심사자가 점수를 매기고 순위가 흔들리지 않는지 확인한 뒤, 상위 10개를
+  `.litcodex/brainstorm/<주제>/`에 남깁니다. 만들지는 않습니다.
+- **스스로 목표를 거는 계획.** `lit-plan` 계획은 `npm test` 같은 `## Done when` 확인으로 끝납니다. 계획을 승인하면 LitCodex가
+  계획과 확인을 Codex `/goal` 한 줄로 바꾸고, 그 확인이 지금은 실패하는지 본 뒤
+  `Approve plan, start work and set goal: /goal <조건>? (yes / edit / no)`라고 묻습니다. 정확히 `yes`라고 하면 작업이
+  시작되면서 목표도 걸리고, 작업을 시작할 수 없으면 목표도 걸지 않습니다. `lit cancel`은 LitCodex가 건 목표를 지우는 법을 알려 줍니다. 읽기 전용 스킬은 목표를 걸지 않습니다.
+- **나 어디까지 했지.** 쉬었다 돌아오면 `lit adhd`(또는 `lit rewind`)가 "그래서 지금 뭘 하지?"에 여섯 줄 안팎으로
+  답합니다. 지난번 본 뒤 바뀐 것, 할 일 하나와 정확한 입력, 이유와 안 하면 생기는 일, 나를 기다리는 다른 일 최대 두 개,
+  읽지 못한 것이 나옵니다. 증거가 있는 완료만 세고, push나 배포는 언제나 질문으로만 나옵니다. 예전 `lit recap`은
+  `lit adhd recap`이 됐습니다. `lit adhd 자세히`는 KPI 보드(끝남·진행 중·나를 기다림·남음 네 칸과 10칸 막대, 마일스톤,
+  알림 최대 5개)를 보여 주고, 덧붙여 세션마다 요청, 나를 기다리는 것, `[▉▉▉░░] 3/5` 같은 게이지(두 숫자를 모두 알 때만, 아니면 `12 steps · 4m · last: apply_patch` 같은
   확인된 사실을 말로), 멈춘 작업, 끝낸 일·지금·나중을 날짜와 함께 보여 주는 로드맵, 다음 한 걸음이 나옵니다.
   데스크톱 카드는 실행 중 무지개 모습으로 바뀌고, 쉬었다 돌아오면 카드와 세션 시작이 `lit adhd`를 조용히 권합니다. 30분 안에 `go`라고 입력하면 그 걸음을 실행합니다. 루프 도중 곁가지 스킬을 시작했다면
   `lit continue`가 루프를 멈춘 단계와 개수 그대로 되살립니다. 아무것도 고치지 않으며, Start Work가 보류한

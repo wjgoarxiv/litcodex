@@ -58,7 +58,7 @@ flowchart LR
 계획, 검토, 연구, 리캡, 이해, 인수인계, 로컬 지식 기능도 함께 제공합니다. Codex skill picker에서
 `autoconference`, `autoresearch`, `browser-drive`, `coding-session-audit`, `comment-checker`, `debugging`,
 `frontend-ui-ux`, `lit-commit`, `lit-crucible`, `lit-init`, `lit-korean`, `lit-fetch`, `litcodex-doctor`, `litcodex-report-bug`, `lsp`,
-`lsp-setup`, `lit-code`, `refactor`, `lit-burnoff`, `lit-schematic`, `lit-hijack`, `lit-adhd`, `structural-search`, `lit-team`,
+`lsp-setup`, `lit-code`, `refactor`, `lit-burnoff`, `lit-schematic`, `lit-hijack`, `lit-adhd`, `structural-search`, `lit-team`, `ultra-brainstorm`,
 `visual-qa`, `wikify`를 선택할 수 있습니다. 저장소 초기 조사를 위한 `lit-init`도 번들 카탈로그에 포함됩니다.
 
 릴리스 이력은 [CHANGELOG.md](../CHANGELOG.md)에서 관리합니다. 설치기는 npm 패키지에 포함된
@@ -196,7 +196,7 @@ lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외�
 ```
 
 결과물, 실제로 확인한 내용, 남은 일을 살펴보세요. 상태 마크가 떴다는 사실만으로 화면이 정상
-동작한다고 볼 수는 없습니다. `lit recap`으로 기록된 상태를 확인하고, 세션을 마치기 전에는
+동작한다고 볼 수는 없습니다. `lit adhd recap`으로 기록된 상태를 확인하고, 세션을 마치기 전에는
 다른 문구 없이 `handoff`만 보내세요. 다음 세션에서는 그 인수인계 문서와 프로젝트 목표를
 먼저 읽고 이어가도록 요청합니다.
 
@@ -222,9 +222,11 @@ Codex의 native goal과 로컬 루프 기록은 별도로 관리됩니다. nativ
 | `lit brainstorm`, `lit ideation` 또는 `lit idea` | **lit-brainstorm** | 서로 다른 선택지를 많이 낸 뒤 고를 수 있는 짧은 목록으로 좁힘, 만들지는 않음 |
 | `lit schematic` 또는 `lit-schematic` | **lit-schematic** | 실제 장비를 SVG, PDF, PNG로 그림: P&ID, PFD, 실험 장치 그림, 아이소메트릭 컷어웨이. 이런 요청을 담은 단독 `lit`도 이 스킬로 이어짐 |
 | `lit hijack` 또는 `lit-hijack` | **lit-hijack** | 다른 사람이 공개한 기법(게시물, 아티클, 저장소, PDF)을 내 스킬로 옮김: 출처와 라이선스를 먼저 적고, 원문 표현 없는 명세를 쓰고, 따로 구현한 뒤 전후 비교로 증명함 |
-| `lit adhd` 또는 `lit rewind` | **lit-adhd** | 최근 Codex 세션을 읽기 전용 KPI 보드로 정리. 지금 할 일(행동 하나, 이유 하나, 입력할 말), 한눈에 보기(끝남·진행 중·나를 기다림·남음과 전체 진행 막대), 마일스톤(계획마다 막대 한 줄), 최근 끝낸 일, 남은 일, `할 일 → 이렇게` 모양의 알림 최대 5개를 차례로 보여 줌. `lit adhd 자세히`는 세션별 요청, 진행 중·쉬는 중·끝냄·대기 상태, 게이지, 멈춘 작업 목록을 덧붙임. 끝난 세션은 검토하도록 권하고, 할 일이 따로 없으면 이 worktree HANDOFF의 `## Next`에서 다음 걸음을 가져옴. `lit continue`는 멈춘 루프를 그 단계 그대로 이어감 |
+| `lit adhd` 또는 `lit rewind` | **lit-adhd** | 최근 Codex 세션을 읽고 여섯 줄 안팎의 판정 카드를 보여 줌: 지난번 본 뒤 바뀐 것(증거 있는 완료만), 지문이 붙은 할 일 하나와 정확한 입력, 이유와 안 하면 생기는 일, 기다리는 일 최대 두 개(push·배포는 `네 확인 필요:` 질문으로만), 읽은 범위. 전부 읽었을 때만 `지금 할 일 없음`. `lit adhd 자세히`는 KPI 보드로 정리. 지금 할 일(행동 하나, 이유 하나, 입력할 말), 한눈에 보기(끝남·진행 중·나를 기다림·남음과 전체 진행 막대), 마일스톤(계획마다 막대 한 줄), 최근 끝낸 일, 남은 일, `할 일 → 이렇게` 모양의 알림 최대 5개를 차례로 보여 줌. `lit adhd 자세히`는 세션별 요청, 진행 중·쉬는 중·끝냄·대기 상태, 게이지, 멈춘 작업 목록을 덧붙임. 끝난 세션은 검토하도록 권하고, 할 일이 따로 없으면 이 worktree HANDOFF의 `## Next`에서 다음 걸음을 가져옴. `lit continue`는 멈춘 루프를 그 단계 그대로 이어감 |
 | `litgoal` 또는 `lit goal` | **litgoal** | 완료 기준을 정하고 유지: 목표와 기준을 lit-loop와 Start Work가 향해 가는 루프 상태에 연결 |
-| `lit-recap` 또는 `lit recap` | **lit-recap** | `.litcodex` 원장을 읽기 전용으로 요약 |
+| `lit adhd recap [세션]` (`lit recap`도 됨) | **lit-adhd** | 리캡 보기: 세션별 리캡 카드. 예전 lit-recap 말로 열면 옮겨졌다는 한 줄이 먼저 나옴 |
+| `lit ultra-brainstorm <주제>` | **ultra-brainstorm** | 값싼 아이디어 에이전트를 몇 개 띄울지 비용 한 줄과 함께 묻고(100개 권장), 관점 하나씩 주어 펼친 뒤 모으고 심사해 상위 10개를 `.litcodex/brainstorm/`에 저장 |
+| `lit team <목표>` | **lit-team** | 이 세션이 서브에이전트, fan-out, herdr 창 또는 worktree를 지휘하고, 멈춘 멤버를 깨우고, 합치고, 다시 검증해 보고 하나를 보냄. 멤버는 커밋하지 않음 |
 | `lit-comprehend` 또는 `comprehend` | **lit-comprehend** | 작업 트리 밖에 자체 완결형 설명 자료 생성 |
 | `review-work` 또는 `lit review` | **review-work** | Start Work 전에는 계획 검토, 뒤에는 작업 검토(읽기 전용). 있는 것을 보고 모드를 고르며 `lit review plan` 또는 `lit review work`로 지정 |
 | `litresearch`, `/litresearch` 또는 `lit research` | **litresearch** | 사실·가설·출처·불확실성을 나누는 연구 저널 |

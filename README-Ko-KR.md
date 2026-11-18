@@ -224,7 +224,7 @@ lit 현재 폴더에 HTML 파일 하나로 할 일 목록을 만들어줘. 외�
 ```
 
 끝나면 세 가지를 보세요. 페이지 자체(열어서 할 일을 하나 추가해 보세요), 실제로 돌린 확인, 아직 남은 일입니다.
-`lit recap`은 기록된 내용을 다시 읽어 줍니다. 세션을 닫기 전에 `handoff`만 따로 보내 두고, 다음 세션에서는
+`lit adhd recap`은 기록된 내용을 다시 읽어 줍니다. 세션을 닫기 전에 `handoff`만 따로 보내 두고, 다음 세션에서는
 그 문서와 프로젝트 목표부터 읽게 하면 됩니다.
 
 ## 할 수 있는 일
@@ -609,9 +609,10 @@ LitCodex가 그 도구를 직접 부르지는 않습니다. 로그인, 모델 �
 | `lit brainstorm`, `lit ideation` 또는 `lit idea` | **lit-brainstorm** | 서로 다른 선택지를 많이 낸 뒤 고를 수 있는 짧은 목록으로 좁힘, 만들지는 않음 |
 | `lit schematic` 또는 `lit-schematic` | **lit-schematic** | 실제 장비를 SVG, PDF, PNG로 그림 |
 | `lit hijack` 또는 `lit-hijack` | **lit-hijack** | 다른 사람이 공개한 기법을 내 스킬로 옮김 |
-| `lit adhd` 또는 `lit rewind` | **lit-adhd** | 읽기 전용 "나 어디까지 했지"를 최근 Codex 세션 전체의 KPI 보드로 보여 줌 |
+| `lit adhd` 또는 `lit rewind` | **lit-adhd** | 최근 Codex 세션 전체를 읽고 "그래서 지금 뭘 하지?"에 여섯 줄로 답함. `lit adhd 자세히`는 KPI 보드, `lit adhd recap`은 리캡 |
 | `litgoal` 또는 `lit goal` | **litgoal** | lit-loop와 Start Work가 향해 갈 완료 기준을 정하고 유지 |
-| `lit-recap` 또는 `lit recap` | **lit-recap** | `.litcodex` 원장을 읽기 전용으로 요약 |
+| `lit ultra-brainstorm <topic>` | **ultra-brainstorm** | 값싼 아이디어 에이전트를 몇 개 띄울지 묻고(100개 권장) 펼친 뒤, 심사한 상위 10개를 보여 줌. 만들지는 않음 |
+| `lit team <goal>` | **lit-team** | 이 세션이 지휘함: 일을 나누고 서브에이전트, herdr 창 또는 worktree로 돌린 뒤 검증한 보고 하나를 돌려줌 |
 | `lit-comprehend` 또는 `comprehend` | **lit-comprehend** | 작업 트리 밖에 자체 완결형 설명 자료 생성 |
 | `review-work` 또는 `lit review` | **review-work** | 계획이나 끝난 작업을 읽기 전용으로 검토 |
 | `litresearch`, `/litresearch` 또는 `lit research` | **litresearch** | 사실·가설·출처·불확실성을 나눠 적는 연구 저널 |
@@ -620,16 +621,21 @@ LitCodex가 그 도구를 직접 부르지는 않습니다. 로그인, 모델 �
 | 정확히 단독으로 입력한 `lit-scientific-visualization` | **lit-scientific-visualization** | 훅을 통해 출판용 시각화 어댑터를 불러옴 |
 
 <details>
-<summary>다섯 모드 자세히</summary>
+<summary>여섯 모드 자세히</summary>
 
 - **`lit-schematic`:** P&ID, PFD, 실험 장치 그림, 아이소메트릭 컷어웨이를 그립니다. 이런 요청을 담은 단독 `lit`도
   이 스킬로 이어집니다.
 - **`lit-hijack`:** 게시물, 아티클, 저장소, PDF를 받아 출처와 라이선스를 먼저 적고, 원문 표현 없는 명세를 쓰고, 따로
   구현한 뒤 전후 비교로 증명합니다. `lit` 뒤에 하이재킹, 하이잭도 쓸 수 있습니다.
-- **`lit-adhd`:** 지금 할 일 하나와 입력할 말(`go`면 실행), 끝낸 마일스톤과 남은 마일스톤(10칸 막대), 나를 기다리는
-  세션·커밋 안 된 변경·멈춘 계획 같은 알림을 최대 5개 보여 줍니다. `lit adhd 자세히`는 세션별 목록을 덧붙이고,
-  `lit continue`는 멈춘 루프를 그 단계 그대로 되살립니다.
+- **`lit-adhd`:** "그래서 지금 뭘 하지?"에 여섯 줄 안팎으로 답합니다. 지난번에 본 뒤 바뀐 것(증거가 있는 완료만 셉니다),
+  할 일 하나와 정확한 입력, 이유와 안 하면 생기는 일, 나를 기다리는 다른 일 최대 두 개, 어디까지 읽었는지가 나옵니다.
+  push나 배포는 언제나 `네 확인 필요:` 질문으로만 나옵니다. `lit adhd 자세히`는 전체 KPI 보드를, `lit adhd recap`은
+  예전 `lit recap` 리캡을 보여 줍니다(예전 말도 그대로 통합니다). `lit continue`는 멈춘 루프를 그 단계 그대로 되살립니다.
 - **`litgoal`:** 목표와 기준을 lit-loop와 Start Work가 향해 가는 루프 상태에 연결합니다.
+- **`lit-plan`:** 계획마다 마지막에 `## Done when` 확인 명령이 붙습니다. 계획을 승인할 때 LitCodex가 그 확인을 Codex
+  `/goal` 한 줄로 바꿔 `Approve plan, start work and set goal: /goal <조건>? (yes / edit / no)`라고 묻습니다.
+  정확히 `yes`라고 답하면 작업을 시작하면서 목표도 함께 겁니다. 이미 통과하는 확인은 목표로 내놓지 않고, 그때는
+  작업을 시작할지만 묻습니다.
 - **`review-work`:** Start Work 전에는 계획 검토, 뒤에는 작업 검토를 합니다. 있는 것을 보고 모드를 고르며,
   `lit review plan` 또는 `lit review work`로 직접 지정할 수 있습니다.
 
