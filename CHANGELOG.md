@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.43] - 2026-11-20
+
 ### Fixed
 
 - The isolated test runner starts package bins such as `vitest` through `cmd.exe` on Windows, where they
