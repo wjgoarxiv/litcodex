@@ -48,11 +48,17 @@ const quote = (value) => JSON.stringify(value);
 const profile = `(version 1) (allow default)
 (deny file-write* (require-all (subpath ${quote(protectedHome)}) ${writableRepoPaths.map((p) => `(require-not (subpath ${quote(p)}))`).join(" ")}))
 (deny file-write* (subpath ${quote(protectedCodex)}))`;
+// On Windows a package bin such as `vitest` is a `.cmd` shim, which Node runs only through a shell,
+// so the command line goes to cmd.exe with each argument quoted when it holds a space or a quote.
+const windowsLine = () =>
+	[command, ...args].map((part) => (/[\s"]/u.test(part) ? `"${part.replaceAll('"', '\\"')}"` : part)).join(" ");
 try {
 	const result =
 		process.platform === "darwin"
 			? spawnSync("/usr/bin/sandbox-exec", ["-p", profile, command, ...args], { env, stdio: "inherit" })
-			: spawnSync(command, args, { env, stdio: "inherit" });
+			: process.platform === "win32"
+				? spawnSync(windowsLine(), { env, stdio: "inherit", shell: true })
+				: spawnSync(command, args, { env, stdio: "inherit" });
 	if (result.error) throw result.error;
 	process.exitCode = result.status ?? 1;
 } finally {

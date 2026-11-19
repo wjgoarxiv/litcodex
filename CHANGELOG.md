@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The isolated test runner starts package bins such as `vitest` through `cmd.exe` on Windows, where they
+  are `.cmd` shims, so the Windows CI job runs its tests again instead of stopping at `spawnSync vitest ENOENT`.
+
 ## [1.0.42] - 2026-11-18
 
 ### Added
