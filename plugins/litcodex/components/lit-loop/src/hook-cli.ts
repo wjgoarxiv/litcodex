@@ -17,7 +17,17 @@ import {
 	parseAutoHandoffRoute,
 } from "./auto-handoff-settings.js";
 import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
-import { goalCancelContext, planAnswer, sweepGoalState } from "./goal-pipeline.js";
+import {
+	closeOwnedGoal,
+	detectCheck,
+	goalCancelContext,
+	liveConsent,
+	normalizeGoalObjective,
+	ownedGoal,
+	planAnswer,
+	proposeLoopGoal,
+	sweepGoalState,
+} from "./goal-pipeline.js";
 import { laneScope, subagentEvent, toolLaneEvents } from "./lane-events.js";
 import { type LaneEvent, recordLaneEvent } from "./lane-state.js";
 import {
@@ -48,6 +58,7 @@ import { workflowCard } from "./screen-card.js";
 import { screenColor } from "./screen-status.js";
 import { recordLiveness } from "./session-liveness.js";
 import { applyPromptToStack, frameToResume } from "./stack-hook.js";
+import { maskMarkdownCode } from "./trigger.js";
 import { recordWorkflowTurn, workflowStopLine, workflowTurn } from "./workflow-map.js";
 
 /** Hard cap on stdin to bound memory / ReDoS exposure inside the 5 s Codex hook budget. 8 MB. */
@@ -261,7 +272,12 @@ export async function runUserPromptSubmitHookCli(
 	const own =
 		decision.kind === "inject"
 			? withCardOffer(
-					withWorkflowMap(decision.stdout, parsed, decision.mode, env),
+					withWorkflowMap(
+						withLoopGoal(decision, parsed, hookCwd(parsed, repoRoot), auto.now ?? Date.now()),
+						parsed,
+						decision.mode,
+						env,
+					),
 					pointer,
 					auto,
 					decision.entry === "continue",
@@ -332,6 +348,63 @@ function withReloadContext(stdout: string, reload: string): string | null {
 		return `${JSON.stringify(output)}\n`;
 	} catch {
 		return null;
+	}
+}
+
+/** Run routes that get the lit-loop goal question; litgoal keeps its own binding and plans keep the plan question. */
+const LOOP_GOAL_ROUTES: ReadonlySet<string> = new Set(["lit-loop", "litwork"]);
+
+// Short on purpose: the first activation's context is held to a byte budget. The full steps are in the lit-loop skill.
+const LOOP_GOAL_FALLBACK =
+	"Goal: after a failing check, follow lit-loop's `goal propose --loop` step; never call `create_goal` first.";
+
+/** The model-context line for a run whose goal question the hook already put in front of the user. */
+const loopGoalContext = (line: string): string =>
+	`Native goal: LitCodex has shown the user this goal question: ${line} Do not ask it again. Never call \`create_goal\` or type \`/goal\` yourself: the user's exact \`yes\` on a later prompt arms it and this hook then tells you to call \`create_goal\`.`;
+
+/** The text after the run-route word as the objective: no leading route filler or skill-plan flags. */
+function loopObjective(prompt: string): string {
+	const tail =
+		/(?:^|[^\p{L}\p{N}_])(?:lit-loop|litcodex|litwork|lit)(?![\p{L}\p{N}_-])\s*(.*)$/isu.exec(
+			maskMarkdownCode(prompt),
+		)?.[1] ?? "";
+	return normalizeGoalObjective(tail.replace(/^(?:\+[\w-]+\s+)*(?:(?:loop|work)\b\s*)?/iu, ""));
+}
+
+/**
+ * A run's first activation asks the goal question itself, shown to the user in the hook's systemMessage, when the
+ * prompt names an objective, the project has a test command, and LitCodex owns or asks no goal yet. The check is
+ * not run here. Without that, the run route only learns it may propose one after its failing check. A repeated
+ * prompt (entry "continue") and every other route get nothing.
+ */
+function withLoopGoal(
+	decision: { readonly kind: "inject"; readonly stdout: string; readonly mode: string; readonly entry?: "continue" },
+	parsed: unknown,
+	cwd: string,
+	now: number,
+): string {
+	if (!LOOP_GOAL_ROUTES.has(decision.mode) || decision.entry === "continue" || !isLitUserPromptSubmitInput(parsed))
+		return decision.stdout;
+	try {
+		const objective = loopObjective(parsed.prompt);
+		const check = objective === "" ? null : detectCheck(cwd);
+		const open = ownedGoal(cwd) !== null || liveConsent(cwd, now) !== null;
+		const offer = check === null || open ? null : proposeLoopGoal({ cwd, check, objective, now, falsifyNow: false });
+		const note =
+			offer?.consent !== undefined
+				? loopGoalContext(offer.line)
+				: open || objective === ""
+					? null
+					: LOOP_GOAL_FALLBACK;
+		if (note === null) return decision.stdout;
+		const output = JSON.parse(decision.stdout) as Record<string, unknown>;
+		if (offer?.consent !== undefined && isRecord(output) && typeof output["systemMessage"] === "string") {
+			output["systemMessage"] = `${output["systemMessage"]}\n${offer.line}`;
+		}
+		const base = `${JSON.stringify(output)}\n`;
+		return withContextAfterBanner(base, note) ?? withReloadContext(base, note) ?? decision.stdout;
+	} catch {
+		return decision.stdout;
 	}
 }
 
@@ -678,6 +751,10 @@ export async function runPostToolUseLiveHookCli(
 	if (event.exit !== null) return 0;
 	const scope = toolEventScope(event.parsed);
 	const now = options.now ?? Date.now();
+	if (scope !== null && scope.tool === "update_goal" && isRecord(event.parsed)) {
+		const input = event.parsed["tool_input"];
+		if (isRecord(input) && input["status"] === "complete") closeOwnedGoal(scope.cwd, now);
+	}
 	if (scope !== null && !OWN_CARD_TOOL.test(scope.tool)) {
 		recordLiveStepEnd(scope.cwd, scope.sessionId, scope, now);
 		if (workflowTurn(scope.cwd, scope.sessionId) !== null)

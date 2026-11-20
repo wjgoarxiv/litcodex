@@ -541,12 +541,12 @@
 		},
 		"lit-loop": {
 			"skillMd": {
-				"bytes": 21028,
-				"sha256": "e89be88fb34435b598cdaa98085ee9ee1b07242e1e4f15219fff4d08c52926ee"
+				"bytes": 21975,
+				"sha256": "7deb91f45e72a89096e1819a92524b25a64d79e3827756b43be8080de8538789"
 			},
 			"files": 4,
-			"bytes": 35618,
-			"sha256": "43a192685daa2787e10df06424a79e87b5f781172c289bec91d446f6fb48207f"
+			"bytes": 36565,
+			"sha256": "8790cdb6b54b299e29d2bf8c99f9a6776860df08ee33e8408cb43a1cd6522b00"
 		},
 		"lit-plan": {
 			"skillMd": {

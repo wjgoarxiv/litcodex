@@ -175,6 +175,17 @@ directory, or a task ledger. Do not run `litcodex loop` commands or spawn subage
 `lit` activated this discipline. This path still requires the tests and real-surface checks the
 task calls for.
 
+A bounded run still gets one native-goal question. At the run's first activation, when the prompt names
+an objective and the project has a test command (`npm test`, `pytest`, `cargo test`, `go test ./...`),
+the prompt hook shows the user `Set goal for this lit-loop: /goal <cond>? (yes / no)` itself; do not ask
+it again. Without a detected command, once a failing check proves the objective (after the RED step), run
+`node <plugin-root>/components/lit-loop/dist/cli.js goal propose --loop --check "<check>" <objective>`
+and end the reply with the line it prints; a check that already passes, cannot run or is not an
+allowlisted test command prints `No goal set: <reason>` and records nothing. Only the user's exact `yes`
+on a later prompt arms it: the hook then tells you to call `get_goal` and `create_goal`, and starts no
+start-work run. `no` or any other prompt drops the question. Never call `create_goal` or type `/goal`
+before that `yes`.
+
 For a software implementation request, load the installed sibling `../lit-code/SKILL.md`
 before editing source. Use its language-specific guidance as a supporting skill without another
 activation banner. Establish the core user flow, input errors, and executable checks from the

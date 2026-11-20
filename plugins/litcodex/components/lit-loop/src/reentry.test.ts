@@ -474,7 +474,8 @@ describe("the first activation keeps its content and drops its duplication", () 
 			.join(`/${"p".repeat(98)}/`)
 			.split(s.cwd)
 			.join(`/${"c".repeat(40)}`);
-		expect(Buffer.byteLength(sized)).toBeLessThan(4_600);
+		// 4,600 + 150: the one-line native-goal fallback every first lit-loop activation without a detected test command carries.
+		expect(Buffer.byteLength(sized)).toBeLessThan(4_750);
 	});
 });
 

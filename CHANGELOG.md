@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A `lit-loop` or `litwork` run with no plan can now get a native `/goal` too. At the run's first activation, when the
+  prompt names an objective and the project has a test command (`npm test`, `pytest`, `cargo test`, `go test ./...`),
+  the prompt hook shows the user `Set goal for this lit-loop: /goal <cond>? (yes / no)` itself, where the condition is
+  that check exiting 0 with the objective done, so it never depends on the model asking. An exact `yes` arms the goal
+  the way a plan's goal is armed (the hook tells the model to call `get_goal` and `create_goal`) and starts no
+  plan run; `no` or any other prompt drops the question. Without a detected test command, the run may call
+  `cli.js goal propose --loop --check "<check>" <objective>` after a failing check, which prints `No goal set:
+  <reason>` and records nothing when the check already passes, cannot run or is not an allowlisted test command.
+  The question is not asked on a repeated prompt, a bare `lit`, litgoal, or while LitCodex owns an unfinished goal or a
+  plan question is open. A goal the model marked complete with `update_goal` (seen by the PostToolUse hook) counts as
+  finished: it no longer blocks the next question and no longer earns a `/goal clear` line on `lit cancel`. A goal
+  the user clears by hand is not seen and stays owned until `lit cancel`.
+
 ## [1.0.43] - 2026-11-20
 
 ### Fixed

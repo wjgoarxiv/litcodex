@@ -7,6 +7,7 @@ export declare const GOAL_STATUS: Readonly<{
     asked: (condition: string) => string;
     askStart: "Approve plan and start work? (yes / no)";
     notStarted: (reason: string) => string;
+    loopAsked: (condition: string) => string;
     skipped: (reason: string) => string;
     set: (id: string) => string;
     yours: "Your own goal is active; LitCodex left it alone.";
@@ -30,6 +31,11 @@ export declare function parseDoneWhen(planText: string): Outcome<{
 }>;
 /** `Every row in .litcodex/plans/<f>.md is ticked and \`<cmd>\` exits 0 [lit:<id>]`, or why it cannot be built. */
 export declare function compileCondition(plan: string, check: string): Outcome<{
+    readonly condition: string;
+    readonly id: string;
+}>;
+/** A lit-loop's condition: its check exits 0 and its objective is done. No plan, so no rows to tick. */
+export declare function compileLoopCondition(objective: string, check: string): Outcome<{
     readonly condition: string;
     readonly id: string;
 }>;
@@ -66,13 +72,25 @@ export declare function falsify(args: {
     readonly open: number;
     readonly exit: number | null;
 }>;
+/** A lit-loop has no unticked rows to keep its goal false, so its check must fail right now. */
+export declare function falsifyLoop(args: {
+    readonly cwd: string;
+    readonly check: string;
+    readonly timeoutMs?: number;
+    readonly run?: CheckRunner;
+}): Outcome<{
+    readonly exit: number | null;
+}>;
 export interface GoalConsent {
     readonly version: 1;
+    /** `"loop"` for a lit-loop question (no plan, no start-work); absent for a plan question. */
+    readonly kind?: "loop";
     /** Null when no goal could be compiled: `yes` then starts the work alone. */
     readonly condition: string | null;
     readonly hash: string;
     readonly id: string;
-    readonly plan: string;
+    /** Null for a loop question. */
+    readonly plan: string | null;
     readonly askedAt: string;
 }
 /** `goal propose <plan>`: the one line to add to the approval question, and the consent it recorded. */
@@ -86,15 +104,41 @@ export declare function proposeGoal(args: {
     readonly line: string;
     readonly consent?: GoalConsent;
 };
+export declare function normalizeGoalObjective(value: string): string;
+/** The project's own test command, for the question the prompt hook shows; null when there is none. */
+export declare function detectCheck(cwd: string): string | null;
+/**
+ * `goal propose --loop --check "<cmd>" <objective>`: a lit-loop's question. With no settable goal it records
+ * nothing and returns only `No goal set: <reason>`. `falsifyNow: false` skips the dry run (the prompt hook cannot
+ * wait on a test run); the objective clause still keeps such a goal false until the work is done.
+ */
+export declare function proposeLoopGoal(args: {
+    readonly cwd: string;
+    readonly check: string | undefined;
+    readonly objective: string | undefined;
+    readonly now?: number;
+    readonly timeoutMs?: number;
+    readonly run?: CheckRunner;
+    readonly falsifyNow?: boolean;
+}): {
+    readonly line: string;
+    readonly consent?: GoalConsent;
+};
 /** `yes`, `edit` and `no` (exactly, any case) answer the goal question; anything else is no answer. */
 export declare function consentAnswer(prompt: string): "yes" | "edit" | "no" | null;
 /** The consent the user is answering: fresh, and its hash still binds its condition. */
 export declare function liveConsent(cwd: string, now: number): GoalConsent | null;
-/** The goal LitCodex armed in this project, if any. */
+/** The goal LitCodex armed in this project and has not seen finish, if any. */
 export declare function ownedGoal(cwd: string): {
     readonly condition: string;
     readonly id: string;
 } | null;
+/**
+ * The owned goal finished: the model's `update_goal` with `status: "complete"` ran, which the PostToolUse hook sees.
+ * The record is kept with `closedAt`, so a finished goal neither blocks the next lit-loop question nor earns a
+ * `/goal clear` line on `lit cancel`. A goal the user clears by hand is not seen, and stays owned until `lit cancel`.
+ */
+export declare function closeOwnedGoal(cwd: string, now: number): boolean;
 /** What an answer to the plan question does: the context for the model and, on a `yes` that starts, the start prompt. */
 export interface PlanAnswer {
     readonly context: string;
@@ -121,7 +165,7 @@ export declare function planAnswer(args: {
 export declare function goalCancelContext(cwd: string): string | null;
 /** SessionStart sweep: an expired question is removed so a later bare `yes` arms nothing. */
 export declare function sweepGoalState(cwd: string, now: number): void;
-/** `cli.js goal propose <plan>`. */
+/** `cli.js goal propose <plan>` or `goal propose --loop --check "<cmd>" <objective>`. */
 export declare function goalCommand(argv: readonly string[], io: {
     readonly stdout: NodeJS.WritableStream;
     readonly stderr: NodeJS.WritableStream;

@@ -298,6 +298,14 @@ protocol, not package runtime enforcement: LitCodex emits instructions and deriv
 metadata, but the package runtime does not observe native goal state or perform native goal
 mutations.
 
+A run with no plan asks for its goal through the hook, not through the model: at the first activation of
+`lit-loop` or `litwork`, when the prompt names an objective and the project has a test command, the prompt
+hook shows the user `Set goal for this lit-loop: /goal <cond>? (yes / no)` (the condition is `` `<check>` exits 0
+and this is done: <objective> [lit:<id>] ``) and tells you it did; do not ask it again and never call
+`create_goal` before the user's exact `yes`. Without a detected test command, after a failing check run
+`node <plugin-root>/components/lit-loop/dist/cli.js goal propose --loop --check "<check>" <objective>` and end
+the reply with its line; `No goal set: <reason>` means go on without a goal. A `yes` here starts no plan run; it only arms the goal.
+
 Call `get_goal` first. Apply the result as follows:
 
 - If `get_goal` reports no goal record, the agent may call `create_goal` with the rendered payload

@@ -9,11 +9,17 @@
 // run `/goal clear`, so LitCodex never clears a goal: on done the model marks the owned goal complete
 // with `update_goal`, and on `lit cancel` it hands the user the `/goal clear` line, in both cases only
 // when `get_goal` reports exactly the owned objective. A goal the user set by hand is never touched.
+//
+// A lit-loop or litwork run with no plan gets one question too (`kind: "loop"`): its condition is the project's
+// test command exiting 0 with the objective done. The prompt hook records it at the run's first activation
+// (`offerLoopGoal`, no test run), or `goal propose --loop --check "<cmd>" <objective>` records it after a failing
+// check; only the user's exact `yes` arms it, and it starts no start-work run.
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { plainDirsOrMissing, writeFileAtomic } from "./live-step.js";
+import { redactSecrets } from "./redaction.js";
 import { chooseNext, openPlanNamed } from "./rewind.js";
 export const GOAL_DIR = ".litcodex/goal";
 export const GOAL_MAX_CHARS = 500;
@@ -24,6 +30,7 @@ export const GOAL_STATUS = Object.freeze({
     asked: (condition) => `Approve plan, start work and set goal: /goal ${condition}? (yes / edit / no)`,
     askStart: "Approve plan and start work? (yes / no)",
     notStarted: (reason) => `Work not started and no goal set: ${reason}`,
+    loopAsked: (condition) => `Set goal for this lit-loop: /goal ${condition}? (yes / no)`,
     skipped: (reason) => `No goal set: ${reason}`,
     set: (id) => `LitCodex goal set [lit:${id}]`,
     yours: "Your own goal is active; LitCodex left it alone.",
@@ -91,6 +98,15 @@ export function compileCondition(plan, check) {
     }
     return { ok: true, condition, id };
 }
+/** A lit-loop's condition: its check exits 0 and its objective is done. No plan, so no rows to tick. */
+export function compileLoopCondition(objective, check) {
+    const id = goalId(`loop\u0000${objective}`, check);
+    const condition = `\`${check}\` exits 0 and this is done: ${objective} [lit:${id}]`;
+    if (condition.length > GOAL_MAX_CHARS) {
+        return { ok: false, reason: `the condition is over ${GOAL_MAX_CHARS} characters; shorten the objective` };
+    }
+    return { ok: true, condition, id };
+}
 /** Rejects judgment words, an outward-only success, a command off the allowlist and conditions over the cap. */
 export function lintCondition(condition, check) {
     const reasons = [];
@@ -138,6 +154,25 @@ export function falsify(args) {
         };
     }
     return { ok: true, open, exit: result.status };
+}
+/** A lit-loop has no unticked rows to keep its goal false, so its check must fail right now. */
+export function falsifyLoop(args) {
+    const timeoutMs = args.timeoutMs ?? FALSIFY_TIMEOUT_MS;
+    const [cmd = "", ...rest] = args.check.split(/\s+/u);
+    const result = (args.run ?? runCheck)(cmd, rest, args.cwd, timeoutMs);
+    if (result.error?.code === "ETIMEDOUT" || result.signal === "SIGTERM") {
+        return { ok: false, reason: `\`${args.check}\` did not finish within ${Math.round(timeoutMs / 1000)} s` };
+    }
+    if (result.error !== undefined || result.status === 127) {
+        return { ok: false, reason: `\`${args.check}\` cannot run here` };
+    }
+    if (result.status === 0) {
+        return {
+            ok: false,
+            reason: `\`${args.check}\` already passes, so the goal would be met at once; write the failing test first`,
+        };
+    }
+    return { ok: true, exit: result.status };
 }
 /** `goal propose <plan>`: the one line to add to the approval question, and the consent it recorded. */
 export function proposeGoal(args) {
@@ -194,6 +229,75 @@ function compileGoal(cwd, plan, planText, args) {
         return { ok: false, reason: dry.reason };
     return { ok: true, condition: built.condition, id: built.id };
 }
+/** The text of a prompt after its run-route word, as the objective: no code, no pasted slash commands, no secrets. */
+const MAX_OBJECTIVE_CHARS = 180;
+export function normalizeGoalObjective(value) {
+    const joined = value
+        .split(/\r?\n/gu)
+        .filter((line) => !line.trimStart().startsWith("/"))
+        .join(" ");
+    return redactSecrets(joined).replace(/\s+/gu, " ").slice(0, MAX_OBJECTIVE_CHARS).trim();
+}
+/** The project's own test command, for the question the prompt hook shows; null when there is none. */
+export function detectCheck(cwd) {
+    try {
+        const pkg = JSON.parse(readFileSync(join(cwd, "package.json"), "utf8"));
+        if (typeof pkg?.scripts?.test === "string")
+            return "npm test";
+    }
+    catch {
+        // No readable package.json.
+    }
+    for (const [file, check] of [
+        ["pytest.ini", "pytest"],
+        ["pyproject.toml", "pytest"],
+        ["Cargo.toml", "cargo test"],
+        ["go.mod", "go test ./..."],
+    ]) {
+        if (existsSync(join(cwd, file)))
+            return check;
+    }
+    return null;
+}
+/**
+ * `goal propose --loop --check "<cmd>" <objective>`: a lit-loop's question. With no settable goal it records
+ * nothing and returns only `No goal set: <reason>`. `falsifyNow: false` skips the dry run (the prompt hook cannot
+ * wait on a test run); the objective clause still keeps such a goal false until the work is done.
+ */
+export function proposeLoopGoal(args) {
+    const objective = normalizeGoalObjective(args.objective ?? "");
+    const check = (args.check ?? "").trim();
+    if (objective === "")
+        return { line: GOAL_STATUS.skipped("name what the loop should finish") };
+    const built = compileLoopCondition(objective, check);
+    if (!built.ok)
+        return { line: GOAL_STATUS.skipped(built.reason) };
+    const lint = lintCondition(built.condition, check);
+    if (!lint.ok)
+        return { line: GOAL_STATUS.skipped(lint.reasons.join("; ")) };
+    if (args.falsifyNow !== false) {
+        const dry = falsifyLoop({
+            cwd: args.cwd,
+            check,
+            ...(args.timeoutMs === undefined ? {} : { timeoutMs: args.timeoutMs }),
+            ...(args.run === undefined ? {} : { run: args.run }),
+        });
+        if (!dry.ok)
+            return { line: GOAL_STATUS.skipped(dry.reason) };
+    }
+    const consent = {
+        version: 1,
+        kind: "loop",
+        condition: built.condition,
+        hash: conditionHash(built.condition),
+        id: built.id,
+        plan: null,
+        askedAt: new Date(args.now ?? Date.now()).toISOString(),
+    };
+    if (!writeGoalFile(args.cwd, "consent.json", { ...consent, objective }))
+        return { line: GOAL_STATUS.skipped(`${GOAL_DIR} is not writable`) };
+    return { line: GOAL_STATUS.loopAsked(built.condition), consent };
+}
 /** `yes`, `edit` and `no` (exactly, any case) answer the goal question; anything else is no answer. */
 export function consentAnswer(prompt) {
     const text = prompt.trim().toLowerCase();
@@ -240,23 +344,42 @@ export function liveConsent(cwd, now) {
     if (record === null)
         return null;
     const { condition, hash, id, plan, askedAt } = record;
-    if ((typeof condition !== "string" && condition !== null) || typeof id !== "string" || typeof plan !== "string")
+    if ((typeof condition !== "string" && condition !== null) || typeof id !== "string")
         return null;
-    if (typeof askedAt !== "string" || hash !== consentHash(plan, condition))
+    if (typeof askedAt !== "string")
         return null;
     const asked = Date.parse(askedAt);
     if (!Number.isFinite(asked) || now - asked > CONSENT_TTL_MS)
         return null;
+    if (record["kind"] === "loop") {
+        if (plan !== null || typeof condition !== "string" || hash !== conditionHash(condition))
+            return null;
+        return { version: 1, kind: "loop", condition, hash, id, plan: null, askedAt };
+    }
+    if (typeof plan !== "string" || hash !== consentHash(plan, condition))
+        return null;
     return { version: 1, condition, hash, id, plan, askedAt };
 }
-/** The goal LitCodex armed in this project, if any. */
+/** The goal LitCodex armed in this project and has not seen finish, if any. */
 export function ownedGoal(cwd) {
     const record = readGoalFile(cwd, "owner.json");
     return typeof record?.["condition"] === "string" &&
         typeof record["id"] === "string" &&
-        record["hash"] === conditionHash(record["condition"])
+        record["hash"] === conditionHash(record["condition"]) &&
+        typeof record["closedAt"] !== "string"
         ? { condition: record["condition"], id: record["id"] }
         : null;
+}
+/**
+ * The owned goal finished: the model's `update_goal` with `status: "complete"` ran, which the PostToolUse hook sees.
+ * The record is kept with `closedAt`, so a finished goal neither blocks the next lit-loop question nor earns a
+ * `/goal clear` line on `lit cancel`. A goal the user clears by hand is not seen, and stays owned until `lit cancel`.
+ */
+export function closeOwnedGoal(cwd, now) {
+    const record = readGoalFile(cwd, "owner.json");
+    if (record === null || ownedGoal(cwd) === null)
+        return false;
+    return writeGoalFile(cwd, "owner.json", { ...record, closedAt: new Date(now).toISOString() });
 }
 const ACTIVE_RUN = new Set(["continue-work", "other-session", "approve-boundary"]);
 /** The production start check: the plan is still open and no start-work run is under way in this project. */
@@ -274,12 +397,21 @@ export const defaultStartCheck = (cwd, plan, sessionId) => {
  */
 export function planAnswer(args) {
     const answer = consentAnswer(args.prompt);
-    if (answer === null)
+    if (answer === null) {
+        // Any other prompt ends a lit-loop question; a plan question waits for its answer until it expires.
+        if (readGoalFile(args.cwd, "consent.json")?.["kind"] === "loop")
+            dropGoalFile(args.cwd, "consent.json");
         return null;
+    }
     const consent = liveConsent(args.cwd, args.now);
     if (consent === null)
         return null;
     dropGoalFile(args.cwd, "consent.json");
+    if (consent.kind === "loop")
+        return loopAnswer(args.cwd, consent, answer, args.sessionId, args.now);
+    const plan = consent.plan;
+    if (plan === null)
+        return null;
     if (answer === "no") {
         return {
             context: `LitCodex plan: the user answered no. Reply with exactly \`${GOAL_STATUS.skipped("you said no")}\`, then ask how to go on with the plan; start nothing.`,
@@ -288,18 +420,18 @@ export function planAnswer(args) {
     }
     if (answer === "edit") {
         return {
-            context: `LitCodex plan: the user wants to edit. Ask one question: what to change in the plan or its \`## Done when\` check. Update ${consent.plan}, run \`node <plugin-root>/components/lit-loop/dist/cli.js goal propose ${consent.plan}\` again and ask its question again. Start and set nothing yourself.`,
+            context: `LitCodex plan: the user wants to edit. Ask one question: what to change in the plan or its \`## Done when\` check. Update ${plan}, run \`node <plugin-root>/components/lit-loop/dist/cli.js goal propose ${plan}\` again and ask its question again. Start and set nothing yourself.`,
             start: null,
         };
     }
-    const refused = (args.startCheck ?? defaultStartCheck)(args.cwd, consent.plan, args.sessionId);
+    const refused = (args.startCheck ?? defaultStartCheck)(args.cwd, plan, args.sessionId);
     if (refused !== null) {
         return {
             context: `LitCodex plan: the answer was yes, but the work cannot start. Reply with exactly \`${GOAL_STATUS.notStarted(refused)}\` and start nothing.`,
             start: null,
         };
     }
-    const start = `start-work ${basename(consent.plan).replace(/\.md$/u, "")}`;
+    const start = `start-work ${basename(plan).replace(/\.md$/u, "")}`;
     if (consent.condition === null) {
         return {
             context: `LitCodex plan: the user approved the plan with yes; this prompt starts its work as \`${start}\`. No goal comes with it.`,
@@ -311,7 +443,7 @@ export function planAnswer(args) {
         condition: consent.condition,
         hash: conditionHash(consent.condition),
         id: consent.id,
-        plan: consent.plan,
+        plan,
         sessionId: args.sessionId,
         setAt: new Date(args.now).toISOString(),
     });
@@ -321,16 +453,58 @@ export function planAnswer(args) {
             start: null,
         };
     }
-    const objective = JSON.stringify({ objective: consent.condition });
     return {
         context: [
             `LitCodex plan: the user approved the plan, its work and its goal with yes. This prompt starts the work as \`${start}\`; first set the goal with Codex's native goal tools:`,
-            `1. Call \`get_goal\`. When it reports an active goal whose objective is not exactly the condition below, that goal is the user's own: leave it, say \`${GOAL_STATUS.yours}\` and go on with the work.`,
-            `2. Otherwise call \`create_goal\` with exactly ${objective} and no other key.`,
-            `3. When create_goal succeeded, say \`${GOAL_STATUS.set(consent.id)}\`; when it failed or was denied, say \`${GOAL_STATUS.notConfirmed(consent.condition)}\`. Then carry on with the start-work run below.`,
-            `Later, only while \`get_goal\` reports exactly this objective: when every row of ${consent.plan} is ticked and its check exits 0, call \`update_goal\` with \`{"status": "complete"}\` and say \`${GOAL_STATUS.met(consent.id)}\`. On \`lit cancel\` or a BLOCKED stop, say \`${GOAL_STATUS.clearByUser(consent.id)}\`.`,
+            ...nativeGoalSteps(consent.condition, consent.id, "the start-work run below"),
+            `Later, only while \`get_goal\` reports exactly this objective: when every row of ${plan} is ticked and its check exits 0, call \`update_goal\` with \`{"status": "complete"}\` and say \`${GOAL_STATUS.met(consent.id)}\`. On \`lit cancel\` or a BLOCKED stop, say \`${GOAL_STATUS.clearByUser(consent.id)}\`.`,
         ].join("\n"),
         start,
+    };
+}
+/** The three steps that set the approved goal through Codex's native tools; the plan and loop answers share them. */
+function nativeGoalSteps(condition, id, next) {
+    return [
+        `1. Call \`get_goal\`. When it reports an active goal whose objective is not exactly the condition below, that goal is the user's own: leave it, say \`${GOAL_STATUS.yours}\` and go on with the work.`,
+        `2. Otherwise call \`create_goal\` with exactly ${JSON.stringify({ objective: condition })} and no other key.`,
+        `3. When create_goal succeeded, say \`${GOAL_STATUS.set(id)}\`; when it failed or was denied, say \`${GOAL_STATUS.notConfirmed(condition)}\`. Then carry on with ${next}.`,
+    ];
+}
+/** The answer to a lit-loop question: `yes` arms the goal and starts nothing; `no` and `edit` set nothing. */
+function loopAnswer(cwd, consent, answer, sessionId, now) {
+    const condition = consent.condition;
+    if (answer === "edit" || condition === null)
+        return null;
+    if (answer === "no") {
+        return {
+            context: `LitCodex lit-loop: the user answered no to the goal question, so no goal is set. Make the first line of your reply exactly \`${GOAL_STATUS.skipped("you said no")}\`, then go on with the lit-loop work.`,
+            start: null,
+        };
+    }
+    if (ownedGoal(cwd) !== null)
+        return null;
+    const owned = writeGoalFile(cwd, "owner.json", {
+        version: 1,
+        condition,
+        hash: conditionHash(condition),
+        id: consent.id,
+        plan: null,
+        sessionId,
+        setAt: new Date(now).toISOString(),
+    });
+    if (!owned) {
+        return {
+            context: `LitCodex lit-loop: the answer was yes, but ${GOAL_DIR} is not writable. Make the first line of your reply exactly \`${GOAL_STATUS.notConfirmed(condition)}\`, then go on with the lit-loop work.`,
+            start: null,
+        };
+    }
+    return {
+        context: [
+            "LitCodex lit-loop: the user approved the lit-loop goal with yes. This starts no start-work run; first set the goal with Codex's native goal tools:",
+            ...nativeGoalSteps(condition, consent.id, "the lit-loop work"),
+            `Later, only while \`get_goal\` reports exactly this objective: when the check in it exits 0 and the objective is done, call \`update_goal\` with \`{"status": "complete"}\` and say \`${GOAL_STATUS.met(consent.id)}\`. On \`lit cancel\` or a BLOCKED stop, say \`${GOAL_STATUS.clearByUser(consent.id)}\`.`,
+        ].join("\n"),
+        start: null,
     };
 }
 /** `lit cancel` while LitCodex owns a goal: the clear line for the user, never a clear of the goal itself. */
@@ -346,12 +520,17 @@ export function sweepGoalState(cwd, now) {
     if (readGoalFile(cwd, "consent.json") !== null && liveConsent(cwd, now) === null)
         dropGoalFile(cwd, "consent.json");
 }
-/** `cli.js goal propose <plan>`. */
+/** `cli.js goal propose <plan>` or `goal propose --loop --check "<cmd>" <objective>`. */
 export function goalCommand(argv, io) {
     if (argv[0] !== "propose") {
-        io.stderr.write("[lit-loop] goal: usage: goal propose .litcodex/plans/<slug>.md\n");
+        io.stderr.write('[lit-loop] goal: usage: goal propose .litcodex/plans/<slug>.md | goal propose --loop --check "<cmd>" <objective>\n');
         return 2;
     }
-    io.stdout.write(`${proposeGoal({ cwd: io.cwd ?? process.cwd(), planArg: argv[1] }).line}\n`);
+    const cwd = io.cwd ?? process.cwd();
+    // `--loop --check "<cmd>" <objective...>` is a lit-loop's question; a plan path is a plan's.
+    const line = argv[1] === "--loop" && argv[2] === "--check"
+        ? proposeLoopGoal({ cwd, check: argv[3], objective: argv.slice(4).join(" ") }).line
+        : proposeGoal({ cwd, planArg: argv[1] }).line;
+    io.stdout.write(`${line}\n`);
     return 0;
 }
