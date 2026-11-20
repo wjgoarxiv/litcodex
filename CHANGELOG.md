@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.44] - 2026-11-21
+
 ### Added
 
 - A `lit-loop` or `litwork` run with no plan can now get a native `/goal` too. At the run's first activation, when the
