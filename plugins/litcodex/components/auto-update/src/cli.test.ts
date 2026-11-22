@@ -125,7 +125,7 @@ describe("auto-update management fail-closed boundary", () => {
 				"exit 0",
 			].join("\n"),
 			[
-				"const mark = process.argv[1] + ".installed";",
+				'const mark = process.argv[1] + ".installed";',
 				'if (args[0] === "install") { fs.writeFileSync(mark, ""); process.exit(0); }',
 				'if (args.includes("--version")) process.stdout.write(fs.existsSync(mark) ? "0.3.57\\n" : "0.3.56\\n");',
 				'else if (args.includes("doctor")) process.stdout.write(\'{"ok":true}\\n\');',
