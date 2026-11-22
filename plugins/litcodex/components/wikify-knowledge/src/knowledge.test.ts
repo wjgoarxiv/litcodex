@@ -655,7 +655,8 @@ describe("durability and noninterference", () => {
 		expect(readFileSync(authority)).toEqual(before);
 	});
 
-	it("creates private knowledge directories", () => {
+	// Skip on Windows: POSIX file permission mode 0o700 is not enforced by the Windows FS.
+	it.skipIf(process.platform === "win32")("creates private knowledge directories", () => {
 		const projectRoot = root();
 		captureKnowledgeEvent(event(), { root: projectRoot, now: () => NOW });
 

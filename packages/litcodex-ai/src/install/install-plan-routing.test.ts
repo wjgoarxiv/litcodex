@@ -1,3 +1,4 @@
+import { join, resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import { dispatch, runCli } from "../cli.js";
@@ -51,7 +52,7 @@ describe("buildInstallPlan + renderInstallPlan (dry-run plan)", () => {
 			env: { CODEX_HOME: "/isolated/codex-home" },
 			repoRoot: "/neutral/cwd",
 		});
-		expect(opts.repoUrl).toBe("/isolated/codex-home/marketplaces/litcodex");
+		expect(opts.repoUrl).toBe(join(resolve("/isolated/codex-home"), "marketplaces", "litcodex"));
 		const text = renderInstallPlan(buildInstallPlan(opts));
 		expect(text).not.toContain("github.com");
 	});

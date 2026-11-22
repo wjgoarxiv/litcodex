@@ -10,7 +10,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 
 import { type ExecuteDeps, executeInstallPlan, type WritableFsLike } from "./execute.js";
@@ -21,14 +21,14 @@ import type { InstallStepResult } from "./types.js";
 const VALID_FAKE_AGENT_TOML = 'model = "gpt-5.6-sol"\nmodel_reasoning_effort = "high"\n';
 
 describe("executeInstallPlan — spawns ONLY codex (fake-codex argv capture)", () => {
-	const codexBin = "/usr/local/bin/codex";
-	const fakeSourceDir = "/fake/agents-src";
+	const codexBin = resolve("/usr/local/bin/codex");
+	const fakeSourceDir = resolve("/fake/agents-src");
 	const fakeAgentFile = "litcodex-fake.toml";
 
 	function deps(over: Partial<ExecuteDeps> = {}): ExecuteDeps {
 		const rec = makeSpawnRecorder(() => ({ status: 0, stdout: "" }));
 		const wfs = makeMemWriteFs({
-			initialFiles: new Map([[`${fakeSourceDir}/${fakeAgentFile}`, VALID_FAKE_AGENT_TOML]]),
+			initialFiles: new Map([[join(fakeSourceDir, fakeAgentFile), VALID_FAKE_AGENT_TOML]]),
 			sourceDirEntries: new Map([[fakeSourceDir, [fakeAgentFile]]]),
 		});
 		return {
@@ -40,7 +40,7 @@ describe("executeInstallPlan — spawns ONLY codex (fake-codex argv capture)", (
 			migrateConfig: async () => ({ changed: [], backups: [], skipped: [], stateWritten: false }),
 			writeFs: wfs,
 			agentsSourceDir: fakeSourceDir,
-			codexHome: "/tmp/codex-home",
+			codexHome: resolve("/tmp/codex-home"),
 			...over,
 		};
 	}
@@ -71,7 +71,7 @@ describe("executeInstallPlan — spawns ONLY codex (fake-codex argv capture)", (
 	it("captures Codex mutation output for the TUI instead of inheriting the spinner line", async () => {
 		const rec = makeSpawnRecorder((_cmd, args) => {
 			const command = args.join(" ");
-			if (command === "plugin marketplace add /tmp/codex-home/marketplaces/litcodex") {
+			if (command === `plugin marketplace add ${join(resolve("/tmp/codex-home"), "marketplaces", "litcodex")}`) {
 				return { status: 0, stdout: "Added marketplace `litcodex`.\nInstalled marketplace root: /tmp/local\n" };
 			}
 			if (command === "plugin add litcodex@litcodex") {
@@ -103,7 +103,7 @@ describe("executeInstallPlan — spawns ONLY codex (fake-codex argv capture)", (
 			{
 				kind: "marketplace-add",
 				status: "failed",
-				detail: "codex plugin marketplace add /tmp/codex-home/marketplaces/litcodex failed",
+				detail: `codex plugin marketplace add ${join(resolve("/tmp/codex-home"), "marketplaces", "litcodex")} failed`,
 			},
 		]);
 	});
@@ -115,7 +115,7 @@ describe("executeInstallPlan — spawns ONLY codex (fake-codex argv capture)", (
 // These tests run the REAL defaultVerifyHook + REAL @litcodex/lit-loop resolution from a NEUTRAL
 // repoRoot (no dev payload), exactly like the shipped tarball.
 describe("published-shape install (neutral repoRoot, no injected verifyHook/agentsSourceDir)", () => {
-	const codexBin = "/usr/local/bin/codex";
+	const codexBin = resolve("/usr/local/bin/codex");
 	const tmpDirs: string[] = [];
 	afterAll(() => {
 		for (const d of tmpDirs.splice(0)) rmSync(d, { recursive: true, force: true });
@@ -182,8 +182,8 @@ describe("published-shape install (neutral repoRoot, no injected verifyHook/agen
 });
 
 describe("idempotent re-install is probe-gated", () => {
-	const codexBin = "/usr/local/bin/codex";
-	const fakeSourceDir = "/fake/agents-src";
+	const codexBin = resolve("/usr/local/bin/codex");
+	const fakeSourceDir = resolve("/fake/agents-src");
 
 	it("re-run skips marketplace-add + plugin-add via probes (zero add spawns)", async () => {
 		// Probe spawns report the plugin + marketplace ALREADY present; add spawns must never run.
@@ -195,7 +195,11 @@ describe("idempotent re-install is probe-gated", () => {
 				return {
 					status: 0,
 					stdout: JSON.stringify([
-						{ name: "litcodex", sourceType: "path", source: "/tmp/codex-home/marketplaces/litcodex" },
+						{
+							name: "litcodex",
+							sourceType: "path",
+							source: join(resolve("/tmp/codex-home"), "marketplaces", "litcodex"),
+						},
 					]),
 				};
 			}
@@ -206,10 +210,10 @@ describe("idempotent re-install is probe-gated", () => {
 			return { status: 0, stdout: "" };
 		};
 		const wfs = makeMemWriteFs({
-			initialFiles: new Map([[`${fakeSourceDir}/litcodex-fake.toml`, VALID_FAKE_AGENT_TOML]]),
+			initialFiles: new Map([[join(fakeSourceDir, "litcodex-fake.toml"), VALID_FAKE_AGENT_TOML]]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-fake.toml"]]]),
 		});
-		const steps = buildInstallPlan(baseOptions({ codexHome: "/tmp/codex-home" }));
+		const steps = buildInstallPlan(baseOptions({ codexHome: resolve("/tmp/codex-home") }));
 		const result = await executeInstallPlan(steps, {
 			spawn,
 			fs: { existsSync: (p) => p === codexBin, readFileSync: () => "" },
@@ -219,7 +223,7 @@ describe("idempotent re-install is probe-gated", () => {
 			migrateConfig: async () => ({ changed: [], backups: [], skipped: [], stateWritten: false }),
 			writeFs: wfs,
 			agentsSourceDir: fakeSourceDir,
-			codexHome: "/tmp/codex-home",
+			codexHome: resolve("/tmp/codex-home"),
 		});
 		const addCalls = calls.filter((c) => c.args.includes("add"));
 		expect(addCalls.length).toBe(0);
@@ -231,15 +235,15 @@ describe("idempotent re-install is probe-gated", () => {
 });
 
 describe("managed marketplace registration migration", () => {
-	const codexBin = "/usr/local/bin/codex";
+	const codexBin = resolve("/usr/local/bin/codex");
 
 	it("replaces an existing Git marketplace with the managed local marketplace", async () => {
 		const calls: string[] = [];
-		const managedRoot = "/tmp/codex-home/marketplaces/litcodex";
+		const managedRoot = join(resolve("/tmp/codex-home"), "marketplaces", "litcodex");
 		let pluginInstalled = true;
-		const fakeSourceDir = "/fake/agents-src";
+		const fakeSourceDir = resolve("/fake/agents-src");
 		const writeFs = makeMemWriteFs({
-			initialFiles: new Map([[`${fakeSourceDir}/litcodex-fake.toml`, VALID_FAKE_AGENT_TOML]]),
+			initialFiles: new Map([[join(fakeSourceDir, "litcodex-fake.toml"), VALID_FAKE_AGENT_TOML]]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-fake.toml"]]]),
 		});
 		const result = await executeInstallPlan(buildInstallPlan(baseOptions({ repoUrl: managedRoot })), {
@@ -270,7 +274,7 @@ describe("managed marketplace registration migration", () => {
 			migrateConfig: async () => ({ changed: [], backups: [], skipped: [], stateWritten: false }),
 			writeFs,
 			agentsSourceDir: fakeSourceDir,
-			codexHome: "/tmp/codex-home",
+			codexHome: resolve("/tmp/codex-home"),
 		});
 
 		expect(result.ok).toBe(true);

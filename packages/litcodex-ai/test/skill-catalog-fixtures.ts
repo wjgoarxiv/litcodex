@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
 	AUTOCONFERENCE_PAYLOAD_HASHES,
@@ -106,7 +106,7 @@ export function catalogFs(installed: ReadonlySet<string>, marketplaceRoot: strin
 	return {
 		existsSync: (path: string) => installed.has(path),
 		listFilesRecursive: (root: string) => {
-			const skillId = root.slice(root.lastIndexOf("/") + 1) as keyof typeof EXACT_PAYLOADS;
+			const skillId = basename(root) as keyof typeof EXACT_PAYLOADS;
 			return skillId in EXACT_PAYLOADS ? Object.keys(EXACT_PAYLOADS[skillId]) : [];
 		},
 		readFileBufferSync: (path: string) => readFileSync(join(sourceRoot, path.slice(skillsRoot.length + 1))),

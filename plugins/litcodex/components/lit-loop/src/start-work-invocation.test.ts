@@ -28,7 +28,8 @@ describe("start-work explicit execution route", () => {
 			const context = parsed.hookSpecificOutput.additionalContext;
 			expect(context).toContain("<start-work-mode>");
 			expect(context).toContain("🔥 **LIT IGNITED · start-work** 🔥");
-			expect(context).toMatch(/^skill start-work: .+\/skills\/start-work\/SKILL\.md$/mu);
+			// Normalize backslashes so the regex works on both POSIX and Windows paths.
+			expect(context.replace(/\\/gu, "/")).toMatch(/^skill start-work: .+\/skills\/start-work\/SKILL\.md$/mu);
 			expect(context).toContain("same-named skill from another harness");
 			expect(context).not.toContain("🔥 START-WORK BLOCKED 🔥");
 		}

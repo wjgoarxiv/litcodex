@@ -264,7 +264,7 @@ describe("litcodex extensions", () => {
 		expect(missing.err).toMatch(/git is not available/u);
 		const badFrom = run(w, ["install", "lit-docx", "--from", join(w.root, "nowhere"), "--yes"]);
 		expect(badFrom.code).toBe(1);
-		expect(badFrom.err).toContain("variants/litcodex");
+		expect(badFrom.err).toContain(join("variants", "litcodex"));
 		expect(existsSync(join(w.codexHome, "skills"))).toBe(false);
 	});
 
@@ -470,19 +470,23 @@ describe("litcodex extensions", () => {
 		expect(stopped.err).toContain(personal);
 	});
 
-	it("the duplicate fix line moves the copy into a dated backup set that prune-backups lists", () => {
-		const w = world();
-		writeSkill(join(w.codexHome, "skills", "old-docx"), "lit-docx", "renamed copy");
-		const [finding] = check(w).findings;
-		expect(finding?.kind).toBe("duplicate");
-		expect(finding?.fix).not.toContain("manual");
-		const ran = spawnSync("/bin/bash", ["-c", finding?.fix ?? "false"], { encoding: "utf8" });
-		expect(ran.status, ran.stderr).toBe(0);
-		expect(check(w).findings).toEqual([]);
-		const listed = run(w, ["prune-backups"]);
-		expect(listed.out).toMatch(/\d{8}-\d{6}\s.*old-docx/u);
-		expect(check(w).backups.count).toBe(1);
-	});
+	// /bin/bash is not available on Windows; the fix command is a POSIX shell snippet.
+	it.skipIf(process.platform === "win32")(
+		"the duplicate fix line moves the copy into a dated backup set that prune-backups lists",
+		() => {
+			const w = world();
+			writeSkill(join(w.codexHome, "skills", "old-docx"), "lit-docx", "renamed copy");
+			const [finding] = check(w).findings;
+			expect(finding?.kind).toBe("duplicate");
+			expect(finding?.fix).not.toContain("manual");
+			const ran = spawnSync("/bin/bash", ["-c", finding?.fix ?? "false"], { encoding: "utf8" });
+			expect(ran.status, ran.stderr).toBe(0);
+			expect(check(w).findings).toEqual([]);
+			const listed = run(w, ["prune-backups"]);
+			expect(listed.out).toMatch(/\d{8}-\d{6}\s.*old-docx/u);
+			expect(check(w).backups.count).toBe(1);
+		},
+	);
 
 	it("the notice's check line leaves out the stale notice that the same install replaces", () => {
 		const w = world();

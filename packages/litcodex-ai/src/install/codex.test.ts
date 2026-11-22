@@ -1,12 +1,18 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { codexSpawnInvocation, findCodexBinary, type ReadonlyFsLike } from "./codex.js";
+
+// path.join normalises forward/back slashes; normalise fake FS keys and expected values the same way.
+function posixKey(p: string): string {
+	return p.replaceAll("\\", "/");
+}
 
 describe("Windows-shaped Codex discovery", () => {
 	it("resolves a codex.cmd shim from a Windows PATH", () => {
 		const files = new Set(["/windows/bin/codex.cmd"]);
 		const fs: ReadonlyFsLike = {
-			existsSync: (path) => files.has(path),
+			existsSync: (path) => files.has(posixKey(path)),
 			readFileSync: () => "",
 		};
 
@@ -19,13 +25,13 @@ describe("Windows-shaped Codex discovery", () => {
 				fs,
 				"win32",
 			),
-		).toBe("/windows/bin/codex.cmd");
+		).toBe(join("/windows/bin", "codex.cmd"));
 	});
 
 	it("resolves a codex.ps1-only Windows PATH", () => {
 		const files = new Set(["/windows/bin/codex.ps1"]);
 		const fs: ReadonlyFsLike = {
-			existsSync: (path) => files.has(path),
+			existsSync: (path) => files.has(posixKey(path)),
 			readFileSync: () => "",
 		};
 
@@ -38,7 +44,7 @@ describe("Windows-shaped Codex discovery", () => {
 				fs,
 				"win32",
 			),
-		).toBe("/windows/bin/codex.ps1");
+		).toBe(join("/windows/bin", "codex.ps1"));
 	});
 
 	it("routes a codex.ps1 shim through powershell -NoProfile -ExecutionPolicy Bypass -File", () => {

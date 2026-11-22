@@ -84,8 +84,9 @@ describe("moved skills are same-name stubs that point at wjgoarxiv-skills", () =
 	});
 
 	it.each(MOVED)("$id ships only the stub and its Codex picker metadata", ({ id }) => {
+		// On Windows path.relative() uses backslashes; normalise to forward slash for the comparison.
 		const files = walk(join(SKILLS_DIR, id))
-			.map((path) => relative(join(SKILLS_DIR, id), path))
+			.map((path) => relative(join(SKILLS_DIR, id), path).replace(/\\/gu, "/"))
 			.sort();
 		const allowed = existsSync(join(SKILLS_DIR, id, "agents", "openai.yaml"))
 			? ["SKILL.md", "agents/openai.yaml"]

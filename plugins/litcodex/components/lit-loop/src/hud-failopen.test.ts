@@ -101,11 +101,15 @@ describe("hud fail-open reads", () => {
 		expect(text).not.toContain("Evil");
 	});
 
-	it.skipIf(process.getuid?.() === 0)("says it cannot read a live step it has no permission for", () => {
-		const { env, cwd } = session();
-		chmodSync(liveStepPath(cwd, ID) as string, 0o000);
-		expect(frame(env)).toContain("cannot read live step");
-	});
+	// Windows ignores POSIX file-mode bits; chmodSync(0o000) leaves the file readable there. POSIX only.
+	it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
+		"says it cannot read a live step it has no permission for",
+		() => {
+			const { env, cwd } = session();
+			chmodSync(liveStepPath(cwd, ID) as string, 0o000);
+			expect(frame(env)).toContain("cannot read live step");
+		},
+	);
 
 	it("says it cannot read a corrupt workflow record", () => {
 		const { env, cwd } = session();
@@ -211,31 +215,36 @@ describe("hud exit", () => {
 		expect(out.at(-1)).toBe(LEAVE);
 	});
 
-	it("exits 0 when the built command gets SIGTERM", async () => {
-		const home = realpathSync(mkdtempSync(join(tmpdir(), "litcodex-hud-proc-")));
-		roots.push(home);
-		const child = spawn(process.execPath, [PUBLIC_BIN, "hud"], {
-			env: { PATH: process.env["PATH"] ?? "", HOME: home, CODEX_HOME: join(home, ".codex") },
-			stdio: ["ignore", "pipe", "pipe"],
-		});
-		let stdout = "";
-		let stderr = "";
-		child.stderr.on("data", (chunk: Buffer) => {
-			stderr += chunk.toString("utf8");
-		});
-		await new Promise<void>((resolve, reject) => {
-			child.on("error", reject);
-			child.stdout.on("data", (chunk: Buffer) => {
-				stdout += chunk.toString("utf8");
-				resolve();
+	// Windows does not support graceful SIGTERM handlers; the process exits with signal instead of code 0.
+	it.skipIf(process.platform === "win32")(
+		"exits 0 when the built command gets SIGTERM",
+		async () => {
+			const home = realpathSync(mkdtempSync(join(tmpdir(), "litcodex-hud-proc-")));
+			roots.push(home);
+			const child = spawn(process.execPath, [PUBLIC_BIN, "hud"], {
+				env: { PATH: process.env["PATH"] ?? "", HOME: home, CODEX_HOME: join(home, ".codex") },
+				stdio: ["ignore", "pipe", "pipe"],
 			});
-		});
-		child.kill("SIGTERM");
-		const [code, signal] = await new Promise<[number | null, NodeJS.Signals | null]>((resolve) =>
-			child.on("exit", (exitCode, exitSignal) => resolve([exitCode, exitSignal])),
-		);
-		expect({ code, signal, stderr }).toEqual({ code: 0, signal: null, stderr: "" });
-		expect(stdout).toContain("waiting for a LIT session");
-		expect(stdout).not.toContain("\u001b[?1049h");
-	}, 20_000);
+			let stdout = "";
+			let stderr = "";
+			child.stderr.on("data", (chunk: Buffer) => {
+				stderr += chunk.toString("utf8");
+			});
+			await new Promise<void>((resolve, reject) => {
+				child.on("error", reject);
+				child.stdout.on("data", (chunk: Buffer) => {
+					stdout += chunk.toString("utf8");
+					resolve();
+				});
+			});
+			child.kill("SIGTERM");
+			const [code, signal] = await new Promise<[number | null, NodeJS.Signals | null]>((resolve) =>
+				child.on("exit", (exitCode, exitSignal) => resolve([exitCode, exitSignal])),
+			);
+			expect({ code, signal, stderr }).toEqual({ code: 0, signal: null, stderr: "" });
+			expect(stdout).toContain("waiting for a LIT session");
+			expect(stdout).not.toContain("\u001b[?1049h");
+		},
+		20_000,
+	);
 });

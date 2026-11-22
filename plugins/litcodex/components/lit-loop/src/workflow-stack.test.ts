@@ -214,7 +214,8 @@ describe("store", () => {
 		const read = readStack(cwd, "sess/1");
 		expect(read.frames).toHaveLength(2);
 		expect(pausedSpine(read)).toMatchObject({ skill: "lit-loop", stage: "RED", n: 1, total: 4 });
-		expect(stackPath(cwd, "sess/1")).toContain(".litcodex/workflow-stack/");
+		// Normalize backslashes so the check works on both POSIX and Windows paths.
+		expect(stackPath(cwd, "sess/1")?.replace(/\\/gu, "/")).toContain(".litcodex/workflow-stack/");
 	});
 
 	it("reads a link, an oversized file and malformed JSON as empty", () => {

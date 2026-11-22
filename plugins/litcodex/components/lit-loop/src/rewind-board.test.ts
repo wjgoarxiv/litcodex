@@ -40,7 +40,8 @@ function scratch(withSessions = true): Scratch {
 		const day = join(codexHome, "sessions/2026/10/25");
 		for (const name of readdirSync(day)) {
 			const file = join(day, name);
-			writeFileSync(file, readFileSync(file, "utf8").replaceAll("__CWD__", workspace));
+			// JSON-encode the path so Windows backslashes become valid JSON escape sequences.
+			writeFileSync(file, readFileSync(file, "utf8").replaceAll("__CWD__", JSON.stringify(workspace).slice(1, -1)));
 			const when = name.includes("aaaaaaaa") ? NOW - 5 * 3_600_000 : NOW - 4 * 60_000;
 			utimesSync(file, when / 1000, when / 1000);
 		}

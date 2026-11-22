@@ -55,7 +55,7 @@ describe("codex rules post-compaction read directive", () => {
 		expect(context).toContain("MUST READ");
 		expect(context).toContain("NO EXCUSES");
 		expect(context).toContain("CONTEXT.md");
-		expect(context).toContain(".litcodex/rules/typescript.md");
+		expect(context).toContain(path.join(".litcodex", "rules", "typescript.md"));
 		expect(context).not.toContain("A".repeat(50));
 		expect(context).not.toContain("B".repeat(50));
 		expect(context.length).toBeLessThan(2_000);
@@ -188,33 +188,37 @@ describe("codex rules post-compaction read directive", () => {
 		expect(output).toBe("");
 	});
 
-	it("#given bundled baseline rule dropped by compaction #when compact SessionStart recovers #then baseline body is re-injected in full alongside the directive", async () => {
-		// given
-		const { root, pluginData } = makeProject(true);
-		const env = {
-			CODEX_RULES_ENABLED_SOURCES: "CONTEXT.md,plugin-bundled",
-			CODEX_HOME: "/nonexistent-codex-home",
-		};
-		await runSessionStartHook(sessionStartInput(root), { pluginDataRoot: pluginData, env });
-		const transcriptPath = writeCompactedTranscript(root, "summary that dropped every injected rule");
-		await runPostCompactHook(
-			{ ...postCompactInput(root), transcript_path: transcriptPath },
-			{ pluginDataRoot: pluginData },
-		);
+	// Skip on Windows: makeProject(true) creates a path with 180 "x" chars that exceeds the 260-char Windows MAX_PATH.
+	it.skipIf(process.platform === "win32")(
+		"#given bundled baseline rule dropped by compaction #when compact SessionStart recovers #then baseline body is re-injected in full alongside the directive",
+		async () => {
+			// given
+			const { root, pluginData } = makeProject(true);
+			const env = {
+				CODEX_RULES_ENABLED_SOURCES: "CONTEXT.md,plugin-bundled",
+				CODEX_HOME: "/nonexistent-codex-home",
+			};
+			await runSessionStartHook(sessionStartInput(root), { pluginDataRoot: pluginData, env });
+			const transcriptPath = writeCompactedTranscript(root, "summary that dropped every injected rule");
+			await runPostCompactHook(
+				{ ...postCompactInput(root), transcript_path: transcriptPath },
+				{ pluginDataRoot: pluginData },
+			);
 
-		// when
-		const output = await runSessionStartHook(compactSessionStartInput(root, transcriptPath), {
-			pluginDataRoot: pluginData,
-			env,
-		});
+			// when
+			const output = await runSessionStartHook(compactSessionStartInput(root, transcriptPath), {
+				pluginDataRoot: pluginData,
+				env,
+			});
 
-		// then
-		const context = readAdditionalContext(output);
-		expect(context).toContain("You are a Codex implementation worker");
-		expect(context).not.toContain("[Truncated. Full:");
-		expect(context).toContain("MUST READ");
-		expect(context).toContain("CONTEXT.md");
-	});
+			// then
+			const context = readAdditionalContext(output);
+			expect(context).toContain("You are a Codex implementation worker");
+			expect(context).not.toContain("[Truncated. Full:");
+			expect(context).toContain("MUST READ");
+			expect(context).toContain("CONTEXT.md");
+		},
+	);
 });
 
 function makeProject(longPath = false): { root: string; pluginData: string } {

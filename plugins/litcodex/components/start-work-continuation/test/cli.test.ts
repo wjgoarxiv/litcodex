@@ -394,59 +394,67 @@ describe("start-work continuation CLI", () => {
 		expect(readdirSync(join(cwd, ".litcodex", "plans")).filter((name) => name.endsWith(".tmp"))).toEqual([]);
 	});
 
-	it("leaves no plan or temp file when a writer is interrupted before stdin closes", async () => {
-		const cwd = createBareWorkspace();
-		const child = spawnCli(["publish-plan", "--cwd", cwd, "--slug", "interrupted"]);
-		const resultPromise = collectChild(child);
-		child.stdin.write(validPlan("interrupted"));
-		child.kill("SIGTERM");
-		const result = await resultPromise;
+	// Skip on Windows: relies on POSIX process signals (SIGTERM) which behave differently on Windows.
+	it.skipIf(process.platform === "win32")(
+		"leaves no plan or temp file when a writer is interrupted before stdin closes",
+		async () => {
+			const cwd = createBareWorkspace();
+			const child = spawnCli(["publish-plan", "--cwd", cwd, "--slug", "interrupted"]);
+			const resultPromise = collectChild(child);
+			child.stdin.write(validPlan("interrupted"));
+			child.kill("SIGTERM");
+			const result = await resultPromise;
 
-		expect(result.signal).toBe("SIGTERM");
-		expect(existsSync(join(cwd, ".litcodex"))).toBe(false);
-	});
+			expect(result.signal).toBe("SIGTERM");
+			expect(existsSync(join(cwd, ".litcodex"))).toBe(false);
+		},
+	);
 
 	for (const signal of ["SIGTERM", "SIGINT"] as const) {
-		it(`cleans the temporary plan when the built CLI receives ${signal} after publishing starts`, async () => {
-			const cwd = createBareWorkspace();
-			const plansPath = join(cwd, ".litcodex", "plans");
-			mkdirSync(plansPath, { recursive: true });
-			const preloadPath = join(cwd, `publisher-signal-${signal.toLowerCase()}.cjs`);
-			const readyPath = join(cwd, `publisher-signal-${signal.toLowerCase()}.ready`);
-			writeFileSync(preloadPath, publisherSignalProbe(), "utf8");
-			const plan = validPlan(`interrupted-${signal}`, 900_000);
-			const child = spawnCli(["publish-plan", "--cwd", cwd, "--slug", `interrupted-${signal.toLowerCase()}`], {
-				env: {
-					...process.env,
-					NODE_OPTIONS: [process.env["NODE_OPTIONS"], `--require=${preloadPath}`].filter(Boolean).join(" "),
-					LITCODEX_PLAN_PUBLISHER_READY: readyPath,
-				},
-			});
-			const resultPromise = collectChild(child);
+		// Skip on Windows: child.kill("SIGCONT") throws TypeError: Unknown signal on Windows.
+		it.skipIf(process.platform === "win32")(
+			`cleans the temporary plan when the built CLI receives ${signal} after publishing starts`,
+			async () => {
+				const cwd = createBareWorkspace();
+				const plansPath = join(cwd, ".litcodex", "plans");
+				mkdirSync(plansPath, { recursive: true });
+				const preloadPath = join(cwd, `publisher-signal-${signal.toLowerCase()}.cjs`);
+				const readyPath = join(cwd, `publisher-signal-${signal.toLowerCase()}.ready`);
+				writeFileSync(preloadPath, publisherSignalProbe(), "utf8");
+				const plan = validPlan(`interrupted-${signal}`, 900_000);
+				const child = spawnCli(["publish-plan", "--cwd", cwd, "--slug", `interrupted-${signal.toLowerCase()}`], {
+					env: {
+						...process.env,
+						NODE_OPTIONS: [process.env["NODE_OPTIONS"], `--require=${preloadPath}`].filter(Boolean).join(" "),
+						LITCODEX_PLAN_PUBLISHER_READY: readyPath,
+					},
+				});
+				const resultPromise = collectChild(child);
 
-			try {
-				child.stdin.end(plan);
-				const temporary = await waitForPublisherReady(readyPath);
-				expect(existsSync(temporary)).toBe(true);
-				await new Promise((resolve) => setTimeout(resolve, 20));
-				child.kill(signal);
-				child.kill("SIGCONT");
-				const result = await resultPromise;
+				try {
+					child.stdin.end(plan);
+					const temporary = await waitForPublisherReady(readyPath);
+					expect(existsSync(temporary)).toBe(true);
+					await new Promise((resolve) => setTimeout(resolve, 20));
+					child.kill(signal);
+					child.kill("SIGCONT");
+					const result = await resultPromise;
 
-				expect(result.signal).toBeNull();
-				expect([0, signal === "SIGINT" ? 130 : 143]).toContain(result.status);
-				expect(readdirSync(plansPath).filter((name) => name.endsWith(".md.tmp"))).toEqual([]);
-				const target = join(plansPath, `interrupted-${signal.toLowerCase()}.md`);
-				if (result.status === 0) {
-					expect(readFileSync(target, "utf8")).toBe(plan);
-				} else if (existsSync(target)) {
-					expect(readFileSync(target, "utf8")).toBe(plan);
+					expect(result.signal).toBeNull();
+					expect([0, signal === "SIGINT" ? 130 : 143]).toContain(result.status);
+					expect(readdirSync(plansPath).filter((name) => name.endsWith(".md.tmp"))).toEqual([]);
+					const target = join(plansPath, `interrupted-${signal.toLowerCase()}.md`);
+					if (result.status === 0) {
+						expect(readFileSync(target, "utf8")).toBe(plan);
+					} else if (existsSync(target)) {
+						expect(readFileSync(target, "utf8")).toBe(plan);
+					}
+				} finally {
+					if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+					if (child.exitCode === null && child.signalCode === null) await resultPromise;
 				}
-			} finally {
-				if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
-				if (child.exitCode === null && child.signalCode === null) await resultPromise;
-			}
-		});
+			},
+		);
 	}
 
 	it("cleans the temporary plan after a write error", () => {

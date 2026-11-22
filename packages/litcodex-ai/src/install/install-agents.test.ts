@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { runAgentsInstall } from "./agents-install.js";
@@ -10,9 +10,9 @@ import { buildInstallPlan } from "./plan.js";
 import { renderInstallPlan } from "./render-plan.js";
 
 describe("agents-install step — runAgentsInstall", () => {
-	const codexBin = "/usr/local/bin/codex";
-	const fakeSourceDir = "/fake/src/agents";
-	const codexHome = "/tmp/codex-home-agents-test";
+	const codexBin = resolve("/usr/local/bin/codex");
+	const fakeSourceDir = resolve("/fake/src/agents");
+	const codexHome = resolve("/tmp/codex-home-agents-test");
 	const agentToml = (name: string) =>
 		`model = "gpt-5.6-sol"\nmodel_reasoning_effort = "high"\n[agent]\nname="${name}"\n`;
 
@@ -40,8 +40,8 @@ describe("agents-install step — runAgentsInstall", () => {
 	it("fresh install: two toml files written; result detail mentions installed count", async () => {
 		const wfs = makeMemWriteFs({
 			initialFiles: new Map([
-				[`${fakeSourceDir}/litcodex-alpha.toml`, agentToml("alpha")],
-				[`${fakeSourceDir}/litcodex-beta.toml`, agentToml("beta")],
+				[join(fakeSourceDir, "litcodex-alpha.toml"), agentToml("alpha")],
+				[join(fakeSourceDir, "litcodex-beta.toml"), agentToml("beta")],
 			]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-alpha.toml", "litcodex-beta.toml"]]]),
 		});
@@ -51,11 +51,11 @@ describe("agents-install step — runAgentsInstall", () => {
 		expect(step?.status).toBe("ok");
 		expect(step?.detail).toMatch(/2 agent role\(s\) installed/);
 		// Both files written to <codexHome>/agents/
-		expect(wfs.written.has(`${codexHome}/agents/litcodex-alpha.toml`)).toBe(true);
-		expect(wfs.written.has(`${codexHome}/agents/litcodex-beta.toml`)).toBe(true);
+		expect(wfs.written.has(join(codexHome, "agents", "litcodex-alpha.toml"))).toBe(true);
+		expect(wfs.written.has(join(codexHome, "agents", "litcodex-beta.toml"))).toBe(true);
 		// Nothing written outside codexHome/agents
 		for (const key of wfs.written.keys()) {
-			expect(key.startsWith(`${codexHome}/agents/`)).toBe(true);
+			expect(key.startsWith(join(codexHome, "agents") + sep)).toBe(true);
 		}
 	});
 
@@ -69,7 +69,7 @@ describe("agents-install step — runAgentsInstall", () => {
 			'"""',
 		].join("\n");
 		const wfs = makeMemWriteFs({
-			initialFiles: new Map([[`${fakeSourceDir}/litcodex-default.toml`, source]]),
+			initialFiles: new Map([[join(fakeSourceDir, "litcodex-default.toml"), source]]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-default.toml"]]]),
 		});
 
@@ -81,11 +81,11 @@ describe("agents-install step — runAgentsInstall", () => {
 			}),
 		);
 
-		const installed = wfs.written.get(`${codexHome}/litcodex-default.toml`) ?? "";
+		const installed = wfs.written.get(join(codexHome, "litcodex-default.toml")) ?? "";
 		expect(installed).toContain('model = "gpt-6-astra"');
 		expect(installed).toContain('model_reasoning_effort = "xhigh"');
 		expect(installed).toContain("Keep the generic helper contract and tools.");
-		expect(wfs.written.has(`${codexHome}/agents/litcodex-default.toml`)).toBe(false);
+		expect(wfs.written.has(join(codexHome, "agents", "litcodex-default.toml"))).toBe(false);
 	});
 
 	it("ordinary reinstall preserves the existing generic route even when Astra is selected", async () => {
@@ -105,10 +105,10 @@ describe("agents-install step — runAgentsInstall", () => {
 			"User instructions remain byte-for-byte intact.",
 			'"""',
 		].join("\n");
-		const target = `${codexHome}/litcodex-default.toml`;
+		const target = join(codexHome, "litcodex-default.toml");
 		const wfs = makeMemWriteFs({
 			initialFiles: new Map([
-				[`${fakeSourceDir}/litcodex-default.toml`, source],
+				[join(fakeSourceDir, "litcodex-default.toml"), source],
 				[target, existing],
 			]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-default.toml"]]]),
@@ -144,10 +144,10 @@ describe("agents-install step — runAgentsInstall", () => {
 			"User body must remain byte-for-byte intact.",
 			'"""',
 		].join("\n");
-		const target = `${codexHome}/litcodex-default.toml`;
+		const target = join(codexHome, "litcodex-default.toml");
 		const wfs = makeMemWriteFs({
 			initialFiles: new Map([
-				[`${fakeSourceDir}/litcodex-default.toml`, source],
+				[join(fakeSourceDir, "litcodex-default.toml"), source],
 				[target, existing],
 			]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-default.toml"]]]),
@@ -182,10 +182,10 @@ describe("agents-install step — runAgentsInstall", () => {
 			"User-owned bytes stay at the legacy path.",
 			'"""',
 		].join("\n");
-		const legacy = `${codexHome}/agents/litcodex-default.toml`;
+		const legacy = join(codexHome, "agents", "litcodex-default.toml");
 		const wfs = makeMemWriteFs({
 			initialFiles: new Map([
-				[`${fakeSourceDir}/litcodex-default.toml`, source],
+				[join(fakeSourceDir, "litcodex-default.toml"), source],
 				[legacy, source],
 			]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-default.toml"]]]),
@@ -289,10 +289,10 @@ describe("agents-install step — runAgentsInstall", () => {
 		// Pre-seed target with same content as source.
 		const wfs = makeMemWriteFs({
 			initialFiles: new Map([
-				[`${fakeSourceDir}/litcodex-alpha.toml`, content1],
-				[`${fakeSourceDir}/litcodex-beta.toml`, content2],
-				[`${codexHome}/agents/litcodex-alpha.toml`, content1],
-				[`${codexHome}/agents/litcodex-beta.toml`, content2],
+				[join(fakeSourceDir, "litcodex-alpha.toml"), content1],
+				[join(fakeSourceDir, "litcodex-beta.toml"), content2],
+				[join(codexHome, "agents", "litcodex-alpha.toml"), content1],
+				[join(codexHome, "agents", "litcodex-beta.toml"), content2],
 			]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-alpha.toml", "litcodex-beta.toml"]]]),
 		});
@@ -310,29 +310,29 @@ describe("agents-install step — runAgentsInstall", () => {
 		const oldContent = 'model = "gpt-5.6-luna"\nmodel_reasoning_effort = "max"\n[agent]\nname="alpha-v1"\n';
 		const wfs = makeMemWriteFs({
 			initialFiles: new Map([
-				[`${fakeSourceDir}/litcodex-alpha.toml`, sourceContent],
-				[`${codexHome}/agents/litcodex-alpha.toml`, oldContent],
+				[join(fakeSourceDir, "litcodex-alpha.toml"), sourceContent],
+				[join(codexHome, "agents", "litcodex-alpha.toml"), oldContent],
 			]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-alpha.toml"]]]),
 		});
 		const steps = [agentStep()];
 		await executeInstallPlan(steps, baseAgentDeps(wfs, { reconfigure: true }));
 		// Explicit reconfigure updates only the native route header and keeps user body fields.
-		const updated = wfs.written.get(`${codexHome}/agents/litcodex-alpha.toml`) ?? "";
+		const updated = wfs.written.get(join(codexHome, "agents", "litcodex-alpha.toml")) ?? "";
 		expect(updated).toContain('model = "gpt-5.6-sol"');
 		expect(updated).toContain('model_reasoning_effort = "high"');
 		expect(updated).toContain('name="alpha-v1"');
 		expect(updated).not.toBe(sourceContent);
 		// A backup file matching the pattern should exist.
 		const backupKeys = [...wfs.written.keys()].filter((k) =>
-			k.startsWith(`${codexHome}/agents/litcodex-alpha.toml.litcodex-bak.`),
+			k.startsWith(`${join(codexHome, "agents", "litcodex-alpha.toml")}.litcodex-bak.`),
 		);
 		expect(backupKeys.length).toBe(1);
 		// Backup contains the OLD content.
 		expect(wfs.written.get(backupKeys[0] ?? "")).toBe(oldContent);
 		// All writes are inside codexHome/agents/.
 		for (const key of wfs.written.keys()) {
-			expect(key.startsWith(`${codexHome}/agents/`)).toBe(true);
+			expect(key.startsWith(join(codexHome, "agents") + sep)).toBe(true);
 		}
 	});
 
@@ -346,10 +346,10 @@ describe("agents-install step — runAgentsInstall", () => {
 			"Keep this user instruction and tool policy.",
 			'"""',
 		].join("\n");
-		const target = `${codexHome}/agents/litcodex-alpha.toml`;
+		const target = join(codexHome, "agents", "litcodex-alpha.toml");
 		const wfs = makeMemWriteFs({
 			initialFiles: new Map([
-				[`${fakeSourceDir}/litcodex-alpha.toml`, sourceContent],
+				[join(fakeSourceDir, "litcodex-alpha.toml"), sourceContent],
 				[target, userContent],
 			]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-alpha.toml"]]]),
@@ -369,10 +369,10 @@ describe("agents-install step — runAgentsInstall", () => {
 		["unsafe Astra", 'model = "gpt-6-astra"\nmodel_reasoning_effort = "invalid"\n', "UNSAFE_MODEL_ROUTE"],
 		["malformed TOML", 'model = "gpt-6-astra\nmodel_reasoning_effort = "xhigh"\n', "AGENTS_MISSING"],
 	])("preflights an existing %s before any agent write", (_label, existing, code) => {
-		const target = `${codexHome}/agents/litcodex-alpha.toml`;
+		const target = join(codexHome, "agents", "litcodex-alpha.toml");
 		const wfs = makeMemWriteFs({
 			initialFiles: new Map([
-				[`${fakeSourceDir}/litcodex-alpha.toml`, agentToml("alpha-managed")],
+				[join(fakeSourceDir, "litcodex-alpha.toml"), agentToml("alpha-managed")],
 				[target, existing],
 			]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-alpha.toml"]]]),
@@ -411,13 +411,13 @@ describe("agents-install step — runAgentsInstall", () => {
 
 	it("all writes confined to codexHome/agents/ sandbox (hermeticity assertion)", async () => {
 		const wfs = makeMemWriteFs({
-			initialFiles: new Map([[`${fakeSourceDir}/litcodex-gamma.toml`, agentToml("gamma")]]),
+			initialFiles: new Map([[join(fakeSourceDir, "litcodex-gamma.toml"), agentToml("gamma")]]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-gamma.toml"]]]),
 		});
 		const steps = [agentStep()];
 		await executeInstallPlan(steps, baseAgentDeps(wfs));
 		for (const key of wfs.written.keys()) {
-			expect(key.startsWith(`${codexHome}/agents/`), `Write escaped sandbox: ${key}`).toBe(true);
+			expect(key.startsWith(join(codexHome, "agents") + sep), `Write escaped sandbox: ${key}`).toBe(true);
 		}
 	});
 });

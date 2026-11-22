@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { acceptedModelIds, FALLBACK_CATALOG, modelDefinition } from "../config-migration/catalog.js";
 import { parseConfigMigrateArgs } from "../config-migration/cli.js";
@@ -426,7 +427,7 @@ describe("ChatGPT-auth Sol dispatch fix", () => {
 
 describe("uninstall removes the managed subagent keys", () => {
 	it("strips default_subagent_model/effort from config.toml and keeps the rest", () => {
-		const codexHome = "/tmp/codex-home";
+		const codexHome = resolve("/tmp/codex-home");
 		const config = [
 			'model = "gpt-5.6-luna"',
 			"[agents]",
@@ -451,7 +452,7 @@ describe("uninstall removes the managed subagent keys", () => {
 			},
 		});
 		expect(result.ok).toBe(true);
-		const written = writes.get(`${codexHome}/config.toml`) ?? "";
+		const written = writes.get(join(codexHome, "config.toml")) ?? "";
 		expect(written).not.toContain("default_subagent_model");
 		expect(written).not.toContain("default_subagent_reasoning_effort");
 		expect(written).toContain('model = "gpt-5.6-luna"');

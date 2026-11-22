@@ -73,7 +73,17 @@ describe("foreground auto-update plan", () => {
 			source: "session-start",
 		});
 		expect(plan).toMatchObject({ shouldRun: true, currentVersion: "1.2.3", latestVersion: "1.2.4" });
-		expect(plan.args).toEqual(["install", "--global", "--no-fund", "--no-audit", "@litfamily/litcodex@1.2.4"]);
+		// On Windows, args may be prefixed with the npm-cli.js path; slice from the "install" subcommand.
+		const args = plan.args ?? [];
+		const installIdx = args.indexOf("install");
+		expect(installIdx).toBeGreaterThanOrEqual(0);
+		expect(args.slice(installIdx)).toEqual([
+			"install",
+			"--global",
+			"--no-fund",
+			"--no-audit",
+			"@litfamily/litcodex@1.2.4",
+		]);
 	});
 
 	it.each([
@@ -169,11 +179,11 @@ describe("foreground auto-update transaction", () => {
 				stateRoot: root,
 				spawn: (_command, args) => {
 					(calls as (readonly string[])[]).push(args);
-					if (args[0] === "install" && args.at(-1) === "@litfamily/litcodex@1.2.4") {
+					if (npmSubcmd(args) === "install" && args.at(-1) === "@litfamily/litcodex@1.2.4") {
 						installAttempt += 1;
 						return { status: 0, signal: null, error: undefined };
 					}
-					if (args[0] === "exec") return { status: 0, stdout: "1.2.3\n", signal: null, error: undefined };
+					if (npmSubcmd(args) === "exec") return { status: 0, stdout: "1.2.3\n", signal: null, error: undefined };
 					return { status: 0, signal: null, error: undefined };
 				},
 			});
@@ -204,7 +214,7 @@ describe("foreground auto-update transaction", () => {
 				source: "management-command",
 				stateRoot: root,
 				spawn: (_command, args) =>
-					args[0] === "exec"
+					npmSubcmd(args) === "exec"
 						? { status: 1, signal: null, error: undefined }
 						: { status: 0, signal: null, error: undefined },
 			});
@@ -628,7 +638,9 @@ describe("foreground auto-update transaction", () => {
 		try {
 			const host = statefulHost({ globalVersion: "1.2.3", marketplaceVersion: "1.2.3", registryVersion: "1.2.4" });
 			const offline: AutoUpdateSpawn = (command, args, options) =>
-				args[0] === "view" ? { status: 1, signal: null, error: undefined } : host.spawn(command, args, options);
+				npmSubcmd(args) === "view"
+					? { status: 1, signal: null, error: undefined }
+					: host.spawn(command, args, options);
 			const run = (now: number, currentVersion: string, spawn = host.spawn) =>
 				runForegroundAutoUpdate({ env: {}, now, currentVersion, source: "session-start", stateRoot: root, spawn });
 			const receipt = () => JSON.parse(readFileSync(join(root, "receipt.json"), "utf8")) as Record<string, unknown>;
@@ -786,6 +798,12 @@ interface HostCall {
 	readonly timeout: number;
 }
 
+// On Windows, resolveNpmInvocation prepends the npm-cli.js path so args[0] is a file path, not the
+// npm sub-command. npmSubcmd returns the first arg that is not a path so mocks work on both platforms.
+function npmSubcmd(args: readonly string[]): string {
+	return args.find((a) => !/[/\\]/u.test(a) && !a.endsWith(".js")) ?? args[0] ?? "";
+}
+
 /**
  * A fake host that remembers what npm installed globally and which version the Codex marketplace
  * holds. The target doctor is healthy only when both agree, as the real doctor's version check is.
@@ -808,13 +826,13 @@ function statefulHost(options: {
 		host.calls.push({ args, env: spawnOptions.env, timeout: spawnOptions.timeout });
 		const ok = (stdout = "") => ({ status: 0, stdout, signal: null, error: undefined });
 		const fail = { status: 1, signal: null, error: undefined };
-		if (args[0] === "view") return ok(`${JSON.stringify(options.registryVersion)}\n`);
-		if (args[0] === "install") {
+		if (npmSubcmd(args) === "view") return ok(`${JSON.stringify(options.registryVersion)}\n`);
+		if (npmSubcmd(args) === "install") {
 			if (options.npmInstallFails && args.at(-1) !== `@litfamily/litcodex@${options.globalVersion}`) return fail;
 			host.globalVersion = String(args.at(-1)).split("@").at(-1) as string;
 			return ok();
 		}
-		const litcodex = args[0] === "exec" ? args.slice(args.indexOf("litcodex") + 1) : [];
+		const litcodex = npmSubcmd(args) === "exec" ? args.slice(args.indexOf("litcodex") + 1) : [];
 		if (litcodex[0] === "--version") return ok(`${host.globalVersion}\n`);
 		if (litcodex[0] === "install") {
 			if (options.codexInstallFailsFor === host.globalVersion) return fail;

@@ -214,32 +214,36 @@ describe("atomicity #given/#when/#then", () => {
 		expect(readGoalsRaw()).toBe(good); // target untouched
 	});
 
-	it("surfaces write failure without clobbering (rename target is a symlink loop)", async () => {
-		const plan = await initState(root, { brief: "b" });
-		await writePlan(root, plan);
-		const good = readGoalsRaw();
-		const dir = join(root, ".litcodex", "lit-loop");
-		// Make the directory read-only so the tmp create fails → WRITE_FAILED, old file intact.
-		chmodSync(dir, 0o500);
-		try {
-			plan.goals.push({
-				id: "G002",
-				title: "t",
-				objective: "o",
-				status: "pending",
-				attempt: 0,
-				createdAt: plan.createdAt,
-				updatedAt: plan.createdAt,
-				successCriteria: [],
-			});
-			await expect(writePlan(root, plan)).rejects.toMatchObject({
-				code: "LIT_LOOP_WRITE_FAILED",
-			});
-		} finally {
-			chmodSync(dir, 0o700);
-		}
-		expect(readGoalsRaw()).toBe(good); // prior bytes intact
-	});
+	// Windows ignores POSIX file-mode bits; chmodSync(0o500) does not make the directory read-only there.
+	it.skipIf(process.platform === "win32")(
+		"surfaces write failure without clobbering (rename target is a symlink loop)",
+		async () => {
+			const plan = await initState(root, { brief: "b" });
+			await writePlan(root, plan);
+			const good = readGoalsRaw();
+			const dir = join(root, ".litcodex", "lit-loop");
+			// Make the directory read-only so the tmp create fails → WRITE_FAILED, old file intact.
+			chmodSync(dir, 0o500);
+			try {
+				plan.goals.push({
+					id: "G002",
+					title: "t",
+					objective: "o",
+					status: "pending",
+					attempt: 0,
+					createdAt: plan.createdAt,
+					updatedAt: plan.createdAt,
+					successCriteria: [],
+				});
+				await expect(writePlan(root, plan)).rejects.toMatchObject({
+					code: "LIT_LOOP_WRITE_FAILED",
+				});
+			} finally {
+				chmodSync(dir, 0o700);
+			}
+			expect(readGoalsRaw()).toBe(good); // prior bytes intact
+		},
+	);
 });
 
 describe("missing & corruption #given/#when/#then", () => {
@@ -546,7 +550,8 @@ describe("readBriefFile #given/#when/#then (M09-addendum A1.1)", () => {
 		await expect(readBriefFile(root, root)).rejects.toBeInstanceOf(BriefFileMissingError);
 	});
 
-	it("throws BriefFileUnreadableError on EACCES", async () => {
+	// Windows ignores POSIX file-mode bits; chmodSync(0o000) leaves the file readable there.
+	it.skipIf(process.platform === "win32")("throws BriefFileUnreadableError on EACCES", async () => {
 		const f = join(root, "secret.md");
 		writeFileSync(f, "secret", "utf8");
 		chmodSync(f, 0o000);

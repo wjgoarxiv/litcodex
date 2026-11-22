@@ -58,16 +58,18 @@ describe("the LitFamily extensions notice", () => {
 	});
 
 	it("on an upgrade names the runtimes the old version left behind and says they can be deleted", () => {
-		const cache = "/h/.cache";
+		const cache = join("/h", ".cache");
+		const leftoverOffice = join(cache, "litcodex", "office");
+		const leftoverMotion = join(cache, "litcodex", "motion-runtime");
 		const leftovers = leftoverRuntimePaths({ XDG_CACHE_HOME: cache }, () => true);
-		expect(leftovers).toEqual([`${cache}/litcodex/office`, `${cache}/litcodex/motion-runtime`]);
+		expect(leftovers).toEqual([leftoverOffice, leftoverMotion]);
 		const text = renderExtensionsNotice({ previousVersion: "1.0.38", leftovers });
 		expect(text).toContain(
-			"LitCodex 1.0.38 left its office and film runtimes in /h/.cache/litcodex/office and /h/.cache/litcodex/motion-runtime; you can delete them if you do not install those extensions.",
+			`LitCodex 1.0.38 left its office and film runtimes in ${leftoverOffice} and ${leftoverMotion}; you can delete them if you do not install those extensions.`,
 		);
 		expect(text.trimEnd().split("\n").length).toBeLessThanOrEqual(10);
 		expect(leftoverRuntimePaths({ HOME: "/h" }, (path) => path.endsWith("motion-runtime"))).toEqual([
-			"/h/.cache/litcodex/motion-runtime",
+			join("/h", ".cache", "litcodex", "motion-runtime"),
 		]);
 	});
 
@@ -82,7 +84,7 @@ describe("the LitFamily extensions notice", () => {
 			exists: () => true,
 		});
 		expect(out.join("")).toContain("LitFamily extensions");
-		expect(out.join("")).toContain(`${join(root, "cache")}/litcodex/motion-runtime`);
+		expect(out.join("")).toContain(join(root, "cache", "litcodex", "motion-runtime"));
 		const marker = JSON.parse(readFileSync(join(root, "data", "extensions-notice.json"), "utf8")) as {
 			version: string;
 			message: string;

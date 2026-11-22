@@ -1,10 +1,11 @@
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { codexBin, codexHome, doctorDeps, sentinelPath } from "../../test/install-doctor-fixtures.js";
 import { autoHandoffLine, inspectAutoHandoff } from "./auto-handoff-doctor.js";
 import type { ReadonlyFsLike } from "./codex.js";
 import { renderDoctorText, runDoctor } from "./doctor.js";
 
-const PROJECT = "/work/project";
+const PROJECT = resolve("/work/project");
 const ON_55 = { LITCODEX_AUTO_HANDOFF: "1", LITCODEX_AUTO_HANDOFF_PERCENT: "55" };
 
 function fsOf(files: Record<string, string>): ReadonlyFsLike {
@@ -15,11 +16,11 @@ function fsOf(files: Record<string, string>): ReadonlyFsLike {
 }
 
 const trustedProject = (level = "trusted"): Record<string, string> => ({
-	[`${codexHome}/config.toml`]: `[projects."${PROJECT}"]\ntrust_level = "${level}"\n`,
+	[join(codexHome, "config.toml")]: `[projects."${PROJECT}"]\ntrust_level = "${level}"\n`,
 });
 
 const settings = (value: unknown): Record<string, string> => ({
-	[`${PROJECT}/.litcodex/auto-handoff/settings.json`]: JSON.stringify(value),
+	[join(PROJECT, ".litcodex", "auto-handoff", "settings.json")]: JSON.stringify(value),
 });
 
 describe("doctor: automatic handoff", () => {
@@ -41,7 +42,7 @@ describe("doctor: automatic handoff", () => {
 		const env = inspectAutoHandoff(fsOf({}), { LITCODEX_AUTO_HANDOFF: "0" }, PROJECT, codexHome);
 		expect(env.state).toBe("off");
 		const unreadable = inspectAutoHandoff(
-			fsOf({ [`${PROJECT}/.litcodex/auto-handoff/settings.json`]: "{not json" }),
+			fsOf({ [join(PROJECT, ".litcodex", "auto-handoff", "settings.json")]: "{not json" }),
 			{},
 			PROJECT,
 			codexHome,
@@ -66,7 +67,7 @@ describe("doctor: automatic handoff", () => {
 			fsOf({
 				...settings({ version: 1, enabled: true, percent: 60 }),
 				...trustedProject(),
-				[`${PROJECT}/.codex/config.toml`]: "# x\nmodel_post_turn_compact_threshold_percent = 60\n",
+				[join(PROJECT, ".codex", "config.toml")]: "# x\nmodel_post_turn_compact_threshold_percent = 60\n",
 			}),
 			{},
 			PROJECT,
@@ -93,7 +94,7 @@ describe("doctor: automatic handoff", () => {
 	});
 
 	it("warns when the chosen percent reaches Codex's own automatic compaction point", () => {
-		const home = `${codexHome}/config.toml`;
+		const home = join(codexHome, "config.toml");
 		const low = inspectAutoHandoff(
 			fsOf({ [home]: "model_context_window = 400000\nmodel_auto_compact_token_limit = 200000\n" }),
 			{ LITCODEX_AUTO_HANDOFF: "1", LITCODEX_AUTO_HANDOFF_PERCENT: "40" },
@@ -111,7 +112,7 @@ describe("doctor: automatic handoff", () => {
 	});
 
 	it("does not promise Codex compaction when the project is not trusted", () => {
-		const files = { [`${PROJECT}/.codex/config.toml`]: "model_post_turn_compact_threshold_percent = 60\n" };
+		const files = { [join(PROJECT, ".codex", "config.toml")]: "model_post_turn_compact_threshold_percent = 60\n" };
 		for (const extra of [{}, trustedProject("untrusted")]) {
 			const report = inspectAutoHandoff(
 				fsOf({ ...files, ...extra }),
@@ -129,7 +130,7 @@ describe("doctor: automatic handoff", () => {
 		const report = inspectAutoHandoff(
 			fsOf({
 				...trustedProject(),
-				[`${PROJECT}/.codex/config.toml`]: "model_post_turn_compact_threshold_percent = 45\n",
+				[join(PROJECT, ".codex", "config.toml")]: "model_post_turn_compact_threshold_percent = 45\n",
 			}),
 			{ LITCODEX_AUTO_HANDOFF: "1", LITCODEX_AUTO_HANDOFF_PERCENT: "60" },
 			PROJECT,
@@ -144,7 +145,7 @@ describe("doctor: automatic handoff", () => {
 			"model_post_turn_compact_threshold_percent = 60",
 			"",
 		].join("\n");
-		const config = { [`${PROJECT}/.codex/config.toml`]: managed };
+		const config = { [join(PROJECT, ".codex", "config.toml")]: managed };
 
 		it("warns when the environment turned the feature off", () => {
 			const report = inspectAutoHandoff(
@@ -173,7 +174,7 @@ describe("doctor: automatic handoff", () => {
 			const on = inspectAutoHandoff(fsOf({ ...config, ...trustedProject() }), ON_55, PROJECT, codexHome);
 			expect(on.warnings.join(" ")).not.toContain("keeps compacting");
 			const mine = inspectAutoHandoff(
-				fsOf({ [`${PROJECT}/.codex/config.toml`]: "model_post_turn_compact_threshold_percent = 60\n" }),
+				fsOf({ [join(PROJECT, ".codex", "config.toml")]: "model_post_turn_compact_threshold_percent = 60\n" }),
 				{ LITCODEX_AUTO_HANDOFF: "0" },
 				PROJECT,
 				codexHome,
@@ -184,7 +185,7 @@ describe("doctor: automatic handoff", () => {
 
 		it("reaches the doctor warning list", () => {
 			const deps = doctorDeps([codexBin, sentinelPath]);
-			const path = `${deps.repoRoot}/.codex/config.toml`;
+			const path = join(deps.repoRoot, ".codex", "config.toml");
 			const report = runDoctor({
 				...deps,
 				env: { ...deps.env, LITCODEX_AUTO_HANDOFF: "0" },

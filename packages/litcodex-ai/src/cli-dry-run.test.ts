@@ -12,7 +12,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative } from "node:path";
+import { delimiter, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -49,14 +49,30 @@ function sandbox(): Sandbox {
 	}
 	writeFileSync(join(codexHome, "config.toml"), 'model = "gpt-6-astra"\n\n[agents]\nmax_threads = 20\n');
 	writeFileSync(join(codexHome, "agents", "litcodex-explorer.toml"), 'model = "gpt-6-luna"\n');
-	const fakeCodex = join(fakeBin, "codex");
-	writeFileSync(fakeCodex, `#!/bin/sh\necho "$*" >> "${codexLog}"\nexit 0\n`);
-	chmodSync(fakeCodex, 0o755);
+	let codexBin: string;
+	if (process.platform === "win32") {
+		// Windows does not run extensionless scripts; create a .cmd that appends to the log via node.
+		const fakeCodexJs = join(fakeBin, "_codex_impl.js");
+		writeFileSync(
+			fakeCodexJs,
+			[
+				"const fs = require('node:fs');",
+				`fs.appendFileSync(${JSON.stringify(codexLog)}, process.argv.slice(2).join(' ') + '\\n');`,
+				"process.exit(0);",
+			].join("\n"),
+		);
+		codexBin = join(fakeBin, "codex.cmd");
+		writeFileSync(codexBin, `@echo off\n"${process.execPath}" "${fakeCodexJs}" %*\n`);
+	} else {
+		codexBin = join(fakeBin, "codex");
+		writeFileSync(codexBin, `#!/bin/sh\necho "$*" >> "${codexLog}"\nexit 0\n`);
+		chmodSync(codexBin, 0o755);
+	}
 	const env: NodeJS.ProcessEnv = {
-		PATH: `${fakeBin}:/usr/bin:/bin`,
+		PATH: `${fakeBin}${delimiter}${process.env["PATH"] ?? ""}`,
 		HOME: home,
 		CODEX_HOME: codexHome,
-		CODEX_BIN: fakeCodex,
+		CODEX_BIN: codexBin,
 		XDG_CACHE_HOME: join(home, ".cache"),
 		XDG_CONFIG_HOME: join(home, ".config"),
 		XDG_DATA_HOME: join(home, ".local", "share"),

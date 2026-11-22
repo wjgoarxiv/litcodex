@@ -337,6 +337,6 @@ describe("run route (Codex with a live LIT panel)", () => {
 		expect(refused.stderr).toContain('unknown option "--model"');
 		const dry = runBin(["--dry-run", "run", "--", "--help", "--version"]);
 		expect(dry.code).toBe(0);
-		expect(dry.stdout).toMatch(/codex --help --version in a pseudo-terminal/u);
+		expect(dry.stdout).toMatch(/codex(?:\.cmd|\.ps1|\.exe)? --help --version in a pseudo-terminal/u);
 	});
 });

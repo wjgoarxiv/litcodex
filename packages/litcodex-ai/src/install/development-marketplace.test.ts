@@ -11,6 +11,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { materializeDevelopmentMarketplace } from "./development-marketplace.js";
 import { resolveBundledMarketplaceSource } from "./package-root.js";
@@ -97,7 +98,7 @@ describe("development workspace marketplace fallback", () => {
 	});
 
 	it("preserves exact skill sets and exposes tamper, missing, and orphan failures", () => {
-		const sourceRepo = new URL("../../../../", import.meta.url).pathname;
+		const sourceRepo = fileURLToPath(new URL("../../../../", import.meta.url));
 		const repoRoot = mkdtempSync(join(tmpdir(), "litcodex-workspace-exact-source-"));
 		const tempParent = mkdtempSync(join(tmpdir(), "litcodex-workspace-exact-output-"));
 		roots.push(repoRoot, tempParent);

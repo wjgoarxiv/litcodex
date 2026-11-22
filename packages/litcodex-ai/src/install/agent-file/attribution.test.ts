@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { doctorDeps } from "../../../test/install-doctor-fixtures.js";
+import { codexBin, doctorDeps } from "../../../test/install-doctor-fixtures.js";
 import { dispatch } from "../../cli.js";
 import { runDoctor } from "../doctor.js";
 import { renderDoctorText } from "../doctor-render.js";
@@ -209,7 +209,7 @@ describe("install flow", () => {
 describe("doctor and uninstall", () => {
 	it("doctor reports attribution: keep|off", () =>
 		withDir((dir) => {
-			const deps = doctorDeps(["/usr/local/bin/codex"]);
+			const deps = doctorDeps([codexBin]);
 			const keep = runDoctor({ ...deps, env: { ...deps.env, CODEX_HOME: dir } });
 			expect(keep.attribution).toBe("keep");
 			expect(renderDoctorText(keep)).toMatch(/attribution:\s+keep/u);
@@ -228,12 +228,20 @@ describe("doctor and uninstall", () => {
 			writeAttributionMode(codexHome, "off");
 			writeGlobalAgentFile(codexHome, "1.0.33", "off");
 			expect(readFileSync(agents, "utf8")).toContain(AGENT_FILE_ID);
+			const fakeCodex =
+				process.platform === "win32"
+					? (() => {
+							const p = join(dir, "fake-codex.cmd");
+							writeFileSync(p, "@echo off\r\nexit 0\r\n");
+							return p;
+						})()
+					: "/usr/bin/true";
 			const out = sink();
 			const err = sink();
 			const code = runUninstallCli([], {
 				stdout: out.stream,
 				stderr: err.stream,
-				env: { CODEX_HOME: codexHome, CODEX_BIN: "/usr/bin/true" },
+				env: { CODEX_HOME: codexHome, CODEX_BIN: fakeCodex },
 				repoRoot: dir,
 			});
 			expect(code).toBe(0);

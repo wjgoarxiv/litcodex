@@ -46,8 +46,10 @@ describe("runUserPromptSubmitHook lit-hijack routing #given/#when/#then", () => 
 
 	it("names the installed skill and the route directive as files the model reads", () => {
 		const ctx = parseInject(runUserPromptSubmitHook(ups("lit hijack this post into my skill")));
-		expect(ctx).toMatch(/^skill lit-hijack: \/\S+\/skills\/lit-hijack\/SKILL\.md$/mu);
-		expect(ctx).toMatch(/^directive lit-hijack: \/\S+\/directives\/lit-hijack\.md$/mu);
+		// Normalize backslashes so the regex works on both POSIX and Windows paths.
+		const ctxNorm = ctx.replace(/\\/gu, "/");
+		expect(ctxNorm).toMatch(/^skill lit-hijack: .+\/skills\/lit-hijack\/SKILL\.md$/mu);
+		expect(ctxNorm).toMatch(/^directive lit-hijack: .+\/directives\/lit-hijack\.md$/mu);
 	});
 
 	it("keeps the neighbouring routes on their own tokens when the route word is not directly after lit", () => {

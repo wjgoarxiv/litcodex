@@ -144,6 +144,17 @@ function readSessionCache(pluginData: string): {
 	};
 }
 
+// On Windows, OS paths in JSON output are double-backslash-encoded; extract the parsed string to compare them.
+function additionalContext(output: string): string {
+	if (!output) return "";
+	try {
+		const parsed = JSON.parse(output) as { hookSpecificOutput?: { additionalContext?: string } };
+		return parsed.hookSpecificOutput?.additionalContext ?? "";
+	} catch {
+		return output;
+	}
+}
+
 describe("plugin bundled rules", () => {
 	it("#given PLUGIN_ROOT with bundled markdown #when finding candidates #then plugin-bundled source is cached", () => {
 		// given
@@ -172,11 +183,11 @@ describe("plugin bundled rules", () => {
 
 		// then
 		expect(output).toContain('"hookEventName":"SessionStart"');
-		expect(output).toContain(`Instructions from: ${bundledRulePath}`);
+		expect(additionalContext(output)).toContain(`Instructions from: ${bundledRulePath}`);
 		expect(output).toContain(BUNDLED_BODY);
 		expect(output).toContain("## Project Instructions");
 		expect(output).not.toContain("must read project rules:");
-		expect(output).not.toContain(`- [baseline-discipline.md]{${bundledRulePath}}`);
+		expect(additionalContext(output)).not.toContain(`- [baseline-discipline.md]{${bundledRulePath}}`);
 	});
 
 	it("#given same project and bundled body #when SessionStart runs #then project rule file wins", async () => {
@@ -191,9 +202,9 @@ describe("plugin bundled rules", () => {
 
 		// then
 		expect(occurrenceCount(output, "- [baseline-discipline.md]{")).toBe(0);
-		expect(output).toContain(`Instructions from: ${projectRulePath}`);
+		expect(additionalContext(output)).toContain(`Instructions from: ${projectRulePath}`);
 		expect(output).toContain(SHARED_BODY);
-		expect(output).not.toContain(bundledRulePath);
+		expect(additionalContext(output)).not.toContain(bundledRulePath);
 	});
 
 	it("#given bundled rules disabled #when SessionStart runs #then bundled context is suppressed", async () => {
@@ -217,7 +228,7 @@ describe("plugin bundled rules", () => {
 			pluginDataRoot: pluginData,
 			env: BUNDLED_ONLY_ENV,
 		});
-		expect(firstOutput).toContain(`Instructions from: ${bundledRulePath}`);
+		expect(additionalContext(firstOutput)).toContain(`Instructions from: ${bundledRulePath}`);
 		expect(firstOutput).toContain(BUNDLED_BODY);
 
 		// when
@@ -229,7 +240,7 @@ describe("plugin bundled rules", () => {
 
 		// then
 		expect(compactOutput).toBe("");
-		expect(output).toContain(`Instructions from: ${bundledRulePath}`);
+		expect(additionalContext(output)).toContain(`Instructions from: ${bundledRulePath}`);
 		expect(output).toContain(BUNDLED_BODY);
 		expect(output).not.toContain("[Truncated. Full:");
 	});
@@ -268,7 +279,7 @@ describe("plugin bundled rules", () => {
 		});
 
 		// then
-		expect(blockedOutput).toContain(projectRulePath);
+		expect(additionalContext(blockedOutput)).toContain(projectRulePath);
 		expect(blockedOutput).not.toContain("B".repeat(100));
 		expect(readSessionCache(pluginData).postCompactPending?.static).toBe(true);
 
@@ -276,7 +287,7 @@ describe("plugin bundled rules", () => {
 			pluginDataRoot: pluginData,
 			env: adequateEnv,
 		});
-		expect(adequateOutput).toContain(bundledRulePath);
+		expect(additionalContext(adequateOutput)).toContain(bundledRulePath);
 		expect(adequateOutput).toContain("B".repeat(100));
 		expect(readSessionCache(pluginData).postCompactPending?.static).not.toBe(true);
 	});
@@ -304,7 +315,7 @@ describe("plugin bundled rules", () => {
 		});
 
 		// then
-		expect(output).toContain(`Instructions from: ${bundledRulePath}`);
+		expect(additionalContext(output)).toContain(`Instructions from: ${bundledRulePath}`);
 		expect(output).toContain("The bundled craftsman discipline is non-negotiable.");
 		expect(output).toContain(tailMarker);
 		expect(output).not.toContain("[Truncated. Full:");
@@ -334,7 +345,7 @@ describe("plugin bundled rules", () => {
 		});
 
 		// then
-		expect(output).toContain(`Instructions from: ${projectRulePath}`);
+		expect(additionalContext(output)).toContain(`Instructions from: ${projectRulePath}`);
 		expect(output).toContain("The project rule body is intentionally oversized for the cap test.");
 		expect(output).toContain("[Truncated. Full:");
 		expect(output).not.toContain(tailMarker);
