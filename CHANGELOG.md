@@ -6,6 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.45] - 2026-11-22
+
+### Added
+
+- Each goal question now comes with a short answer guide under it, so a first-time user knows what to type. After
+  `Approve plan, start work and set goal: /goal <cond>? (yes / edit / no)`, `Approve plan and start work? (yes / no)`
+  or `Set goal for this lit-loop: /goal <cond>? (yes / no)`, one line per answer says what it does (`yes` starts the
+  work and sets the goal, `edit` changes the goal's check first, `no` starts nothing) and reminds you to type the
+  word alone. The lit-loop prompt hook prints it as plain terminal lines; in a model-written reply it is a small
+  quoted table whose explanations follow the user's language, while the question line and the answer words stay
+  exactly as printed. The accepted answers are unchanged.
+
+### Changed
+
+- The READMEs, English and Korean, and the npm README now open with a plain one-line pitch and a short story of what
+  changes when you add `lit` to a request, followed by two ways to use it: the easy way (put `lit` at the start or
+  end of a request) and the full workflow (explore, clarify, plan, build, review, hand off).
+
 ## [1.0.44] - 2026-11-21
 
 ### Added
