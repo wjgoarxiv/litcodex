@@ -722,7 +722,9 @@ function extractOfficeText(path: string, cwd: string): string {
 	const stat = lstatSync(target);
 	if (!stat.isFile() || stat.isSymbolicLink()) throw new Error("Office target is not a regular file");
 	const extension = extname(target).toLowerCase();
-	const command = extension === ".pdf" ? "pdftotext" : "python3";
+	// Windows installs Python as `python`; `python3` is usually absent there.
+	const python = process.platform === "win32" ? "python" : "python3";
+	const command = extension === ".pdf" ? "pdftotext" : python;
 	const args =
 		extension === ".pdf" ? [target, "-"] : [join(dirname(DEFAULT_DETECTOR), "extract_office_text.py"), target];
 	const result = spawnSync(command, args, {
