@@ -3,7 +3,7 @@ import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 // Windows behaviour is simulated by injecting platform and a shim reader into the helper; real Windows is
 // not exercised here. The office, film and diagram runtimes left with their skills, so the browser-drive
@@ -30,7 +30,9 @@ const NPM_SHIM = [
 ].join("\r\n");
 
 describe("user-installed CLIs run without cmd.exe", async () => {
-	const probe = await import(join(root, "plugins/litcodex/skills/browser-drive/scripts/capability-probe.mjs"));
+	const probe = await import(
+		pathToFileURL(join(root, "plugins/litcodex/skills/browser-drive/scripts/capability-probe.mjs")).href
+	);
 	const shimDir = "C:\\Users\\A B\\AppData\\Roaming\\npm";
 
 	it("the browser-drive probe unwraps the resolved shim and refuses anything else", () => {

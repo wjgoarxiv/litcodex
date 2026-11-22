@@ -400,7 +400,9 @@ describe("repo-top addendum", () => {
     writeEvidence("task-01-git-missing.txt", `exit=${res.status}\n${res.stdout}\n${res.stderr}`);
   });
 
-  it("exits 4 when cwd deleted", () => {
+  it("exits 4 when cwd deleted", {
+    skip: process.platform === "win32" ? "uses /bin/sh and relies on rmdir of cwd-in-use, neither available on Windows" : false,
+  }, () => {
     // given a child process whose cwd is removed before it runs
     const scratch = mkdtempSync(join(tmpdir(), "lc-cwd-gone-"));
     // Spawn a shell that cds in, rmdir's the cwd, then runs the script.
@@ -417,7 +419,9 @@ describe("repo-top addendum", () => {
     writeEvidence("task-01-cwd-gone.txt", `exit=${res.status}\n${res.stdout}\n${res.stderr}`);
   });
 
-  it("distinguishes missing-git from missing-cwd", () => {
+  it("distinguishes missing-git from missing-cwd", {
+    skip: process.platform === "win32" ? "uses /bin/sh and relies on rmdir of cwd-in-use, neither available on Windows" : false,
+  }, () => {
     // given valid cwd + no git → GIT_BINARY_MISSING
     const noGit = runAssert(["--json"], { env: { ...NEUTRAL_GIT_ENV, PATH: "" } });
     const noGitJson = JSON.parse(noGit.stdout);
