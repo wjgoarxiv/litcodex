@@ -155,7 +155,7 @@ describe("browser-drive capability probe", () => {
 			status: "available",
 			available: true,
 			blocker: null,
-			command: process.platform === "win32" ? `${driver}.cmd` : driver,
+			command: process.platform === "win32" ? `${driver}.CMD` : driver,
 			version: `${DRIVER_COMMAND} 9.9.9`,
 			reason: null,
 		});
@@ -738,7 +738,7 @@ describe("browser-drive skill contract", () => {
 		expect(result.stderr).toBe("");
 		expect(JSON.parse(result.stdout.trim())).toMatchObject({
 			status: "available",
-			command: process.platform === "win32" ? `${driver}.cmd` : driver,
+			command: process.platform === "win32" ? `${driver}.CMD` : driver,
 			version: `${DRIVER_COMMAND} 9.9.9`,
 		});
 		expect(wrongRoot.status).not.toBe(0);
