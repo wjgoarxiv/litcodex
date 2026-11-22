@@ -134,6 +134,8 @@ export type AutoUpdateSpawn = (
 
 export interface AutoUpdateVerifyOptions {
 	readonly command: string;
+	/** Arguments before every npm subcommand: the npm-cli.js script when `command` is node itself. */
+	readonly commandArgs?: readonly string[];
 	readonly cwd: string;
 	readonly env: NodeJS.ProcessEnv;
 	readonly timeout: number;
@@ -346,10 +348,11 @@ function withCodexHost(safe: NodeJS.ProcessEnv, env: NodeJS.ProcessEnv): NodeJS.
 
 function installIntoCodex(
 	command: string,
-	options: Pick<AutoUpdateVerifyOptions, "cwd" | "env" | "spawn">,
+	options: Pick<AutoUpdateVerifyOptions, "cwd" | "env" | "spawn" | "commandArgs">,
 	timeout: number,
 ): AutoUpdateSpawnResult {
-	return options.spawn(command, ["exec", "--global", "--", "litcodex", "install", "--no-auto-update"], {
+	const args = [...(options.commandArgs ?? []), "exec", "--global", "--", "litcodex", "install", "--no-auto-update"];
+	return options.spawn(command, args, {
 		cwd: options.cwd,
 		env: options.env,
 		timeout,
@@ -593,7 +596,7 @@ export function verifyInstalledVersion(
 	options: AutoUpdateVerifyOptions,
 ): AutoUpdateVerification {
 	const versionArgs = ["exec", "--global", "--", "litcodex", "--version"] as const;
-	const result = options.spawn(options.command, versionArgs, {
+	const result = options.spawn(options.command, [...(options.commandArgs ?? []), ...versionArgs], {
 		cwd: options.cwd,
 		env: options.env,
 		timeout: options.timeout,
@@ -645,7 +648,7 @@ export function verifyInstalledVersion(
 		};
 	}
 	const doctorArgs = ["exec", "--global", "--", "litcodex", "doctor", "--json", "--no-auto-update"] as const;
-	const doctorResult = options.spawn(options.command, doctorArgs, {
+	const doctorResult = options.spawn(options.command, [...(options.commandArgs ?? []), ...doctorArgs], {
 		cwd: options.cwd,
 		env: options.env,
 		timeout: options.timeout,
@@ -784,6 +787,8 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 		atomicJson(statePath, { ...state, lastAttemptedAt: now, lastStatus: "started" });
 		const command = plan.command as string;
 		const args = plan.args as readonly string[];
+		// When npm runs as `node npm-cli.js` (Windows, or npm_execpath), every later npm call needs that script too.
+		const npmPrefix = args.slice(0, Math.max(0, args.indexOf("install")));
 		const result = withSanitizedNpmEnvironment(env, (safeEnv) =>
 			spawn(command, args, {
 				cwd,
@@ -805,6 +810,7 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 				verification = withSanitizedNpmEnvironment(env, (safeEnv) =>
 					(options.verifyInstalled ?? verifyInstalledVersion)(plan.latestVersion as string, {
 						command,
+						commandArgs: npmPrefix,
 						cwd,
 						env: withCodexHost(safeEnv, env),
 						timeout,
@@ -873,7 +879,14 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 				const rollback = withSanitizedNpmEnvironment(env, (safeEnv) =>
 					spawn(
 						command,
-						["install", "--global", "--no-fund", "--no-audit", `${AUTO_UPDATE_PACKAGE}@${plan.currentVersion}`],
+						[
+							...npmPrefix,
+							"install",
+							"--global",
+							"--no-fund",
+							"--no-audit",
+							`${AUTO_UPDATE_PACKAGE}@${plan.currentVersion}`,
+						],
 						{
 							cwd,
 							env: safeEnv,
@@ -889,7 +902,11 @@ export function runForegroundAutoUpdate(options: AutoUpdateRunOptions): AutoUpda
 				if (rollbackSucceeded && verification.codexInstallAttempted === true) {
 					// The target already wrote its plugin into Codex, so the restored package reinstalls its own.
 					const restore = withSanitizedNpmEnvironment(env, (safeEnv) =>
-						installIntoCodex(command, { cwd, env: withCodexHost(safeEnv, env), spawn }, installTimeout),
+						installIntoCodex(
+							command,
+							{ cwd, env: withCodexHost(safeEnv, env), spawn, commandArgs: npmPrefix },
+							installTimeout,
+						),
 					);
 					rollbackStatus = restore.status;
 					rollbackSignal = restore.signal;
