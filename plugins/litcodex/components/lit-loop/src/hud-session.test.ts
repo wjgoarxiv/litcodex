@@ -82,8 +82,7 @@ describe("hud session pick", () => {
 		expect(readHud(env, null, 5_000).status?.usage).toBeNull();
 	});
 
-	// tilde() in hud.ts uses `${home}/` separator which fails with Windows backslashes. REAL-BUG in product.
-	it.skipIf(process.platform === "win32")(
+	it(
 		"names the short session id and the project folder under ~ in the header",
 		() => {
 			const { env, home } = setup();
@@ -97,8 +96,7 @@ describe("hud session pick", () => {
 		},
 	);
 
-	// tilde() in hud.ts uses `${home}/` separator which fails with Windows backslashes. REAL-BUG in product.
-	it.skipIf(process.platform === "win32")(
+	it(
 		"follows the session with the newest LIT activity, not the newest pointer",
 		() => {
 			const { env, home } = setup();
@@ -113,8 +111,7 @@ describe("hud session pick", () => {
 		},
 	);
 
-	// tilde() in hud.ts uses `${home}/` separator which fails with Windows backslashes. REAL-BUG in product.
-	it.skipIf(process.platform === "win32")("reports a broken pointer newer than the session it follows", () => {
+	it("reports a broken pointer newer than the session it follows", () => {
 		const { env, home } = setup();
 		writeThreadPointer(env, OLD, project(home, "alpha"), 1_000);
 		const broken = threadPointerPath(env, NEW) as string;
