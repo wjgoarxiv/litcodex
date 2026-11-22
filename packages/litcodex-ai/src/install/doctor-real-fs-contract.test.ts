@@ -12,7 +12,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join, sep } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { codexBin, codexHome, doctorDeps, sentinelPath } from "../../test/install-doctor-fixtures.js";
 import { runDoctor } from "./doctor.js";
@@ -81,13 +81,13 @@ function realUiDoctor(
 							? (listFilesRecursive?.(root) ?? [])
 							: listPayloadEntries(
 									actual,
-									actual.endsWith("/lit-humanizer") ? visualDirectoryReader : undefined,
+									basename(actual) === "lit-humanizer" ? visualDirectoryReader : undefined,
 									directoryCapability,
 								);
 					},
 					readFileBufferSync: (path) => {
 						for (const [managed, actual] of actualRoots) {
-							if (path.startsWith(`${managed}/`))
+							if (path.startsWith(managed + sep))
 								return readRegularFileBuffer(join(actual, path.slice(managed.length + 1)));
 						}
 						if (readFileBufferSync === undefined) throw new Error(`unexpected binary read: ${path}`);

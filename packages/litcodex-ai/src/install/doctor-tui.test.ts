@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { codexBin, codexHome, doctorDeps, sentinelPath } from "../../test/install-doctor-fixtures.js";
 import type { ReadonlyFsLike } from "./codex.js";
@@ -105,7 +106,7 @@ describe("doctor — built-in Codex status line and terminal title suggestion", 
 		expect(text).toContain("Suggestion:");
 		expect(text).toContain("/statusline");
 		expect(text).toContain("/title");
-		expect(text).toContain(`${codexHome}/config.toml`);
+		expect(text).toContain(join(codexHome, "config.toml"));
 		expect(text).toContain("    [tui]");
 		expect(text).toContain('    terminal_title = ["activity", "project-name"]');
 		expect(text).toContain("  task-progress counts the steps of Codex's own plan");

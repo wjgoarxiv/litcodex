@@ -147,7 +147,15 @@ describe("doctor — agentsInstalled probe", () => {
 					}),
 				);
 				const deps = doctorDeps([codexBin, sentinelPath], config);
-				const hooksPath = `${deps.env["CODEX_HOME"]}/marketplaces/litcodex/plugins/litcodex/hooks/hooks.json`;
+				const hooksPath = join(
+					deps.env["CODEX_HOME"] ?? "",
+					"marketplaces",
+					"litcodex",
+					"plugins",
+					"litcodex",
+					"hooks",
+					"hooks.json",
+				);
 				const fs =
 					hooksJson === undefined
 						? deps.fs
