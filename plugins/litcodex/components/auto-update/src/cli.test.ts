@@ -7,22 +7,30 @@ import { describe, expect, it } from "vitest";
 
 const distCli = fileURLToPath(new URL("../dist/cli.js", import.meta.url));
 
-function fakeNpm(root: string, body: string, cmdBody: string): string {
+function fakeNpm(root: string, body: string, jsBody: string): string {
 	const path = join(root, "npm");
 	writeFileSync(path, `#!/bin/sh\n${body}\n`, { encoding: "utf8", mode: 0o700 });
 	chmodSync(path, 0o700);
-	// Windows: product calls npm.cmd on win32 (resolveNpmCommand returns "npm.cmd").
-	writeFileSync(join(root, "npm.cmd"), `@echo off\r\n${cmdBody}\r\n`, { encoding: "utf8" });
+	writeFileSync(
+		join(root, "npm.cjs"),
+		`const fs = require("node:fs");\nconst args = process.argv.slice(2);\n${jsBody}\n`,
+	);
 	return path;
+}
+
+// On Windows the product prefers the npm beside node.exe over PATH, so the fake is named by npm_execpath.
+function windowsNpm(root: string, always = false): Record<string, string> {
+	return always || process.platform === "win32" ? { npm_execpath: join(root, "npm.cjs") } : {};
 }
 
 function runManagement(
 	root: string,
 	npmBody: string,
-	npmCmdBody: string,
+	npmJsBody: string,
+	viaExecPath = false,
 ): { code: number; receipt: Record<string, unknown> } {
 	const npmDir = mkdtempSync(join(root, "npm-bin-"));
-	fakeNpm(npmDir, npmBody, npmCmdBody);
+	fakeNpm(npmDir, npmBody, npmJsBody);
 	const stateRoot = join(root, "state");
 	try {
 		execFileSync(
@@ -32,6 +40,7 @@ function runManagement(
 				encoding: "utf8",
 				env: {
 					PATH: npmDir,
+					...windowsNpm(npmDir, viaExecPath),
 					LITCODEX_AUTO_UPDATE_STATE_ROOT: stateRoot,
 				},
 			},
@@ -54,7 +63,7 @@ describe("auto-update management fail-closed boundary", () => {
 			const result = runManagement(
 				root,
 				'if [ "$1" = "exec" ]; then printf "1.2.3\\n"; exit 0; fi\nexit 0',
-				'if /i "%~1"=="exec" (\r\n  echo 1.2.3\r\n  exit /b 0\r\n)\r\nexit /b 0',
+				'if (args[0] === "exec") process.stdout.write("1.2.3\\n");\nprocess.exit(0);',
 			);
 			expect(result.code).toBe(3);
 			expect(result.receipt).toMatchObject({ status: "failed", verificationStatus: "mismatch" });
@@ -67,13 +76,29 @@ describe("auto-update management fail-closed boundary", () => {
 		}
 	});
 
+	it("probes the installed version through the same npm script when npm runs as node npm-cli.js", () => {
+		const root = mkdtempSync(join(tmpdir(), "litcodex-auto-update-cli-execpath-"));
+		try {
+			const result = runManagement(
+				root,
+				"exit 0",
+				'if (args[0] === "exec") process.stdout.write("1.2.3\\n");\nprocess.exit(0);',
+				true,
+			);
+			expect(result.code).toBe(3);
+			expect(result.receipt).toMatchObject({ status: "failed", verificationStatus: "mismatch" });
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
 	it("returns nonzero and durable unknown-state receipt when rollback fails", () => {
 		const root = mkdtempSync(join(tmpdir(), "litcodex-auto-update-cli-unknown-"));
 		try {
 			const result = runManagement(
 				root,
 				'if [ "$1" = "install" ]; then\n  if [ -e "$0.seen" ]; then exit 2; fi\n  /usr/bin/touch "$0.seen"\n  exit 1\nfi\nexit 0',
-				'if /i "%~1"=="install" (\r\n  if exist "%~f0.seen" (exit /b 2)\r\n  echo.>"%~f0.seen"\r\n  exit /b 1\r\n)\r\nexit /b 0',
+				'const seen = process.argv[1] + ".seen";\nif (args[0] === "install") {\n  if (fs.existsSync(seen)) process.exit(2);\n  fs.writeFileSync(seen, "");\n  process.exit(1);\n}\nprocess.exit(0);',
 			);
 			expect(result.code).toBe(3);
 			expect(result.receipt).toMatchObject({ status: "unknown-state", rollbackStatus: 2 });
@@ -100,13 +125,12 @@ describe("auto-update management fail-closed boundary", () => {
 				"exit 0",
 			].join("\n"),
 			[
-				'if /i "%~1"=="install" (echo.>"%~f0.installed" & exit /b 0)',
-				'echo %* | findstr /i /c:"--version" >nul 2>&1',
-				'if not errorlevel 1 (if exist "%~f0.installed" (echo 0.3.57) else (echo 0.3.56) & exit /b 0)',
-				'echo %* | findstr /i /c:"doctor" >nul 2>&1',
-				'if not errorlevel 1 (echo {"ok":true} & exit /b 0)',
-				"exit /b 0",
-			].join("\r\n"),
+				"const mark = process.argv[1] + ".installed";",
+				'if (args[0] === "install") { fs.writeFileSync(mark, ""); process.exit(0); }',
+				'if (args.includes("--version")) process.stdout.write(fs.existsSync(mark) ? "0.3.57\\n" : "0.3.56\\n");',
+				'else if (args.includes("doctor")) process.stdout.write(\'{"ok":true}\\n\');',
+				"process.exit(0);",
+			].join("\n"),
 		);
 		try {
 			const stdout = execFileSync(process.execPath, [distCli, "hook", "session-start"], {
@@ -114,6 +138,7 @@ describe("auto-update management fail-closed boundary", () => {
 				encoding: "utf8",
 				env: {
 					PATH: npmDir,
+					...windowsNpm(npmDir),
 					LITCODEX_AUTO_UPDATE_STATE_ROOT: join(root, "state"),
 					LITCODEX_CURRENT_VERSION: "0.3.56",
 					LITCODEX_LATEST_VERSION: "0.3.57",
@@ -134,7 +159,7 @@ describe("auto-update management fail-closed boundary", () => {
 		fakeNpm(
 			npmDir,
 			'if [ "$1" = "install" ]; then\n  if [ -e "$0.seen" ]; then exit 2; fi\n  /usr/bin/touch "$0.seen"\n  exit 1\nfi\nexit 0',
-			'if /i "%~1"=="install" (\r\n  if exist "%~f0.seen" (exit /b 2)\r\n  echo.>"%~f0.seen"\r\n  exit /b 1\r\n)\r\nexit /b 0',
+			'const seen = process.argv[1] + ".seen";\nif (args[0] === "install") {\n  if (fs.existsSync(seen)) process.exit(2);\n  fs.writeFileSync(seen, "");\n  process.exit(1);\n}\nprocess.exit(0);',
 		);
 		try {
 			try {
@@ -143,6 +168,7 @@ describe("auto-update management fail-closed boundary", () => {
 					encoding: "utf8",
 					env: {
 						PATH: npmDir,
+						...windowsNpm(npmDir),
 						LITCODEX_AUTO_UPDATE_STATE_ROOT: join(root, "state"),
 						LITCODEX_CURRENT_VERSION: "0.3.56",
 						LITCODEX_LATEST_VERSION: "0.3.57",
