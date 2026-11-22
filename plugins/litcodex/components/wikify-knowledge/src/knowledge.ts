@@ -365,26 +365,30 @@ function prepareAuthorityForAppend(path: string, root: string): void {
 	assertNotSymlink(path);
 	const expectedParent = pinAuthorityParent(path);
 
-	let descriptor: number;
+	let descriptor: number | undefined;
 	try {
 		descriptor = openAuthorityFile(path, fsConstants.O_RDWR);
 	} catch (error) {
 		if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
 		throw error;
 	}
+	const opened = descriptor;
 	try {
-		assertOpenedAuthorityFile(path, descriptor, expectedParent, "read");
-		assertAuthoritySize(descriptor);
-		const bytes = readFileSync(descriptor);
+		assertOpenedAuthorityFile(path, opened, expectedParent, "read");
+		assertAuthoritySize(opened);
+		const bytes = readFileSync(opened);
 		if (bytes.length === 0 || bytes.at(-1) === 0x0a) return;
 
 		const complete = completeAuthorityBytes(bytes);
 		const repaired =
 			complete.length === bytes.length ? Buffer.concat([complete, Buffer.from("\n", "utf8")]) : complete;
 		assertAuthorityParent(path, expectedParent, "write");
-		replaceAuthority(path, descriptor, repaired, expectedParent);
+		replaceAuthority(path, opened, repaired, expectedParent, () => {
+			closeSync(opened);
+			descriptor = undefined;
+		});
 	} finally {
-		closeSync(descriptor);
+		if (descriptor !== undefined) closeSync(descriptor);
 	}
 }
 
@@ -598,6 +602,7 @@ function replaceAuthority(
 	sourceDescriptor: number,
 	bytes: Buffer,
 	expectedParent: AuthorityParentIdentity,
+	releaseSource: () => void,
 ): void {
 	const temporary = `${path}.tmp.${process.pid}.${randomUUID()}`;
 	let descriptor: number | undefined;
@@ -615,6 +620,8 @@ function replaceAuthority(
 		descriptor = undefined;
 		assertOpenedAuthorityFile(path, sourceDescriptor, expectedParent, "write");
 		assertAuthorityParent(path, expectedParent, "write");
+		// Windows refuses to rename over a file that is still open, so the checked source closes first.
+		releaseSource();
 		renameSync(temporary, path);
 	} finally {
 		if (descriptor !== undefined) closeSync(descriptor);
