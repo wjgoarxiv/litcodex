@@ -13,6 +13,7 @@
 // the hostile path — exactly the bug class under test. Only the `symlink` kind adds a symlink hop for
 // the cwd. OS rejection of a hostile leaf → LIT_PATHROBUST_WORKSPACE_UNSUPPORTED so the caller SKIPS.
 
+import { spawnSync } from "node:child_process";
 import { cp, mkdir, mkdtemp, realpath, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -113,6 +114,20 @@ export async function materializeWorkspace(caseDef, opts) {
 	await writeFile(join(workspaceDir, ".gitignore"), ".litcodex/\n", "utf8");
 
 	const workspaceRoot = await realpath(workspaceDir);
+
+	// On Windows, some paths (e.g. trailing dots) are created by mkdir but rejected by CreateProcess
+	// as a cwd, causing all spawn calls to return status null. Detect this and skip the case.
+	if (process.platform === "win32") {
+		const check = spawnSync(process.execPath, ["-e", ""], { cwd: workspaceRoot });
+		if (check.error) {
+			throw new PathRobustnessError(
+				"LIT_PATHROBUST_WORKSPACE_UNSUPPORTED",
+				`OS rejected workspace cwd on Windows: ${JSON.stringify(caseDef.leaf)} (${check.error.code})`,
+				{ leaf: caseDef.leaf, cause: check.error.code },
+			);
+		}
+	}
+
 	let runDir = workspaceRoot;
 	if (caseDef.kind === "symlink" && caseDef.linkLeaf) {
 		const linkPath = join(cleanupRoot, caseDef.linkLeaf);
