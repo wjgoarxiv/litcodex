@@ -485,7 +485,9 @@ describe("foreground auto-update transaction", () => {
 			const codexInstall = host.calls.find(
 				(call) => call.args.includes("litcodex") && call.args.includes("install"),
 			);
-			expect(codexInstall?.args).toEqual(["exec", "--global", "--", "litcodex", "install", "--no-auto-update"]);
+			// On Windows npm runs as `node npm-cli.js`, so the npm arguments start after that script.
+			const npmArgs = codexInstall?.args.slice(codexInstall.args.indexOf("exec"));
+			expect(npmArgs).toEqual(["exec", "--global", "--", "litcodex", "install", "--no-auto-update"]);
 			// The target package must manage the same Codex home as the session that started the update.
 			expect(codexInstall?.env["CODEX_HOME"]).toBe("/codex-home");
 			expect(codexInstall?.env["LITCODEX_NO_AUTO_UPDATE"]).toBe("1");
