@@ -4,9 +4,8 @@
 
 **Keep the work lit.**
 
-Put `lit` in front of a request and Codex CLI works toward checks that can pass or fail, calling the job
-done only when each one has proof. The proof stays in your project, so tomorrow's session starts where
-today's stopped.
+LitCodex is an add-on for Codex CLI. It makes Codex check its own work before it says "done", and leaves a note
+so the next session starts where this one stopped.
 
 <p>
 <a href="https://www.npmjs.com/package/@litfamily/litcodex"><img src="https://img.shields.io/npm/v/@litfamily/litcodex?color=FF6337&label=npm" alt="npm version" /></a>
@@ -17,10 +16,6 @@ today's stopped.
 
 [한국어](./README-Ko-KR.md) · [Install](#install) · [First task](#start-with-lit) · [What you get](#what-you-get) · [Commands](#commands) · [Update](#update-and-uninstall) · [Learn more](#learn-more)
 
-> [!TIP]
-> Run the one line under [Install](#install), approve the LitCodex hooks when Codex asks, then type `lit` and your
-> request, as in [Start with lit](#start-with-lit).
-
 The short film below is one real turn: a test written first, a failing run, the fix, and a passing run
 before Codex says the turn is done.
 
@@ -28,15 +23,47 @@ before Codex says the turn is done.
 
 ## What is LitCodex
 
-Codex CLI is quick at the next step, and the trouble starts when a piece of work is bigger than one conversation.
-The context fills up or the session ends, and the next session has to work out again what was decided, what was
-checked and what was left half done. LitCodex is a plugin for Codex CLI that keeps those records where any later
-session can read them, and the single word `handoff` before you stop leaves a written note of where you were.
+You ask Codex for a feature. It writes the code and says it is finished, and a day later you find the tests never
+ran. You open a new session and explain the whole project again.
 
-It also brings more than forty skills for planning, code review, research, debugging, Word and PowerPoint files, and
+With LitCodex you add `lit` to the same request. Codex first writes down what "finished" means for this task, adds a
+test that fails, makes it pass, and ends by telling you what it checked and what it could not. When you stop, type
+`handoff`. Codex saves a note, and the next session reads it and carries on.
+
+LitCodex also brings more than forty skills for planning, code review, research, debugging, Word and PowerPoint files, and
 English or Korean prose, all running inside Codex on your machine with your own sign-in and models. It is built for
 people whose Codex CLI work outlasts one sitting: a feature that takes a few days, a refactor you want planned before
 anyone edits, research you need with sources, or a report or deck that has to end up as a real file.
+
+## Two ways to use it
+
+**The easy way.** Write your request as usual and put `lit` at the start or at the end:
+
+```text
+fix the date parsing bug in src/dates.js lit
+```
+
+Codex sets the goal, writes a failing test, fixes the bug, checks the result and tells you what it checked.
+Most tasks need nothing more.
+
+**The full workflow.** For a bigger job, go one step at a time. Each step hands its result to the next, and you can
+skip any step you do not need.
+
+| Step | Type | What happens |
+| --- | --- | --- |
+| 1. Explore | `lit brainstorm <question>` | Many options, scored and cut to a short list you pick from |
+| 2. Clarify | `lit deep interview <idea>` | Codex asks questions until the goal is clear |
+| 3. Plan | `lit-crucible <approach>` or `lit plan <task>` | Crucible attacks the approach first and hands what survives to lit-plan; lit-plan writes the steps and waits for your yes |
+| 4. Build | `yes` to the plan, or `lit <task>` | Codex works through it with tests and checks |
+| 5. Review | `lit review` | A review in five lanes, findings first |
+| 6. Hand off | `handoff` | The decisions and the next step, saved to a file |
+
+Install with one line, restart Codex, and approve the LitCodex hooks when Codex asks
+([Install](#install) has the details):
+
+```sh
+npm exec --yes --package @litfamily/litcodex@1.0.44 -- litcodex install
+```
 
 ## Pick your path
 
