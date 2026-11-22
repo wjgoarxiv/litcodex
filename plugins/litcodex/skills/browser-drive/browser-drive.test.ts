@@ -126,7 +126,8 @@ describe("browser-drive capability probe", () => {
 		});
 	});
 
-	it("accepts a stub only when its version banner identifies the driver", () => {
+	// Skip on Windows: creates a #!/bin/sh script stub that is not executable on Windows.
+	it.skipIf(process.platform === "win32")("accepts a stub only when its version banner identifies the driver", () => {
 		const root = mkdtempSync(join(tmpdir(), "litcodex-browser-drive-"));
 		temporaryRoots.push(root);
 		const driver = join(root, DRIVER_COMMAND);
@@ -179,7 +180,8 @@ describe("browser-drive capability probe", () => {
 		expect(environments).toEqual([{ PATH: searchPath }, { PATH: searchPath }]);
 	});
 
-	it("returns typed unavailable for a misleading version banner", () => {
+	// Skip on Windows: creates a #!/bin/sh script stub that is not executable on Windows.
+	it.skipIf(process.platform === "win32")("returns typed unavailable for a misleading version banner", () => {
 		const root = mkdtempSync(join(tmpdir(), "litcodex-browser-drive-false-"));
 		temporaryRoots.push(root);
 		const driver = join(root, DRIVER_COMMAND);
@@ -197,7 +199,8 @@ describe("browser-drive capability probe", () => {
 		});
 	});
 
-	it("rejects hostile content after a valid-looking banner", () => {
+	// Skip on Windows: creates a #!/bin/sh script stub that is not executable on Windows.
+	it.skipIf(process.platform === "win32")("rejects hostile content after a valid-looking banner", () => {
 		const root = mkdtempSync(join(tmpdir(), "litcodex-browser-drive-hostile-"));
 		temporaryRoots.push(root);
 		const driver = join(root, DRIVER_COMMAND);
@@ -482,7 +485,8 @@ process.stdout.write("${DRIVER_COMMAND} 9.9.9\\n");
 		}
 	});
 
-	it("never throws for malformed input or a failing runner", () => {
+	// Skip on Windows: creates a #!/bin/sh script stub that is not executable on Windows.
+	it.skipIf(process.platform === "win32")("never throws for malformed input or a failing runner", () => {
 		const root = mkdtempSync(join(tmpdir(), "litcodex-browser-drive-malformed-"));
 		temporaryRoots.push(root);
 		const driver = join(root, DRIVER_COMMAND);
@@ -522,7 +526,8 @@ process.stdout.write("${DRIVER_COMMAND} 9.9.9\\n");
 		expect(existsSync(root)).toBe(false);
 	});
 
-	it("rejects a newline-bearing executable path without launching it", () => {
+	// Skip on Windows: mkdirSync("evil\nbin") with a newline in the name fails with EINVAL on Windows.
+	it.skipIf(process.platform === "win32")("rejects a newline-bearing executable path without launching it", () => {
 		const base = mkdtempSync(join(tmpdir(), "litcodex-browser-drive-newline-"));
 		temporaryRoots.push(base);
 		const hostileDir = join(base, "evil\nbin");
@@ -551,7 +556,8 @@ process.stdout.write("${DRIVER_COMMAND} 9.9.9\\n");
 		expect(existsSync(marker)).toBe(false);
 	});
 
-	it("rejects combined stdout and stderr output that exceeds the aggregate byte budget", () => {
+	// Skip on Windows: creates a #!/bin/sh wrapper script that is not executable on Windows.
+	it.skipIf(process.platform === "win32")("rejects combined stdout and stderr output that exceeds the aggregate byte budget", () => {
 		const root = mkdtempSync(join(tmpdir(), "litcodex-browser-drive-aggregate-"));
 		temporaryRoots.push(root);
 		const driver = join(root, DRIVER_COMMAND);
@@ -578,7 +584,8 @@ for (let index = 0; index < 120; index += 1) process.stderr.write(line);
 		});
 	});
 
-	it("truncates the shared supervisor budget deterministically across multibyte boundaries", () => {
+	// Skip on Windows: POSIX_SUPERVISOR uses POSIX process group signals (SIGTERM/SIGKILL), not available on Windows.
+	it.skipIf(process.platform === "win32")("truncates the shared supervisor budget deterministically across multibyte boundaries", () => {
 		const source = readFileSync(CAPABILITY_PROBE_PATH, "utf8");
 		const supervisorMatch = source.match(/const POSIX_SUPERVISOR = String\.raw`([\s\S]*?)`;/u);
 		expect(supervisorMatch).not.toBeNull();
@@ -680,7 +687,8 @@ describe("browser-drive skill contract", () => {
 		expect(directive).not.toContain("node skills/browser-drive/scripts/capability-probe.mjs");
 	});
 
-	it("executes the documented capability command from a disposable installed skill root", () => {
+	// Skip on Windows: creates a #!/bin/sh script stub that is not executable on Windows.
+	it.skipIf(process.platform === "win32")("executes the documented capability command from a disposable installed skill root", () => {
 		const callerRoot = mkdtempSync(join(tmpdir(), "litcodex-browser-drive-caller-"));
 		const skillRoot = join(callerRoot, "installed-browser-drive");
 		const driverRoot = join(callerRoot, "bin");
@@ -720,7 +728,7 @@ describe("browser-drive hook route", () => {
 		for (const prompt of ["browser-drive", "$litcodex:browser-drive", "  BROWSER-DRIVE  "]) {
 			const context = injectedContext(runUserPromptSubmitHook(userPrompt(prompt)));
 			expect(context).toContain("<browser-drive-mode>");
-			expect(context).toMatch(/^skill browser-drive: .+\/skills\/browser-drive\/SKILL\.md$/mu);
+			expect(context).toMatch(/^skill browser-drive: .+[/\\]skills[/\\]browser-drive[/\\]SKILL\.md$/mu);
 		}
 	});
 

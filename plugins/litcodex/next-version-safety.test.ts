@@ -66,73 +66,87 @@ describe("safe installed scaffold output", () => {
 		["autoresearch", researchScript, researchArgs, "research.md"],
 		["autoconference", conferenceScript, conferenceArgs, "conference.md"],
 	] as const) {
-		it(`${name} rejects symlink output roots and parents without writing through them`, () => {
-			const root = sandbox();
-			const outsideRoot = join(root, "outside-root");
-			const outsideParent = join(root, "outside-parent");
-			mkdirSync(outsideRoot);
-			mkdirSync(outsideParent);
-			const linkedRoot = join(root, "linked-root");
-			const linkedParent = join(root, "linked-parent");
-			symlinkSync(outsideRoot, linkedRoot);
-			symlinkSync(outsideParent, linkedParent);
+		// Skip on Windows: Python scripts use POSIX-only capabilities (O_DIRECTORY, dir_fd, symlinks)
+		// that emit BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME; a dedicated win32 test covers that path.
+		it.skipIf(process.platform === "win32")(
+			`${name} rejects symlink output roots and parents without writing through them`,
+			() => {
+				const root = sandbox();
+				const outsideRoot = join(root, "outside-root");
+				const outsideParent = join(root, "outside-parent");
+				mkdirSync(outsideRoot);
+				mkdirSync(outsideParent);
+				const linkedRoot = join(root, "linked-root");
+				const linkedParent = join(root, "linked-parent");
+				symlinkSync(outsideRoot, linkedRoot);
+				symlinkSync(outsideParent, linkedParent);
 
-			const rootResult = python(script, [...baseArgs, "--output", linkedRoot], root);
-			expect(rootResult.status).toBe(1);
-			expect(rootResult.stderr).toContain("UNSAFE_OUTPUT_SYMLINK");
-			expect(readdirSync(outsideRoot)).toEqual([]);
+				const rootResult = python(script, [...baseArgs, "--output", linkedRoot], root);
+				expect(rootResult.status).toBe(1);
+				expect(rootResult.stderr).toContain("UNSAFE_OUTPUT_SYMLINK");
+				expect(readdirSync(outsideRoot)).toEqual([]);
 
-			const parentResult = python(script, [...baseArgs, "--output", join(linkedParent, "run")], root);
-			expect(parentResult.status).toBe(1);
-			expect(parentResult.stderr).toContain("UNSAFE_OUTPUT_SYMLINK");
-			expect(readdirSync(outsideParent)).toEqual([]);
-		});
+				const parentResult = python(script, [...baseArgs, "--output", join(linkedParent, "run")], root);
+				expect(parentResult.status).toBe(1);
+				expect(parentResult.stderr).toContain("UNSAFE_OUTPUT_SYMLINK");
+				expect(readdirSync(outsideParent)).toEqual([]);
+			},
+		);
 
-		it(`${name} rejects a swapped generated leaf and preserves its outside target`, () => {
-			const root = sandbox();
-			const output = join(root, "output");
-			const outside = join(root, "outside.txt");
-			mkdirSync(output);
-			writeFileSync(outside, "outside-must-not-change\n");
-			symlinkSync(outside, join(output, primaryLeaf));
+		// Skip on Windows: same POSIX-only Python descriptor requirement as the test above.
+		it.skipIf(process.platform === "win32")(
+			`${name} rejects a swapped generated leaf and preserves its outside target`,
+			() => {
+				const root = sandbox();
+				const output = join(root, "output");
+				const outside = join(root, "outside.txt");
+				mkdirSync(output);
+				writeFileSync(outside, "outside-must-not-change\n");
+				symlinkSync(outside, join(output, primaryLeaf));
 
-			const result = python(script, [...baseArgs, "--output", output, "--force"], root);
-			expect(result.status).toBe(1);
-			expect(result.stderr).toContain("UNSAFE_GENERATED_LEAF");
-			expect(readFileSync(outside, "utf8")).toBe("outside-must-not-change\n");
-			expect(lstatSync(join(output, primaryLeaf)).isSymbolicLink()).toBe(true);
-		});
+				const result = python(script, [...baseArgs, "--output", output, "--force"], root);
+				expect(result.status).toBe(1);
+				expect(result.stderr).toContain("UNSAFE_GENERATED_LEAF");
+				expect(readFileSync(outside, "utf8")).toBe("outside-must-not-change\n");
+				expect(lstatSync(join(output, primaryLeaf)).isSymbolicLink()).toBe(true);
+			},
+		);
 	}
 
-	it("--force removes stale run-owned artifacts while preserving unrelated files", () => {
-		const root = sandbox();
-		for (const [script, baseArgs, directory, staleLeaves] of [
-			[
-				researchScript,
-				researchArgs,
-				"research",
-				["final_report.md", "autoresearch-run-state.json", ".autoresearch-loop.pid"],
-			],
-			[
-				conferenceScript,
-				conferenceArgs,
-				"conference",
-				["synthesis.md", "autoconference-run-state.json", ".autoconference-loop.pid"],
-			],
-		] as const) {
-			const output = join(root, directory);
-			mkdirSync(output);
-			writeFileSync(join(output, "sentinel.txt"), "keep\n");
-			for (const leaf of staleLeaves) writeFileSync(join(output, leaf), "stale\n");
+	// Skip on Windows: Python init scripts require POSIX descriptor capabilities not available on Windows.
+	it.skipIf(process.platform === "win32")(
+		"--force removes stale run-owned artifacts while preserving unrelated files",
+		() => {
+			const root = sandbox();
+			for (const [script, baseArgs, directory, staleLeaves] of [
+				[
+					researchScript,
+					researchArgs,
+					"research",
+					["final_report.md", "autoresearch-run-state.json", ".autoresearch-loop.pid"],
+				],
+				[
+					conferenceScript,
+					conferenceArgs,
+					"conference",
+					["synthesis.md", "autoconference-run-state.json", ".autoconference-loop.pid"],
+				],
+			] as const) {
+				const output = join(root, directory);
+				mkdirSync(output);
+				writeFileSync(join(output, "sentinel.txt"), "keep\n");
+				for (const leaf of staleLeaves) writeFileSync(join(output, leaf), "stale\n");
 
-			const result = python(script, [...baseArgs, "--output", output, "--force"], root);
-			expect(result.status, result.stderr).toBe(0);
-			expect(readFileSync(join(output, "sentinel.txt"), "utf8")).toBe("keep\n");
-			for (const leaf of staleLeaves) expect(existsSync(join(output, leaf)), `${directory}/${leaf}`).toBe(false);
-		}
-	});
+				const result = python(script, [...baseArgs, "--output", output, "--force"], root);
+				expect(result.status, result.stderr).toBe(0);
+				expect(readFileSync(join(output, "sentinel.txt"), "utf8")).toBe("keep\n");
+				for (const leaf of staleLeaves) expect(existsSync(join(output, leaf)), `${directory}/${leaf}`).toBe(false);
+			}
+		},
+	);
 
-	it("strictly rejects zero, negative, NaN, and infinite budgets", () => {
+	// Skip on Windows: scripts emit BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME before the budget check.
+	it.skipIf(process.platform === "win32")("strictly rejects zero, negative, NaN, and infinite budgets", () => {
 		const root = sandbox();
 		const cases = [
 			[researchScript, [...researchArgs, "--max-iterations", "0"]],
@@ -152,13 +166,16 @@ describe("safe installed scaffold output", () => {
 		}
 	});
 
-	it("rejects a parent symlink inserted between component inspection and creation", () => {
-		const root = sandbox();
-		const parent = join(root, "parent");
-		const outside = join(root, "outside");
-		mkdirSync(parent);
-		mkdirSync(outside);
-		const probe = `
+	// Skip on Windows: probe uses dir_fd= POSIX keyword argument, unavailable on Windows.
+	it.skipIf(process.platform === "win32")(
+		"rejects a parent symlink inserted between component inspection and creation",
+		() => {
+			const root = sandbox();
+			const parent = join(root, "parent");
+			const outside = join(root, "outside");
+			mkdirSync(parent);
+			mkdirSync(outside);
+			const probe = `
 import importlib.util
 import os
 import sys
@@ -179,25 +196,29 @@ def raced_mkdir(name, mode=0o777, *, dir_fd=None):
 module.os.mkdir = raced_mkdir
 module.open_safe_directory(Path(sys.argv[2]))
 `;
-		for (const script of [researchScript, conferenceScript]) {
-			const target = join(parent, "run");
-			const result = spawnSync("python3", ["-c", probe, script, target, outside], {
-				cwd: root,
-				encoding: "utf8",
-				timeout: 30_000,
-			});
-			expect(result.status).toBe(1);
-			expect(result.stderr).toContain("UNSAFE_OUTPUT_SYMLINK");
-			rmSync(target, { force: true });
-			expect(readdirSync(outside)).toEqual([]);
-		}
-	});
+			for (const script of [researchScript, conferenceScript]) {
+				const target = join(parent, "run");
+				const result = spawnSync("python3", ["-c", probe, script, target, outside], {
+					cwd: root,
+					encoding: "utf8",
+					timeout: 30_000,
+				});
+				expect(result.status).toBe(1);
+				expect(result.stderr).toContain("UNSAFE_OUTPUT_SYMLINK");
+				rmSync(target, { force: true });
+				expect(readdirSync(outside)).toEqual([]);
+			}
+		},
+	);
 
-	it("rejects a same-path directory replacement after child stat and before open", () => {
-		const root = sandbox();
-		const output = join(root, "output");
-		mkdirSync(output);
-		const probe = `
+	// Skip on Windows: probe uses dir_fd= in os.rename and os.open, unavailable on Windows.
+	it.skipIf(process.platform === "win32")(
+		"rejects a same-path directory replacement after child stat and before open",
+		() => {
+			const root = sandbox();
+			const output = join(root, "output");
+			mkdirSync(output);
+			const probe = `
 import importlib.util
 import os
 import sys
@@ -226,24 +247,28 @@ except SystemExit:
 else:
     raise SystemExit(9)
 `;
-		for (const script of [researchScript, conferenceScript]) {
-			const result = spawnSync("python3", ["-c", probe, script, output], {
-				cwd: root,
-				encoding: "utf8",
-				timeout: 30_000,
-			});
-			expect(result.status).toBe(1);
-			expect(result.stderr).toContain("UNSAFE_OUTPUT_SWAP");
-			expect(existsSync(join(root, "output-original"))).toBe(true);
-			rmSync(output, { recursive: true, force: true });
-			rmSync(join(root, "output-original"), { recursive: true, force: true });
-			mkdirSync(output);
-		}
-	});
+			for (const script of [researchScript, conferenceScript]) {
+				const result = spawnSync("python3", ["-c", probe, script, output], {
+					cwd: root,
+					encoding: "utf8",
+					timeout: 30_000,
+				});
+				expect(result.status).toBe(1);
+				expect(result.stderr).toContain("UNSAFE_OUTPUT_SWAP");
+				expect(existsSync(join(root, "output-original"))).toBe(true);
+				rmSync(output, { recursive: true, force: true });
+				rmSync(join(root, "output-original"), { recursive: true, force: true });
+				mkdirSync(output);
+			}
+		},
+	);
 
-	it("cleans sensitive temporary leaves after partial write and fsync failures, including later --force", () => {
-		const root = sandbox();
-		const probe = `
+	// Skip on Windows: probe uses os.write/os.fsync with dir_fd= POSIX descriptors, unavailable on Windows.
+	it.skipIf(process.platform === "win32")(
+		"cleans sensitive temporary leaves after partial write and fsync failures, including later --force",
+		() => {
+			const root = sandbox();
+			const probe = `
 import importlib.util
 import os
 import sys
@@ -290,30 +315,35 @@ if residue:
     print("TEMP_RESIDUE", file=sys.stderr)
     raise SystemExit(8)
 `;
-		for (const [family, script, baseArgs] of [
-			["autoresearch", researchScript, researchArgs],
-			["autoconference", conferenceScript, conferenceArgs],
-		] as const) {
-			for (const failure of ["write", "fsync"]) {
-				const output = join(root, `${family}-${failure}`);
-				const failed = spawnSync("python3", ["-c", probe, script, output, failure], {
-					cwd: root,
-					encoding: "utf8",
-					timeout: 30_000,
-				});
-				expect(failed.status, failed.stderr).toBe(0);
-				expect(readdirSync(output).filter((name) => name.includes(".tmp-"))).toEqual([]);
+			for (const [family, script, baseArgs] of [
+				["autoresearch", researchScript, researchArgs],
+				["autoconference", conferenceScript, conferenceArgs],
+			] as const) {
+				for (const failure of ["write", "fsync"]) {
+					const output = join(root, `${family}-${failure}`);
+					const failed = spawnSync("python3", ["-c", probe, script, output, failure], {
+						cwd: root,
+						encoding: "utf8",
+						timeout: 30_000,
+					});
+					expect(failed.status, failed.stderr).toBe(0);
+					expect(readdirSync(output).filter((name) => name.includes(".tmp-"))).toEqual([]);
 
-				const forced = python(script, [...baseArgs, "--output", output, "--force"], root);
-				expect(forced.status, forced.stderr).toBe(0);
-				expect(readdirSync(output).filter((name) => name.includes(".tmp-"))).toEqual([]);
+					const forced = python(script, [...baseArgs, "--output", output, "--force"], root);
+					expect(forced.status, forced.stderr).toBe(0);
+					expect(readdirSync(output).filter((name) => name.includes(".tmp-"))).toEqual([]);
+				}
 			}
-		}
-	});
+		},
+	);
 
-	it("fails typed before mutation when required Python/POSIX descriptor capabilities are unavailable", () => {
-		const root = sandbox();
-		const probe = `
+	// Skip on Windows: the probe itself calls module.os.supports_dir_fd which requires POSIX support
+	// to import; the win32 variant below tests this path natively without the probe.
+	it.skipIf(process.platform === "win32")(
+		"fails typed before mutation when required Python/POSIX descriptor capabilities are unavailable",
+		() => {
+			const root = sandbox();
+			const probe = `
 import importlib.util
 import os
 import sys
@@ -326,25 +356,36 @@ module.os.supports_dir_fd = set()
 sys.argv = [sys.argv[1], *sys.argv[3:]]
 module.main()
 `;
-		for (const [index, [script, baseArgs]] of [
-			[researchScript, researchArgs],
-			[conferenceScript, conferenceArgs],
-		].entries()) {
-			const output = join(root, `unsupported-${index}`);
-			const result = spawnSync("python3", ["-c", probe, script, output, ...baseArgs, "--output", output], {
-				cwd: root,
-				encoding: "utf8",
-				timeout: 30_000,
-			});
-			expect(result.status).toBe(1);
-			expect(result.stderr).toContain("BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME");
-			expect(existsSync(output)).toBe(false);
-		}
-		for (const family of ["autoresearch", "autoconference"]) {
-			const contract = readFileSync(join(skillsRoot, family, "references/family-contract.md"), "utf8");
-			expect(contract).toContain("Python 3.8+");
-			expect(contract).toContain("BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME");
-		}
+			for (const [index, [script, baseArgs]] of [
+				[researchScript, researchArgs],
+				[conferenceScript, conferenceArgs],
+			].entries()) {
+				const output = join(root, `unsupported-${index}`);
+				const result = spawnSync("python3", ["-c", probe, script, output, ...baseArgs, "--output", output], {
+					cwd: root,
+					encoding: "utf8",
+					timeout: 30_000,
+				});
+				expect(result.status).toBe(1);
+				expect(result.stderr).toContain("BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME");
+				expect(existsSync(output)).toBe(false);
+			}
+			for (const family of ["autoresearch", "autoconference"]) {
+				const contract = readFileSync(join(skillsRoot, family, "references/family-contract.md"), "utf8");
+				expect(contract).toContain("Python 3.8+");
+				expect(contract).toContain("BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME");
+			}
+		},
+	);
+
+	// On Windows, Python's os.supports_dir_fd is empty and the scripts emit the typed refusal directly.
+	it.runIf(process.platform === "win32")("emits typed POSIX-runtime refusal when run on win32", () => {
+		const root = sandbox();
+		const output = join(root, "win32-blocked");
+		const result = python(researchScript, [...researchArgs, "--output", output], root);
+		expect(result.status).toBe(1);
+		expect(result.stderr).toContain("BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME");
+		expect(existsSync(output)).toBe(false);
 	});
 });
 

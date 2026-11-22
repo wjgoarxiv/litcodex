@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { type AuthMode, detectAuthMode } from "./auth-mode.js";
@@ -14,8 +15,9 @@ function fakeFs(files: ReadonlyMap<string, string>): ReadonlyFsLike {
 	};
 }
 
-const CODEX_HOME = "/tmp/test-codex-home";
-const AUTH_PATH = `${CODEX_HOME}/auth.json`;
+// Use path.join so the product's internal path construction matches on both POSIX and Windows.
+const CODEX_HOME = join("/tmp", "test-codex-home");
+const AUTH_PATH = join(CODEX_HOME, "auth.json");
 
 describe("detectAuthMode", () => {
 	it("returns 'chatgpt' when tokens object contains id_token", () => {

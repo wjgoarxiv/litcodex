@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { accessSync, chmodSync, constants, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { recordTurnStart, writeThreadPointer } from "@litcodex/lit-loop/dist/live-step.js";
 import { recordWorkflowTurn } from "@litcodex/lit-loop/dist/workflow-map.js";
@@ -25,16 +25,32 @@ function tempHome(): string {
 	return home;
 }
 
-/** A folder holding an executable `codex` that prints its arguments and exits 7. */
+/** A folder holding an executable `codex` (or `codex.cmd` on Windows) that prints its arguments and exits 7. */
 function fakeCodexDir(home: string): string {
 	const bin = join(home, "bin");
 	mkdirSync(bin, { recursive: true });
-	const codex = join(bin, "codex");
-	writeFileSync(
-		codex,
-		'#!/bin/sh\nprintf "fake codex"\nfor a in "$@"; do printf " [%s]" "$a"; done\nprintf "\\n"\nexit 7\n',
-	);
-	chmodSync(codex, 0o755);
+	if (process.platform === "win32") {
+		// Windows does not run extensionless scripts; write a .cmd that delegates to a .js helper.
+		const codexJs = join(bin, "_codex.js");
+		writeFileSync(
+			codexJs,
+			[
+				'process.stdout.write("fake codex");',
+				`for (const arg of process.argv.slice(2)) process.stdout.write(\` [\${arg}]\`);`,
+				'process.stdout.write("\\n");',
+				"process.exit(7);",
+				"",
+			].join("\n"),
+		);
+		writeFileSync(join(bin, "codex.cmd"), `@echo off\n"${process.execPath}" "${codexJs}" %*\n`);
+	} else {
+		const codex = join(bin, "codex");
+		writeFileSync(
+			codex,
+			'#!/bin/sh\nprintf "fake codex"\nfor a in "$@"; do printf " [%s]" "$a"; done\nprintf "\\n"\nexit 7\n',
+		);
+		chmodSync(codex, 0o755);
+	}
 	return bin;
 }
 
@@ -148,7 +164,8 @@ describe("findCodex", () => {
 	it("finds an executable codex on PATH and nothing when it is missing", () => {
 		const home = tempHome();
 		const bin = fakeCodexDir(home);
-		expect(findCodex({ PATH: `${join(home, "nothing")}:${bin}` })).toBe(join(bin, "codex"));
+		const codexName = process.platform === "win32" ? "codex.cmd" : "codex";
+		expect(findCodex({ PATH: `${join(home, "nothing")}${delimiter}${bin}` })).toBe(join(bin, codexName));
 		expect(findCodex({ PATH: join(home, "nothing") })).toBeNull();
 	});
 
@@ -179,8 +196,9 @@ describe("runCommand fallback", () => {
 	])("runs codex plainly with one note when %s", async (_name, options, note) => {
 		const h = harness(options);
 		const code = await runCommand(["--model", "x"], h.io);
+		const codexName = process.platform === "win32" ? "codex.cmd" : "codex";
 		expect(code).toBe(5);
-		expect(h.plain).toEqual([{ file: join(h.io.env["PATH"] as string, "codex"), args: ["--model", "x"] }]);
+		expect(h.plain).toEqual([{ file: join(h.io.env["PATH"] as string, codexName), args: ["--model", "x"] }]);
 		expect(h.err).toHaveLength(1);
 		expect(h.err[0]).toMatch(note);
 		expect(h.err[0]?.endsWith("\n")).toBe(true);
@@ -489,21 +507,25 @@ describe("runCommand with a pseudo-terminal", () => {
 });
 
 describe("ensurePtyHelperExecutable", () => {
-	it("sets the execute bit on a macOS prebuild helper that lacks it, and leaves other layouts alone", () => {
-		const root = join(tempHome(), "node-pty");
-		const dir = join(root, "prebuilds", `darwin-${process.arch}`);
-		mkdirSync(dir, { recursive: true });
-		const helper = join(dir, "spawn-helper");
-		writeFileSync(helper, "");
-		chmodSync(helper, 0o644);
-		expect(ensurePtyHelperExecutable(root, "linux")).toBeNull();
-		expect(() => accessSync(helper, constants.X_OK)).toThrow();
-		expect(ensurePtyHelperExecutable(root, "darwin")).toBeNull();
-		expect(() => accessSync(helper, constants.X_OK)).not.toThrow();
-		expect(ensurePtyHelperExecutable(join(root, "missing"), "darwin")).toBeNull();
-	});
+	// chmodSync / accessSync(X_OK) are POSIX-only; file mode bits have no meaning on Windows.
+	it.skipIf(process.platform === "win32")(
+		"sets the execute bit on a macOS prebuild helper that lacks it, and leaves other layouts alone",
+		() => {
+			const root = join(tempHome(), "node-pty");
+			const dir = join(root, "prebuilds", `darwin-${process.arch}`);
+			mkdirSync(dir, { recursive: true });
+			const helper = join(dir, "spawn-helper");
+			writeFileSync(helper, "");
+			chmodSync(helper, 0o644);
+			expect(ensurePtyHelperExecutable(root, "linux")).toBeNull();
+			expect(() => accessSync(helper, constants.X_OK)).toThrow();
+			expect(ensurePtyHelperExecutable(root, "darwin")).toBeNull();
+			expect(() => accessSync(helper, constants.X_OK)).not.toThrow();
+			expect(ensurePtyHelperExecutable(join(root, "missing"), "darwin")).toBeNull();
+		},
+	);
 
-	it("leaves a node-pty outside the given package's node_modules alone", () => {
+	it.skipIf(process.platform === "win32")("leaves a node-pty outside the given package's node_modules alone", () => {
 		const home = tempHome();
 		const root = join(home, "global", "node_modules", "node-pty");
 		const dir = join(root, "prebuilds", `darwin-${process.arch}`);
@@ -535,7 +557,11 @@ describe("litcodex run as a process", () => {
 		const run = spawnSync(process.execPath, ["--import", register, binPath, "run", "--", "--flag", "two words"], {
 			encoding: "utf8",
 			cwd: home,
-			env: { PATH: `${bin}:/usr/bin:/bin`, HOME: home, CODEX_HOME: join(home, ".codex") },
+			env: {
+				PATH: `${bin}${delimiter}${process.env["PATH"] ?? ""}`,
+				HOME: home,
+				CODEX_HOME: join(home, ".codex"),
+			},
 		});
 		expect(run.status).toBe(7);
 		expect(run.stdout).toBe("fake codex [--flag] [two words]\n");
@@ -550,7 +576,7 @@ describe("litcodex run as a process", () => {
 		const run = spawnSync(process.execPath, [binPath, "run", "--", "--version"], {
 			encoding: "utf8",
 			cwd: home,
-			env: { PATH: `${bin}:/usr/bin:/bin`, HOME: home, CODEX_HOME: join(home, ".codex") },
+			env: { PATH: `${bin}${delimiter}${process.env["PATH"] ?? ""}`, HOME: home, CODEX_HOME: join(home, ".codex") },
 		});
 		expect(run.status).toBe(7);
 		expect(run.stdout).toBe("fake codex [--version]\n");

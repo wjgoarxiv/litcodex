@@ -33,7 +33,7 @@ describe("MODE_BY_TOKEN routing table", () => {
 			expect(spec.mode).toBe("lit-loop");
 			expect(spec.openMarker).toBe(LIT_LOOP_DIRECTIVE_MARKER);
 			expect(spec.closeMarker).toBe(LIT_LOOP_DIRECTIVE_CLOSE);
-			expect(spec.directivePath.endsWith("/directive.md")).toBe(true);
+			expect(spec.directivePath.replace(/\\/gu, "/").endsWith("/directive.md")).toBe(true);
 			expect(spec.directivePath).not.toContain("/directives/");
 		}
 		// all three share the SAME frozen spec object (single source).
@@ -46,7 +46,7 @@ describe("MODE_BY_TOKEN routing table", () => {
 		expect(spec.mode).toBe("litwork");
 		expect(spec.openMarker).toBe(LITWORK_DIRECTIVE_MARKER);
 		expect(spec.closeMarker).toBe(LITWORK_DIRECTIVE_CLOSE);
-		expect(spec.directivePath.endsWith("/directives/litwork.md")).toBe(true);
+		expect(spec.directivePath.replace(/\\/gu, "/").endsWith("/directives/litwork.md")).toBe(true);
 	});
 
 	it("maps lit-plan → lit-plan mode + directives/lit-plan.md", () => {
@@ -54,7 +54,7 @@ describe("MODE_BY_TOKEN routing table", () => {
 		expect(spec.mode).toBe("lit-plan");
 		expect(spec.openMarker).toBe(LIT_PLAN_DIRECTIVE_MARKER);
 		expect(spec.closeMarker).toBe(LIT_PLAN_DIRECTIVE_CLOSE);
-		expect(spec.directivePath.endsWith("/directives/lit-plan.md")).toBe(true);
+		expect(spec.directivePath.replace(/\\/gu, "/").endsWith("/directives/lit-plan.md")).toBe(true);
 	});
 
 	it("maps litgoal → litgoal mode + directives/litgoal.md", () => {
@@ -62,7 +62,7 @@ describe("MODE_BY_TOKEN routing table", () => {
 		expect(spec.mode).toBe("litgoal");
 		expect(spec.openMarker).toBe(LITGOAL_DIRECTIVE_MARKER);
 		expect(spec.closeMarker).toBe(LITGOAL_DIRECTIVE_CLOSE);
-		expect(spec.directivePath.endsWith("/directives/litgoal.md")).toBe(true);
+		expect(spec.directivePath.replace(/\\/gu, "/").endsWith("/directives/litgoal.md")).toBe(true);
 	});
 
 	it("maps lit-crucible → lit-crucible mode + directives/lit-crucible.md", () => {
@@ -70,8 +70,8 @@ describe("MODE_BY_TOKEN routing table", () => {
 		expect(spec.mode).toBe("lit-crucible");
 		expect(spec.openMarker).toBe(LIT_CRUCIBLE_DIRECTIVE_MARKER);
 		expect(spec.closeMarker).toBe(LIT_CRUCIBLE_DIRECTIVE_CLOSE);
-		expect(spec.directivePath.endsWith("/directives/lit-crucible.md")).toBe(true);
-		expect(spec.skillPath.endsWith("/skills/lit-crucible/SKILL.md")).toBe(true);
+		expect(spec.directivePath.replace(/\\/gu, "/").endsWith("/directives/lit-crucible.md")).toBe(true);
+		expect(spec.skillPath.replace(/\\/gu, "/").endsWith("/skills/lit-crucible/SKILL.md")).toBe(true);
 	});
 
 	it("maps lit-brainstorm → lit-brainstorm mode + directives/lit-brainstorm.md", () => {
@@ -79,8 +79,8 @@ describe("MODE_BY_TOKEN routing table", () => {
 		expect(spec.mode).toBe("lit-brainstorm");
 		expect(spec.openMarker).toBe(LIT_BRAINSTORM_DIRECTIVE_MARKER);
 		expect(spec.closeMarker).toBe(LIT_BRAINSTORM_DIRECTIVE_CLOSE);
-		expect(spec.directivePath.endsWith("/directives/lit-brainstorm.md")).toBe(true);
-		expect(spec.skillPath.endsWith("/skills/lit-brainstorm/SKILL.md")).toBe(true);
+		expect(spec.directivePath.replace(/\\/gu, "/").endsWith("/directives/lit-brainstorm.md")).toBe(true);
+		expect(spec.skillPath.replace(/\\/gu, "/").endsWith("/skills/lit-brainstorm/SKILL.md")).toBe(true);
 	});
 
 	it("maps lit-schematic → lit-schematic mode + directives/lit-schematic.md", () => {
@@ -88,8 +88,8 @@ describe("MODE_BY_TOKEN routing table", () => {
 		expect(spec.mode).toBe("lit-schematic");
 		expect(spec.openMarker).toBe(LIT_SCHEMATIC_DIRECTIVE_MARKER);
 		expect(spec.closeMarker).toBe(LIT_SCHEMATIC_DIRECTIVE_CLOSE);
-		expect(spec.directivePath.endsWith("/directives/lit-schematic.md")).toBe(true);
-		expect(spec.skillPath.endsWith("/skills/lit-schematic/SKILL.md")).toBe(true);
+		expect(spec.directivePath.replace(/\\/gu, "/").endsWith("/directives/lit-schematic.md")).toBe(true);
+		expect(spec.skillPath.replace(/\\/gu, "/").endsWith("/skills/lit-schematic/SKILL.md")).toBe(true);
 	});
 
 	it("maps lit-hijack → lit-hijack mode + directives/lit-hijack.md", () => {
@@ -97,8 +97,8 @@ describe("MODE_BY_TOKEN routing table", () => {
 		expect(spec.mode).toBe("lit-hijack");
 		expect(spec.openMarker).toBe(LIT_HIJACK_DIRECTIVE_MARKER);
 		expect(spec.closeMarker).toBe(LIT_HIJACK_DIRECTIVE_CLOSE);
-		expect(spec.directivePath.endsWith("/directives/lit-hijack.md")).toBe(true);
-		expect(spec.skillPath.endsWith("/skills/lit-hijack/SKILL.md")).toBe(true);
+		expect(spec.directivePath.replace(/\\/gu, "/").endsWith("/directives/lit-hijack.md")).toBe(true);
+		expect(spec.skillPath.replace(/\\/gu, "/").endsWith("/skills/lit-hijack/SKILL.md")).toBe(true);
 	});
 
 	it("names every routed skill by its route: litgoal and review-work route to a skill of the same name", () => {
@@ -114,8 +114,8 @@ describe("MODE_BY_TOKEN routing table", () => {
 		expect(spec.mode).toBe("lit-init");
 		expect(spec.openMarker).toBe(LIT_INIT_DIRECTIVE_MARKER);
 		expect(spec.closeMarker).toBe(LIT_INIT_DIRECTIVE_CLOSE);
-		expect(spec.directivePath.endsWith("/directives/lit-init.md")).toBe(true);
-		expect(spec.skillPath.endsWith("/skills/lit-init/SKILL.md")).toBe(true);
+		expect(spec.directivePath.replace(/\\/gu, "/").endsWith("/directives/lit-init.md")).toBe(true);
+		expect(spec.skillPath.replace(/\\/gu, "/").endsWith("/skills/lit-init/SKILL.md")).toBe(true);
 	});
 
 	it("maps deep-interview → dedicated Codex planning directive", () => {
@@ -123,17 +123,29 @@ describe("MODE_BY_TOKEN routing table", () => {
 		expect(spec.mode).toBe("deep-interview");
 		expect(spec.openMarker).toBe(DEEP_INTERVIEW_DIRECTIVE_MARKER);
 		expect(spec.closeMarker).toBe(DEEP_INTERVIEW_DIRECTIVE_CLOSE);
-		expect(spec.directivePath.endsWith("/directives/deep-interview.md")).toBe(true);
-		expect(spec.skillPath.endsWith("/skills/deep-interview/SKILL.md")).toBe(true);
+		expect(spec.directivePath.replace(/\\/gu, "/").endsWith("/directives/deep-interview.md")).toBe(true);
+		expect(spec.skillPath.replace(/\\/gu, "/").endsWith("/skills/deep-interview/SKILL.md")).toBe(true);
 	});
 
 	it("maps natural phrase modes to their dedicated directives", () => {
 		expect(modeForToken("review-work" as never).mode).toBe("review-work");
-		expect(modeForToken("review-work" as never).directivePath.endsWith("/directives/review-work.md")).toBe(true);
+		expect(
+			modeForToken("review-work" as never)
+				.directivePath.replace(/\\/gu, "/")
+				.endsWith("/directives/review-work.md"),
+		).toBe(true);
 		expect(modeForToken("litresearch" as never).mode).toBe("litresearch");
-		expect(modeForToken("litresearch" as never).directivePath.endsWith("/directives/litresearch.md")).toBe(true);
+		expect(
+			modeForToken("litresearch" as never)
+				.directivePath.replace(/\\/gu, "/")
+				.endsWith("/directives/litresearch.md"),
+		).toBe(true);
 		expect(modeForToken("start-work" as never).mode).toBe("start-work");
-		expect(modeForToken("start-work" as never).directivePath.endsWith("/directives/start-work.md")).toBe(true);
+		expect(
+			modeForToken("start-work" as never)
+				.directivePath.replace(/\\/gu, "/")
+				.endsWith("/directives/start-work.md"),
+		).toBe(true);
 	});
 
 	it("covers EVERY trigger token (no token can route nowhere) and is frozen", () => {
@@ -141,9 +153,11 @@ describe("MODE_BY_TOKEN routing table", () => {
 			expect(MODE_BY_TOKEN[token]).toBeDefined();
 			expect(typeof MODE_BY_TOKEN[token].directivePath).toBe("string");
 			expect(typeof MODE_BY_TOKEN[token].skillName).toBe("string");
-			expect(MODE_BY_TOKEN[token].skillPath.endsWith(`/skills/${MODE_BY_TOKEN[token].skillName}/SKILL.md`)).toBe(
-				true,
-			);
+			expect(
+				MODE_BY_TOKEN[token].skillPath
+					.replace(/\\/gu, "/")
+					.endsWith(`/skills/${MODE_BY_TOKEN[token].skillName}/SKILL.md`),
+			).toBe(true);
 		}
 		expect(Object.isFrozen(MODE_BY_TOKEN)).toBe(true);
 	});

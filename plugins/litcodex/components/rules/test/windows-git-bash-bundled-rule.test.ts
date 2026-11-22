@@ -62,6 +62,17 @@ function occurrenceCount(value: string, search: string): number {
 	return value.split(search).length - 1;
 }
 
+// On Windows, OS paths in JSON output are double-backslash-encoded; extract the parsed string to compare them.
+function additionalContext(output: string): string {
+	if (!output) return "";
+	try {
+		const parsed = JSON.parse(output) as { hookSpecificOutput?: { additionalContext?: string } };
+		return parsed.hookSpecificOutput?.additionalContext ?? "";
+	} catch {
+		return output;
+	}
+}
+
 describe("Windows Git Bash bundled rule", () => {
 	it("#given packaged bundled rules #when discovering plugin-bundled candidates #then Windows Git Bash rule is included", () => {
 		const candidates = findPluginBundledCandidates({ pluginRoot: componentRoot, platform: "win32" });
@@ -84,7 +95,9 @@ describe("Windows Git Bash bundled rule", () => {
 			platform: "win32",
 		});
 
-		expect(occurrenceCount(output, `Instructions from: ${join(componentRoot, WINDOWS_RULE_PATH)}`)).toBe(1);
+		expect(
+			occurrenceCount(additionalContext(output), `Instructions from: ${join(componentRoot, WINDOWS_RULE_PATH)}`),
+		).toBe(1);
 		expect(output).toContain(WINDOWS_GUIDANCE);
 	});
 
@@ -119,7 +132,7 @@ describe("Windows Git Bash bundled rule", () => {
 			platform: "win32",
 		});
 
-		expect(output).toContain(`Instructions from: ${projectRulePath}`);
+		expect(additionalContext(output)).toContain(`Instructions from: ${projectRulePath}`);
 		expect(output).toContain(projectGuidance);
 		expect(output).not.toContain(WINDOWS_GUIDANCE);
 	});

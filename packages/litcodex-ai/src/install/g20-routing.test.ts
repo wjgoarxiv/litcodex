@@ -1,3 +1,4 @@
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { parseAgentRoute, routingReport } from "./agent-routing.js";
@@ -28,9 +29,9 @@ function completeRoutes(): AgentRoute[] {
 }
 
 function installFixture(file: string, content: string) {
-	const sourceDir = "/fake/agents";
+	const sourceDir = resolve("/fake/agents");
 	return makeMemWriteFs({
-		initialFiles: new Map([[`${sourceDir}/${file}`, content]]),
+		initialFiles: new Map([[join(sourceDir, file), content]]),
 		sourceDirEntries: new Map([[sourceDir, [file]]]),
 	});
 }
@@ -75,13 +76,13 @@ async function executeWithInvalidRoute(
 	content: string,
 	expectedError: RegExp,
 ): Promise<{ before: FakeCodexHost; after: FakeCodexHost; agentWrites: number }> {
-	const codexBin = "/fake/codex";
-	const sourceDir = "/fake/agents";
-	const codexHome = "/fake/codex-home";
+	const codexBin = resolve("/fake/codex");
+	const sourceDir = resolve("/fake/agents");
+	const codexHome = resolve("/fake/codex-home");
 	const host: FakeCodexHost = { marketplace: null, pluginInstalled: false };
 	const before = snapshotHost(host);
 	const writeFs = makeMemWriteFs({
-		initialFiles: new Map([[`${sourceDir}/litcodex-explorer.toml`, content]]),
+		initialFiles: new Map([[join(sourceDir, "litcodex-explorer.toml"), content]]),
 		sourceDirEntries: new Map([[sourceDir, ["litcodex-explorer.toml"]]]),
 	});
 
@@ -164,9 +165,9 @@ describe("G20 Codex-native agent routing", () => {
 			runAgentsInstall(AGENT_STEP, {
 				now: () => 0,
 				repoRoot: "/repo",
-				codexHome: "/tmp/g20-routing-home",
+				codexHome: resolve("/tmp/g20-routing-home"),
 				writeFs,
-				agentsSourceDir: "/fake/agents",
+				agentsSourceDir: resolve("/fake/agents"),
 			}),
 		).toThrow(/gpt-5\.6-luna requires/i);
 		expect(writeFs.written.size).toBe(0);
@@ -181,9 +182,9 @@ describe("G20 Codex-native agent routing", () => {
 			runAgentsInstall(AGENT_STEP, {
 				now: () => 0,
 				repoRoot: "/repo",
-				codexHome: "/tmp/g20-routing-home",
+				codexHome: resolve("/tmp/g20-routing-home"),
 				writeFs,
-				agentsSourceDir: "/fake/agents",
+				agentsSourceDir: resolve("/fake/agents"),
 			}),
 		).toThrow(/unknown model/i);
 		expect(writeFs.written.size).toBe(0);
@@ -204,12 +205,12 @@ describe("G20 Codex-native agent routing", () => {
 		runAgentsInstall(AGENT_STEP, {
 			now: () => 0,
 			repoRoot: "/repo",
-			codexHome: "/tmp/g20-routing-home",
+			codexHome: resolve("/tmp/g20-routing-home"),
 			writeFs,
-			agentsSourceDir: "/fake/agents",
+			agentsSourceDir: resolve("/fake/agents"),
 		});
 
-		expect(writeFs.written.get(`/tmp/g20-routing-home/agents/${file}`)).toBe(content);
+		expect(writeFs.written.get(join(resolve("/tmp/g20-routing-home"), "agents", file))).toBe(content);
 		expect(writeFs.written.size).toBe(1);
 	});
 
@@ -227,13 +228,13 @@ describe("G20 Codex-native agent routing", () => {
 		runAgentsInstall(AGENT_STEP, {
 			now: () => 0,
 			repoRoot: "/repo",
-			codexHome: "/tmp/g20-routing-home",
+			codexHome: resolve("/tmp/g20-routing-home"),
 			writeFs,
-			agentsSourceDir: "/fake/agents",
+			agentsSourceDir: resolve("/fake/agents"),
 			authMode: "chatgpt",
 		});
 
-		expect(writeFs.written.get(`/tmp/g20-routing-home/agents/${file}`)).toBe(content);
+		expect(writeFs.written.get(join(resolve("/tmp/g20-routing-home"), "agents", file))).toBe(content);
 	});
 
 	it.each([

@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 
 import { desiredAgentRoutes, installedAgentPath } from "../src/install/agent-routing.js";
 import { HANDOFF_SOURCE_HASHES } from "../src/install/bundled-skill-manifests.js";
@@ -26,9 +26,9 @@ import {
 	WIKIFY_PAYLOAD_HASHES,
 } from "../src/install/skill-resource-hashes.js";
 
-export const codexBin = "/usr/local/bin/codex";
-export const codexHome = "/tmp/test-codex-home";
-export const sentinelPath = `${codexHome}/agents/litcodex-litwork-reviewer.toml`;
+export const codexBin = resolve("/usr/local/bin/codex");
+export const codexHome = resolve("/tmp/test-codex-home");
+export const sentinelPath = join(codexHome, "agents", "litcodex-litwork-reviewer.toml");
 
 const completeAgentTomls = new Map(
 	desiredAgentRoutes().map((route) => [
@@ -40,7 +40,7 @@ const completeAgentTomls = new Map(
 export function doctorDeps(
 	fsFiles: string[],
 	rootConfig?: string,
-	marketplaceSource = `${codexHome}/marketplaces/litcodex`,
+	marketplaceSource = join(codexHome, "marketplaces", "litcodex"),
 	pluginVersion = "1.0.45",
 	codexVersion = "0.144.0",
 	handoffAvailable = true,
@@ -59,47 +59,55 @@ export function doctorDeps(
 		readonly missing?: "lit-diagram-drawer" | "lit-schematic" | "lit-hijack" | "card-server";
 	},
 ): Parameters<typeof runDoctor>[0] {
-	const configPath = `${codexHome}/config.toml`;
-	const marketplaceManifest = `${codexHome}/marketplaces/litcodex/.agents/plugins/marketplace.json`;
-	const pluginManifest = `${codexHome}/marketplaces/litcodex/plugins/litcodex/.codex-plugin/plugin.json`;
-	const hooksManifest = `${codexHome}/marketplaces/litcodex/plugins/litcodex/hooks/hooks.json`;
-	const pluginRoot = `${codexHome}/marketplaces/litcodex/plugins/litcodex`;
-	const cardServer = `${pluginRoot}/components/lit-loop/dist/card-server.js`;
-	const skillsRoot = `${pluginRoot}/skills`;
-	const vendorRoot = `${pluginRoot}/vendor`;
-	const handoffRoot = `${skillsRoot}/lit-handoff`;
-	const handoffOriginalRoot = `${vendorRoot}/handoff`;
+	const configPath = join(codexHome, "config.toml");
+	const marketplaceManifest = join(codexHome, "marketplaces", "litcodex", ".agents", "plugins", "marketplace.json");
+	const pluginManifest = join(
+		codexHome,
+		"marketplaces",
+		"litcodex",
+		"plugins",
+		"litcodex",
+		".codex-plugin",
+		"plugin.json",
+	);
+	const hooksManifest = join(codexHome, "marketplaces", "litcodex", "plugins", "litcodex", "hooks", "hooks.json");
+	const pluginRoot = join(codexHome, "marketplaces", "litcodex", "plugins", "litcodex");
+	const cardServer = join(pluginRoot, "components", "lit-loop", "dist", "card-server.js");
+	const skillsRoot = join(pluginRoot, "skills");
+	const vendorRoot = join(pluginRoot, "vendor");
+	const handoffRoot = join(skillsRoot, "lit-handoff");
+	const handoffOriginalRoot = join(vendorRoot, "handoff");
 	const handoffFiles = [
-		`${handoffRoot}/SKILL.md`,
-		`${vendorRoot}/NOTICE`,
-		`${vendorRoot}/licenses/022_handoff-MIT.txt`,
-		`${vendorRoot}/provenance/022_handoff.md`,
-		`${handoffOriginalRoot}/SKILL.md`,
-		`${handoffOriginalRoot}/evals/evals.json`,
-		`${handoffOriginalRoot}/examples/HANDOFF-example-generic-auth-refactor.md`,
-		`${handoffOriginalRoot}/templates/HANDOFF.md`,
+		join(handoffRoot, "SKILL.md"),
+		join(vendorRoot, "NOTICE"),
+		join(vendorRoot, "licenses", "022_handoff-MIT.txt"),
+		join(vendorRoot, "provenance", "022_handoff.md"),
+		join(handoffOriginalRoot, "SKILL.md"),
+		join(handoffOriginalRoot, "evals", "evals.json"),
+		join(handoffOriginalRoot, "examples", "HANDOFF-example-generic-auth-refactor.md"),
+		join(handoffOriginalRoot, "templates", "HANDOFF.md"),
 	];
-	const skillCatalogRoot = `${codexHome}/marketplaces/litcodex/plugins/litcodex/skills`;
-	const frontendUiuxRoot = `${skillCatalogRoot}/frontend-ui-ux`;
-	const humanizerRoot = `${skillCatalogRoot}/lit-humanizer`;
-	const diagramDrawerRoot = `${skillCatalogRoot}/lit-diagram-drawer`;
-	const autoconferenceRoot = `${skillCatalogRoot}/autoconference`;
-	const autoresearchRoot = `${skillCatalogRoot}/autoresearch`;
-	const browserDriveRoot = `${skillCatalogRoot}/browser-drive`;
-	const deepInterviewRoot = `${skillCatalogRoot}/deep-interview`;
-	const docxRoot = `${skillCatalogRoot}/lit-docx`;
-	const pptxRoot = `${skillCatalogRoot}/lit-pptx`;
-	const schematicRoot = `${skillCatalogRoot}/lit-schematic`;
-	const hijackRoot = `${skillCatalogRoot}/lit-hijack`;
-	const motionRoot = `${skillCatalogRoot}/lit-typographic-motion`;
-	const readmeStudioRoot = `${skillCatalogRoot}/readme-studio`;
-	const visualQaRoot = `${skillCatalogRoot}/visual-qa`;
-	const structuralSearchRoot = `${skillCatalogRoot}/structural-search`;
-	const codingSessionAuditRoot = `${skillCatalogRoot}/coding-session-audit`;
-	const wikifyRoot = `${skillCatalogRoot}/wikify`;
+	const skillCatalogRoot = join(codexHome, "marketplaces", "litcodex", "plugins", "litcodex", "skills");
+	const frontendUiuxRoot = join(skillCatalogRoot, "frontend-ui-ux");
+	const humanizerRoot = join(skillCatalogRoot, "lit-humanizer");
+	const diagramDrawerRoot = join(skillCatalogRoot, "lit-diagram-drawer");
+	const autoconferenceRoot = join(skillCatalogRoot, "autoconference");
+	const autoresearchRoot = join(skillCatalogRoot, "autoresearch");
+	const browserDriveRoot = join(skillCatalogRoot, "browser-drive");
+	const deepInterviewRoot = join(skillCatalogRoot, "deep-interview");
+	const docxRoot = join(skillCatalogRoot, "lit-docx");
+	const pptxRoot = join(skillCatalogRoot, "lit-pptx");
+	const schematicRoot = join(skillCatalogRoot, "lit-schematic");
+	const hijackRoot = join(skillCatalogRoot, "lit-hijack");
+	const motionRoot = join(skillCatalogRoot, "lit-typographic-motion");
+	const readmeStudioRoot = join(skillCatalogRoot, "readme-studio");
+	const visualQaRoot = join(skillCatalogRoot, "visual-qa");
+	const structuralSearchRoot = join(skillCatalogRoot, "structural-search");
+	const codingSessionAuditRoot = join(skillCatalogRoot, "coding-session-audit");
+	const wikifyRoot = join(skillCatalogRoot, "wikify");
 	const skillCatalogFiles = [
-		...CANONICAL_SKILL_IDS.map((skillId) => `${skillCatalogRoot}/${skillId}/SKILL.md`),
-		...CANONICAL_SKILL_RESOURCE_PATHS.map((resourcePath) => `${skillCatalogRoot}/${resourcePath}`),
+		...CANONICAL_SKILL_IDS.map((skillId) => join(skillCatalogRoot, skillId, "SKILL.md")),
+		...CANONICAL_SKILL_RESOURCE_PATHS.map((resourcePath) => join(skillCatalogRoot, resourcePath)),
 	];
 	return {
 		spawn: (_cmd, args) => {
@@ -133,9 +141,9 @@ export function doctorDeps(
 				(fsFiles.includes(sentinelPath) && completeAgentTomls.has(path)) ||
 				(handoffAvailable && handoffFiles.includes(path)) ||
 				(skillCatalogFiles.includes(path) &&
-					!(payloadMutation?.missing === "lit-diagram-drawer" && path === `${diagramDrawerRoot}/SKILL.md`) &&
-					!(payloadMutation?.missing === "lit-schematic" && path === `${schematicRoot}/SKILL.md`) &&
-					!(payloadMutation?.missing === "lit-hijack" && path === `${hijackRoot}/SKILL.md`)) ||
+					!(payloadMutation?.missing === "lit-diagram-drawer" && path === join(diagramDrawerRoot, "SKILL.md")) &&
+					!(payloadMutation?.missing === "lit-schematic" && path === join(schematicRoot, "SKILL.md")) &&
+					!(payloadMutation?.missing === "lit-hijack" && path === join(hijackRoot, "SKILL.md"))) ||
 				path === marketplaceManifest ||
 				path === pluginManifest ||
 				path === hooksManifest ||
@@ -181,44 +189,32 @@ export function doctorDeps(
 				return [];
 			},
 			readFileBufferSync: (path) => {
-				if (
-					path.startsWith(`${skillCatalogRoot}/autoconference/`) ||
-					path.startsWith(`${skillCatalogRoot}/autoresearch/`) ||
-					path.startsWith(`${skillCatalogRoot}/browser-drive/`) ||
-					path.startsWith(`${skillCatalogRoot}/deep-interview/`) ||
-					path.startsWith(`${skillCatalogRoot}/frontend-ui-ux/`) ||
-					path.startsWith(`${skillCatalogRoot}/lit-humanizer/`) ||
-					path.startsWith(`${skillCatalogRoot}/lit-diagram-drawer/`) ||
-					path.startsWith(`${skillCatalogRoot}/lit-docx/`) ||
-					path.startsWith(`${skillCatalogRoot}/lit-pptx/`) ||
-					path.startsWith(`${skillCatalogRoot}/lit-schematic/`) ||
-					path.startsWith(`${skillCatalogRoot}/lit-hijack/`) ||
-					path.startsWith(`${skillCatalogRoot}/lit-typographic-motion/`) ||
-					path.startsWith(`${skillCatalogRoot}/readme-studio/`) ||
-					path.startsWith(`${skillCatalogRoot}/visual-qa/`) ||
-					path.startsWith(`${skillCatalogRoot}/structural-search/`) ||
-					path.startsWith(`${skillCatalogRoot}/coding-session-audit/`) ||
-					path.startsWith(`${skillCatalogRoot}/wikify/`)
-				) {
+				if (path.startsWith(skillCatalogRoot + sep)) {
 					const relativePath = path.slice(skillCatalogRoot.length + 1);
-					if (payloadMutation?.tamper === "uiux-visual-qa" && relativePath === "frontend-ui-ux/SKILL.md") {
+					if (
+						payloadMutation?.tamper === "uiux-visual-qa" &&
+						relativePath === join("frontend-ui-ux", "SKILL.md")
+					) {
 						return Buffer.from("tampered");
 					}
-					if (payloadMutation?.tamper === "humanizer" && relativePath === "lit-humanizer/SKILL.md") {
+					if (payloadMutation?.tamper === "humanizer" && relativePath === join("lit-humanizer", "SKILL.md")) {
 						return Buffer.from("tampered");
 					}
-					if (payloadMutation?.tamper === "lit-diagram-drawer" && relativePath === "lit-diagram-drawer/SKILL.md") {
+					if (
+						payloadMutation?.tamper === "lit-diagram-drawer" &&
+						relativePath === join("lit-diagram-drawer", "SKILL.md")
+					) {
 						return Buffer.from("tampered");
 					}
-					if (payloadMutation?.tamper === "lit-schematic" && relativePath === "lit-schematic/SKILL.md") {
+					if (payloadMutation?.tamper === "lit-schematic" && relativePath === join("lit-schematic", "SKILL.md")) {
 						return Buffer.from("tampered");
 					}
-					if (payloadMutation?.tamper === "lit-hijack" && relativePath === "lit-hijack/SKILL.md") {
+					if (payloadMutation?.tamper === "lit-hijack" && relativePath === join("lit-hijack", "SKILL.md")) {
 						return Buffer.from("tampered");
 					}
 					return readFileSync(join(REPO_ROOT, "plugins/litcodex/skills", relativePath));
 				}
-				if (path.startsWith(`${handoffOriginalRoot}/`)) {
+				if (path.startsWith(handoffOriginalRoot + sep)) {
 					const relativePath = path.slice(handoffOriginalRoot.length + 1);
 					if (payloadMutation?.tamper === "handoff" && relativePath === "SKILL.md") {
 						return Buffer.from("tampered");

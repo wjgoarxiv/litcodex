@@ -90,7 +90,8 @@ describe("lit-team mutation lock #given/#when/#then", () => {
 });
 
 describe("lit-team state confidentiality and read-path safety #given/#when/#then", () => {
-	it("creates team state private to the owner", () => {
+	// Skip on Windows: POSIX file permission modes (0o700, 0o600) are not enforced by the Windows FS.
+	it.skipIf(process.platform === "win32")("creates team state private to the owner", () => {
 		const cwd = workspace();
 		const dir = seedTeam(cwd);
 		expect(lstatSync(dir).mode & 0o777).toBe(0o700);

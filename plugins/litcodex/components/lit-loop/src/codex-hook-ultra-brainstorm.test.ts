@@ -32,7 +32,10 @@ describe("ultra-brainstorm route", () => {
 		expect(decision.kind === "inject" && decision.mode).toBe("ultra-brainstorm");
 		const context = contextOf(decision);
 		expect(context).toContain("🔥 **LIT IGNITED · ultra-brainstorm** 🔥");
-		expect(context).toMatch(/^skill ultra-brainstorm: \/\S+\/skills\/ultra-brainstorm\/SKILL\.md$/mu);
+		// Normalize backslashes so the regex works on both POSIX and Windows paths.
+		expect(context.replace(/\\/gu, "/")).toMatch(
+			/^skill ultra-brainstorm: .+\/skills\/ultra-brainstorm\/SKILL\.md$/mu,
+		);
 		expect(context).not.toContain("<lit-brainstorm-mode>");
 	});
 
@@ -96,21 +99,25 @@ describe("ultra-brainstorm launch answer (R2, R6, R7)", () => {
 		expect(read(reply)).toEqual({ action: "stop" });
 	});
 
-	it("R7: a reply that looks like shell is inert data read from stdin; nothing runs", () => {
-		const dir = mkdtempSync(join(tmpdir(), "ub-reply-"));
-		try {
-			const marker = join(dir, "x");
-			const reply = `$(touch ${marker}) \`touch ${marker}\` 100`;
-			execFileSync("/bin/sh", ["-c", `node "${script}" <<'LIT_REPLY_END_9Q7'\n${reply}\nLIT_REPLY_END_9Q7\n`], {
-				cwd: dir,
-				encoding: "utf8",
-			});
-			expect(existsSync(marker)).toBe(false);
-			expect(read(reply).action).toBe("ask-again");
-		} finally {
-			rmSync(dir, { recursive: true, force: true });
-		}
-	});
+	// /bin/sh does not exist on Windows; this POSIX-only security proof is skipped there.
+	it.skipIf(process.platform === "win32")(
+		"R7: a reply that looks like shell is inert data read from stdin; nothing runs",
+		() => {
+			const dir = mkdtempSync(join(tmpdir(), "ub-reply-"));
+			try {
+				const marker = join(dir, "x");
+				const reply = `$(touch ${marker}) \`touch ${marker}\` 100`;
+				execFileSync("/bin/sh", ["-c", `node "${script}" <<'LIT_REPLY_END_9Q7'\n${reply}\nLIT_REPLY_END_9Q7\n`], {
+					cwd: dir,
+					encoding: "utf8",
+				});
+				expect(existsSync(marker)).toBe(false);
+				expect(read(reply).action).toBe("ask-again");
+			} finally {
+				rmSync(dir, { recursive: true, force: true });
+			}
+		},
+	);
 
 	it("R7: the argument form is gone; any argument is an error", () => {
 		for (const args of [["--answer", "100"], ["100"], ["--answer=100"]]) {
@@ -132,7 +139,9 @@ describe("lit team route (S3)", () => {
 		(prompt) => {
 			const decision = runUserPromptSubmitHook(ups(prompt));
 			expect(decision.kind === "inject" && decision.mode).toBe("lit-team");
-			expect(contextOf(decision)).toMatch(/^skill lit-team: \/\S+\/skills\/lit-team\/SKILL\.md$/mu);
+			expect(contextOf(decision).replace(/\\/gu, "/")).toMatch(
+				/^skill lit-team: .+\/skills\/lit-team\/SKILL\.md$/mu,
+			);
 			expect(contextOf(decision)).toContain("this session becomes the orchestrator");
 		},
 	);

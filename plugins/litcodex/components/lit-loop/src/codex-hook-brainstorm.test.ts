@@ -44,8 +44,10 @@ describe("runUserPromptSubmitHook lit-brainstorm routing #given/#when/#then", ()
 
 	it("names the installed skill and the route directive as files the model reads", () => {
 		const ctx = parseInject(runUserPromptSubmitHook(ups("lit brainstorm a name for my app")));
-		expect(ctx).toMatch(/^skill lit-brainstorm: \/\S+\/skills\/lit-brainstorm\/SKILL\.md$/mu);
-		expect(ctx).toMatch(/^directive lit-brainstorm: \/\S+\/directives\/lit-brainstorm\.md$/mu);
+		// Normalize backslashes so the regex works on both POSIX and Windows paths.
+		const ctxNorm = ctx.replace(/\\/gu, "/");
+		expect(ctxNorm).toMatch(/^skill lit-brainstorm: .+\/skills\/lit-brainstorm\/SKILL\.md$/mu);
+		expect(ctxNorm).toMatch(/^directive lit-brainstorm: .+\/directives\/lit-brainstorm\.md$/mu);
 	});
 
 	it("keeps the neighbouring routes on their own tokens", () => {

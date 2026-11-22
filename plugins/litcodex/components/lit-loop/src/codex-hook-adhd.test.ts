@@ -44,8 +44,10 @@ describe("runUserPromptSubmitHook lit-adhd routing #given/#when/#then", () => {
 
 	it("names the installed skill, the route directive and the collector command", () => {
 		const ctx = parseInject(runUserPromptSubmitHook(ups("lit adhd")));
-		expect(ctx).toMatch(/^skill lit-adhd: \/\S+\/skills\/lit-adhd\/SKILL\.md$/mu);
-		expect(ctx).toMatch(/^directive lit-adhd: \/\S+\/directives\/lit-adhd\.md$/mu);
+		// Normalize backslashes so the regex works on both POSIX and Windows paths.
+		const ctxNorm = ctx.replace(/\\/gu, "/");
+		expect(ctxNorm).toMatch(/^skill lit-adhd: .+\/skills\/lit-adhd\/SKILL\.md$/mu);
+		expect(ctxNorm).toMatch(/^directive lit-adhd: .+\/directives\/lit-adhd\.md$/mu);
 		expect(ctx).toMatch(/components\/lit-loop\/dist\/cli\.js rewind --lang/u);
 	});
 

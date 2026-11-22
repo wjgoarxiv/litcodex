@@ -23,29 +23,43 @@ afterEach(() => {
 });
 
 describe("installed family runtime helpers", () => {
-	it("init_research fails closed without --force and preserves an existing sentinel", () => {
-		const root = sandbox();
-		const output = join(root, "existing");
-		mkdirSync(output);
-		const sentinel = join(output, "sentinel.txt");
-		writeFileSync(sentinel, "keep-me\n");
-		const script = join(skillsRoot, "autoresearch/scripts/init_research.py");
-		const args = ["--goal", "reduce latency", "--metric", "latency", "--direction", "minimize", "--output", output];
+	// Skip on Windows: init_research.py requires POSIX descriptor capabilities (dir_fd) unavailable on Windows.
+	it.skipIf(process.platform === "win32")(
+		"init_research fails closed without --force and preserves an existing sentinel",
+		() => {
+			const root = sandbox();
+			const output = join(root, "existing");
+			mkdirSync(output);
+			const sentinel = join(output, "sentinel.txt");
+			writeFileSync(sentinel, "keep-me\n");
+			const script = join(skillsRoot, "autoresearch/scripts/init_research.py");
+			const args = [
+				"--goal",
+				"reduce latency",
+				"--metric",
+				"latency",
+				"--direction",
+				"minimize",
+				"--output",
+				output,
+			];
 
-		const blocked = python(script, args, root);
-		expect(blocked.status).toBe(1);
-		expect(blocked.stderr).toContain("OUTPUT_NOT_EMPTY");
-		expect(blocked.stderr).toContain("Use --force to overwrite generated files");
-		expect(readFileSync(sentinel, "utf8")).toBe("keep-me\n");
-		expect(existsSync(join(output, "research.md"))).toBe(false);
+			const blocked = python(script, args, root);
+			expect(blocked.status).toBe(1);
+			expect(blocked.stderr).toContain("OUTPUT_NOT_EMPTY");
+			expect(blocked.stderr).toContain("Use --force to overwrite generated files");
+			expect(readFileSync(sentinel, "utf8")).toBe("keep-me\n");
+			expect(existsSync(join(output, "research.md"))).toBe(false);
 
-		const forced = python(script, [...args, "--force"], root);
-		expect(forced.status, forced.stderr).toBe(0);
-		expect(readFileSync(sentinel, "utf8")).toBe("keep-me\n");
-		expect(existsSync(join(output, "research.md"))).toBe(true);
-	});
+			const forced = python(script, [...args, "--force"], root);
+			expect(forced.status, forced.stderr).toBe(0);
+			expect(readFileSync(sentinel, "utf8")).toBe("keep-me\n");
+			expect(existsSync(join(output, "research.md"))).toBe(true);
+		},
+	);
 
-	it("resolves helper guidance from a copied installed skill root", () => {
+	// Skip on Windows: invokes both init_research.py and init_conference.py which require POSIX dir_fd.
+	it.skipIf(process.platform === "win32")("resolves helper guidance from a copied installed skill root", () => {
 		const root = sandbox();
 		const installedSkills = join(root, "home/.codex/marketplaces/litcodex/plugins/litcodex/skills");
 		const autoresearch = join(installedSkills, "autoresearch");

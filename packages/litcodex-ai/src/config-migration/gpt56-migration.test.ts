@@ -49,9 +49,11 @@ describe("GPT-5.6 migration policy", () => {
 		const root = readFileSync(join(f.codexHome, "config.toml"), "utf8");
 		expect(root).toContain('model = "gpt-6-astra"');
 		expect(root).toContain('model_reasoning_effort = "xhigh"');
-		expect(root).toContain(`[agents.default]\nconfig_file = "${join(f.codexHome, "litcodex-default.toml")}"`);
+		expect(root).toContain(
+			`[agents.default]\nconfig_file = ${JSON.stringify(join(f.codexHome, "litcodex-default.toml"))}`,
+		);
 		expect(root).not.toContain(
-			`[agents.default]\nconfig_file = "${join(f.codexHome, "agents", "litcodex-default.toml")}"`,
+			`[agents.default]\nconfig_file = ${JSON.stringify(join(f.codexHome, "agents", "litcodex-default.toml"))}`,
 		);
 	});
 
@@ -61,9 +63,11 @@ describe("GPT-5.6 migration policy", () => {
 		const root = readFileSync(join(f.codexHome, "config.toml"), "utf8");
 		expect(root).toContain('model = "gpt-6-astra"');
 		expect(root).toContain('model_reasoning_effort = "xhigh"');
-		expect(root).toContain(`[agents.default]\nconfig_file = "${join(f.codexHome, "litcodex-default.toml")}"`);
+		expect(root).toContain(
+			`[agents.default]\nconfig_file = ${JSON.stringify(join(f.codexHome, "litcodex-default.toml"))}`,
+		);
 		expect(root).not.toContain(
-			`[agents.default]\nconfig_file = "${join(f.codexHome, "agents", "litcodex-default.toml")}"`,
+			`[agents.default]\nconfig_file = ${JSON.stringify(join(f.codexHome, "agents", "litcodex-default.toml"))}`,
 		);
 		expect(root).toContain("multi_agent = true");
 		expect(root).toContain("enabled = true");
@@ -159,7 +163,7 @@ describe("GPT-5.6 migration policy", () => {
 			'model_reasoning_effort = "max"',
 			"",
 			"[agents.default]",
-			`config_file = "${join(f.codexHome, "agents", "litcodex-default.toml")}"`,
+			`config_file = ${JSON.stringify(join(f.codexHome, "agents", "litcodex-default.toml"))}`,
 			"",
 		].join("\n");
 		seed(f.codexHome, existing);
@@ -265,7 +269,9 @@ describe("GPT-5.6 migration policy", () => {
 		expect(root).toContain('model_reasoning_effort = "xhigh"');
 		expect(root).not.toContain("model_context_window");
 		expect(root).not.toContain("model_auto_compact_token_limit");
-		expect(root).toContain(`[agents.default]\nconfig_file = "${join(f.codexHome, "litcodex-default.toml")}"`);
+		expect(root).toContain(
+			`[agents.default]\nconfig_file = ${JSON.stringify(join(f.codexHome, "litcodex-default.toml"))}`,
+		);
 		expect(result.backups).toHaveLength(1);
 		expect(result.backups.some((backup) => readFileSync(backup, "utf8") === existing)).toBe(true);
 	});

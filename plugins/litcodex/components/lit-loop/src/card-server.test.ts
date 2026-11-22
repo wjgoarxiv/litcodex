@@ -11,7 +11,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
 import { afterEach, describe, expect, it } from "vitest";
@@ -92,7 +92,7 @@ describe("card status", () => {
 			ignitedAt: 100_000,
 			step: { tool: "Bash", startedAt: 108_000 },
 			working: true,
-			workspace: root.split("/").at(-1),
+			workspace: basename(root),
 			now: 120_000,
 		});
 		expect(status.map?.family).toBe("main");

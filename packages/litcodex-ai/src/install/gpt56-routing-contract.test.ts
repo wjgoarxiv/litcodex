@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join } from "node:path";
+import { basename, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { migrateCodexConfig } from "../config-migration/index.js";
@@ -114,13 +115,11 @@ describe("GPT-5.6 routing policy", () => {
 		["openai/gpt-5.6-luna", "ultra"],
 		["custom/gpt-6-luna", "ultra"],
 	])("rejects unsafe bundled agent route %s/%s before writing any TOML", (model, effort) => {
-		const sourceDir = "/fake/agents";
-		const codexHome = "/tmp/isolated-agent-home";
+		const sourceDir = resolve("/fake/agents");
+		const codexHome = resolve("/tmp/isolated-agent-home");
 		const file = "litcodex-unsafe.toml";
 		const wfs = makeMemWriteFs({
-			initialFiles: new Map([
-				[`${sourceDir}/${file}`, `model = "${model}"\nmodel_reasoning_effort = "${effort}"\n`],
-			]),
+			initialFiles: new Map([[join(sourceDir, file), `model = "${model}"\nmodel_reasoning_effort = "${effort}"\n`]]),
 			sourceDirEntries: new Map([[sourceDir, [file]]]),
 		});
 
@@ -147,7 +146,7 @@ describe("GPT-5.6 routing policy", () => {
 		];
 
 		for (const file of files) {
-			const route = routeFromToml(new URL(file, agentRoot).pathname);
+			const route = routeFromToml(fileURLToPath(new URL(file, agentRoot)));
 			expect(catalog.roles[route.role], `catalog missing ${route.role}`).toEqual({
 				model: route.model,
 				model_reasoning_effort: route.effort,
@@ -159,14 +158,14 @@ describe("GPT-5.6 routing policy", () => {
 	});
 
 	it("rewrites SOL-aliased agent TOMLs to explicit Sol for chatgpt auth", () => {
-		const sourceDir = "/fake/agents";
-		const codexHome = "/tmp/isolated-chatgpt-agent-home";
+		const sourceDir = resolve("/fake/agents");
+		const codexHome = resolve("/tmp/isolated-chatgpt-agent-home");
 		const solToml = 'model = "gpt-5.6"\nmodel_reasoning_effort = "high"\n[agent]\nname="plan"\n';
 		const terraToml = 'model = "gpt-5.6-terra"\nmodel_reasoning_effort = "xhigh"\n[agent]\nname="explorer"\n';
 		const wfs = makeMemWriteFs({
 			initialFiles: new Map([
-				[`${sourceDir}/litcodex-plan.toml`, solToml],
-				[`${sourceDir}/litcodex-explorer.toml`, terraToml],
+				[join(sourceDir, "litcodex-plan.toml"), solToml],
+				[join(sourceDir, "litcodex-explorer.toml"), terraToml],
 			]),
 			sourceDirEntries: new Map([[sourceDir, ["litcodex-explorer.toml", "litcodex-plan.toml"]]]),
 		});
@@ -176,20 +175,20 @@ describe("GPT-5.6 routing policy", () => {
 			{ now: () => 0, repoRoot: "/repo", codexHome, writeFs: wfs, agentsSourceDir: sourceDir, authMode: "chatgpt" },
 		);
 
-		const planContent = wfs.written.get(`${codexHome}/agents/litcodex-plan.toml`) ?? "";
+		const planContent = wfs.written.get(join(codexHome, "agents", "litcodex-plan.toml")) ?? "";
 		expect(planContent).toContain('model = "gpt-5.6-sol"');
 		expect(planContent).not.toContain('model = "gpt-5.6"\n');
 
-		const explorerContent = wfs.written.get(`${codexHome}/agents/litcodex-explorer.toml`) ?? "";
+		const explorerContent = wfs.written.get(join(codexHome, "agents", "litcodex-explorer.toml")) ?? "";
 		expect(explorerContent).toContain('model = "gpt-5.6-terra"');
 	});
 
 	it("keeps public alias for api-key auth", () => {
-		const sourceDir = "/fake/agents";
-		const codexHome = "/tmp/isolated-apikey-agent-home";
+		const sourceDir = resolve("/fake/agents");
+		const codexHome = resolve("/tmp/isolated-apikey-agent-home");
 		const solToml = 'model = "gpt-5.6"\nmodel_reasoning_effort = "high"\n[agent]\nname="plan"\n';
 		const wfs = makeMemWriteFs({
-			initialFiles: new Map([[`${sourceDir}/litcodex-plan.toml`, solToml]]),
+			initialFiles: new Map([[join(sourceDir, "litcodex-plan.toml"), solToml]]),
 			sourceDirEntries: new Map([[sourceDir, ["litcodex-plan.toml"]]]),
 		});
 
@@ -198,7 +197,7 @@ describe("GPT-5.6 routing policy", () => {
 			{ now: () => 0, repoRoot: "/repo", codexHome, writeFs: wfs, agentsSourceDir: sourceDir, authMode: "api-key" },
 		);
 
-		const content = wfs.written.get(`${codexHome}/agents/litcodex-plan.toml`) ?? "";
+		const content = wfs.written.get(join(codexHome, "agents", "litcodex-plan.toml")) ?? "";
 		expect(content).toContain('model = "gpt-5.6"');
 		expect(content).not.toContain("gpt-5.6-sol");
 	});

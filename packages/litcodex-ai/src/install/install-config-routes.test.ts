@@ -1,3 +1,4 @@
+import { join, resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import { runCli } from "../cli.js";
@@ -10,11 +11,12 @@ import { buildInstallPlan } from "./plan.js";
 const VALID_FAKE_AGENT_TOML = 'model = "gpt-5.6-sol"\nmodel_reasoning_effort = "high"\n';
 
 describe("config-update seam", () => {
-	const codexBin = "/usr/local/bin/codex";
-	const fakeSourceDir = "/fake/agents-src";
+	const codexBin = resolve("/usr/local/bin/codex");
+	const fakeSourceDir = resolve("/fake/agents-src");
+	const codexHomeH = resolve("/h/.codex");
 	const fakeWfs = () =>
 		makeMemWriteFs({
-			initialFiles: new Map([[`${fakeSourceDir}/litcodex-fake.toml`, VALID_FAKE_AGENT_TOML]]),
+			initialFiles: new Map([[join(fakeSourceDir, "litcodex-fake.toml"), VALID_FAKE_AGENT_TOML]]),
 			sourceDirEntries: new Map([[fakeSourceDir, ["litcodex-fake.toml"]]]),
 		});
 
@@ -33,7 +35,7 @@ describe("config-update seam", () => {
 			}
 			return { status: 0, stdout: "" };
 		};
-		const steps = buildInstallPlan(baseOptions({ codexHome: "/h/.codex" }));
+		const steps = buildInstallPlan(baseOptions({ codexHome: codexHomeH }));
 		await executeInstallPlan(steps, {
 			spawn,
 			fs: { existsSync: (p) => p === codexBin, readFileSync: () => "" },
@@ -41,12 +43,12 @@ describe("config-update seam", () => {
 			now: () => 0,
 			repoRoot: REPO_ROOT,
 			migrateConfig: migrate,
-			codexHome: "/h/.codex",
+			codexHome: codexHomeH,
 			writeFs: fakeWfs(),
 			agentsSourceDir: fakeSourceDir,
 		});
 		expect(migrate).toHaveBeenCalledTimes(1);
-		expect(migrate.mock.calls[0]?.[0]).toMatchObject({ mode: "install", cwd: "/h/.codex" });
+		expect(migrate.mock.calls[0]?.[0]).toMatchObject({ mode: "install", cwd: codexHomeH });
 	});
 
 	it("maps CodexConfigMigrationError to LITCODEX_INSTALL_CONFIG_WRITE_FAILED exit 3", async () => {
@@ -61,7 +63,7 @@ describe("config-update seam", () => {
 			}
 			return { status: 0, stdout: "" };
 		};
-		const steps = buildInstallPlan(baseOptions({ codexHome: "/h/.codex" }));
+		const steps = buildInstallPlan(baseOptions({ codexHome: codexHomeH }));
 		await expect(
 			executeInstallPlan(steps, {
 				spawn,
@@ -72,7 +74,7 @@ describe("config-update seam", () => {
 				migrateConfig: migrate,
 				writeFs: fakeWfs(),
 				agentsSourceDir: fakeSourceDir,
-				codexHome: "/h/.codex",
+				codexHome: codexHomeH,
 			}),
 		).rejects.toMatchObject({ code: "LITCODEX_INSTALL_CONFIG_WRITE_FAILED" });
 	});
@@ -89,7 +91,7 @@ describe("config-update seam", () => {
 			if (sub.includes("list")) return { status: 0, stdout: "" };
 			return { status: 0, stdout: "" };
 		};
-		const steps = buildInstallPlan(baseOptions({ codexHome: "/h/.codex" }));
+		const steps = buildInstallPlan(baseOptions({ codexHome: codexHomeH }));
 
 		const result = await executeInstallPlan(steps, {
 			spawn,
@@ -100,7 +102,7 @@ describe("config-update seam", () => {
 			migrateConfig: migrate,
 			writeFs: fakeWfs(),
 			agentsSourceDir: fakeSourceDir,
-			codexHome: "/h/.codex",
+			codexHome: codexHomeH,
 		});
 
 		const config = result.steps.find((step) => step.kind === "config-update");
@@ -114,7 +116,7 @@ describe("config-update seam", () => {
 			skipped: [{ path: "/h/.codex/config.toml", reason: "preserved" as const }],
 			stateWritten: true,
 		});
-		const steps = buildInstallPlan(baseOptions({ codexHome: "/h/.codex" }));
+		const steps = buildInstallPlan(baseOptions({ codexHome: codexHomeH }));
 		const result = await executeInstallPlan(steps, {
 			spawn: () => ({ status: 0, stdout: "" }),
 			fs: { existsSync: (p) => p === codexBin, readFileSync: () => "" },
@@ -124,7 +126,7 @@ describe("config-update seam", () => {
 			migrateConfig: migrate,
 			writeFs: fakeWfs(),
 			agentsSourceDir: fakeSourceDir,
-			codexHome: "/h/.codex",
+			codexHome: codexHomeH,
 		});
 		const config = result.steps.find((step) => step.kind === "config-update");
 		expect(config).toMatchObject({ status: "skipped", detail: expect.stringContaining("preserved") });
@@ -144,7 +146,7 @@ describe("config-update seam", () => {
 			if (sub.includes("list")) return { status: 0, stdout: "" };
 			return { status: 0, stdout: "" };
 		};
-		const steps = buildInstallPlan(baseOptions({ codexHome: "/h/.codex" }));
+		const steps = buildInstallPlan(baseOptions({ codexHome: codexHomeH }));
 
 		const result = await executeInstallPlan(steps, {
 			spawn,
@@ -155,7 +157,7 @@ describe("config-update seam", () => {
 			migrateConfig: migrate,
 			writeFs: fakeWfs(),
 			agentsSourceDir: fakeSourceDir,
-			codexHome: "/h/.codex",
+			codexHome: codexHomeH,
 		});
 
 		const config = result.steps.find((step) => step.kind === "config-update");
@@ -169,7 +171,7 @@ describe("config-update seam", () => {
 
 describe("codex home resolution", () => {
 	it("trims CODEX_HOME and falls back to ~/.codex when empty", () => {
-		expect(resolveCodexHome({ CODEX_HOME: "  /x/.codex  " })).toBe("/x/.codex");
+		expect(resolveCodexHome({ CODEX_HOME: "  /x/.codex  " })).toBe(resolve("/x/.codex"));
 		const home = resolveCodexHome({ CODEX_HOME: "", HOME: "/home/u" });
 		expect(home).toContain(".codex");
 	});

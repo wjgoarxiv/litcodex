@@ -51,8 +51,10 @@ describe("runUserPromptSubmitHook lit-schematic routing #given/#when/#then", () 
 
 	it("names the installed skill and the route directive as files the model reads", () => {
 		const ctx = parseInject(runUserPromptSubmitHook(ups("lit draw the PFD for the absorber section")));
-		expect(ctx).toMatch(/^skill lit-schematic: \/\S+\/skills\/lit-schematic\/SKILL\.md$/mu);
-		expect(ctx).toMatch(/^directive lit-schematic: \/\S+\/directives\/lit-schematic\.md$/mu);
+		// Normalize backslashes so the regex works on both POSIX and Windows paths.
+		const ctxNorm = ctx.replace(/\\/gu, "/");
+		expect(ctxNorm).toMatch(/^skill lit-schematic: .+\/skills\/lit-schematic\/SKILL\.md$/mu);
+		expect(ctxNorm).toMatch(/^directive lit-schematic: .+\/directives\/lit-schematic\.md$/mu);
 	});
 
 	it("keeps documents, decks, charts, interfaces and software diagrams on the generic route", () => {
