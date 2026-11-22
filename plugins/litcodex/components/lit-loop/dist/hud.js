@@ -153,7 +153,9 @@ function tilde(path, home) {
         return path;
     if (path === home)
         return "~";
-    return path.startsWith(`${home}/`) ? `~${path.slice(home.length)}` : path;
+    // Windows paths use `\`; the HUD always shows the shortened path with `/`.
+    const under = path.startsWith(`${home}/`) || path.startsWith(`${home}\\`);
+    return under ? `~${path.slice(home.length).replace(/\\/gu, "/")}` : path;
 }
 /** Everything one frame needs, read once. Never throws and never writes. */
 export function readHud(env, wanted, now) {
