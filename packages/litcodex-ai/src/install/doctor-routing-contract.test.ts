@@ -148,7 +148,9 @@ describe("doctor model-routing health", () => {
 		await migrateCodexConfig({ env, cwd: root, mode: "install", reconfigure: true });
 		const alias = readFileSync(configPath, "utf8");
 		expect(alias).toContain('model = "gpt-6-astra"');
-		expect(alias).toContain(`[agents.default]\nconfig_file = "${join(codexHome, "litcodex-default.toml")}"`);
+		expect(alias).toContain(
+			`[agents.default]\nconfig_file = ${JSON.stringify(join(codexHome, "litcodex-default.toml"))}`,
+		);
 		expect(alias).not.toContain("model_context_window");
 		expect(alias).not.toContain("model_auto_compact_token_limit");
 		expect(doctorReport({ agentFiles: completeAgentFiles(), config: alias }).effectiveConfig.state).toBe("applied");
