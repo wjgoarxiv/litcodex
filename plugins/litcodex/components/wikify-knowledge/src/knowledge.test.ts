@@ -22,14 +22,23 @@ const fsFault = vi.hoisted(() => ({
 
 vi.mock("node:fs", async () => {
 	const actual = await vi.importActual<typeof import("node:fs")>("node:fs");
+	// Windows cannot truncate through an append-only handle, so the fault truncates by path there.
+	const openedPaths = new Map<number, string>();
 	return {
 		...actual,
+		openSync(...args: Parameters<typeof actual.openSync>): number {
+			const descriptor = actual.openSync(...args);
+			openedPaths.set(descriptor, String(args[0]));
+			return descriptor;
+		},
 		fsyncSync(handle: number): void {
 			actual.fsyncSync(handle);
 			const truncateTo = fsFault.postFlushTruncate;
 			if (truncateTo !== undefined) {
 				fsFault.postFlushTruncate = undefined;
-				actual.ftruncateSync(handle, truncateTo);
+				const path = openedPaths.get(handle);
+				if (process.platform === "win32" && path !== undefined) actual.truncateSync(path, truncateTo);
+				else actual.ftruncateSync(handle, truncateTo);
 			}
 		},
 	};
