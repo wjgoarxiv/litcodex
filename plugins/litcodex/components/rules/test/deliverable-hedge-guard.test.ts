@@ -348,6 +348,20 @@ describe("PostToolUse document guard", () => {
 						python: spawnSync(process.platform === "win32" ? "python" : "python3", ["--version"], {
 							encoding: "utf8",
 						}),
+						extract: (() => {
+							const started = Date.now();
+							const run = spawnSync(
+								process.platform === "win32" ? "python" : "python3",
+								[
+									fileURLToPath(
+										new URL("../../../skills/lit-humanizer/scripts/extract_office_text.py", import.meta.url),
+									),
+									docx,
+								],
+								{ cwd: root, encoding: "utf8" },
+							);
+							return { ms: Date.now() - started, status: run.status, stdout: run.stdout, stderr: run.stderr };
+						})(),
 					});
 		expect(inspected, probe).toBe(1);
 		expect(output.hookSpecificOutput.additionalContext).toContain(
