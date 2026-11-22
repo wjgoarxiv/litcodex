@@ -339,7 +339,17 @@ describe("PostToolUse document guard", () => {
 				},
 			}),
 		);
-		expect(inspected).toBe(1);
+		// TEMPORARY Windows diagnostic: show why the extractor read nothing.
+		const probe =
+			inspected === 1
+				? ""
+				: JSON.stringify({
+						output,
+						python: spawnSync(process.platform === "win32" ? "python" : "python3", ["--version"], {
+							encoding: "utf8",
+						}),
+					});
+		expect(inspected, probe).toBe(1);
 		expect(output.hookSpecificOutput.additionalContext).toContain(
 			"Fix the changed passages and rebuild the artifact.",
 		);

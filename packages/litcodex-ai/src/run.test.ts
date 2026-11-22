@@ -560,16 +560,20 @@ describe("litcodex run as a process", () => {
 			register,
 			`import { register } from "node:module";\nregister(${JSON.stringify(pathToFileURL(hooks).href)});\n`,
 		);
-		const run = spawnSync(process.execPath, ["--import", register, binPath, "run", "--", "--flag", "two words"], {
-			encoding: "utf8",
-			cwd: home,
-			env: {
-				PATH: `${bin}${delimiter}${process.env["PATH"] ?? ""}`,
-				HOME: home,
-				CODEX_HOME: join(home, ".codex"),
-				...(process.platform === "win32" ? { SystemRoot: process.env["SystemRoot"] ?? "" } : {}),
+		const run = spawnSync(
+			process.execPath,
+			["--import", pathToFileURL(register).href, binPath, "run", "--", "--flag", "two words"],
+			{
+				encoding: "utf8",
+				cwd: home,
+				env: {
+					PATH: `${bin}${delimiter}${process.env["PATH"] ?? ""}`,
+					HOME: home,
+					CODEX_HOME: join(home, ".codex"),
+					...(process.platform === "win32" ? { SystemRoot: process.env["SystemRoot"] ?? "" } : {}),
+				},
 			},
-		});
+		);
 		expect(run.status).toBe(7);
 		expect(run.stdout).toBe("fake codex [--flag] [two words]\n");
 		const notes = run.stderr.split("\n").filter((line) => line !== "");
