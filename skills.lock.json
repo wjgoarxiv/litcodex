@@ -541,21 +541,21 @@
 		},
 		"lit-loop": {
 			"skillMd": {
-				"bytes": 21975,
-				"sha256": "7deb91f45e72a89096e1819a92524b25a64d79e3827756b43be8080de8538789"
+				"bytes": 22190,
+				"sha256": "623a603ba4956e9c4cd9ba7522bde8873783ddde1d148fb39a4f64c059297716"
 			},
 			"files": 4,
-			"bytes": 36565,
-			"sha256": "8790cdb6b54b299e29d2bf8c99f9a6776860df08ee33e8408cb43a1cd6522b00"
+			"bytes": 36780,
+			"sha256": "d8f9f5928caf559373c36a7cb672030c17c0a710ebe9499a86b5d2f557babdfe"
 		},
 		"lit-plan": {
 			"skillMd": {
-				"bytes": 26577,
-				"sha256": "3e4ebaf8b3b7336cbf4022d83846ffa2cc13069be6b3320ca4002a29975cd2b0"
+				"bytes": 26916,
+				"sha256": "d92976f353b382a2f49a3c01681b72005debe16f6e7d0e385e507af1f8bfb132"
 			},
 			"files": 5,
-			"bytes": 42881,
-			"sha256": "c52456c506bdd2b1956713b7c4843ba108e872182028d7d219e97ace0d0d6d70"
+			"bytes": 43220,
+			"sha256": "a5d5c927c4cb4b2a0646e6facbb4b5d5be83549f8510070ff999c94a3f0558df"
 		},
 		"lit-pptx": {
 			"skillMd": {
@@ -1136,6 +1136,8 @@
 		"plugins/litcodex/components/lit-loop/dist/control-chars.js",
 		"plugins/litcodex/components/lit-loop/dist/directive.d.ts",
 		"plugins/litcodex/components/lit-loop/dist/directive.js",
+		"plugins/litcodex/components/lit-loop/dist/goal-guide.d.ts",
+		"plugins/litcodex/components/lit-loop/dist/goal-guide.js",
 		"plugins/litcodex/components/lit-loop/dist/goal-pipeline.d.ts",
 		"plugins/litcodex/components/lit-loop/dist/goal-pipeline.js",
 		"plugins/litcodex/components/lit-loop/dist/goal-status.d.ts",
@@ -1295,6 +1297,8 @@
 		"plugins/litcodex/components/lit-loop/src/fixtures/lit-mark-round6-generator.mjs",
 		"plugins/litcodex/components/lit-loop/src/fixtures/lit-mark-round6-sheet.json",
 		"plugins/litcodex/components/lit-loop/src/fixtures/lit-mark-round6.json",
+		"plugins/litcodex/components/lit-loop/src/goal-guide.test.ts",
+		"plugins/litcodex/components/lit-loop/src/goal-guide.ts",
 		"plugins/litcodex/components/lit-loop/src/goal-pipeline.test.ts",
 		"plugins/litcodex/components/lit-loop/src/goal-pipeline.ts",
 		"plugins/litcodex/components/lit-loop/src/goal-status.test.ts",

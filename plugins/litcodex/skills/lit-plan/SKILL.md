@@ -256,9 +256,12 @@ node <plugin-root>/components/lit-loop/dist/cli.js goal propose .litcodex/plans/
 
 It compiles the `## Done when` check into one condition, rejects a judgment, outward-only or over-long one,
 runs the check once (read-only, time-boxed) to prove the condition is false now, and prints the closing
-question. End the reply with it unchanged: `Approve plan, start work and set goal: /goal <condition>? (yes /
-edit / no)`, or, when no goal can be set, the `No goal set: <reason>` line above `Approve plan and start work?
-(yes / no)`. Never call `create_goal` or start the work from lit-plan. The user's next prompt, exactly `yes`,
+question. End the reply with it: `Approve plan, start work and set goal: /goal <condition>? (yes / edit /
+no)`, or, when no goal can be set, the `No goal set: <reason>` line above `Approve plan and start work? (yes /
+no)`. Under the question it prints an answer guide, a quoted table with one row per answer (`yes`, `edit`,
+`no`, or `yes` and `no` alone without a goal) that says what each answer does; keep it under the line. The
+question line and the answer words stay exactly as printed; write the guide's title, goal label and row
+explanations in the user's language. Never call `create_goal` or start the work from lit-plan. The user's next prompt, exactly `yes`,
 does both in one step: the hook routes it as `start-work <slug>` (the same start path as typing it) and tells
 the session how to set the goal with `create_goal`. When the run cannot start (another run is active, the plan
 is gone or already ticked), nothing starts and no goal is armed, and one `Work not started and no goal set:

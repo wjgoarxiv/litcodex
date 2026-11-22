@@ -18,6 +18,7 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { basename, isAbsolute, join, relative, resolve } from "node:path";
+import { answerChoice, markdownGuide } from "./goal-guide.js";
 import { plainDirsOrMissing, writeFileAtomic } from "./live-step.js";
 import { redactSecrets } from "./redaction.js";
 import { chooseNext, openPlanNamed } from "./rewind.js";
@@ -27,10 +28,10 @@ export const CONSENT_TTL_MS = 30 * 60 * 1000;
 export const FALSIFY_TIMEOUT_MS = 120_000;
 /** Fixed status lines, one per outcome. The CLI and the hook print these and nothing else. */
 export const GOAL_STATUS = Object.freeze({
-    asked: (condition) => `Approve plan, start work and set goal: /goal ${condition}? (yes / edit / no)`,
-    askStart: "Approve plan and start work? (yes / no)",
+    asked: (condition) => `Approve plan, start work and set goal: /goal ${condition}? ${answerChoice("plan")}`,
+    askStart: `Approve plan and start work? ${answerChoice("start")}`,
     notStarted: (reason) => `Work not started and no goal set: ${reason}`,
-    loopAsked: (condition) => `Set goal for this lit-loop: /goal ${condition}? (yes / no)`,
+    loopAsked: (condition) => `Set goal for this lit-loop: /goal ${condition}? ${answerChoice("loop")}`,
     skipped: (reason) => `No goal set: ${reason}`,
     set: (id) => `LitCodex goal set [lit:${id}]`,
     yours: "Your own goal is active; LitCodex left it alone.",
@@ -202,8 +203,8 @@ export function proposeGoal(args) {
         return { line: GOAL_STATUS.skipped(`${GOAL_DIR} is not writable`) };
     // Without a goal the question still starts the work; the one reason line says why no goal comes with it.
     return goal.ok
-        ? { line: GOAL_STATUS.asked(goal.condition), consent }
-        : { line: `${GOAL_STATUS.skipped(goal.reason)}\n${GOAL_STATUS.askStart}`, consent };
+        ? { line: GOAL_STATUS.asked(goal.condition), consent, asked: "plan" }
+        : { line: `${GOAL_STATUS.skipped(goal.reason)}\n${GOAL_STATUS.askStart}`, consent, asked: "start" };
 }
 function compileGoal(cwd, plan, planText, args) {
     if (/^goal:\s*never\s*$/mu.test(planText))
@@ -296,7 +297,7 @@ export function proposeLoopGoal(args) {
     };
     if (!writeGoalFile(args.cwd, "consent.json", { ...consent, objective }))
         return { line: GOAL_STATUS.skipped(`${GOAL_DIR} is not writable`) };
-    return { line: GOAL_STATUS.loopAsked(built.condition), consent };
+    return { line: GOAL_STATUS.loopAsked(built.condition), consent, asked: "loop" };
 }
 /** `yes`, `edit` and `no` (exactly, any case) answer the goal question; anything else is no answer. */
 export function consentAnswer(prompt) {
@@ -528,9 +529,11 @@ export function goalCommand(argv, io) {
     }
     const cwd = io.cwd ?? process.cwd();
     // `--loop --check "<cmd>" <objective...>` is a lit-loop's question; a plan path is a plan's.
-    const line = argv[1] === "--loop" && argv[2] === "--check"
-        ? proposeLoopGoal({ cwd, check: argv[3], objective: argv.slice(4).join(" ") }).line
-        : proposeGoal({ cwd, planArg: argv[1] }).line;
-    io.stdout.write(`${line}\n`);
+    const result = argv[1] === "--loop" && argv[2] === "--check"
+        ? proposeLoopGoal({ cwd, check: argv[3], objective: argv.slice(4).join(" ") })
+        : proposeGoal({ cwd, planArg: argv[1] });
+    // The model ends its reply with this output, so an asked question carries its answer guide below it.
+    const guide = result.asked === undefined ? "" : `\n\n${markdownGuide(result.asked, result.consent?.condition ?? null)}`;
+    io.stdout.write(`${result.line}${guide}\n`);
     return 0;
 }

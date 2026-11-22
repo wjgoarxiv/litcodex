@@ -180,7 +180,9 @@ an objective and the project has a test command (`npm test`, `pytest`, `cargo te
 the prompt hook shows the user `Set goal for this lit-loop: /goal <cond>? (yes / no)` itself; do not ask
 it again. Without a detected command, once a failing check proves the objective (after the RED step), run
 `node <plugin-root>/components/lit-loop/dist/cli.js goal propose --loop --check "<check>" <objective>`
-and end the reply with the line it prints; a check that already passes, cannot run or is not an
+and end the reply with the question it prints and the answer guide under it (the hook's own question shows
+the same guide as plain lines). The question line and the answer words stay exactly as printed; write the
+guide's explanations in the user's language. A check that already passes, cannot run or is not an
 allowlisted test command prints `No goal set: <reason>` and records nothing. Only the user's exact `yes`
 on a later prompt arms it: the hook then tells you to call `get_goal` and `create_goal`, and starts no
 start-work run. `no` or any other prompt drops the question. Never call `create_goal` or type `/goal`

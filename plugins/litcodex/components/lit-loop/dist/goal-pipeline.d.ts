@@ -1,3 +1,4 @@
+import { type GoalQuestion } from "./goal-guide.js";
 export declare const GOAL_DIR = ".litcodex/goal";
 export declare const GOAL_MAX_CHARS = 500;
 export declare const CONSENT_TTL_MS: number;
@@ -5,7 +6,7 @@ export declare const FALSIFY_TIMEOUT_MS = 120000;
 /** Fixed status lines, one per outcome. The CLI and the hook print these and nothing else. */
 export declare const GOAL_STATUS: Readonly<{
     asked: (condition: string) => string;
-    askStart: "Approve plan and start work? (yes / no)";
+    askStart: `Approve plan and start work? ${string}`;
     notStarted: (reason: string) => string;
     loopAsked: (condition: string) => string;
     skipped: (reason: string) => string;
@@ -103,6 +104,7 @@ export declare function proposeGoal(args: {
 }): {
     readonly line: string;
     readonly consent?: GoalConsent;
+    readonly asked?: GoalQuestion;
 };
 export declare function normalizeGoalObjective(value: string): string;
 /** The project's own test command, for the question the prompt hook shows; null when there is none. */
@@ -123,6 +125,7 @@ export declare function proposeLoopGoal(args: {
 }): {
     readonly line: string;
     readonly consent?: GoalConsent;
+    readonly asked?: GoalQuestion;
 };
 /** `yes`, `edit` and `no` (exactly, any case) answer the goal question; anything else is no answer. */
 export declare function consentAnswer(prompt: string): "yes" | "edit" | "no" | null;

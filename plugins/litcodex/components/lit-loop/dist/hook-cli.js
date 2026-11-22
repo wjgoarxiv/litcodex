@@ -12,6 +12,7 @@ import { adhdSuggestion } from "./adhd-suggest.js";
 import { claimReloadContext, evaluateAutoHandoffStop, recordCompaction, takeReloadContext } from "./auto-handoff.js";
 import { applyAutoHandoffRoute, clearManagedCompactionWhenOff, parseAutoHandoffRoute, } from "./auto-handoff-settings.js";
 import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
+import { plainGuide } from "./goal-guide.js";
 import { closeOwnedGoal, detectCheck, goalCancelContext, liveConsent, normalizeGoalObjective, ownedGoal, planAnswer, proposeLoopGoal, sweepGoalState, } from "./goal-pipeline.js";
 import { laneScope, subagentEvent, toolLaneEvents } from "./lane-events.js";
 import { recordLaneEvent } from "./lane-state.js";
@@ -302,7 +303,7 @@ function withLoopGoal(decision, parsed, cwd, now) {
             return decision.stdout;
         const output = JSON.parse(decision.stdout);
         if (offer?.consent !== undefined && isRecord(output) && typeof output["systemMessage"] === "string") {
-            output["systemMessage"] = `${output["systemMessage"]}\n${offer.line}`;
+            output["systemMessage"] = `${output["systemMessage"]}\n${offer.line}\n${plainGuide("loop")}`;
         }
         const base = `${JSON.stringify(output)}\n`;
         return withContextAfterBanner(base, note) ?? withReloadContext(base, note) ?? decision.stdout;
