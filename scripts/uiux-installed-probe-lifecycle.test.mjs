@@ -849,7 +849,12 @@ for (const [signal, expectedExitCode] of [
 	["SIGINT", 130],
 	["SIGTERM", 143],
 ]) {
-	it(`handles ${signal} during a real active lifecycle with cleanup and a terminal receipt`, async () => {
+	it(`handles ${signal} during a real active lifecycle with cleanup and a terminal receipt`, {
+		skip:
+			process.platform === "win32"
+				? "POSIX signals SIGINT/SIGTERM do not deliver named signal semantics on Windows"
+				: false,
+	}, async () => {
 		const root = mkdtempSync(join(tmpdir(), `litcodex-probe-${signal.toLowerCase()}-test-`));
 		roots.push(root);
 		const fixture = spawnInterruptibleLifecycle(root, `${signal.toLowerCase()}-run`);
@@ -870,7 +875,12 @@ for (const [signal, expectedExitCode] of [
 	});
 }
 
-it("coalesces a repeated signal during cleanup without leaking handlers or hanging", async () => {
+it("coalesces a repeated signal during cleanup without leaking handlers or hanging", {
+	skip:
+		process.platform === "win32"
+			? "POSIX signals SIGINT/SIGTERM do not deliver named signal semantics on Windows"
+			: false,
+}, async () => {
 	const root = mkdtempSync(join(tmpdir(), "litcodex-probe-repeated-signal-test-"));
 	roots.push(root);
 	const fixture = spawnInterruptibleLifecycle(root, "repeated-signal-run", 250);
@@ -890,7 +900,12 @@ it("coalesces a repeated signal during cleanup without leaking handlers or hangi
 	assertTimedWorkerExited(fixture);
 });
 
-it("bounds a hanging cleanup after interruption and persists the incomplete cleanup result", async () => {
+it("bounds a hanging cleanup after interruption and persists the incomplete cleanup result", {
+	skip:
+		process.platform === "win32"
+			? "POSIX signals SIGINT/SIGTERM do not deliver named signal semantics on Windows"
+			: false,
+}, async () => {
 	const root = mkdtempSync(join(tmpdir(), "litcodex-probe-hanging-cleanup-test-"));
 	roots.push(root);
 	const fixture = spawnInterruptibleLifecycle(root, "hanging-cleanup-run", 0, true, true);

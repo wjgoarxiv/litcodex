@@ -4,10 +4,11 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 const runner = new URL("./run-isolated-tests.mjs", import.meta.url);
 test("repository tree verification can use its linked worktree Git metadata", () => {
-	const result = spawnSync(process.execPath, [runner.pathname, "git", "write-tree"], { encoding: "utf8" });
+	const result = spawnSync(process.execPath, [fileURLToPath(runner), "git", "write-tree"], { encoding: "utf8" });
 	assert.equal(result.status, 0, result.stderr);
 	assert.match(result.stdout.trim(), /^[0-9a-f]{40,64}$/);
 });
@@ -16,7 +17,7 @@ test("test child inherits disposable HOME and CODEX_HOME", () => {
 	const result = spawnSync(
 		process.execPath,
 		[
-			runner.pathname,
+			fileURLToPath(runner),
 			process.execPath,
 			"-e",
 			"const fs=require('fs'); for (const key of ['HOME','CODEX_HOME']) { if (!process.env[key].includes('litcodex-tests-')) process.exit(1); fs.writeFileSync(process.env[key]+'/canary','ok'); }",

@@ -47,7 +47,12 @@ function capture({ root, publicBin }) {
 	return helpers.captureRepositoryCodexIdentity({ repoRoot: root, codexBin: publicBin });
 }
 
-it("validates the current repository's exact public Codex path", () => {
+it("validates the current repository's exact public Codex path", {
+	skip:
+		process.platform === "win32"
+			? "npm creates .cmd shims on Windows, not symlinks; symlink check does not apply"
+			: false,
+}, () => {
 	const repoRoot = join(import.meta.dirname, "..");
 	const codexBin = join(repoRoot, "node_modules/.bin/codex");
 	const identity = helpers.captureRepositoryCodexIdentity({ repoRoot, codexBin });
@@ -78,7 +83,12 @@ it("accepts only the exact canonical public path and captures its package-owned 
 	);
 });
 
-it("rejects missing, non-executable, and outside-target public entries", () => {
+it("rejects missing, non-executable, and outside-target public entries", {
+	skip:
+		process.platform === "win32"
+			? "chmodSync does not set execute bits on Windows; non-executable detection does not apply"
+			: false,
+}, () => {
 	const missing = fixture();
 	unlinkSync(missing.publicBin);
 	assert.throws(() => capture(missing), /unavailable/u);

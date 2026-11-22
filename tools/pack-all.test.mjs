@@ -189,7 +189,12 @@ test("pack workspace derives string and multiple bin paths from its package mani
 	}
 });
 
-test("symlink invocation runs the CLI and emits its JSON payload report", () => {
+test("symlink invocation runs the CLI and emits its JSON payload report", {
+	skip:
+		process.platform === "win32"
+			? "fake npm via extensionless shebang and POSIX PATH separator is not usable on Windows"
+			: false,
+}, () => {
 	const root = mkdtempSync(join(tmpdir(), "lit-pack-all-alias-test-"));
 	try {
 		for (const [workspace, name] of [

@@ -114,7 +114,12 @@ test("fails closed instead of executing a test symlinked outside an approved roo
 	}
 });
 
-test("fails closed on unsafe Git output", () => {
+test("fails closed on unsafe Git output", {
+	skip:
+		process.platform === "win32"
+			? "fake-git via extensionless shebang and POSIX PATH separator is not usable on Windows"
+			: false,
+}, () => {
 	const root = makeFixture();
 	try {
 		const bin = join(root, "fake-bin");

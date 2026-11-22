@@ -119,7 +119,12 @@ test("fake failure fixtures fail closed with typed zero-work receipts", () => {
 	}
 });
 
-test("live mode without reusable host auth blocks before provider work", () => {
+test("live mode without reusable host auth blocks before provider work", {
+	skip:
+		process.platform === "win32"
+			? "HOME env does not control homedir() on Windows; CI runner auth leaks through"
+			: false,
+}, () => {
 	const root = mkdtempSync(join(tmpdir(), "litcodex-provider-cache-no-auth-"));
 	const env = { ...process.env, HOME: root, CODEX_HOME: join(root, ".codex") };
 	mkdirSync(env.CODEX_HOME, { recursive: true });
@@ -156,7 +161,12 @@ test("live mode does not require OPENAI_API_KEY when a host auth source exists",
 	}
 });
 
-test("an explicit output path retains a privacy-bounded auth block for resumable evidence", () => {
+test("an explicit output path retains a privacy-bounded auth block for resumable evidence", {
+	skip:
+		process.platform === "win32"
+			? "HOME env does not control homedir() on Windows; CI runner auth leaks through"
+			: false,
+}, () => {
 	const root = mkdtempSync(join(tmpdir(), "litcodex-provider-cache-block-"));
 	const output = join(root, "blocked.json");
 	const env = { ...process.env, HOME: root, CODEX_HOME: join(root, ".codex") };
