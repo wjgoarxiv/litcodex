@@ -17,7 +17,7 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
-import { basename, isAbsolute, join, relative, resolve } from "node:path";
+import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { answerChoice, markdownGuide } from "./goal-guide.js";
 import { plainDirsOrMissing, writeFileAtomic } from "./live-step.js";
 import { redactSecrets } from "./redaction.js";
@@ -179,7 +179,8 @@ export function falsifyLoop(args) {
 export function proposeGoal(args) {
     const { cwd } = args;
     const planPath = resolve(cwd, args.planArg ?? "");
-    const plan = relative(cwd, planPath);
+    // Windows `relative` uses backslashes; the plan id and its check are always written with `/`.
+    const plan = relative(cwd, planPath).split(sep).join("/");
     if (args.planArg === undefined || isAbsolute(plan) || !/^\.litcodex\/plans\/[\w.-]+\.md$/u.test(plan)) {
         return { line: GOAL_STATUS.skipped("give the published plan as .litcodex/plans/<slug>.md inside this project") };
     }
