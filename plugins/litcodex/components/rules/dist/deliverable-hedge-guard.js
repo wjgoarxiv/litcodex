@@ -6,6 +6,9 @@ const MAX_TEXT_BYTES = 4 * 1024 * 1024;
 const MAX_PATHS = 64;
 const MAX_OUTPUT_BYTES = 512 * 1024;
 const DETECTOR_TIMEOUT_MS = 1500;
+// A cold Python start takes about a second on Windows; all documents share one budget inside the 5 s hook.
+const OFFICE_EXTRACT_TIMEOUT_MS = 3000;
+const OFFICE_EXTRACT_BUDGET_MS = 3500;
 const DEFAULT_DETECTOR = resolve(dirname(fileURLToPath(import.meta.url)), "../../../skills/lit-humanizer/scripts/detect.mjs");
 /**
  * Reader-facing prose formats. Block-tier rules are prose rules (a line-start `Source:` label, for
@@ -97,8 +100,11 @@ export function runHumanizerPostToolUse(input, options = {}) {
             (isOfficePath(path) || (input.tool_name.toLowerCase() === "bash" && isTextPath(path))));
         if (targets.length === 0)
             return "";
+        const officeDeadline = Date.now() + OFFICE_EXTRACT_BUDGET_MS;
         const text = targets
-            .map((path) => isOfficePath(path) ? extractOfficeText(path, input.cwd) : readAddedOutputText(path, input.cwd))
+            .map((path) => isOfficePath(path)
+            ? extractOfficeText(path, input.cwd, officeDeadline)
+            : readAddedOutputText(path, input.cwd))
             .join("\n\n");
         return findingsOutput("PostToolUse", (options.scan ?? inspectHumanizerText)(maskQuotedUserText(text)), targets.length);
     }
@@ -701,7 +707,10 @@ function readSafeExistingText(path, cwd) {
     }
     return null;
 }
-function extractOfficeText(path, cwd) {
+function extractOfficeText(path, cwd, deadline) {
+    const timeout = Math.min(OFFICE_EXTRACT_TIMEOUT_MS, deadline - Date.now());
+    if (timeout <= 0)
+        throw new Error("Office extraction budget spent");
     const root = realpathSync(cwd);
     const target = isAbsolute(path) ? resolve(path) : resolve(root, path);
     const relativePath = relative(root, target);
@@ -719,7 +728,7 @@ function extractOfficeText(path, cwd) {
         cwd: root,
         encoding: "utf8",
         maxBuffer: MAX_OUTPUT_BYTES,
-        timeout: DETECTOR_TIMEOUT_MS,
+        timeout,
         windowsHide: true,
     });
     if (result.error || result.status !== 0)

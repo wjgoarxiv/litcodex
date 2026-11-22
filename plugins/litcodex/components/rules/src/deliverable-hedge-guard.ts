@@ -39,6 +39,9 @@ const MAX_TEXT_BYTES = 4 * 1024 * 1024;
 const MAX_PATHS = 64;
 const MAX_OUTPUT_BYTES = 512 * 1024;
 const DETECTOR_TIMEOUT_MS = 1500;
+// A cold Python start takes about a second on Windows; all documents share one budget inside the 5 s hook.
+const OFFICE_EXTRACT_TIMEOUT_MS = 3000;
+const OFFICE_EXTRACT_BUDGET_MS = 3500;
 const DEFAULT_DETECTOR = resolve(
 	dirname(fileURLToPath(import.meta.url)),
 	"../../../skills/lit-humanizer/scripts/detect.mjs",
@@ -142,9 +145,12 @@ export function runHumanizerPostToolUse(input: HumanizerHookInput, options: Guar
 				(isOfficePath(path) || (input.tool_name.toLowerCase() === "bash" && isTextPath(path))),
 		);
 		if (targets.length === 0) return "";
+		const officeDeadline = Date.now() + OFFICE_EXTRACT_BUDGET_MS;
 		const text = targets
 			.map((path) =>
-				isOfficePath(path) ? extractOfficeText(path, input.cwd) : readAddedOutputText(path, input.cwd),
+				isOfficePath(path)
+					? extractOfficeText(path, input.cwd, officeDeadline)
+					: readAddedOutputText(path, input.cwd),
 			)
 			.join("\n\n");
 		return findingsOutput(
@@ -714,7 +720,9 @@ function readSafeExistingText(path: string, cwd: string): string | null {
 	return null;
 }
 
-function extractOfficeText(path: string, cwd: string): string {
+function extractOfficeText(path: string, cwd: string, deadline: number): string {
+	const timeout = Math.min(OFFICE_EXTRACT_TIMEOUT_MS, deadline - Date.now());
+	if (timeout <= 0) throw new Error("Office extraction budget spent");
 	const root = realpathSync(cwd);
 	const target = isAbsolute(path) ? resolve(path) : resolve(root, path);
 	const relativePath = relative(root, target);
@@ -731,7 +739,7 @@ function extractOfficeText(path: string, cwd: string): string {
 		cwd: root,
 		encoding: "utf8",
 		maxBuffer: MAX_OUTPUT_BYTES,
-		timeout: DETECTOR_TIMEOUT_MS,
+		timeout,
 		windowsHide: true,
 	});
 	if (result.error || result.status !== 0) throw new Error("Office text extraction failed");
