@@ -13,7 +13,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
 const fsFault = vi.hoisted(() => ({
@@ -142,7 +142,7 @@ function runKnowledgeChild(
 	value: unknown,
 ): Promise<{ status: number | null; stdout: string; stderr: string }> {
 	const script = `
-import { captureKnowledgeEvent, reviewKnowledgeRecord } from ${JSON.stringify(KNOWLEDGE_MODULE)};
+import { captureKnowledgeEvent, reviewKnowledgeRecord } from ${JSON.stringify(pathToFileURL(KNOWLEDGE_MODULE).href)};
 const [operation, projectRoot, serialized] = process.argv.slice(1);
 try {
   const value = JSON.parse(serialized);
