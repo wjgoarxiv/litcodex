@@ -13,9 +13,15 @@
 
 **Keep the work lit.**
 
-Put `lit` in front of a request and Codex CLI works toward checks that can pass or fail, calling the job
-done only when each one has proof. The proof stays in your project, so tomorrow's session starts where
-today's stopped.
+LitCodex is an add-on for Codex CLI. It makes Codex check its own work before it says "done", and leaves a note
+so the next session starts where this one stopped.
+
+You ask Codex for a feature. It writes the code and says it is finished, and a day later you find the tests never
+ran. You open a new session and explain the whole project again.
+
+With LitCodex you add `lit` to the same request. Codex first writes down what "finished" means for this task, adds a
+test that fails, makes it pass, and ends by telling you what it checked and what it could not. When you stop, type
+`handoff`. Codex saves a note, and the next session reads it and carries on.
 
 **[Full guide on GitHub](https://github.com/wjgoarxiv/litcodex#readme)** · [한국어](https://github.com/wjgoarxiv/litcodex/blob/main/packages/litcodex-ai/README-Ko-KR.md)
 
@@ -42,6 +48,29 @@ A global install also gets the video skill's tools ready with a few pinned downl
 and shows how to skip them.
 
 > Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.44 -- litcodex <command>`.
+
+## Two ways to use it
+
+**The easy way.** Write your request as usual and put `lit` at the start or at the end:
+
+```text
+fix the date parsing bug in src/dates.js lit
+```
+
+Codex sets the goal, writes a failing test, fixes the bug, checks the result and tells you what it checked.
+Most tasks need nothing more.
+
+**The full workflow.** For a bigger job, go one step at a time. Each step hands its result to the next, and you can
+skip any step you do not need.
+
+| Step | Type | What happens |
+| --- | --- | --- |
+| 1. Explore | `lit brainstorm <question>` | Many options, scored and cut to a short list you pick from |
+| 2. Clarify | `lit deep interview <idea>` | Codex asks questions until the goal is clear |
+| 3. Plan | `lit-crucible <approach>` or `lit plan <task>` | Crucible attacks the approach first and hands what survives to lit-plan; lit-plan writes the steps and waits for your yes |
+| 4. Build | `yes` to the plan, or `lit <task>` | Codex works through it with tests and checks |
+| 5. Review | `lit review` | A review in five lanes, findings first |
+| 6. Hand off | `handoff` | The decisions and the next step, saved to a file |
 
 ## First task
 

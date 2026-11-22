@@ -13,8 +13,15 @@
 
 **Keep the work lit.**
 
-요청 앞에 `lit`을 붙이면 Codex CLI가 통과·실패를 가릴 수 있는 기준을 세우고, 기준마다 증거가 남아야 일을 끝냅니다.
-증거는 프로젝트 안에 남기 때문에 내일 세션은 오늘 멈춘 자리에서 시작합니다.
+LitCodex는 Codex CLI에 붙이는 추가 기능입니다. Codex가 "다 됐어요"라고 말하기 전에 자기 작업을 직접 확인하게 하고,
+다음 세션이 이어서 시작할 수 있도록 기록을 남기게 합니다.
+
+Codex에게 기능을 하나 맡기면 코드를 쓰고 끝났다고 말합니다. 그런데 다음 날 보니 테스트는 한 번도 돌지 않았습니다.
+새 세션을 열면 프로젝트 이야기를 처음부터 다시 해야 합니다.
+
+LitCodex가 있으면 같은 요청에 `lit`만 붙이면 됩니다. Codex는 먼저 이 작업에서 "끝났다"가 무슨 뜻인지 적어 두고,
+실패하는 테스트를 추가해 통과시킨 다음, 무엇을 확인했고 무엇은 확인하지 못했는지 알려 줍니다. 작업을 멈출 때
+`handoff`라고 보내면 Codex가 기록을 남기고, 다음 세션은 그 기록을 읽고 이어서 일합니다.
 
 **[GitHub에서 전체 안내 보기](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md)** · [English](https://github.com/wjgoarxiv/litcodex#readme)
 
@@ -40,6 +47,28 @@ litcodex install
 건너뛰는 방법은 [설치 안내](https://github.com/wjgoarxiv/litcodex/blob/main/docs/install-Ko-KR.md#전역-명령으로-쓰기)에 있습니다.
 
 > 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.44 -- litcodex <command>` 형식을 사용하세요.
+
+## 두 가지 사용법
+
+**간단하게.** 평소처럼 요청을 쓰고, 앞이나 끝에 `lit`을 붙입니다.
+
+```text
+src/dates.js의 날짜 파싱 버그 고쳐줘 lit
+```
+
+Codex가 목표를 정하고, 실패하는 테스트를 쓰고, 버그를 고치고, 결과를 확인한 뒤 무엇을 확인했는지 알려 줍니다.
+웬만한 작업은 이걸로 충분합니다.
+
+**본격적으로.** 큰 작업은 한 단계씩 밟아 갑니다. 앞 단계의 결과를 다음 단계가 이어받고, 필요 없는 단계는 건너뛰어도 됩니다.
+
+| 단계 | 입력 | 하는 일 |
+| --- | --- | --- |
+| 1. 넓게 보기 | `lit brainstorm <질문>` | 선택지를 많이 낸 뒤 점수를 매겨 고를 만한 몇 개로 추립니다 |
+| 2. 구체화 | `lit deep interview <아이디어>` | 목표가 분명해질 때까지 Codex가 질문합니다 |
+| 3. 계획 | `lit-crucible <접근법>` 또는 `lit plan <작업>` | crucible은 접근법의 약점부터 찌르고 살아남은 내용을 lit-plan에 넘깁니다. lit-plan은 단계를 적고 승인을 기다립니다 |
+| 4. 실행 | 계획에 `yes`, 또는 `lit <작업>` | 테스트와 확인을 거치며 작업합니다 |
+| 5. 검토 | `lit review` | 다섯 갈래로 검토하고, 찾은 문제부터 알려 줍니다 |
+| 6. 넘겨주기 | `handoff` | 내린 결정과 다음 할 일을 파일로 남깁니다 |
 
 ## 첫 작업
 
