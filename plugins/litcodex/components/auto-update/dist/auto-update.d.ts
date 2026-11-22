@@ -66,6 +66,8 @@ export interface AutoUpdateSpawnResult {
 export type AutoUpdateSpawn = (command: string, args: readonly string[], options: AutoUpdateSpawnOptions) => AutoUpdateSpawnResult;
 export interface AutoUpdateVerifyOptions {
     readonly command: string;
+    /** Arguments before every npm subcommand: the npm-cli.js script when `command` is node itself. */
+    readonly commandArgs?: readonly string[];
     readonly cwd: string;
     readonly env: NodeJS.ProcessEnv;
     readonly timeout: number;

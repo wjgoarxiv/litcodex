@@ -165,7 +165,8 @@ function withCodexHost(safe, env) {
     return host;
 }
 function installIntoCodex(command, options, timeout) {
-    return options.spawn(command, ["exec", "--global", "--", "litcodex", "install", "--no-auto-update"], {
+    const args = [...(options.commandArgs ?? []), "exec", "--global", "--", "litcodex", "install", "--no-auto-update"];
+    return options.spawn(command, args, {
         cwd: options.cwd,
         env: options.env,
         timeout,
@@ -393,7 +394,7 @@ function latestFromRegistry(env, spawn, cwd, timeout) {
  */
 export function verifyInstalledVersion(expectedVersion, options) {
     const versionArgs = ["exec", "--global", "--", "litcodex", "--version"];
-    const result = options.spawn(options.command, versionArgs, {
+    const result = options.spawn(options.command, [...(options.commandArgs ?? []), ...versionArgs], {
         cwd: options.cwd,
         env: options.env,
         timeout: options.timeout,
@@ -441,7 +442,7 @@ export function verifyInstalledVersion(expectedVersion, options) {
         };
     }
     const doctorArgs = ["exec", "--global", "--", "litcodex", "doctor", "--json", "--no-auto-update"];
-    const doctorResult = options.spawn(options.command, doctorArgs, {
+    const doctorResult = options.spawn(options.command, [...(options.commandArgs ?? []), ...doctorArgs], {
         cwd: options.cwd,
         env: options.env,
         timeout: options.timeout,
@@ -567,6 +568,8 @@ export function runForegroundAutoUpdate(options) {
         atomicJson(statePath, { ...state, lastAttemptedAt: now, lastStatus: "started" });
         const command = plan.command;
         const args = plan.args;
+        // When npm runs as `node npm-cli.js` (Windows, or npm_execpath), every later npm call needs that script too.
+        const npmPrefix = args.slice(0, Math.max(0, args.indexOf("install")));
         const result = withSanitizedNpmEnvironment(env, (safeEnv) => spawn(command, args, {
             cwd,
             env: safeEnv,
@@ -585,6 +588,7 @@ export function runForegroundAutoUpdate(options) {
             try {
                 verification = withSanitizedNpmEnvironment(env, (safeEnv) => (options.verifyInstalled ?? verifyInstalledVersion)(plan.latestVersion, {
                     command,
+                    commandArgs: npmPrefix,
                     cwd,
                     env: withCodexHost(safeEnv, env),
                     timeout,
@@ -650,7 +654,14 @@ export function runForegroundAutoUpdate(options) {
         rollbackAttempted = plan.currentVersion !== undefined && parseStableVersion(plan.currentVersion) !== null;
         if (rollbackAttempted) {
             try {
-                const rollback = withSanitizedNpmEnvironment(env, (safeEnv) => spawn(command, ["install", "--global", "--no-fund", "--no-audit", `${AUTO_UPDATE_PACKAGE}@${plan.currentVersion}`], {
+                const rollback = withSanitizedNpmEnvironment(env, (safeEnv) => spawn(command, [
+                    ...npmPrefix,
+                    "install",
+                    "--global",
+                    "--no-fund",
+                    "--no-audit",
+                    `${AUTO_UPDATE_PACKAGE}@${plan.currentVersion}`,
+                ], {
                     cwd,
                     env: safeEnv,
                     timeout: installTimeout,
@@ -662,7 +673,7 @@ export function runForegroundAutoUpdate(options) {
                 rollbackSucceeded = spawnSucceeded(rollback);
                 if (rollbackSucceeded && verification.codexInstallAttempted === true) {
                     // The target already wrote its plugin into Codex, so the restored package reinstalls its own.
-                    const restore = withSanitizedNpmEnvironment(env, (safeEnv) => installIntoCodex(command, { cwd, env: withCodexHost(safeEnv, env), spawn }, installTimeout));
+                    const restore = withSanitizedNpmEnvironment(env, (safeEnv) => installIntoCodex(command, { cwd, env: withCodexHost(safeEnv, env), spawn, commandArgs: npmPrefix }, installTimeout));
                     rollbackStatus = restore.status;
                     rollbackSignal = restore.signal;
                     rollbackError =
