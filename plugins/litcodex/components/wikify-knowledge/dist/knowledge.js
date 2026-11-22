@@ -290,19 +290,24 @@ function prepareAuthorityForAppend(path, root) {
             return;
         throw error;
     }
+    const opened = descriptor;
     try {
-        assertOpenedAuthorityFile(path, descriptor, expectedParent, "read");
-        assertAuthoritySize(descriptor);
-        const bytes = readFileSync(descriptor);
+        assertOpenedAuthorityFile(path, opened, expectedParent, "read");
+        assertAuthoritySize(opened);
+        const bytes = readFileSync(opened);
         if (bytes.length === 0 || bytes.at(-1) === 0x0a)
             return;
         const complete = completeAuthorityBytes(bytes);
         const repaired = complete.length === bytes.length ? Buffer.concat([complete, Buffer.from("\n", "utf8")]) : complete;
         assertAuthorityParent(path, expectedParent, "write");
-        replaceAuthority(path, descriptor, repaired, expectedParent);
+        replaceAuthority(path, opened, repaired, expectedParent, () => {
+            closeSync(opened);
+            descriptor = undefined;
+        });
     }
     finally {
-        closeSync(descriptor);
+        if (descriptor !== undefined)
+            closeSync(descriptor);
     }
 }
 function readAuthority(path) {
@@ -505,7 +510,7 @@ function assertAuthorityParent(path, expected, phase) {
         throw new Error(`Knowledge authority parent changed before ${phase}.`);
     }
 }
-function replaceAuthority(path, sourceDescriptor, bytes, expectedParent) {
+function replaceAuthority(path, sourceDescriptor, bytes, expectedParent, releaseSource) {
     const temporary = `${path}.tmp.${process.pid}.${randomUUID()}`;
     let descriptor;
     let temporaryIdentity;
@@ -523,6 +528,8 @@ function replaceAuthority(path, sourceDescriptor, bytes, expectedParent) {
         descriptor = undefined;
         assertOpenedAuthorityFile(path, sourceDescriptor, expectedParent, "write");
         assertAuthorityParent(path, expectedParent, "write");
+        // Windows refuses to rename over a file that is still open, so the checked source closes first.
+        releaseSource();
         renameSync(temporary, path);
     }
     finally {
