@@ -443,9 +443,7 @@ describe("stop line while start-work keeps the turn going", () => {
 		expect(workflowStopLine(root, "s1", "t1", active)).toBe("✨ turn done · next ▸ Show the map in …");
 	});
 
-	// O_NOFOLLOW === 0 on Windows, so inspectTranscript() returns "invalid" for any non-null path,
-	// making the continuation hook always bail. REAL-BUG in product (start-work-continuation/src/codex-hook.ts).
-	it.skipIf(process.platform === "win32")(
+	it(
 		"says the turn is done under context pressure or an oversized transcript",
 		() => {
 			const root = repo();

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { closeSync, constants, fstatSync, openSync, readSync, realpathSync } from "node:fs";
+import { closeSync, constants, fstatSync, lstatSync, openSync, readSync, realpathSync } from "node:fs";
 import { basename, isAbsolute } from "node:path";
 import { START_WORK_CONTINUATION_DIRECTIVE } from "./directive.js";
 import { findLifecycleRoot } from "./lifecycle-root.js";
@@ -308,12 +308,16 @@ function safeJson(value) {
 function inspectTranscript(transcriptPath) {
     if (transcriptPath === null || transcriptPath.length === 0)
         return "clear";
-    if (O_NOFOLLOW === 0)
-        return "invalid";
     let fd;
     try {
+        // Windows has no O_NOFOLLOW: refuse a link up front, then prove the opened file is the one checked.
+        const before = O_NOFOLLOW === 0 ? lstatSync(transcriptPath) : null;
+        if (before !== null && (before.isSymbolicLink() || !before.isFile()))
+            return "invalid";
         fd = openSync(transcriptPath, constants.O_RDONLY | O_NOFOLLOW);
         const stat = fstatSync(fd);
+        if (before !== null && (stat.ino !== before.ino || stat.dev !== before.dev))
+            return "invalid";
         if (!stat.isFile() || stat.size > MAX_TRANSCRIPT_BYTES)
             return "invalid";
         const buffer = Buffer.alloc(stat.size);
