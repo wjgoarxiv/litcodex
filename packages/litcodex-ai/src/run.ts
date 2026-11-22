@@ -43,6 +43,7 @@ import {
 	readRunPanel,
 	renderRunPanel,
 } from "@litcodex/lit-loop/dist/run-panel.js";
+import { codexSpawnInvocation } from "./install/codex.js";
 import { ensurePtyHelperExecutable } from "./pty-helper.js";
 
 export const RUN_HELP_TEXT = `litcodex run [-- <codex args>...]
@@ -176,7 +177,14 @@ function signalCode(signal: NodeJS.Signals | number | null | undefined): number 
 /** Codex with this terminal's own stdio; Ctrl-C reaches Codex directly, so the wrapper only waits. */
 function runPlainCodex(file: string, args: readonly string[], io: RunIo): Promise<number> {
 	return new Promise((resolve) => {
-		const child = spawn(file, [...args], { stdio: "inherit", cwd: io.cwd, env: io.env });
+		// Node refuses to spawn a Windows codex.cmd shim directly; route it through ComSpec as install does.
+		const invocation = codexSpawnInvocation(file, args, io.env);
+		const child = spawn(invocation.command, invocation.args, {
+			stdio: "inherit",
+			cwd: io.cwd,
+			env: io.env,
+			windowsVerbatimArguments: invocation.windowsVerbatimArguments,
+		});
 		const ignore = (): void => undefined;
 		const forward = (signal: NodeJS.Signals) => (): void => {
 			child.kill(signal);
