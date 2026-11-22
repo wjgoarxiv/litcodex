@@ -10,7 +10,8 @@ export const NODE_STABLE_READ_FS = Object.freeze({
     close: (descriptor) => closeSync(descriptor),
 });
 export function readStableRegularUtf8(path, maxBytes, fs = NODE_STABLE_READ_FS, expectedDirectories) {
-    if (!Number.isSafeInteger(maxBytes) || maxBytes < 0 || fs.noFollowFlag === 0)
+    // Without O_NOFOLLOW (Windows) a link swapped in before open still fails the identity checks below.
+    if (!Number.isSafeInteger(maxBytes) || maxBytes < 0)
         return undefined;
     let descriptor;
     try {

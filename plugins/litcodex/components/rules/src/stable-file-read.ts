@@ -33,7 +33,8 @@ export function readStableRegularUtf8(
 	fs: StableReadFileSystem = NODE_STABLE_READ_FS,
 	expectedDirectories?: readonly StableDirectorySnapshot[],
 ): string | undefined {
-	if (!Number.isSafeInteger(maxBytes) || maxBytes < 0 || fs.noFollowFlag === 0) return undefined;
+	// Without O_NOFOLLOW (Windows) a link swapped in before open still fails the identity checks below.
+	if (!Number.isSafeInteger(maxBytes) || maxBytes < 0) return undefined;
 	let descriptor: number | undefined;
 	try {
 		const pinnedDirectories = expectedDirectories ?? snapshotStableDirectoryChain(path, fs);
