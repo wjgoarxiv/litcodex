@@ -71,7 +71,7 @@ describe("executeInstallPlan — spawns ONLY codex (fake-codex argv capture)", (
 	it("captures Codex mutation output for the TUI instead of inheriting the spinner line", async () => {
 		const rec = makeSpawnRecorder((_cmd, args) => {
 			const command = args.join(" ");
-			if (command === `plugin marketplace add ${join(resolve("/tmp/codex-home"), "marketplaces", "litcodex")}`) {
+			if (command === `plugin marketplace add ${baseOptions().repoUrl}`) {
 				return { status: 0, stdout: "Added marketplace `litcodex`.\nInstalled marketplace root: /tmp/local\n" };
 			}
 			if (command === "plugin add litcodex@litcodex") {
@@ -103,7 +103,7 @@ describe("executeInstallPlan — spawns ONLY codex (fake-codex argv capture)", (
 			{
 				kind: "marketplace-add",
 				status: "failed",
-				detail: `codex plugin marketplace add ${join(resolve("/tmp/codex-home"), "marketplaces", "litcodex")} failed`,
+				detail: `codex plugin marketplace add ${baseOptions().repoUrl} failed`,
 			},
 		]);
 	});

@@ -1,5 +1,5 @@
 import { Buffer } from "node:buffer";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import { catalogFs, EXACT_PAYLOADS, REQUIRED_SKILL_RESOURCES, SKILL_IDS } from "../../test/skill-catalog-fixtures.js";
 import { probeSkillCatalogPayload } from "./skill-catalog.js";
@@ -60,7 +60,7 @@ describe("installed skill catalog payload integrity", () => {
 				{
 					...completeFs,
 					readFileBufferSync: (path: string) =>
-						path.endsWith("lit-humanizer/scripts/detect.mjs")
+						path.endsWith(join("lit-humanizer", "scripts", "detect.mjs"))
 							? Buffer.from("tampered")
 							: completeFs.readFileBufferSync(path),
 				},
@@ -151,7 +151,7 @@ describe("installed skill catalog payload integrity", () => {
 				{
 					...completeFs,
 					listFilesRecursive: (root: string) =>
-						root.endsWith(`/${skillId}`)
+						root.endsWith(`${sep}${skillId}`)
 							? [...completeFs.listFilesRecursive(root), "scripts/orphan.mjs"]
 							: completeFs.listFilesRecursive(root),
 				},

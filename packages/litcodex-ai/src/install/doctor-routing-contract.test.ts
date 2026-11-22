@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -8,8 +8,8 @@ import { migrateCodexConfig } from "../config-migration/index.js";
 import { desiredAgentRoutes, installedAgentPath } from "./agent-routing.js";
 import { runDoctor } from "./doctor.js";
 
-const CODEX_HOME = "/tmp/doctor-routing-home";
-const CODEX_BIN = "/usr/local/bin/codex";
+const CODEX_HOME = resolve("/tmp/doctor-routing-home");
+const CODEX_BIN = resolve("/usr/local/bin/codex");
 const tempRoots: string[] = [];
 
 afterEach(() => {
@@ -243,12 +243,12 @@ function doctorReport(options: {
 	readonly authJson?: string;
 	readonly legacyDefault?: string;
 }) {
-	const configPath = `${CODEX_HOME}/config.toml`;
-	const authPath = `${CODEX_HOME}/auth.json`;
-	const managedRoot = `${CODEX_HOME}/marketplaces/litcodex`;
-	const marketplaceManifest = `${managedRoot}/.agents/plugins/marketplace.json`;
-	const pluginManifest = `${managedRoot}/plugins/litcodex/.codex-plugin/plugin.json`;
-	const hooksManifest = `${managedRoot}/plugins/litcodex/hooks/hooks.json`;
+	const configPath = join(CODEX_HOME, "config.toml");
+	const authPath = join(CODEX_HOME, "auth.json");
+	const managedRoot = join(CODEX_HOME, "marketplaces", "litcodex");
+	const marketplaceManifest = join(managedRoot, ".agents", "plugins", "marketplace.json");
+	const pluginManifest = join(managedRoot, "plugins", "litcodex", ".codex-plugin", "plugin.json");
+	const hooksManifest = join(managedRoot, "plugins", "litcodex", "hooks", "hooks.json");
 	const files = new Map<string, string>([
 		[configPath, options.config ?? 'model = "gpt-5.6"\nmodel_reasoning_effort = "high"\n'],
 		[marketplaceManifest, '{"name":"litcodex"}'],
@@ -258,7 +258,7 @@ function doctorReport(options: {
 	if (options.authJson !== undefined) files.set(authPath, options.authJson);
 	for (const [file, content] of options.agentFiles) files.set(installedAgentPath(CODEX_HOME, file), content);
 	if (options.legacyDefault !== undefined) {
-		files.set(`${CODEX_HOME}/agents/litcodex-default.toml`, options.legacyDefault);
+		files.set(join(CODEX_HOME, "agents", "litcodex-default.toml"), options.legacyDefault);
 	}
 	return runDoctor({
 		env: { CODEX_BIN, CODEX_HOME },
@@ -267,7 +267,7 @@ function doctorReport(options: {
 		fs: {
 			existsSync: (path) => path === CODEX_BIN || files.has(path),
 			readFileSync: (path) => {
-				if (path.endsWith(`/${options.unreadableAgent}`)) throw new Error("permission denied");
+				if (path.endsWith(`${sep}${options.unreadableAgent}`)) throw new Error("permission denied");
 				return files.get(path) ?? "";
 			},
 			listFilesRecursive: () => [],

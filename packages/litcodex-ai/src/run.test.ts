@@ -171,7 +171,13 @@ describe("findCodex", () => {
 
 	it("on Windows skips the extensionless npm sh shim and empty PATHEXT entries", () => {
 		const home = tempHome();
-		const bin = fakeCodexDir(home);
+		// Build the bin dir by hand: only an extensionless 'codex' (the npm sh shim).
+		// fakeCodexDir already creates codex.cmd on real Windows, which findCodex would
+		// find immediately, breaking the toBeNull assertion that comes first.
+		const bin = join(home, "bin");
+		mkdirSync(bin, { recursive: true });
+		writeFileSync(join(bin, "codex"), "#!/bin/sh\nexit 0\n");
+		chmodSync(join(bin, "codex"), 0o755);
 		const platform = Object.getOwnPropertyDescriptor(process, "platform");
 		Object.defineProperty(process, "platform", { value: "win32" });
 		try {
@@ -561,6 +567,7 @@ describe("litcodex run as a process", () => {
 				PATH: `${bin}${delimiter}${process.env["PATH"] ?? ""}`,
 				HOME: home,
 				CODEX_HOME: join(home, ".codex"),
+				...(process.platform === "win32" ? { SystemRoot: process.env["SystemRoot"] ?? "" } : {}),
 			},
 		});
 		expect(run.status).toBe(7);
@@ -576,7 +583,12 @@ describe("litcodex run as a process", () => {
 		const run = spawnSync(process.execPath, [binPath, "run", "--", "--version"], {
 			encoding: "utf8",
 			cwd: home,
-			env: { PATH: `${bin}${delimiter}${process.env["PATH"] ?? ""}`, HOME: home, CODEX_HOME: join(home, ".codex") },
+			env: {
+				PATH: `${bin}${delimiter}${process.env["PATH"] ?? ""}`,
+				HOME: home,
+				CODEX_HOME: join(home, ".codex"),
+				...(process.platform === "win32" ? { SystemRoot: process.env["SystemRoot"] ?? "" } : {}),
+			},
 		});
 		expect(run.status).toBe(7);
 		expect(run.stdout).toBe("fake codex [--version]\n");

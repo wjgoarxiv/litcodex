@@ -1,12 +1,13 @@
+import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
-import { codexBin, doctorDeps, sentinelPath } from "../../test/install-doctor-fixtures.js";
+import { codexBin, codexHome, doctorDeps, sentinelPath } from "../../test/install-doctor-fixtures.js";
 import { renderDoctorText, runDoctor } from "./doctor.js";
 import { CANONICAL_SKILL_RESOURCE_PATHS } from "./skill-catalog.js";
 
 describe("doctor — bundled skill payloads", () => {
 	it("models the exact clean-room payload resources in the doctor fixture", () => {
 		const deps = doctorDeps([codexBin, sentinelPath]);
-		const skillsRoot = "/tmp/test-codex-home/marketplaces/litcodex/plugins/litcodex/skills";
+		const skillsRoot = join(codexHome, "marketplaces", "litcodex", "plugins", "litcodex", "skills");
 		for (const skillId of [
 			"browser-drive",
 			"lit-humanizer",
@@ -17,7 +18,7 @@ describe("doctor — bundled skill payloads", () => {
 			"structural-search",
 			"coding-session-audit",
 		]) {
-			const root = `${skillsRoot}/${skillId}`;
+			const root = join(skillsRoot, skillId);
 			expect(deps.fs.listFilesRecursive?.(root), skillId).not.toEqual([]);
 		}
 	});
@@ -110,7 +111,7 @@ describe("doctor — bundled skill payloads", () => {
 			fs: {
 				...deps.fs,
 				existsSync: (path) =>
-					path.endsWith("/plugins/litcodex/skills/debugging/SKILL.md") ? false : existsSync(path),
+					path.endsWith(join("plugins", "litcodex", "skills", "debugging", "SKILL.md")) ? false : existsSync(path),
 			},
 		});
 		expect(report.skillCatalogComplete).toBe(false);
@@ -125,12 +126,12 @@ describe("doctor — bundled skill payloads", () => {
 		expect(fresh.issues).toEqual([]);
 
 		const deps = doctorDeps([codexBin, sentinelPath], rootConfig);
-		const familyRoot = "/tmp/test-codex-home/marketplaces/litcodex/plugins/litcodex/skills/lit-humanizer";
+		const familyRoot = join(codexHome, "marketplaces", "litcodex", "plugins", "litcodex", "skills", "lit-humanizer");
 		const damaged = runDoctor({
 			...deps,
 			fs: {
 				...deps.fs,
-				existsSync: (path) => (path.startsWith(`${familyRoot}/`) ? false : deps.fs.existsSync(path)),
+				existsSync: (path) => (path.startsWith(familyRoot + sep) ? false : deps.fs.existsSync(path)),
 				listFilesRecursive: (root) => (root === familyRoot ? [] : (deps.fs.listFilesRecursive?.(root) ?? [])),
 			},
 		});
@@ -148,14 +149,14 @@ describe("doctor — bundled skill payloads", () => {
 
 	it("bounds human rendering for all canonical missing exact resources while preserving the structured report", () => {
 		const deps = doctorDeps([codexBin, sentinelPath], 'model = "gpt-5.6"\nmodel_reasoning_effort = "medium"\n');
-		const skillsRoot = "/tmp/test-codex-home/marketplaces/litcodex/plugins/litcodex/skills";
+		const skillsRoot = join(codexHome, "marketplaces", "litcodex", "plugins", "litcodex", "skills");
 		const report = runDoctor({
 			...deps,
 			fs: {
 				...deps.fs,
-				existsSync: (path) => (path.startsWith(`${skillsRoot}/`) ? false : deps.fs.existsSync(path)),
+				existsSync: (path) => (path.startsWith(skillsRoot + sep) ? false : deps.fs.existsSync(path)),
 				listFilesRecursive: (root) =>
-					root.startsWith(`${skillsRoot}/`) ? [] : (deps.fs.listFilesRecursive?.(root) ?? []),
+					root.startsWith(skillsRoot + sep) ? [] : (deps.fs.listFilesRecursive?.(root) ?? []),
 			},
 		});
 		const exactResourcePaths = report.missingSkillResourcePaths.filter(

@@ -389,7 +389,17 @@ describe("installer surface", () => {
 						return true;
 					},
 				} as unknown as NodeJS.WritableStream,
-				env: { CODEX_HOME: codexHome, CODEX_BIN: "/usr/bin/true" },
+				env: {
+					CODEX_HOME: codexHome,
+					CODEX_BIN:
+						process.platform === "win32"
+							? (() => {
+									const p = join(dir, "fake-codex.cmd");
+									writeFileSync(p, "@echo off\r\nexit 0\r\n");
+									return p;
+								})()
+							: "/usr/bin/true",
+				},
 				repoRoot: dir,
 			});
 			expect(code).toBe(0);
