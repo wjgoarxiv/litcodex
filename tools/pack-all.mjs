@@ -100,10 +100,11 @@ export function packAll(repoRoot, runNpm = defaultRunNpm) {
 	return merged;
 }
 
-/** Default npm runner: fixed argv, no shell. */
+/** Default npm runner: fixed argv; a shell only for a Windows npm.cmd, which Node will not spawn without one. */
 function defaultRunNpm(args, cwd) {
 	const npm = resolveNpmInvocation(args);
-	const res = spawnSync(npm.command, npm.args, { cwd, encoding: "utf8", shell: false });
+	const shell = process.platform === "win32" && npm.command.endsWith(".cmd");
+	const res = spawnSync(npm.command, npm.args, { cwd, encoding: "utf8", shell });
 	return { status: res.status, stdout: res.stdout ?? "", stderr: res.stderr ?? "", error: res.error };
 }
 

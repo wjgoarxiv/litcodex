@@ -22,6 +22,7 @@
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { enrichPackResultsFromRepo } from "./enrich-pack-bin-paths.mjs";
 
 /** Built-in no-trace path denylist segments that must never be stored raw in JSON fixtures. */
@@ -691,6 +692,6 @@ function main() {
 }
 
 // Run as CLI only when invoked directly (not when imported by tests / pack-all.mjs).
-if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)) {
+if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
 	main();
 }
