@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -94,8 +94,9 @@ describe("codex rules post-compaction read directive", () => {
 		expect(context).toContain(firstPath);
 		expect(context).not.toContain(secondPath);
 		const state = readSessionCache(pluginData);
-		expect(state.staticDedup.some((key) => key.includes(firstPath))).toBe(true);
-		expect(state.staticDedup.some((key) => key.includes(secondPath))).toBe(false);
+		// Dedup keys hold the native real path, which expands a Windows 8.3 temp folder name.
+		expect(state.staticDedup.some((key) => key.includes(realpathSync.native(firstPath)))).toBe(true);
+		expect(state.staticDedup.some((key) => key.includes(realpathSync.native(secondPath)))).toBe(false);
 	});
 
 	it("#given static recovery omits a dynamic path #when a later event has enough budget #then it delivers the pending dynamic rule", async () => {

@@ -80,12 +80,12 @@ describe("start-work Stop hook", () => {
 		const parsed = parseBlockOutput(output);
 		expect(parsed.decision).toBe("block");
 		expect(parsed.reason).toContain('"planName":"launch-plan"');
-		expect(parsed.reason).toContain(`"planPath":"${realpathSync(PLAN_PATH)}"`);
-		expect(parsed.reason).toContain(`"workStatePath":"${WORK_STATE_PATH}"`);
+		expect(parsed.reason).toContain(`"planPath":${JSON.stringify(realpathSync(PLAN_PATH))}`);
+		expect(parsed.reason).toContain(`"workStatePath":${JSON.stringify(WORK_STATE_PATH)}`);
 		expect(parsed.reason).toContain('"remainingCount":2,"totalCount":3');
 		expect(parsed.reason).toContain('"nextTaskLabel":"First"');
-		expect(parsed.reason).toContain(`"worktreePath":"${realpathSync(WORKSPACE)}"`);
-		expect(parsed.reason).toContain(`"ledgerPath":"${LEDGER_PATH}"`);
+		expect(parsed.reason).toContain(`"worktreePath":${JSON.stringify(realpathSync(WORKSPACE))}`);
+		expect(parsed.reason).toContain(`"ledgerPath":${JSON.stringify(LEDGER_PATH)}`);
 		expect(parsed.reason).toContain('"sessionId":"codex:sess_abc"');
 	});
 

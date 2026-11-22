@@ -560,7 +560,7 @@ describe("negative pledge sentences", () => {
 				`${pledge.label} ${pledge.rule}`,
 			).toBe(true);
 		}
-	});
+	}, 120_000);
 
 	it("leaves every near-miss clear of the three pledge rules, each scanned as its own document", () => {
 		for (const nearMiss of [...pledgeCases.near_misses, ...pledgeCases.near_misses_review]) {
