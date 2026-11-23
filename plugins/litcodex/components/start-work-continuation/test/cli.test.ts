@@ -227,6 +227,7 @@ describe("start-work continuation CLI", () => {
 		expect(readFileSync(statePath, "utf8")).toBe(before);
 	});
 
+	// Six CLI spawns; a loaded Windows CI runner has needed over 7 s for them.
 	it("initializes fresh state through strict code-owned init and rejects mismatched replay", () => {
 		const cwd = createInitWorkspace();
 		const payload = initPayload(cwd, "init-cli");
@@ -249,7 +250,7 @@ describe("start-work continuation CLI", () => {
 			encoding: "utf8",
 		});
 		expect(mismatch.status).toBe(2);
-	});
+	}, 15_000);
 
 	it("analyzes planner-shaped markdown with the lifecycle progress parser and rejects empty structure", () => {
 		const valid = spawnSync(execPath, [CLI_PATH, "analyze-plan"], {
