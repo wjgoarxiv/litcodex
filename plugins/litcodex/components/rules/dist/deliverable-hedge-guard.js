@@ -100,15 +100,18 @@ export function runHumanizerPostToolUse(input, options = {}) {
             (isOfficePath(path) || (input.tool_name.toLowerCase() === "bash" && isTextPath(path))));
         if (targets.length === 0)
             return "";
-        const officeDeadline = Date.now() + OFFICE_EXTRACT_BUDGET_MS;
+        const officeLimit = {
+            deadline: Date.now() + (options.officeTimeoutMs ?? OFFICE_EXTRACT_BUDGET_MS),
+            timeout: options.officeTimeoutMs ?? OFFICE_EXTRACT_TIMEOUT_MS,
+        };
         // One Python start reads every .docx/.pptx; a cold start can take about a second on Windows.
         const ooxml = targets.filter((path) => isOfficePath(path) && extname(path).toLowerCase() !== ".pdf");
         const text = [
-            ...(ooxml.length > 0 ? [extractOfficeText(ooxml, input.cwd, officeDeadline)] : []),
+            ...(ooxml.length > 0 ? [extractOfficeText(ooxml, input.cwd, officeLimit)] : []),
             ...targets
                 .filter((path) => !ooxml.includes(path))
                 .map((path) => isOfficePath(path)
-                ? extractOfficeText([path], input.cwd, officeDeadline)
+                ? extractOfficeText([path], input.cwd, officeLimit)
                 : readAddedOutputText(path, input.cwd)),
         ].join("\n\n");
         return findingsOutput("PostToolUse", (options.scan ?? inspectHumanizerText)(maskQuotedUserText(text)), targets.length);
@@ -713,8 +716,8 @@ function readSafeExistingText(path, cwd) {
     return null;
 }
 /** Extracts one PDF, or one or more .docx/.pptx files through a single Python start. */
-function extractOfficeText(paths, cwd, deadline) {
-    const timeout = Math.min(OFFICE_EXTRACT_TIMEOUT_MS, deadline - Date.now());
+function extractOfficeText(paths, cwd, limit) {
+    const timeout = Math.min(limit.timeout, limit.deadline - Date.now());
     if (timeout <= 0)
         throw new Error("Office extraction budget spent");
     const root = realpathSync(cwd);

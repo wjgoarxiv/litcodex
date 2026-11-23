@@ -16,6 +16,8 @@ export interface HumanizerFinding {
 }
 type GuardOptions = {
     readonly scan?: (text: string) => readonly HumanizerFinding[];
+    /** Tests only: a longer Office extraction limit for loaded CI machines. The hook itself uses the defaults. */
+    readonly officeTimeoutMs?: number;
 };
 /**
  * Reader-facing prose formats. Block-tier rules are prose rules (a line-start `Source:` label, for
