@@ -470,23 +470,55 @@ describe("litcodex extensions", () => {
 		expect(stopped.err).toContain(personal);
 	});
 
-	// /bin/bash is not available on Windows; the fix command is a POSIX shell snippet.
-	it.skipIf(process.platform === "win32")(
-		"the duplicate fix line moves the copy into a dated backup set that prune-backups lists",
-		() => {
-			const w = world();
-			writeSkill(join(w.codexHome, "skills", "old-docx"), "lit-docx", "renamed copy");
-			const [finding] = check(w).findings;
-			expect(finding?.kind).toBe("duplicate");
-			expect(finding?.fix).not.toContain("manual");
-			const ran = spawnSync("/bin/bash", ["-c", finding?.fix ?? "false"], { encoding: "utf8" });
-			expect(ran.status, ran.stderr).toBe(0);
-			expect(check(w).findings).toEqual([]);
-			const listed = run(w, ["prune-backups"]);
-			expect(listed.out).toMatch(/\d{8}-\d{6}\s.*old-docx/u);
-			expect(check(w).backups.count).toBe(1);
-		},
-	);
+	it("the duplicate fix line moves the copy into a dated backup set that prune-backups lists", () => {
+		const w = world();
+		writeSkill(join(w.codexHome, "skills", "old-docx"), "lit-docx", "renamed copy");
+		const [finding] = check(w).findings;
+		expect(finding?.kind).toBe("duplicate");
+		expect(finding?.fix).not.toContain("manual");
+		// The fix line is written for the host's own shell: PowerShell on Windows, a POSIX shell elsewhere.
+		const ran =
+			process.platform === "win32"
+				? spawnSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", finding?.fix ?? "exit 1"], {
+						encoding: "utf8",
+					})
+				: spawnSync("/bin/bash", ["-c", finding?.fix ?? "false"], { encoding: "utf8" });
+		expect(ran.status, ran.stderr).toBe(0);
+		expect(check(w).findings).toEqual([]);
+		const listed = run(w, ["prune-backups"]);
+		expect(listed.out).toMatch(/\d{8}-\d{6}\s.*old-docx/u);
+		expect(check(w).backups.count).toBe(1);
+	});
+
+	it("on Windows every fix line is a PowerShell command, with no POSIX shell syntax", () => {
+		const w = world();
+		writeSkill(join(w.codexHome, "skills", "old-docx"), "lit-docx", "renamed copy");
+		const notice = join(w.home, ".litcodex", "extensions-notice.json");
+		mkdirSync(dirname(notice), { recursive: true });
+		writeFileSync(notice, `${JSON.stringify({ schemaVersion: 1, version: "0.0.1", message: "old" })}\n`);
+		const runtime = join(w.home, ".cache", "litcodex", "office");
+		mkdirSync(runtime, { recursive: true });
+		const fixes = Object.fromEntries(
+			checkExtensions({ env: w.env, cwd: w.project, platform: "win32" }).findings.map((f) => [f.kind, f.fix]),
+		);
+		expect(fixes["stale-notice"]).toBe(`Remove-Item -LiteralPath '${notice}'`);
+		expect(fixes["leftover-runtime"]).toBe(`Remove-Item -LiteralPath '${runtime}' -Recurse`);
+		expect(fixes["duplicate"]).toContain(`Move-Item -LiteralPath '${join(w.codexHome, "skills", "old-docx")}'`);
+		expect(fixes["duplicate"]).toContain("Get-Date -Format yyyyMMdd-HHmmss");
+		for (const fix of Object.values(fixes)) expect(fix).not.toMatch(/\$\(date|mkdir -p|\brm -r\b|^rm |\bmv "/u);
+	});
+
+	it("quotes a single quote inside a Windows path the PowerShell way", () => {
+		const w = world();
+		const env = { ...w.env, XDG_CACHE_HOME: join(w.home, "o'brien") };
+		mkdirSync(join(w.home, "o'brien", "litcodex", "office"), { recursive: true });
+		const [finding] = checkExtensions({ env, cwd: w.project, platform: "win32" }).findings.filter(
+			(f) => f.kind === "leftover-runtime",
+		);
+		expect(finding?.fix).toBe(
+			`Remove-Item -LiteralPath '${join(w.home, "o''brien", "litcodex", "office")}' -Recurse`,
+		);
+	});
 
 	it("the notice's check line leaves out the stale notice that the same install replaces", () => {
 		const w = world();
