@@ -46,6 +46,8 @@ const DETECTOR_TIMEOUT_MS = 1500;
 // A cold Python start takes about a second on Windows; all documents share one budget inside the 5 s hook.
 const OFFICE_EXTRACT_TIMEOUT_MS = 3000;
 const OFFICE_EXTRACT_BUDGET_MS = 3500;
+/** Office extraction plus the detector must end before the host's 5 s hook timeout, which also covers Node's start. */
+const POST_TOOL_SCAN_RESERVE_MS = 1000;
 const DEFAULT_DETECTOR = resolve(
 	dirname(fileURLToPath(import.meta.url)),
 	"../../../skills/lit-humanizer/scripts/detect.mjs",
@@ -89,13 +91,14 @@ export function humanizerFailOpenOutput(event: "PreToolUse" | "PostToolUse"): st
 export function inspectHumanizerText(
 	text: string,
 	detectorPath = detectorPathFromEnvironment(),
+	timeoutMs = DETECTOR_TIMEOUT_MS,
 ): readonly HumanizerFinding[] {
 	if (Buffer.byteLength(text, "utf8") > MAX_TEXT_BYTES) throw new Error("humanizer input limit exceeded");
 	const result = spawnSync(process.execPath, [detectorPath, "--json"], {
 		encoding: "utf8",
 		input: text,
 		maxBuffer: MAX_OUTPUT_BYTES,
-		timeout: DETECTOR_TIMEOUT_MS,
+		timeout: timeoutMs,
 		windowsHide: true,
 	});
 	if (result.error || result.status === null || (result.status !== 0 && result.status !== 1 && result.status !== 2)) {
@@ -149,8 +152,9 @@ export function runHumanizerPostToolUse(input: HumanizerHookInput, options: Guar
 				(isOfficePath(path) || (input.tool_name.toLowerCase() === "bash" && isTextPath(path))),
 		);
 		if (targets.length === 0) return "";
+		const officeDeadline = Date.now() + (options.officeTimeoutMs ?? OFFICE_EXTRACT_BUDGET_MS);
 		const officeLimit = {
-			deadline: Date.now() + (options.officeTimeoutMs ?? OFFICE_EXTRACT_BUDGET_MS),
+			deadline: officeDeadline,
 			timeout: options.officeTimeoutMs ?? OFFICE_EXTRACT_TIMEOUT_MS,
 		};
 		// One Python start reads every .docx/.pptx; a cold start can take about a second on Windows.
@@ -165,9 +169,12 @@ export function runHumanizerPostToolUse(input: HumanizerHookInput, options: Guar
 						: readAddedOutputText(path, input.cwd),
 				),
 		].join("\n\n");
+		const scanTimeout = Math.min(DETECTOR_TIMEOUT_MS, officeDeadline + POST_TOOL_SCAN_RESERVE_MS - Date.now());
+		if (scanTimeout <= 0) throw new Error("humanizer scan budget spent");
+		const masked = maskQuotedUserText(text);
 		return findingsOutput(
 			"PostToolUse",
-			(options.scan ?? inspectHumanizerText)(maskQuotedUserText(text)),
+			options.scan ? options.scan(masked) : inspectHumanizerText(masked, undefined, scanTimeout),
 			targets.length,
 		);
 	} catch {

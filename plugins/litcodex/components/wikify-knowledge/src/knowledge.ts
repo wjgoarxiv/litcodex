@@ -332,6 +332,7 @@ function withAuthorityLock<T>(path: string, root: string, operation: () => T): T
 }
 
 function acquireAuthorityLock(lockPath: string): AuthorityParentIdentity {
+	let lastError: unknown;
 	for (let attempt = 0; attempt < AUTHORITY_LOCK_RETRY_COUNT; attempt += 1) {
 		try {
 			assertNotSymlink(lockPath);
@@ -343,9 +344,12 @@ function acquireAuthorityLock(lockPath: string): AuthorityParentIdentity {
 			// Windows reports EPERM while another process is still deleting the lock directory.
 			const busy = errorCode(error) === "EEXIST" || (process.platform === "win32" && errorCode(error) === "EPERM");
 			if (!busy) throw error;
+			lastError = error;
 			sleepSync(AUTHORITY_LOCK_RETRY_DELAY_MS);
 		}
 	}
+	// An EPERM that never clears is a real permission error, not a busy lock.
+	if (errorCode(lastError) === "EPERM") throw lastError;
 	throw new Error("Knowledge authority lock is busy.");
 }
 

@@ -247,6 +247,7 @@ function withAuthorityLock(path, root, operation) {
     }
 }
 function acquireAuthorityLock(lockPath) {
+    let lastError;
     for (let attempt = 0; attempt < AUTHORITY_LOCK_RETRY_COUNT; attempt += 1) {
         try {
             assertNotSymlink(lockPath);
@@ -261,9 +262,13 @@ function acquireAuthorityLock(lockPath) {
             const busy = errorCode(error) === "EEXIST" || (process.platform === "win32" && errorCode(error) === "EPERM");
             if (!busy)
                 throw error;
+            lastError = error;
             sleepSync(AUTHORITY_LOCK_RETRY_DELAY_MS);
         }
     }
+    // An EPERM that never clears is a real permission error, not a busy lock.
+    if (errorCode(lastError) === "EPERM")
+        throw lastError;
     throw new Error("Knowledge authority lock is busy.");
 }
 function releaseAuthorityLock(lockPath, owner) {
