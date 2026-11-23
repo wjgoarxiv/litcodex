@@ -83,6 +83,8 @@ describe("provider-cache benchmark runner launches codex on Windows", async () =
 			}
 			assert.equal(resolveExecutable("codex", { PATH: dir, PATHEXT: ".EXE;.CMD" }, "win32"), join(dir, "codex.CMD"));
 			assert.equal(resolveExecutable("codex", { PATH: dir }, "linux"), join(dir, "codex"));
+			// A copied Windows environment keeps the key as "Path", not "PATH".
+			assert.equal(resolveExecutable("codex", { Path: dir, PATHEXT: ".CMD" }, "win32"), join(dir, "codex.CMD"));
 			assert.throws(() => resolveExecutable("codex", { PATH: dir, PATHEXT: ".EXE" }, "win32"), /NOT_FOUND/u);
 		} finally {
 			rmSync(dir, { recursive: true, force: true });
