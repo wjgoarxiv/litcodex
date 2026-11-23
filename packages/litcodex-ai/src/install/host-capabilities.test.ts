@@ -240,6 +240,21 @@ describe("Codex GPT-5.6 host capabilities", () => {
 		expect(result.concurrency).toMatchObject({ status: "unavailable", reason: "host-probe-timeout" });
 	});
 
+	it("gives a codex.ps1 shim time for PowerShell's cold start on the quick probes", () => {
+		const quick = (bin: string): number[] => {
+			const timeouts: number[] = [];
+			const base = spawnFor(372_000);
+			const spawn: SpawnLike = (command, args, options) => {
+				if (!args.includes("doctor") && options.timeout !== undefined) timeouts.push(options.timeout);
+				return base(command, args, options);
+			};
+			probeHostCapabilities(bin, spawn);
+			return timeouts;
+		};
+		expect(quick("/fake/codex")).toEqual([5_000, 5_000]);
+		expect(quick("C:\\Users\\me\\AppData\\Roaming\\npm\\codex.PS1")).toEqual([20_000, 20_000]);
+	});
+
 	it("reports a strict probe timeout when spawnSync retains status zero", () => {
 		const base = spawnFor(372_000);
 		const spawn: SpawnLike = (command, args, options) => {
