@@ -42,6 +42,8 @@ const O_NOFOLLOW = typeof fsConstants.O_NOFOLLOW === "number" ? fsConstants.O_NO
 const O_EXCL = fsConstants.O_EXCL;
 const AUTHORITY_LOCK_RETRY_COUNT = 200;
 const AUTHORITY_LOCK_RETRY_DELAY_MS = 5;
+/** A holder keeps the lock for milliseconds; one this old was left by a process that died holding it. */
+const AUTHORITY_LOCK_STALE_MS = 30_000;
 const AUTHORITY_LOCK_SLEEP_VIEW = new Int32Array(new SharedArrayBuffer(4));
 const INSTRUCTION_OVERRIDE_PATTERN =
 	/\b(?:ignore|disregard)[\s_-]+(?:(?:the|any|all|every)[\s_-]+)?(?:previous|prior)[\s_-]+instructions?\b/iu;
@@ -345,12 +347,30 @@ function acquireAuthorityLock(lockPath: string): AuthorityParentIdentity {
 			const busy = errorCode(error) === "EEXIST" || (process.platform === "win32" && errorCode(error) === "EPERM");
 			if (!busy) throw error;
 			lastError = error;
-			sleepSync(AUTHORITY_LOCK_RETRY_DELAY_MS);
+			if (!reclaimStaleAuthorityLock(lockPath)) sleepSync(AUTHORITY_LOCK_RETRY_DELAY_MS);
 		}
 	}
 	// An EPERM that never clears is a real permission error, not a busy lock.
 	if (errorCode(lastError) === "EPERM") throw lastError;
 	throw new Error("Knowledge authority lock is busy.");
+}
+
+/** Move a stale lock directory aside and remove it; false when it is fresh or another process got there first. */
+function reclaimStaleAuthorityLock(lockPath: string): boolean {
+	try {
+		const observed = lstatIfPresent(lockPath);
+		if (observed === undefined || !observed.isDirectory()) return false;
+		const age = Date.now() - Number(observed.mtimeMs);
+		if (age < 0 || age <= AUTHORITY_LOCK_STALE_MS) return false;
+		const current = lstatIfPresent(lockPath);
+		if (current === undefined || current.dev !== observed.dev || current.ino !== observed.ino) return false;
+		const tombstone = `${lockPath}.stale.${process.pid}.${randomUUID()}`;
+		renameSync(lockPath, tombstone);
+		rmSync(tombstone, { recursive: true, force: true });
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 function releaseAuthorityLock(lockPath: string, owner: AuthorityParentIdentity): void {

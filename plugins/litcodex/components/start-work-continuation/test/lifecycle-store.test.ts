@@ -305,6 +305,49 @@ describe("start-work lifecycle store", () => {
 		).toThrow(/lock is busy/i);
 	});
 
+	it("takes over a lock older than ten minutes even when its pid now belongs to a live process", () => {
+		const reused = workspace("active", 0);
+		const lock = `${statePathFor(reused)}.lock`;
+		writeFileSync(lock, JSON.stringify({ token: "reused", createdAt: 0, pid: process.pid }), "utf8");
+		expect(
+			transitionWork(reused, transition("pause", 0, "reused-pid", "authorization_required"), {
+				nowMs: () => 600_001,
+			}).changed,
+		).toBe(true);
+	});
+
+	it("reclaims an old lock whose record names no owner, and keeps a fresh one busy", () => {
+		const old = workspace("active", 0);
+		const oldLock = `${statePathFor(old)}.lock`;
+		writeFileSync(oldLock, "{}", "utf8");
+		utimesSync(oldLock, 1, 1);
+		expect(transitionWork(old, transition("pause", 0, "ownerless-old", "authorization_required")).changed).toBe(true);
+
+		const fresh = workspace("active", 0);
+		const freshLock = `${statePathFor(fresh)}.lock`;
+		writeFileSync(freshLock, "{}", "utf8");
+		expect(() => transitionWork(fresh, transition("pause", 0, "ownerless-fresh", "authorization_required"))).toThrow(
+			/lock is busy/i,
+		);
+		expect(readFileSync(freshLock, "utf8")).toBe("{}");
+	});
+
+	it("names the lock path and its holder when the lock stays busy", () => {
+		const held = workspace("active", 0);
+		const lock = `${statePathFor(held)}.lock`;
+		writeFileSync(lock, JSON.stringify({ token: "held", createdAt: 1_000, pid: process.pid }), "utf8");
+		expect(() =>
+			transitionWork(held, transition("pause", 0, "held", "authorization_required"), { nowMs: () => 6_000 }),
+		).toThrow(new RegExp(`state\\.json\\.lock.*pid ${process.pid}.*5 s`, "u"));
+
+		const ownerless = workspace("active", 0);
+		const ownerlessLock = `${statePathFor(ownerless)}.lock`;
+		writeFileSync(ownerlessLock, "", "utf8");
+		expect(() => transitionWork(ownerless, transition("pause", 0, "ownerless", "authorization_required"))).toThrow(
+			/no owner record/u,
+		);
+	});
+
 	it("records its own process id in the lock it holds", () => {
 		const root = workspace("active", 0);
 		const lock = `${statePathFor(root)}.lock`;

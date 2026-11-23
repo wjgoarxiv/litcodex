@@ -41,6 +41,8 @@ const RELEASE_CLASS_ACTIONS = new Set([
 ]);
 const LOCK_ATTEMPTS = 8;
 const LOCK_STALE_MS = 30_000;
+/** No state update holds the lock this long, so an older lock is stale even when its pid was reused. */
+const LOCK_CEILING_MS = 600_000;
 const O_NOFOLLOW = typeof constants.O_NOFOLLOW === "number" ? constants.O_NOFOLLOW : 0;
 export class LifecycleStoreError extends Error {
     constructor(code, message) {
@@ -1495,7 +1497,30 @@ function acquireLock(paths, nowMs) {
             tryRemoveStaleLock(paths.lock, nowMs());
         }
     }
-    throw new LifecycleStoreError("LOCK_BUSY", "start-work state lock is busy");
+    throw new LifecycleStoreError("LOCK_BUSY", `start-work state lock is busy: ${paths.lock} (${describeLockHolder(paths.lock, nowMs())})`);
+}
+/** Who holds the lock, for the busy error: pid and age, or that the lock has no owner record. */
+function describeLockHolder(path, nowMs) {
+    try {
+        const fd = openNoFollow(path, constants.O_RDONLY, undefined, "lock");
+        let text;
+        try {
+            const buffer = Buffer.alloc(4096);
+            text = buffer.subarray(0, readInto(fd, buffer, 0)).toString("utf8");
+        }
+        finally {
+            closeSync(fd);
+        }
+        const parsed = JSON.parse(text);
+        if (isRecord(parsed) && typeof parsed["createdAt"] === "number") {
+            const pid = typeof parsed["pid"] === "number" ? `pid ${parsed["pid"]}` : "no pid";
+            return `held by ${pid} for ${Math.max(0, Math.round((nowMs - parsed["createdAt"]) / 1000))} s`;
+        }
+    }
+    catch {
+        // An empty, truncated or vanished lock falls through to the ownerless description.
+    }
+    return "no owner record";
 }
 function tryRemoveStaleLock(path, nowMs) {
     const stat = lstatSync(path, { bigint: true });
@@ -1510,19 +1535,26 @@ function tryRemoveStaleLock(path, nowMs) {
         const buffer = Buffer.alloc(size);
         const read = readInto(fd, buffer, 0);
         const text = buffer.subarray(0, read).toString("utf8");
-        let stale = false;
+        let createdAt = null;
+        let pid;
         try {
             const parsed = JSON.parse(text);
-            stale =
-                isRecord(parsed) &&
-                    typeof parsed["createdAt"] === "number" &&
-                    parsed["createdAt"] <= nowMs &&
-                    nowMs - parsed["createdAt"] > LOCK_STALE_MS &&
-                    holderGone(parsed["pid"]);
+            if (isRecord(parsed) && typeof parsed["createdAt"] === "number") {
+                createdAt = parsed["createdAt"];
+                pid = parsed["pid"];
+            }
         }
         catch {
+            // An empty or truncated lock has no owner record; its file age decides below.
+        }
+        let stale;
+        if (createdAt === null) {
             const mtimeMs = Number(fdStat.mtimeMs);
             stale = mtimeMs <= nowMs && nowMs - mtimeMs > LOCK_STALE_MS;
+        }
+        else {
+            const age = nowMs - createdAt;
+            stale = age >= 0 && (age > LOCK_CEILING_MS || (age > LOCK_STALE_MS && holderGone(pid)));
         }
         if (!stale)
             return;

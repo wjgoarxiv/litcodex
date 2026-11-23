@@ -9,6 +9,7 @@ import {
 	rmSync,
 	statSync,
 	symlinkSync,
+	utimesSync,
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -1247,5 +1248,22 @@ describe("deterministic context-reuse fixture", () => {
 		}, 0);
 
 		expect(withKnowledgeBytes).toBeLessThanOrEqual(noKnowledgeBytes * 0.75);
+	});
+});
+
+describe("knowledge authority lock left by a dead holder", () => {
+	it("reclaims a lock older than the stale window and keeps a fresh one busy", () => {
+		const oldRoot = root();
+		const oldLock = join(oldRoot, ".litcodex", "knowledge", "claims.jsonl.lock");
+		mkdirSync(oldLock, { recursive: true });
+		utimesSync(oldLock, 1, 1);
+		expect(captureKnowledgeEvent(event(), { root: oldRoot, now: () => NOW })).toMatchObject({ outcome: "captured" });
+		expect(existsSync(oldLock)).toBe(false);
+
+		const freshRoot = root();
+		const freshLock = join(freshRoot, ".litcodex", "knowledge", "claims.jsonl.lock");
+		mkdirSync(freshLock, { recursive: true });
+		expect(() => captureKnowledgeEvent(event(), { root: freshRoot, now: () => NOW })).toThrow(/lock is busy/u);
+		expect(existsSync(freshLock)).toBe(true);
 	});
 });

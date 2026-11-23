@@ -465,6 +465,23 @@ describe("serialized fenced transitions", () => {
 		expect(readUpdateCache(cachePath, NOW)).toBeNull();
 	});
 
+	it("takes over a mutex older than ten minutes even when its owner pid now belongs to a live process", async () => {
+		const module = (await import("./update-check.js")) as Record<string, unknown>;
+		const reserveRefresh = module["reserveRefresh"] as
+			| ((opts: { cachePath: string; now: number; owner: string }) => { owner: string; generation: number } | null)
+			| undefined;
+		expect(typeof reserveRefresh).toBe("function");
+		if (!reserveRefresh) return;
+
+		const cachePath = join(root, "reused-pid-owner.json");
+		const lockPath = `${cachePath}.lock`;
+		mkdirSync(lockPath, { recursive: true });
+		writeFileSync(join(lockPath, "owner"), `${process.pid}:${OWNER_A}`, "utf8");
+		const pastCeiling = new Date(NOW - 600_001);
+		utimesSync(lockPath, pastCeiling, pastCeiling);
+		expect(reserveRefresh({ cachePath, now: NOW, owner: OWNER_B })).toEqual({ owner: OWNER_B, generation: 1 });
+	});
+
 	it("age-takes a stale well-formed owner only after an ESRCH process probe", async () => {
 		const module = (await import("./update-check.js")) as Record<string, unknown>;
 		const reserveRefresh = module["reserveRefresh"] as

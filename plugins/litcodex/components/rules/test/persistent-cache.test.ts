@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -10,6 +10,7 @@ import {
 	markSessionCompacted,
 	sessionCachePath,
 } from "../src/persistent-cache.js";
+import { SESSION_STATE_LOCK_CONTENDED, withSessionStateLock } from "../src/session-state-lock.js";
 
 const tempDirectories: string[] = [];
 
@@ -59,5 +60,28 @@ describe("persistent post-compact state", () => {
 		} finally {
 			rmSync(lockPath, { recursive: true, force: true });
 		}
+	});
+});
+
+describe("session state lock left by a dead holder", () => {
+	it("#given a lock older than the stale window #when the lock is taken #then it is reclaimed and the callback runs", () => {
+		const pluginData = mkdtempSync(path.join(tmpdir(), "codex-rules-lock-"));
+		tempDirectories.push(pluginData);
+		const cachePath = path.join(pluginData, "session.json");
+		mkdirSync(`${cachePath}.lock`);
+		utimesSync(`${cachePath}.lock`, 1, 1);
+
+		expect(withSessionStateLock(cachePath, () => "ran")).toBe("ran");
+		expect(existsSync(`${cachePath}.lock`)).toBe(false);
+	});
+
+	it("#given a fresh lock #when the lock is taken #then it stays contended and the lock is kept", () => {
+		const pluginData = mkdtempSync(path.join(tmpdir(), "codex-rules-lock-"));
+		tempDirectories.push(pluginData);
+		const cachePath = path.join(pluginData, "session.json");
+		mkdirSync(`${cachePath}.lock`);
+
+		expect(withSessionStateLock(cachePath, () => "ran")).toBe(SESSION_STATE_LOCK_CONTENDED);
+		expect(existsSync(`${cachePath}.lock`)).toBe(true);
 	});
 });

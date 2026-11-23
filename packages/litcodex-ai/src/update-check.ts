@@ -21,6 +21,8 @@ const CACHE_SCHEMA_VERSION = 1 as const;
 const REGISTRY_URL = "https://registry.npmjs.org/@litfamily%2Flitcodex/latest";
 const PACKAGE_NAME = "@litfamily/litcodex";
 const MUTEX_STALE_MS = 30_000;
+/** No transition holds the mutex this long, so an older one is stale even when its owner pid was reused. */
+const MUTEX_CEILING_MS = 600_000;
 const OWNER_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const MUTEX_OWNER_PATTERN = /^([1-9]\d*):([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/;
 
@@ -313,8 +315,10 @@ function acquireTransitionMutex(cachePath: string, now: number): MutexHandle | n
 				if (age >= -5_000 && age < MUTEX_STALE_MS) return null;
 				const observedOwner = readMutexOwner(path);
 				// Malformed stale owners retain abandoned-lock recovery. A well-formed owner is replaced
-				// only after ESRCH proves its PID absent; live, EPERM, and indeterminate probes fail closed.
-				if (!canTakeOverStaleMutex(observedOwner) || readMutexOwner(path) !== observedOwner) return null;
+				// only after ESRCH proves its PID absent; live, EPERM, and indeterminate probes fail closed
+				// until the mutex passes the ceiling, since a live PID may belong to another process by then.
+				const takeOver = age > MUTEX_CEILING_MS || canTakeOverStaleMutex(observedOwner);
+				if (!takeOver || readMutexOwner(path) !== observedOwner) return null;
 				const tombstone = `${path}.stale.${process.pid}.${randomUUID()}`;
 				renameSync(path, tombstone);
 				rmSync(tombstone, { recursive: true, force: true });
