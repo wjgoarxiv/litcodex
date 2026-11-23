@@ -338,6 +338,8 @@ describe("PostToolUse document guard", () => {
 					inspected += 1;
 					return [finding("block")];
 				},
+				// A loaded Windows CI runner can need more than the hook's own 3.5 s for a cold Python start.
+				officeTimeoutMs: 20_000,
 			}),
 		);
 		expect(inspected).toBe(1);
