@@ -12,6 +12,8 @@ import { probeStrictConfig } from "./strict-config-probe.js";
 
 const HARD_CONCURRENCY_LIMIT = 20;
 const PROBE_TIMEOUT_MS = 5_000;
+// A codex.ps1 shim first starts PowerShell, which alone can take over 5 s on a busy Windows machine.
+const PS1_PROBE_TIMEOUT_MS = 20_000;
 const MODELS = FALLBACK_CATALOG.models.filter((model) => model.contextProbe).map((model) => model.id);
 
 export type CapabilityStatus = "hard" | "advisory" | "unavailable";
@@ -43,9 +45,10 @@ export function probeHostCapabilities(
 	spawn: SpawnLike,
 	selection: CapabilityProbeSelection = {},
 ): HostCapabilities {
-	const versionResult = run(spawn, codexBin, ["--version"], PROBE_TIMEOUT_MS, selection.env);
+	const quickTimeout = codexBin.toLowerCase().endsWith(".ps1") ? PS1_PROBE_TIMEOUT_MS : PROBE_TIMEOUT_MS;
+	const versionResult = run(spawn, codexBin, ["--version"], quickTimeout, selection.env);
 	const versionSupport = classifyCodexVersion(versionResult.stdout, versionResult.stderr);
-	const modelsResult = run(spawn, codexBin, ["debug", "models", "--bundled"], PROBE_TIMEOUT_MS, selection.env);
+	const modelsResult = run(spawn, codexBin, ["debug", "models", "--bundled"], quickTimeout, selection.env);
 	const modelContexts = parseModelContexts(modelsResult);
 	const selectedModel = selection.model ?? modelForProfile(selection.profile);
 	const selectedEffort = selection.effort ?? "max";
