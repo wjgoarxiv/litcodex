@@ -144,6 +144,11 @@ function readSessionCache(pluginData: string): {
 	};
 }
 
+// Negative checks search the whole raw output for the JSON-encoded path, so no field can leak it.
+function jsonEncoded(text: string): string {
+	return JSON.stringify(text).slice(1, -1);
+}
+
 // On Windows, OS paths in JSON output are double-backslash-encoded; extract the parsed string to compare them.
 function additionalContext(output: string): string {
 	if (!output) return "";
@@ -187,7 +192,7 @@ describe("plugin bundled rules", () => {
 		expect(output).toContain(BUNDLED_BODY);
 		expect(output).toContain("## Project Instructions");
 		expect(output).not.toContain("must read project rules:");
-		expect(additionalContext(output)).not.toContain(`- [baseline-discipline.md]{${bundledRulePath}}`);
+		expect(output).not.toContain(jsonEncoded(`- [baseline-discipline.md]{${bundledRulePath}}`));
 	});
 
 	it("#given same project and bundled body #when SessionStart runs #then project rule file wins", async () => {
@@ -204,7 +209,7 @@ describe("plugin bundled rules", () => {
 		expect(occurrenceCount(output, "- [baseline-discipline.md]{")).toBe(0);
 		expect(additionalContext(output)).toContain(`Instructions from: ${projectRulePath}`);
 		expect(output).toContain(SHARED_BODY);
-		expect(additionalContext(output)).not.toContain(bundledRulePath);
+		expect(output).not.toContain(jsonEncoded(bundledRulePath));
 	});
 
 	it("#given bundled rules disabled #when SessionStart runs #then bundled context is suppressed", async () => {
