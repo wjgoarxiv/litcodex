@@ -160,31 +160,26 @@ describe("instruction file on disk", () => {
 			expect(readFileSync(empty, "utf8")).toBe("");
 		}));
 
-	// Windows does not support POSIX execute/write-only file modes (chmod 0o600 gives 0o666)
-	it.skipIf(process.platform === "win32")(
-		"keeps the file mode, leaves no staging file, and refuses text that is not UTF-8",
-		() =>
-			withDir((dir) => {
-				const path = join(dir, "AGENTS.md");
-				writeFileSync(path, "mine\n", { mode: 0o600 });
-				chmodSync(path, 0o600);
-				applyInstructionFile({ path, ...block, action: "install" });
-				expect(statSync(path).mode & 0o777).toBe(0o600);
-				expect(readdirSync(dir).filter((name) => name.endsWith(".tmp")).length).toBe(0);
+	it("keeps the file mode, leaves no staging file, and refuses text that is not UTF-8", () =>
+		withDir((dir) => {
+			const path = join(dir, "AGENTS.md");
+			writeFileSync(path, "mine\n", { mode: 0o600 });
+			chmodSync(path, 0o600);
+			applyInstructionFile({ path, ...block, action: "install" });
+			// Windows has no POSIX owner-only mode: chmod 0o600 reads back as 0o666 there.
+			if (process.platform !== "win32") expect(statSync(path).mode & 0o777).toBe(0o600);
+			expect(readdirSync(dir).filter((name) => name.endsWith(".tmp")).length).toBe(0);
 
-				for (const [name, bytes] of [
-					["latin1.md", Buffer.from([0x63, 0x61, 0x66, 0xe9, 0x0a])],
-					["utf16.md", Buffer.from([0xff, 0xfe, 0x61, 0x00, 0x0a, 0x00])],
-				] as const) {
-					const file = join(dir, name);
-					writeFileSync(file, bytes);
-					expect(applyInstructionFile({ path: file, ...block, action: "install" }).status).toBe(
-						"refused-not-utf8",
-					);
-					expect(readFileSync(file)).toEqual(bytes);
-				}
-			}),
-	);
+			for (const [name, bytes] of [
+				["latin1.md", Buffer.from([0x63, 0x61, 0x66, 0xe9, 0x0a])],
+				["utf16.md", Buffer.from([0xff, 0xfe, 0x61, 0x00, 0x0a, 0x00])],
+			] as const) {
+				const file = join(dir, name);
+				writeFileSync(file, bytes);
+				expect(applyInstructionFile({ path: file, ...block, action: "install" }).status).toBe("refused-not-utf8");
+				expect(readFileSync(file)).toEqual(bytes);
+			}
+		}));
 
 	it("refuses a symlinked file and a malformed block without writing", () =>
 		withDir((dir) => {
