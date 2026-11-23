@@ -119,14 +119,10 @@ test("fake failure fixtures fail closed with typed zero-work receipts", () => {
 	}
 });
 
-test("live mode without reusable host auth blocks before provider work", {
-	skip:
-		process.platform === "win32"
-			? "the runner looks up a bare codex on PATH without PATHEXT, so it never finds codex.cmd on Windows"
-			: false,
-}, () => {
+test("live mode without reusable host auth blocks before provider work", () => {
 	const root = mkdtempSync(join(tmpdir(), "litcodex-provider-cache-no-auth-"));
-	const env = { ...process.env, HOME: root, CODEX_HOME: join(root, ".codex") };
+	// The runner drops CODEX_HOME and reads homedir(), which Windows takes from USERPROFILE.
+	const env = { ...process.env, HOME: root, USERPROFILE: root, CODEX_HOME: join(root, ".codex") };
 	mkdirSync(env.CODEX_HOME, { recursive: true });
 	delete env.OPENAI_API_KEY;
 	try {
@@ -161,15 +157,11 @@ test("live mode does not require OPENAI_API_KEY when a host auth source exists",
 	}
 });
 
-test("an explicit output path retains a privacy-bounded auth block for resumable evidence", {
-	skip:
-		process.platform === "win32"
-			? "the runner looks up a bare codex on PATH without PATHEXT, so it never finds codex.cmd on Windows"
-			: false,
-}, () => {
+test("an explicit output path retains a privacy-bounded auth block for resumable evidence", () => {
 	const root = mkdtempSync(join(tmpdir(), "litcodex-provider-cache-block-"));
 	const output = join(root, "blocked.json");
-	const env = { ...process.env, HOME: root, CODEX_HOME: join(root, ".codex") };
+	// The runner drops CODEX_HOME and reads homedir(), which Windows takes from USERPROFILE.
+	const env = { ...process.env, HOME: root, USERPROFILE: root, CODEX_HOME: join(root, ".codex") };
 	mkdirSync(env.CODEX_HOME, { recursive: true });
 	delete env.OPENAI_API_KEY;
 	try {

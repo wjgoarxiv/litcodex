@@ -68,3 +68,40 @@ describe("user-installed CLIs run without cmd.exe", async () => {
 		}
 	});
 });
+
+describe("provider-cache benchmark runner launches codex on Windows", async () => {
+	const { resolveExecutable, windowsLaunch } = await import(
+		pathToFileURL(join(root, "scripts/provider-cache-process-control.mjs")).href
+	);
+
+	it("finds codex.cmd through PATHEXT and never the extensionless npm sh shim", () => {
+		const dir = mkdtempSync(join(tmpdir(), "litcodex-pc-resolve-"));
+		try {
+			for (const name of ["codex", "codex.CMD"]) {
+				writeFileSync(join(dir, name), "");
+				chmodSync(join(dir, name), 0o755);
+			}
+			assert.equal(resolveExecutable("codex", { PATH: dir, PATHEXT: ".EXE;.CMD" }, "win32"), join(dir, "codex.CMD"));
+			assert.equal(resolveExecutable("codex", { PATH: dir }, "linux"), join(dir, "codex"));
+			assert.throws(() => resolveExecutable("codex", { PATH: dir, PATHEXT: ".EXE" }, "win32"), /NOT_FOUND/u);
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+	});
+
+	it("runs a .cmd launcher through ComSpec with an argv array and leaves other launchers alone", () => {
+		const env = { ComSpec: "C:\\Windows\\system32\\cmd.exe" };
+		assert.deepEqual(windowsLaunch("C:\\npm\\codex.cmd", ["exec", "-"], env, "win32"), {
+			command: "C:\\Windows\\system32\\cmd.exe",
+			args: ["/d", "/s", "/c", "C:\\npm\\codex.cmd", "exec", "-"],
+		});
+		assert.deepEqual(windowsLaunch("C:\\bin\\codex.exe", ["exec"], env, "win32"), {
+			command: "C:\\bin\\codex.exe",
+			args: ["exec"],
+		});
+		assert.deepEqual(windowsLaunch("/usr/bin/codex", ["exec"], env, "linux"), {
+			command: "/usr/bin/codex",
+			args: ["exec"],
+		});
+	});
+});

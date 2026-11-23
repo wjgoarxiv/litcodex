@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import http from "node:http";
+import { windowsLaunch } from "./provider-cache-process-control.mjs";
 import { sha256 } from "./provider-cache-skill-primitives.mjs";
 
 const MAX_BUFFER_BYTES = 8_000_000;
@@ -51,7 +52,8 @@ export function localResponsesServer() {
 }
 
 export function jsonRpcClient(codex, args, options) {
-	const child = spawn(codex, args, {
+	const launch = windowsLaunch(codex, args, options?.env);
+	const child = spawn(launch.command, launch.args, {
 		...options,
 		detached: process.platform !== "win32",
 		stdio: ["pipe", "pipe", "pipe"],
