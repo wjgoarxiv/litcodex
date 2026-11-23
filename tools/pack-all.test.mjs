@@ -87,7 +87,12 @@ test("pack workspace validates marketplace and bundled copies of declared worksp
 	}
 });
 
-test("standalone asserter enriches actual raw npm pack JSON", () => {
+test("standalone asserter enriches actual raw npm pack JSON", {
+	skip:
+		process.platform === "win32"
+			? "chmod sets no execute bit on Windows, so real npm pack metadata reports the bin as 644"
+			: false,
+}, () => {
 	const root = mkdtempSync(join(tmpdir(), "lit-pack-standalone-raw-"));
 	try {
 		const workspaces = [
