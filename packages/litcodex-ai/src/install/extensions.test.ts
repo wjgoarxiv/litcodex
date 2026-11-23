@@ -488,7 +488,8 @@ describe("litcodex extensions", () => {
 		const listed = run(w, ["prune-backups"]);
 		expect(listed.out).toMatch(/\d{8}-\d{6}\s.*old-docx/u);
 		expect(check(w).backups.count).toBe(1);
-	});
+		// A cold powershell.exe start alone took over 5 s on a loaded Windows CI runner.
+	}, 30_000);
 
 	it("on Windows every fix line is a PowerShell command, with no POSIX shell syntax", () => {
 		const w = world();
