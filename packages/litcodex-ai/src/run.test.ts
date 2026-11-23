@@ -531,6 +531,7 @@ describe("ensurePtyHelperExecutable", () => {
 		},
 	);
 
+	// Windows has no execute bit, so the X_OK checks below cannot see the helper's mode change there.
 	it.skipIf(process.platform === "win32")("leaves a node-pty outside the given package's node_modules alone", () => {
 		const home = tempHome();
 		const root = join(home, "global", "node_modules", "node-pty");

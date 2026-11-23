@@ -30,46 +30,43 @@ afterEach(() => {
 });
 
 describe("the rewind brief prints repo and rollout text as inert data", () => {
-	// Windows rejects control characters in filenames (EINVAL), so the test fixture cannot be created there.
-	it.skipIf(process.platform === "win32")(
-		"strips controls from commit subjects, branch names, plan rows and names, and session goals",
-		() => {
-			const base = mkdtempSync(join(tmpdir(), "rewind-ctl-"));
-			roots.push(base);
-			const home = join(base, "home");
-			const codexHome = join(home, ".codex");
-			const workspace = join(base, "ws");
-			mkdirSync(join(workspace, ".litcodex/plans"), { recursive: true });
-			writeFileSync(
-				join(workspace, ".litcodex/plans", `${evil("plan")}.md`),
-				`- [ ] ${evil("first row")}\n- [ ] ${evil("second row")}\n`,
-			);
-			cpSync(FIXTURES, join(codexHome, "sessions"), { recursive: true });
-			const day = join(codexHome, "sessions/2026/10/25");
-			for (const name of readdirSync(day)) {
-				const file = join(day, name);
-				const text = readFileSync(file, "utf8")
-					.replaceAll("__CWD__", workspace)
-					.replace("Add retry with backoff to the sync job", JSON.stringify(evil("goal")).slice(1, -1));
-				writeFileSync(file, text);
-				utimesSync(file, (NOW - 4 * 60_000) / 1000, (NOW - 4 * 60_000) / 1000);
-			}
-			const git = (_cwd: string, args: readonly string[]): string | null => {
-				if (args[0] === "rev-parse") return `${workspace}\n`;
-				if (args[0] === "worktree") return `worktree ${workspace}\nHEAD abc\nbranch refs/heads/${evil("feat")}\n`;
-				if (args[0] === "log" && args.includes("-1")) return `${evil("subject")}\n`;
-				if (args[0] === "log") return `2026-10-24\t${evil("older")}\n2026-10-25\t${evil("newer")}\n`;
-				return null;
-			};
-			const result = collectRewind({ env: { HOME: home, CODEX_HOME: codexHome }, cwd: workspace, now: NOW, git });
-			const all = strings(result);
-			expect(all.some((text) => text.includes("subject"))).toBe(true);
-			expect(all.some((text) => text.includes("plan"))).toBe(true);
-			expect(all.filter((text) => CONTROL.test(text))).toEqual([]);
-			const brief = renderBrief(result);
-			expect(brief.replaceAll("\n", " ")).not.toMatch(CONTROL);
-		},
-	);
+	it("strips controls from commit subjects, branch names, plan rows and names, and session goals", () => {
+		const base = mkdtempSync(join(tmpdir(), "rewind-ctl-"));
+		roots.push(base);
+		const home = join(base, "home");
+		const codexHome = join(home, ".codex");
+		const workspace = join(base, "ws");
+		mkdirSync(join(workspace, ".litcodex/plans"), { recursive: true });
+		writeFileSync(
+			// Windows rejects control characters in filenames (EINVAL), so only the plan name stays plain there.
+			join(workspace, ".litcodex/plans", `${process.platform === "win32" ? "plan" : evil("plan")}.md`),
+			`- [ ] ${evil("first row")}\n- [ ] ${evil("second row")}\n`,
+		);
+		cpSync(FIXTURES, join(codexHome, "sessions"), { recursive: true });
+		const day = join(codexHome, "sessions/2026/10/25");
+		for (const name of readdirSync(day)) {
+			const file = join(day, name);
+			const text = readFileSync(file, "utf8")
+				.replaceAll("__CWD__", workspace)
+				.replace("Add retry with backoff to the sync job", JSON.stringify(evil("goal")).slice(1, -1));
+			writeFileSync(file, text);
+			utimesSync(file, (NOW - 4 * 60_000) / 1000, (NOW - 4 * 60_000) / 1000);
+		}
+		const git = (_cwd: string, args: readonly string[]): string | null => {
+			if (args[0] === "rev-parse") return `${workspace}\n`;
+			if (args[0] === "worktree") return `worktree ${workspace}\nHEAD abc\nbranch refs/heads/${evil("feat")}\n`;
+			if (args[0] === "log" && args.includes("-1")) return `${evil("subject")}\n`;
+			if (args[0] === "log") return `2026-10-24\t${evil("older")}\n2026-10-25\t${evil("newer")}\n`;
+			return null;
+		};
+		const result = collectRewind({ env: { HOME: home, CODEX_HOME: codexHome }, cwd: workspace, now: NOW, git });
+		const all = strings(result);
+		expect(all.some((text) => text.includes("subject"))).toBe(true);
+		expect(all.some((text) => text.includes("plan"))).toBe(true);
+		expect(all.filter((text) => CONTROL.test(text))).toEqual([]);
+		const brief = renderBrief(result);
+		expect(brief.replaceAll("\n", " ")).not.toMatch(CONTROL);
+	});
 
 	it("strips controls from a result built elsewhere before it is drawn", () => {
 		const s = mkdtempSync(join(tmpdir(), "rewind-ctl2-"));
