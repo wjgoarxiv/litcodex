@@ -122,7 +122,7 @@ test("fake failure fixtures fail closed with typed zero-work receipts", () => {
 test("live mode without reusable host auth blocks before provider work", {
 	skip:
 		process.platform === "win32"
-			? "HOME env does not control homedir() on Windows; CI runner auth leaks through"
+			? "the runner looks up a bare codex on PATH without PATHEXT, so it never finds codex.cmd on Windows"
 			: false,
 }, () => {
 	const root = mkdtempSync(join(tmpdir(), "litcodex-provider-cache-no-auth-"));
@@ -164,7 +164,7 @@ test("live mode does not require OPENAI_API_KEY when a host auth source exists",
 test("an explicit output path retains a privacy-bounded auth block for resumable evidence", {
 	skip:
 		process.platform === "win32"
-			? "HOME env does not control homedir() on Windows; CI runner auth leaks through"
+			? "the runner looks up a bare codex on PATH without PATHEXT, so it never finds codex.cmd on Windows"
 			: false,
 }, () => {
 	const root = mkdtempSync(join(tmpdir(), "litcodex-provider-cache-block-"));
