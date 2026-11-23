@@ -257,7 +257,9 @@ function acquireAuthorityLock(lockPath) {
             return { dev: stat.dev, ino: stat.ino };
         }
         catch (error) {
-            if (errorCode(error) !== "EEXIST")
+            // Windows reports EPERM while another process is still deleting the lock directory.
+            const busy = errorCode(error) === "EEXIST" || (process.platform === "win32" && errorCode(error) === "EPERM");
+            if (!busy)
                 throw error;
             sleepSync(AUTHORITY_LOCK_RETRY_DELAY_MS);
         }
