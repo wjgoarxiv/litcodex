@@ -431,6 +431,58 @@ describe("lit-loop goal question", () => {
 		expect(repeat.message).not.toContain("Set goal for this lit-loop");
 	});
 
+	it("a request that ends with lit asks the goal question with the words before it", async () => {
+		const cases: ReadonlyArray<readonly [string, string]> = [
+			["fix the retry bug lit", "fix the retry bug"],
+			["로그인 버튼 고쳐줘 lit", "로그인 버튼 고쳐줘"],
+			["로그인 버튼 고쳐줘. 부탁해 lit", "로그인 버튼 고쳐줘. 부탁해"],
+		];
+		for (const [prompt, objective] of cases) {
+			const fired = await firePrompt(loopProject(), prompt);
+			expect(fired.message, prompt).toContain("LIT IGNITED · lit-loop");
+			expect(fired.message, prompt).toContain(`\`npm test\` exits 0 and this is done: ${objective} [lit:`);
+			expect(fired.context, prompt).toContain("Do not ask it again");
+		}
+	});
+
+	it("a trailing lit-loop or litwork routes like a leading one and asks with the words before it", async () => {
+		const cases: ReadonlyArray<readonly [string, string, string]> = [
+			["로그인 버튼 고쳐줘 lit-loop", "lit-loop", "로그인 버튼 고쳐줘"],
+			["fix the retry bug lit-loop", "lit-loop", "fix the retry bug"],
+			["fix the retry bug litwork", "litwork", "fix the retry bug"],
+		];
+		for (const [prompt, route, objective] of cases) {
+			const fired = await firePrompt(loopProject(), prompt);
+			expect(fired.message, prompt).toContain(`LIT IGNITED · ${route}`);
+			expect(fired.message, prompt).toContain(`\`npm test\` exits 0 and this is done: ${objective} [lit:`);
+		}
+	});
+
+	it("a leading lit-loop, litwork, lit loop or lit work carries its task into the question", async () => {
+		const cases: ReadonlyArray<readonly [string, string]> = [
+			["lit-loop fix the retry bug", "lit-loop"],
+			["litwork fix the retry bug", "litwork"],
+			["lit loop fix the retry bug", "lit-loop"],
+			// `lit work` (space) is a bare `lit`, so it runs lit-loop; only the glued `litwork` is the work mode.
+			["lit work fix the retry bug", "lit-loop"],
+		];
+		for (const [prompt, route] of cases) {
+			const fired = await firePrompt(loopProject(), prompt);
+			expect(fired.message, prompt).toContain(`LIT IGNITED · ${route}`);
+			expect(fired.message, prompt).toContain("`npm test` exits 0 and this is done: fix the retry bug [lit:");
+		}
+	});
+
+	it("lit continue, lit resume and a question about the word ask no goal", async () => {
+		for (const prompt of ["lit continue", "lit resume", "lit 계속", "lit-loop continue", "what does lit-loop do?"]) {
+			const cwd = loopProject();
+			const fired = await firePrompt(cwd, prompt);
+			expect(fired.message, prompt).not.toContain("Set goal for this");
+			expect(fired.context, prompt).not.toContain("goal propose --loop");
+			expect(consentFile(cwd), prompt).toBeNull();
+		}
+	});
+
 	it("litwork gets the question; its yes arms the goal without start-work, and the prompt is not a lit route", async () => {
 		const cwd = loopProject({ "pytest.ini": "" });
 		const first = await firePrompt(cwd, "litwork ship the parser fix");

@@ -363,13 +363,21 @@ const LOOP_GOAL_FALLBACK =
 const loopGoalContext = (line: string): string =>
 	`Native goal: LitCodex has shown the user this goal question: ${line} Do not ask it again. Never call \`create_goal\` or type \`/goal\` yourself: the user's exact \`yes\` on a later prompt arms it and this hook then tells you to call \`create_goal\`.`;
 
-/** The text after the run-route word as the objective: no leading route filler or skill-plan flags. */
+/**
+ * The text after the run-route word as the objective: no leading route filler or skill-plan flags. When the word
+ * ends the prompt (`fix the login button lit`), the text before it is the objective instead. A resume word
+ * (`lit continue`) and a question about the word itself (`what does lit-loop do?`) name no objective.
+ */
 function loopObjective(prompt: string): string {
-	const tail =
-		/(?:^|[^\p{L}\p{N}_])(?:lit-loop|litcodex|litwork|lit)(?![\p{L}\p{N}_-])\s*(.*)$/isu.exec(
-			maskMarkdownCode(prompt),
-		)?.[1] ?? "";
-	return normalizeGoalObjective(tail.replace(/^(?:\+[\w-]+\s+)*(?:(?:loop|work)\b\s*)?/iu, ""));
+	const masked = maskMarkdownCode(prompt);
+	const match = /(?:^|[^\p{L}\p{N}_])(?:lit-loop|litcodex|litwork|lit)(?![\p{L}\p{N}_-])\s*(.*)$/isu.exec(masked);
+	if (match === null) return "";
+	const before = normalizeGoalObjective(masked.slice(0, match.index));
+	const tail = normalizeGoalObjective((match[1] ?? "").replace(/^(?:\+[\w-]+\s+)*(?:(?:loop|work)\b\s*)?/iu, ""));
+	if (tail === "") return before;
+	if (/^(?:continue|resume|계속|이어서)[.!]?$/iu.test(tail)) return "";
+	if (before !== "" && /[?？]$/u.test(tail)) return "";
+	return tail;
 }
 
 /**
