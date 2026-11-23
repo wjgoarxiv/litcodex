@@ -41,6 +41,7 @@ export interface HudLoopOptions {
 	readonly wanted: string | null;
 	readonly out: HudOutput;
 	readonly color: boolean;
+	readonly truecolor?: boolean;
 	readonly now: () => number;
 }
 
@@ -63,6 +64,7 @@ export function createHudLoop(options: HudLoopOptions): { tick(): boolean } {
 			const frame = renderHud(readHud(options.env, options.wanted, now), {
 				width: tty ? width - 1 : width,
 				color: options.color,
+				truecolor: options.truecolor === true,
 				now,
 			});
 			if (frame === last) return false;
@@ -130,11 +132,13 @@ export async function hudCommand(args: readonly string[], io: HudIo): Promise<nu
 		return 0;
 	}
 	const tty = io.stdout.isTTY === true;
+	const color = tty && colorAllowed(io.env);
 	const loop = createHudLoop({
 		env: io.env,
 		wanted: parsed.session,
 		out: io.stdout,
-		color: tty && colorAllowed(io.env),
+		color,
+		truecolor: color && /truecolor|24bit/i.test(io.env["COLORTERM"] ?? ""),
 		now,
 	});
 	const signals: HudSignals = io.signals ?? process;

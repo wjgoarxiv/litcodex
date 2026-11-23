@@ -183,6 +183,8 @@ function writeCliBanner(argv: readonly string[]): void {
 	process.stdout.write(
 		renderBanner({
 			version: manifest.version,
+			tty: Boolean((process.stdout as NodeJS.WriteStream).isTTY),
+			columns: (process.stdout as NodeJS.WriteStream).columns,
 			color:
 				shouldDecorate({
 					isTty: Boolean((process.stdout as NodeJS.WriteStream).isTTY),

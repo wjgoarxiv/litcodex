@@ -24,6 +24,8 @@ export interface HudView {
 export interface HudRenderOptions {
     readonly width: number;
     readonly color: boolean;
+    /** The terminal takes 24-bit colour; only then does the first line carry the LIT pill. */
+    readonly truecolor?: boolean;
     readonly now: number;
 }
 /** Every session with a readable pointer, newest LIT activity first. */
@@ -38,5 +40,9 @@ export declare function cleanStatus(status: CardStatus): CardStatus;
 export declare function displayWidth(text: string): number;
 /** The line cut to `width` terminal cells, ending in `…` when anything was cut. */
 export declare function fit(line: string, width: number): string;
+/** Chrome stops 1 and 4 of the LitCodex palette in the LitFamily synthwave spec. */
+export declare const PILL_STOPS: readonly [readonly [number, number, number], readonly [number, number, number]];
+/** The LIT pill: dark bold ink on a mint gradient background, one colour step per cell. Truecolor only. */
+export declare function litPill(): string;
 /** One frame as text: a header, the card, and at most one "cannot read" line. Pure. */
 export declare function renderHud(view: HudView, options: HudRenderOptions): string;

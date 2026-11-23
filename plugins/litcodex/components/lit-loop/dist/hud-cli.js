@@ -45,6 +45,7 @@ export function createHudLoop(options) {
             const frame = renderHud(readHud(options.env, options.wanted, now), {
                 width: tty ? width - 1 : width,
                 color: options.color,
+                truecolor: options.truecolor === true,
                 now,
             });
             if (frame === last)
@@ -97,11 +98,13 @@ export async function hudCommand(args, io) {
         return 0;
     }
     const tty = io.stdout.isTTY === true;
+    const color = tty && colorAllowed(io.env);
     const loop = createHudLoop({
         env: io.env,
         wanted: parsed.session,
         out: io.stdout,
-        color: tty && colorAllowed(io.env),
+        color,
+        truecolor: color && /truecolor|24bit/i.test(io.env["COLORTERM"] ?? ""),
         now,
     });
     const signals = io.signals ?? process;

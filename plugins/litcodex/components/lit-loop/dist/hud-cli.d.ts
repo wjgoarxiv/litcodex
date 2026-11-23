@@ -10,6 +10,7 @@ export interface HudLoopOptions {
     readonly wanted: string | null;
     readonly out: HudOutput;
     readonly color: boolean;
+    readonly truecolor?: boolean;
     readonly now: () => number;
 }
 /**

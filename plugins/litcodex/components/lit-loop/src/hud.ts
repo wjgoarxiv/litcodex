@@ -57,6 +57,8 @@ export interface HudView {
 export interface HudRenderOptions {
 	readonly width: number;
 	readonly color: boolean;
+	/** The terminal takes 24-bit colour; only then does the first line carry the LIT pill. */
+	readonly truecolor?: boolean;
 	readonly now: number;
 }
 
@@ -314,6 +316,38 @@ function rainbowLine(line: string): string {
 	return `${out}${RESET}`;
 }
 
+const BRAND = "🔥 LIT";
+const PILL_TEXT = ` ${BRAND} `;
+/** Chrome stops 1 and 4 of the LitCodex palette in the LitFamily synthwave spec. */
+export const PILL_STOPS: readonly [readonly [number, number, number], readonly [number, number, number]] = [
+	[0x7c, 0xf5, 0xb0],
+	[0xa7, 0xf3, 0xd0],
+];
+const PILL_INK = "\u001b[1m\u001b[38;2;11;14;20m";
+
+/** The LIT pill: dark bold ink on a mint gradient background, one colour step per cell. Truecolor only. */
+export function litPill(): string {
+	const pieces = cells(PILL_TEXT);
+	const [start, end] = PILL_STOPS;
+	let out = `${RESET}${PILL_INK}`;
+	pieces.forEach((cell, index) => {
+		const t = pieces.length === 1 ? 0 : index / (pieces.length - 1);
+		const channel = (k: 0 | 1 | 2): number => Math.round(start[k] + (end[k] - start[k]) * t);
+		out += `\u001b[48;2;${channel(0)};${channel(1)};${channel(2)}m${cell.text}`;
+	});
+	return `${out}${RESET}`;
+}
+
+/** The first line with the pill in front, or null when pill plus a cut line cannot fit `width`. */
+function withPill(line: string, style: string, width: number): string | null {
+	const pillWidth = displayWidth(PILL_TEXT);
+	const rest = line.startsWith(BRAND) ? line.slice(BRAND.length).trimStart() : line;
+	const room = width - pillWidth;
+	if (room < 2) return null;
+	const tail = fit(rest, room);
+	return `${litPill()}${style}${tail}${RESET}`;
+}
+
 /** One frame as text: a header, the card, and at most one "cannot read" line. Pure. */
 export function renderHud(view: HudView, options: HudRenderOptions): string {
 	const width = Math.max(10, Math.floor(options.width));
@@ -350,7 +384,11 @@ export function renderHud(view: HudView, options: HudRenderOptions): string {
 	}
 	if (view.unreadable.length > 0) lines.push({ text: `cannot read ${view.unreadable.join(", ")}`, style: DIM });
 	return lines
-		.map(({ text, style, rainbow }) => {
+		.map(({ text, style, rainbow }, index) => {
+			if (index === 0 && options.color && options.truecolor === true) {
+				const pilled = withPill(clean(text), style, width);
+				if (pilled !== null) return pilled;
+			}
 			const line = fit(clean(text), width);
 			if (options.color && rainbow === true) return rainbowLine(line);
 			return options.color && style !== "" ? `${style}${line}${RESET}` : line;

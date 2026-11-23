@@ -257,6 +257,8 @@ function writeCommandBanner(io: RouteIo, args: readonly string[]): void {
 		renderBanner({
 			version: PACKAGE_VERSION,
 			env: io.env,
+			tty: Boolean((io.stdout as NodeJS.WriteStream).isTTY),
+			columns: (io.stdout as NodeJS.WriteStream).columns,
 			color:
 				shouldDecorate({
 					isTty: Boolean((io.stdout as NodeJS.WriteStream).isTTY),
@@ -285,7 +287,13 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 	});
 	const banner =
 		!opts.json && !opts.noTui
-			? renderBanner({ version: PACKAGE_VERSION, env: io.env, color: decorate && !opts.dryRun })
+			? renderBanner({
+					version: PACKAGE_VERSION,
+					env: io.env,
+					tty: Boolean((io.stdout as NodeJS.WriteStream).isTTY),
+					columns: (io.stdout as NodeJS.WriteStream).columns,
+					color: decorate && !opts.dryRun,
+				})
 			: "";
 	if (banner) io.stdout.write(banner);
 

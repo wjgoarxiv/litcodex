@@ -20,7 +20,7 @@ function main(): void {
 
 	const version = (createRequire(import.meta.url)("../package.json") as { version: string }).version;
 
-	const banner = renderBanner({ version, color });
+	const banner = renderBanner({ version, color, tty: Boolean(process.stdout.isTTY), columns: process.stdout.columns });
 	process.stdout.write(banner);
 
 	if (color) {

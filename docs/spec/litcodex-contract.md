@@ -286,17 +286,32 @@ exact selected rows and per-cell colors; its independent SHA-256 pin prevents si
 The native module carries its own row and color data, with no external runtime dependency.
 The earlier round6 bitmap generator, sheet, and provenance remain historical test assets.
 The lockup keeps the 28-column mark field and supports arbitrary product labels without painting them.
-CLI and README heroes pair the banner with the plain `LIT · codex` product lockup. Markdown omits
+README heroes pair the banner with the plain `LIT · codex` product lockup. Markdown omits
 trailing cell padding; terminal exports retain it. Do not edit glyphs independently of the pinned sheet.
 
-The CLI paints cells in flat orange #FF6337, lime #D7F75B, and ivory #F2EFDF. Color does not replace
-glyphs or add extrusion, gradients, or a background. Terminals advertising truecolor or 24bit receive
-exact RGB; other TTYs receive fixed cube approximations 203/191/230. The former `shadow` option is
-validated for source compatibility but does not alter the current mark. Arbitrary standalone glyph
-rows use the orange accent; recognized mark and lockup rows use their exact cell colors.
-NO_COLOR (including an empty value), CI, non-TTY output, and JSON disable colour. TERM=dumb or an
-explicitly non-UTF-8 locale selects a plain LIT line; LC_ALL takes precedence over LC_CTYPE and LANG.
-An unset locale keeps Unicode. Functional progress and spinner colors retain their own existing policy.
+Ignition still ships in two places: the activation `systemMessage`, which prints the micro rows as plain
+glyphs with no escape bytes, and the README assets. The `lit-mark.ts` `colorize` helper keeps the Ignition
+palette (flat orange #FF6337, lime #D7F75B, ivory #F2EFDF; cube 203/191/230 below truecolor; no gradients or
+background) and its compatibility-only `shadow` option, but no CLI screen calls it any more.
+
+The human-facing CLI screens (install, doctor, help, uninstall, postinstall) draw the Synthwave mark from
+`packages/litcodex-ai/src/synthwave.ts` instead. Its rows are generated from the LitFamily synthwave spec into
+`synthwave-data.ts`, whose digest `synthwave.test.ts` recomputes. The art is for terminals people look at:
+when stdout is not a TTY (a pipe, an agent's tool call, a CI log), the banner prints only the plain line
+`LIT · codex cli` and the `v<version>` line, with no art rows, glyph scene or escape bytes. On a TTY the size
+follows the terminal width (76+ columns large, 44+ medium, 24+ small, otherwise the one plain line; an unknown
+width falls back to COLUMNS, then 80). With colour, two pixels share a cell (upper half block, fg upper, bg
+lower) over the dark synthwave sky, sun and grid; the letters use the LitCodex mint-to-emerald chrome
+gradient with a white edge, in 24-bit colour when COLORTERM advertises truecolor or 24bit and the xterm
+256-colour cube elsewhere, and the `LIT · codex cli` tagline takes a cyan-pink-gold gradient. NO_COLOR
+(including an empty value), CI and `--dry-run` turn colour off on a TTY: the spec's mono glyph scene (█▀▄
+letters, ░ sun, · stars, ━ horizon, ─┼╱│╲ floor) prints as given, then the plain tagline. TERM=dumb or an
+explicitly non-UTF-8 locale prints the one plain line with an ASCII rule; LC_ALL takes precedence over
+LC_CTYPE and LANG, and an unset locale keeps Unicode. `--json` and `--no-tui` print no banner. The mark never
+enters hook output, activation messages or any model-visible text. Functional progress and spinner colours
+keep their own existing policy. `litcodex hud` puts a ` 🔥 LIT ` pill (dark bold ink on a gradient from
+chrome stop 1 to stop 4) at the head of its first line on truecolor terminals only; every other depth keeps
+its earlier frame.
 
 Codex 0.144.0 renders statusMessage as one dimmed header span, not a multiline text body
 ([host renderer](https://github.com/openai/codex/blob/rust-v0.144.0/codex-rs/tui/src/history_cell/hook_cell.rs#L730)).
@@ -305,9 +320,9 @@ hooks use `🔥 LIT IGNITED · <component> 🔥` with each component's existing 
 static host metadata, with no ANSI sequences or invented runtime status-message API. Codex owns their
 display and lifecycle, including a new SessionStart on resume; the plugin does not rewrite metadata
 per prompt or locale.
-The UserPromptSubmit hook separately emits the leading-newline five-row gradient `systemMessage` mark on
-activation, alongside model-only `hookSpecificOutput.additionalContext`; non-activation turns emit no warning.
-The source tests pin its truecolor and escape-free bytes; Codex owns final host placement and persistence.
+The UserPromptSubmit hook separately emits the leading-newline micro-row `systemMessage` mark on
+activation as plain glyphs, alongside model-only `hookSpecificOutput.additionalContext`; non-activation turns
+emit no warning. The source tests pin its escape-free bytes; Codex owns final host placement and persistence.
 The model emits exactly one first-line `🔥 **LIT IGNITED · <discipline>** 🔥` probe for the selected top-level route.
 Supporting skills do not add probes or repeat the harness-rendered mark. Tests verify the prompt
 contract, hook metadata, and the activation payload shape; they do not certify model obedience or an authenticated host session.

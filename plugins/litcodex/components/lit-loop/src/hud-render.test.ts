@@ -1,7 +1,7 @@
 // The HUD frame: card states, terminal widths, colour on and off, and record text shown as inert data.
 import { describe, expect, it } from "vitest";
 import type { CardStatus } from "./card-status.js";
-import { displayWidth, type HudView, renderHud } from "./hud.js";
+import { displayWidth, type HudView, litPill, renderHud } from "./hud.js";
 import { workflowMapCells } from "./workflow-map.js";
 
 const NOW = 1_800_000_000_000;
@@ -159,5 +159,50 @@ describe("hud render", () => {
 		});
 		const lines = frame.split("\n").filter((line) => line.includes("cannot read"));
 		expect(lines).toEqual(["cannot read live step, workflow record"]);
+	});
+});
+
+describe("hud LIT pill", () => {
+	const SGR = /\u001b\[[0-9;]*m/gu;
+	const INK = "\u001b[1m\u001b[38;2;11;14;20m";
+	const waiting: HudView = { wanted: null, session: null, status: null, unreadable: [] };
+
+	it("draws the pill on a mint gradient in dark bold ink", () => {
+		const pill = litPill();
+		expect(pill).toContain(INK);
+		expect(pill).toContain("\u001b[48;2;124;245;176m");
+		expect(pill).toContain("\u001b[48;2;167;243;208m");
+		expect(pill.replace(SGR, "")).toBe(" 🔥 LIT ");
+	});
+
+	it("leads the first line only on a truecolor terminal", () => {
+		const card = STATES["ignited"] as CardStatus;
+		const truecolor = renderHud(view(card), { width: 100, color: true, truecolor: true, now: NOW });
+		expect(truecolor.split("\n")[0]).toContain(INK);
+		expect(truecolor.split("\n").slice(1).join("\n")).not.toContain("48;2;");
+		const waitingFrame = renderHud(waiting, { width: 100, color: true, truecolor: true, now: NOW });
+		expect(waitingFrame.split("\n")[0]?.replace(SGR, "")).toBe(" 🔥 LIT · waiting for a LIT session");
+	});
+
+	it("leaves 256-colour and plain frames exactly as before", () => {
+		for (const card of [STATES["ignited"] as CardStatus, STATES["ready"] as CardStatus]) {
+			const colour = renderHud(view(card), { width: 100, color: true, now: NOW });
+			expect(renderHud(view(card), { width: 100, color: true, truecolor: false, now: NOW })).toBe(colour);
+			expect(colour).not.toContain(INK);
+			const plain = renderHud(view(card), { width: 100, color: false, truecolor: true, now: NOW });
+			expect(plain).not.toContain("\u001b");
+			expect(plain).toBe(renderHud(view(card), { width: 100, color: false, now: NOW }));
+		}
+		expect(renderHud(waiting, { width: 100, color: true, now: NOW })).not.toContain(INK);
+	});
+
+	it("still fits the width budget with the pill", () => {
+		for (let width = 10; width <= 160; width++) {
+			for (const frameView of [view(STATES["step running"] as CardStatus), waiting]) {
+				const frame = renderHud(frameView, { width, color: true, truecolor: true, now: NOW });
+				for (const line of frame.split("\n"))
+					expect(displayWidth(line.replace(SGR, ""))).toBeLessThanOrEqual(width);
+			}
+		}
 	});
 });

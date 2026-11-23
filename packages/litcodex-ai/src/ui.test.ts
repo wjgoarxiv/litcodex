@@ -2,6 +2,7 @@
 // Spinner plain-mode output, banner escape-code gating, humanLabel mapping.
 
 import { describe, expect, it } from "vitest";
+import { MONO_ROWS } from "./synthwave-data.js";
 import { bold, dim, FIRE_GRADIENT, fg, gradient, humanLabel, renderBanner, Spinner, shouldDecorate } from "./ui.js";
 
 // ── shouldDecorate truth table ───────────────────────────────────────────────
@@ -91,53 +92,88 @@ describe("color helpers (color=true)", () => {
 // ── Banner ───────────────────────────────────────────────────────────────────
 
 describe("renderBanner", () => {
-	const expectedWordmark = [
-		"                             ▄▄▄▄           ",
-		"                   ▗███▌   ▗██████▖         ",
-		" ▗▄▄▄▄▄          ▗▟████▌   ▝██████▘         ",
-		" ▐█████        ▗▟██████▌    ▝▀▜█▀▘          ",
-		" ▐█████      ▗▟███████▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  ",
-		" ▐█████    ▗▟█████████████████████████ ▐█▀  ",
-		" ▐█████    ████████████████████████████▀    ",
-		" ▐█████    ██▛▘   ▄ ▄▄▄▄▖▄▄▄▄▄▄▄▄▄▄▄▄▄▖     ",
-		" ▐█████    ▀    ▄██ ████▌█████████████▌     ",
-		" ▐█████       ▄████ ████▌█████████████▌     ",
-		" ▐█████     ▄█████▛                         ",
-		" ▐█████  ▗▟█████▀▘       ▄▄▄▄▄     ▗▖       ",
-		" ▐█████ ▐█████▀          █████     ▐▛▀      ",
-		" ▐█████ ▐███▀            █████              ",
-		" ▐█████ ▐█▀              █████              ",
-		" ▐█████ ▝                █████              ",
-		" ▐█████▄▄▄▄▄▄▄▖          █████              ",
-		" ▐███████████▛           █████              ",
-		" ▐██████████▀            █████              ",
-		"                                            ",
-	].join("\n");
+	const utf8 = { LANG: "en_US.UTF-8" } as NodeJS.ProcessEnv;
 
-	it("color:false contains no escape codes", () => {
-		const banner = renderBanner({ version: "1.0.0", color: false, env: { LANG: "en_US.UTF-8" } });
+	it("color:false prints the mono synthwave scene with no escape codes", () => {
+		const banner = renderBanner({ tty: true, version: "1.0.0", color: false, columns: 80, env: utf8 });
 		expect(banner).not.toContain("\x1b");
-		expect(banner).toContain(expectedWordmark);
+		expect(banner).toContain(MONO_ROWS["B-L"].join("\n"));
+		expect(banner).toContain("LIT · codex cli");
+		expect(banner).toContain("v1.0.0");
 		expect(banner).not.toContain("l  i  t  c  o  d  e  x");
 	});
 
-	it("color:true contains the exact Ignition palette around the interlocking mark", () => {
+	it("color:true paints the synthwave cells with 24-bit fg and bg on a truecolor terminal", () => {
 		const banner = renderBanner({
+			tty: true,
 			version: "0.3.0",
 			color: true,
+			columns: 80,
 			env: { LANG: "en_US.UTF-8", COLORTERM: "truecolor" },
 		});
-		for (const color of ["255;99;55", "215;247;91", "242;239;223"]) {
-			expect(banner).toContain(`\x1b[38;2;${color}m`);
-		}
-		// Strip SGR sequences to verify the exact glyph rows and version placement.
+		// The white letter edge and a mint chrome stop sit in the palette.
+		expect(banner).toContain("255;255;255");
+		expect(banner).toMatch(/\x1b\[38;2;\d+;\d+;\d+;48;2;\d+;\d+;\d+m▀/u);
 		const plain = banner.replace(/\x1b\[[0-9;]*m/g, "");
-		expect(plain).toContain(expectedWordmark);
+		expect(plain).toContain("LIT · codex cli");
+		expect(plain).toContain("v0.3.0");
 		expect(plain).not.toContain("🔥");
 	});
 
+	it("color:true without truecolor uses the 256-colour cube", () => {
+		const banner = renderBanner({ tty: true, version: "0.3.0", color: true, columns: 80, env: utf8 });
+		expect(banner).toMatch(/\x1b\[38;5;\d+;48;5;\d+m▀/u);
+		expect(banner).not.toContain("38;2;");
+	});
+
+	it("follows the size ladder and keeps one plain line below 24 columns", () => {
+		expect(renderBanner({ tty: true, version: "1.0.0", color: false, columns: 44, env: utf8 })).toContain(
+			MONO_ROWS["B-M"].join("\n"),
+		);
+		expect(renderBanner({ tty: true, version: "1.0.0", color: false, columns: 24, env: utf8 })).toContain(
+			MONO_ROWS["B-S"].join("\n"),
+		);
+		const narrow = renderBanner({ tty: true, version: "1.0.0", color: true, columns: 20, env: utf8 });
+		expect(narrow).toContain("\nLIT · codex cli\n");
+		expect(narrow).not.toContain("█");
+		expect(narrow).not.toContain("\x1b[38;5;");
+	});
+
+	it("uses COLUMNS and then 80 when the stream has no width", () => {
+		expect(renderBanner({ tty: true, version: "1.0.0", color: false, env: { ...utf8, COLUMNS: "44" } })).toContain(
+			MONO_ROWS["B-M"].join("\n"),
+		);
+		expect(renderBanner({ tty: true, version: "1.0.0", color: false, env: utf8 })).toContain(
+			MONO_ROWS["B-L"].join("\n"),
+		);
+	});
+
+	it("a dumb terminal gets the plain line and an ASCII rule", () => {
+		const banner = renderBanner({ tty: true, version: "1.0.0", color: false, columns: 80, env: { TERM: "dumb" } });
+		expect(banner).toContain("LIT · codex cli");
+		expect(banner).not.toContain("█");
+		expect(banner).not.toContain("━");
+	});
+
+	it("a pipe gets only the plain line and the version, with no art or escape codes", () => {
+		for (const color of [true, false]) {
+			for (const columns of [20, 44, 80, 200]) {
+				const banner = renderBanner({
+					tty: false,
+					version: "1.0.0",
+					color,
+					columns,
+					env: { LANG: "en_US.UTF-8", COLORTERM: "truecolor" },
+				});
+				expect(banner).toBe("LIT · codex cli\nv1.0.0\n");
+				expect(banner).not.toMatch(/[█▀▄░]/u);
+				expect(banner).not.toContain("\x1b");
+			}
+		}
+	});
+
 	it("accepts a custom subtitle", () => {
-		const banner = renderBanner({ version: "1.0.0", subtitle: "custom", color: false, env: { LANG: "en_US.UTF-8" } });
+		const banner = renderBanner({ tty: true, version: "1.0.0", subtitle: "custom", color: false, env: utf8 });
 		expect(banner).toContain("custom");
 		expect(banner).not.toContain("loop-native");
 	});
