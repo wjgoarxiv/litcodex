@@ -127,7 +127,7 @@ test("live mode without reusable host auth blocks before provider work", () => {
 	delete env.OPENAI_API_KEY;
 	try {
 		const result = runRunner(["--live", "--model", "gpt-5.6-luna"], env);
-		assert.equal(result.status, 2);
+		assert.equal(result.status, 2, result.stdout.slice(0, 400));
 		const receipt = JSON.parse(result.stdout);
 		assert.equal(receipt.status, "blocked");
 		assert.equal(receipt.code, "BLOCKED_HOST_AUTH_UNAVAILABLE");
@@ -166,7 +166,7 @@ test("an explicit output path retains a privacy-bounded auth block for resumable
 	delete env.OPENAI_API_KEY;
 	try {
 		const result = runRunner(["--live", "--output", output], env);
-		assert.equal(result.status, 2);
+		assert.equal(result.status, 2, result.stdout.slice(0, 400));
 		assert.equal(result.stdout, "");
 		const receipt = JSON.parse(readFileSync(output, "utf8"));
 		assert.equal(receipt.code, "BLOCKED_HOST_AUTH_UNAVAILABLE");

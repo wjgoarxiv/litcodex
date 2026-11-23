@@ -138,7 +138,10 @@ export function resolveExecutable(name, env, platform = process.platform) {
 					.map((ext) => ext.trim())
 					.filter((ext) => ext.length > 0)
 			: [""];
-	for (const folder of (env.PATH ?? "").split(delimiter)) {
+	// Windows environment keys are case-insensitive, and a copied process.env there holds "Path".
+	const pathKey =
+		platform === "win32" ? (Object.keys(env).find((key) => key.toUpperCase() === "PATH") ?? "PATH") : "PATH";
+	for (const folder of (env[pathKey] ?? "").split(delimiter)) {
 		if (folder.length === 0) continue;
 		for (const extension of extensions) {
 			const candidate = join(folder, `${name}${extension}`);
