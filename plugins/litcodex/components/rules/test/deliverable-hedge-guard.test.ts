@@ -357,7 +357,8 @@ describe("PostToolUse document guard", () => {
 			{ encoding: "utf8" },
 		);
 		expect(result.status).toBe(0);
-		expect(result.stdout).toBe("I hope this helps.\n\nSource: report table 4.\n");
+		// Python writes \r\n in text mode on Windows.
+		expect(result.stdout.replaceAll("\r\n", "\n")).toBe("I hope this helps.\n\nSource: report table 4.\n");
 	});
 
 	it.runIf(spawnSync("pdftotext", ["-v"], { encoding: "utf8" }).error === undefined)(
