@@ -66,6 +66,8 @@ export interface ExtensionsDeps {
 export interface ExtensionsContext {
 	readonly env: NodeJS.ProcessEnv;
 	readonly cwd: string;
+	/** Decides which shell the printed fix lines are written for; defaults to this process's platform. */
+	readonly platform?: NodeJS.Platform;
 }
 
 export interface ExtensionsIo extends ExtensionsContext {
@@ -264,13 +266,29 @@ function duplicatesIn(paths: Paths): Duplicate[] {
 		});
 }
 
+/** A PowerShell single-quoted literal: nothing inside expands, and a `'` is written twice. */
+function psQuote(text: string): string {
+	return `'${text.replaceAll("'", "''")}'`;
+}
+
 /** A shell line that moves a folder into a dated backup set, the way the manual move-aside line does. */
-function moveAsideLine(paths: Paths, path: string, name: string): string {
+function moveAsideLine(paths: Paths, path: string, name: string, windows: boolean): string {
+	if (windows) {
+		return `$b = Join-Path ${psQuote(paths.backups)} (Get-Date -Format yyyyMMdd-HHmmss); New-Item -ItemType Directory -Force -Path $b | Out-Null; if (-not (Test-Path -LiteralPath (Join-Path $b ${psQuote(name)}))) { Move-Item -LiteralPath ${psQuote(path)} -Destination (Join-Path $b ${psQuote(name)}) }`;
+	}
 	return `b="${paths.backups}/$(date +%Y%m%d-%H%M%S)"; mkdir -p "$b" && [ ! -e "$b/${name}" ] && mv "${path}" "$b/${name}"`;
+}
+
+/** A line that deletes one file, or a whole folder with `recursive`, in the host's own shell. */
+function removeLine(path: string, recursive: boolean, windows: boolean): string {
+	if (windows) return `Remove-Item -LiteralPath ${psQuote(path)}${recursive ? " -Recurse" : ""}`;
+	return `rm ${recursive ? "-r " : ""}"${path}"`;
 }
 
 export function checkExtensions(ctx: ExtensionsContext): CheckReport {
 	const paths = pathsFor(ctx.env);
+	// Codex on Windows runs its shell commands in PowerShell, so the fix lines are written for it there.
+	const windows = (ctx.platform ?? process.platform) === "win32";
 	const entries = EXTENSION_IDS.map((id) => entryFor(id, ctx, paths));
 	const findings: Finding[] = [];
 	for (const entry of entries) {
@@ -328,7 +346,7 @@ export function checkExtensions(ctx: ExtensionsContext): CheckReport {
 			id,
 			path,
 			message: `${id}: ${path} is a second copy under another folder name, and Codex lists both`,
-			fix: moveAsideLine(paths, path, name),
+			fix: moveAsideLine(paths, path, name, windows),
 		});
 	}
 	const notice = extensionsNoticePath(ctx.env);
@@ -339,7 +357,7 @@ export function checkExtensions(ctx: ExtensionsContext): CheckReport {
 				kind: "stale-notice",
 				path: notice,
 				message: `an unshown extensions notice from LitCodex ${String(parsed.version)} is still waiting`,
-				fix: `rm "${notice}"`,
+				fix: removeLine(notice, false, windows),
 			});
 		}
 	} catch {
@@ -350,7 +368,7 @@ export function checkExtensions(ctx: ExtensionsContext): CheckReport {
 			kind: "leftover-runtime",
 			path,
 			message: `LitCodex 1.0.38 and earlier left a runtime in ${path}; nothing uses it now`,
-			fix: `rm -r "${path}"`,
+			fix: removeLine(path, true, windows),
 		});
 	}
 	const sets = listBackups(paths);
@@ -751,7 +769,7 @@ function preflight(
 				out.warnings.push(`warning: Codex will also list ${twin.path}, a second ${id} in its skills folder.`);
 			else {
 				problems.push(
-					`stopped: ${twin.path} is a second ${id} in Codex's skills folder under another folder name. Move it aside with \`${moveAsideLine(paths, twin.path, twin.name)}\`, or pass --allow-shadow to install anyway.`,
+					`stopped: ${twin.path} is a second ${id} in Codex's skills folder under another folder name. Move it aside with \`${moveAsideLine(paths, twin.path, twin.name, (ctx.platform ?? process.platform) === "win32")}\`, or pass --allow-shadow to install anyway.`,
 				);
 			}
 		}
