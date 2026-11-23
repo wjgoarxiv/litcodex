@@ -101,11 +101,16 @@ export function runHumanizerPostToolUse(input, options = {}) {
         if (targets.length === 0)
             return "";
         const officeDeadline = Date.now() + OFFICE_EXTRACT_BUDGET_MS;
-        const text = targets
-            .map((path) => isOfficePath(path)
-            ? extractOfficeText(path, input.cwd, officeDeadline)
-            : readAddedOutputText(path, input.cwd))
-            .join("\n\n");
+        // One Python start reads every .docx/.pptx; a cold start can take about a second on Windows.
+        const ooxml = targets.filter((path) => isOfficePath(path) && extname(path).toLowerCase() !== ".pdf");
+        const text = [
+            ...(ooxml.length > 0 ? [extractOfficeText(ooxml, input.cwd, officeDeadline)] : []),
+            ...targets
+                .filter((path) => !ooxml.includes(path))
+                .map((path) => isOfficePath(path)
+                ? extractOfficeText([path], input.cwd, officeDeadline)
+                : readAddedOutputText(path, input.cwd)),
+        ].join("\n\n");
         return findingsOutput("PostToolUse", (options.scan ?? inspectHumanizerText)(maskQuotedUserText(text)), targets.length);
     }
     catch {
@@ -707,23 +712,27 @@ function readSafeExistingText(path, cwd) {
     }
     return null;
 }
-function extractOfficeText(path, cwd, deadline) {
+/** Extracts one PDF, or one or more .docx/.pptx files through a single Python start. */
+function extractOfficeText(paths, cwd, deadline) {
     const timeout = Math.min(OFFICE_EXTRACT_TIMEOUT_MS, deadline - Date.now());
     if (timeout <= 0)
         throw new Error("Office extraction budget spent");
     const root = realpathSync(cwd);
-    const target = isAbsolute(path) ? resolve(path) : resolve(root, path);
-    const relativePath = relative(root, target);
-    if (relativePath === ".." || relativePath.startsWith(`..${sep}`))
-        throw new Error("Office target outside cwd");
-    const stat = lstatSync(target);
-    if (!stat.isFile() || stat.isSymbolicLink())
-        throw new Error("Office target is not a regular file");
-    const extension = extname(target).toLowerCase();
+    const targets = paths.map((path) => {
+        const target = isAbsolute(path) ? resolve(path) : resolve(root, path);
+        const relativePath = relative(root, target);
+        if (relativePath === ".." || relativePath.startsWith(`..${sep}`))
+            throw new Error("Office target outside cwd");
+        const stat = lstatSync(target);
+        if (!stat.isFile() || stat.isSymbolicLink())
+            throw new Error("Office target is not a regular file");
+        return target;
+    });
+    const pdf = targets.length === 1 && extname(targets[0] ?? "").toLowerCase() === ".pdf";
     // Windows installs Python as `python`; `python3` is usually absent there.
     const python = process.platform === "win32" ? "python" : "python3";
-    const command = extension === ".pdf" ? "pdftotext" : python;
-    const args = extension === ".pdf" ? [target, "-"] : [join(dirname(DEFAULT_DETECTOR), "extract_office_text.py"), target];
+    const command = pdf ? "pdftotext" : python;
+    const args = pdf ? [...targets, "-"] : [join(dirname(DEFAULT_DETECTOR), "extract_office_text.py"), ...targets];
     const result = spawnSync(command, args, {
         cwd: root,
         encoding: "utf8",
