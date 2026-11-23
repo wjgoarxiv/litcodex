@@ -333,7 +333,8 @@ describe("PostToolUse document guard", () => {
 		const output = hookOutput(
 			runHumanizerPostToolUse(post, {
 				scan: (text) => {
-					expect(text.length).toBeGreaterThan(0);
+					expect(text).toContain("I hope this helps.");
+					expect(text).toContain("Source: report table 4.");
 					inspected += 1;
 					return [finding("block")];
 				},
@@ -343,6 +344,20 @@ describe("PostToolUse document guard", () => {
 		expect(output.hookSpecificOutput.additionalContext).toContain(
 			"Fix the changed passages and rebuild the artifact.",
 		);
+	});
+
+	it("extracts several Office files through one Python start", () => {
+		const fixtures = fileURLToPath(new URL("../../../skills/lit-humanizer/fixtures/office/", import.meta.url));
+		const extractor = fileURLToPath(
+			new URL("../../../skills/lit-humanizer/scripts/extract_office_text.py", import.meta.url),
+		);
+		const result = spawnSync(
+			process.platform === "win32" ? "python" : "python3",
+			[extractor, join(fixtures, "minimal.docx"), join(fixtures, "minimal.pptx")],
+			{ encoding: "utf8" },
+		);
+		expect(result.status).toBe(0);
+		expect(result.stdout).toBe("I hope this helps.\n\nSource: report table 4.\n");
 	});
 
 	it.runIf(spawnSync("pdftotext", ["-v"], { encoding: "utf8" }).error === undefined)(
