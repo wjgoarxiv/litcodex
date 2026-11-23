@@ -340,7 +340,9 @@ function acquireAuthorityLock(lockPath: string): AuthorityParentIdentity {
 			if (stat === undefined || !stat.isDirectory()) throw new Error("Knowledge authority lock is not a directory.");
 			return { dev: stat.dev, ino: stat.ino };
 		} catch (error) {
-			if (errorCode(error) !== "EEXIST") throw error;
+			// Windows reports EPERM while another process is still deleting the lock directory.
+			const busy = errorCode(error) === "EEXIST" || (process.platform === "win32" && errorCode(error) === "EPERM");
+			if (!busy) throw error;
 			sleepSync(AUTHORITY_LOCK_RETRY_DELAY_MS);
 		}
 	}
