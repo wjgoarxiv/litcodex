@@ -527,8 +527,8 @@
 				"sha256": "f0d4f43efc9c9600586c16fc958f918e3f14e3ec34cd00cbe187cad1a3fcccc1"
 			},
 			"files": 73,
-			"bytes": 382013,
-			"sha256": "bfa535bc5bb86ee6bafcb0f41d2484c2f95c560c6157cb084180c5481afa993e"
+			"bytes": 382273,
+			"sha256": "0b59304a6feeb03734880471990f137bfb21318f80772920f97a587c5e169844"
 		},
 		"lit-init": {
 			"skillMd": {

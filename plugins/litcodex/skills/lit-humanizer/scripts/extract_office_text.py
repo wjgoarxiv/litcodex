@@ -70,18 +70,23 @@ def extract_document(path: Path) -> list[str]:
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
-        print("Usage: uv run extract_office_text.py FILE.docx|FILE.pptx", file=sys.stderr)
+    if len(sys.argv) < 2:
+        print("Usage: uv run extract_office_text.py FILE.docx|FILE.pptx [FILE ...]", file=sys.stderr)
         return 2
-    path = Path(sys.argv[1])
-    try:
-        text = extract_document(path)
-    except (OSError, zipfile.BadZipFile, KeyError, ParseError, ValueError) as error:
-        print(f"Office text extraction failed: {error}", file=sys.stderr)
-        return 2
-    sys.stdout.write("\n".join(text))
-    if text:
-        sys.stdout.write("\n")
+    # Several files share one interpreter start; a blank line separates their texts.
+    documents = []
+    for arg in sys.argv[1:]:
+        try:
+            documents.append(extract_document(Path(arg)))
+        except (OSError, zipfile.BadZipFile, KeyError, ParseError, ValueError) as error:
+            print(f"Office text extraction failed: {error}", file=sys.stderr)
+            return 2
+    for index, text in enumerate(documents):
+        if index:
+            sys.stdout.write("\n")
+        sys.stdout.write("\n".join(text))
+        if text:
+            sys.stdout.write("\n")
     return 0
 
 

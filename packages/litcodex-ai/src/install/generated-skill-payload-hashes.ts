@@ -81,7 +81,7 @@ export const HUMANIZER_PAYLOAD_HASHES = {
 	"rules.json": "ea2cc0aabafbdd9a94a60a29614cce8fba3ed9b813de0e4b5229f49b7356aaec",
 	"scripts/core.mjs": "cd700c49bf00799bedc3563da0ee555018ea8c6eec92e3ef15b277041bf4f867",
 	"scripts/detect.mjs": "183446709f861299d088af4587fafb808adf2094e08b82c2279c0b50cc39e872",
-	"scripts/extract_office_text.py": "2badb7a32335d28c0dd029617ffe866c27053ef54b8951a40a14475b56633265",
+	"scripts/extract_office_text.py": "e798e433e6a156dca6b1a97ea64f1888d79e063b7e8397b9a1f393b885005585",
 	"scripts/ko-metrics.mjs": "5e53d6dfb212241fbcbddaa5d89cacfda61fa739616b4d1a3dd4d76268b0d871",
 	"scripts/test-fixtures.mjs": "60287142e796e9b44666a5a62a6ea4e5035ec24f9d91ad76dc5f22f8a85bbe80",
 	"scripts/test-ko-metrics.mjs": "75e1e23486f3beca247922a8c37564670c043eb29b22148a71e1ce2b67374b28",
