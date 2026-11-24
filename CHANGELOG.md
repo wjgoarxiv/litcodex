@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.47] - 2026-11-24
+
+### Changed
+
+- The READMEs, English and Korean, and the npm README now explain what 1.0.46 changed. Putting `lit` at the end of a
+  request asks the same goal question as putting it at the start, and so does a trailing `lit-loop` or `litwork`.
+  The install section describes the synthwave mark on install, `doctor` and `--help`, with its plain one-line
+  fallback, and the HUD section describes the truecolor pill. Troubleshooting has a new entry for a busy state lock:
+  which locks clear on their own, what the error names, and how to clear one by hand.
+
 ## [1.0.46] - 2026-11-24
 
 ### Changed

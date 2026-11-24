@@ -67,7 +67,7 @@ Install with one line, restart Codex, and approve the LitCodex hooks when Codex 
 ([Install](#install) has the details):
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex install
 ```
 
 ## Pick your path
@@ -87,7 +87,7 @@ npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex install
 You need Node.js 22 or later and Codex CLI. Run from any folder:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex install
 ```
 
 The installer asks which model leads, which model helps, and which output style you like; Enter keeps the recommended
@@ -104,14 +104,14 @@ anything the model reads.
 
 | You want | Run | What changes |
 | --- | --- | --- |
-| The plan first | `npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex --dry-run install` | Prints every step and writes nothing |
+| The plan first | `npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex --dry-run install` | Prints every step and writes nothing |
 | The defaults, no questions | Add `--yes` after `install` | Keeps the defaults without asking |
 | `litcodex` on your `PATH` | `npm install -g @litfamily/litcodex`, then `litcodex install` | Also readies the video skill's rendering tools |
 
 A global install fetches a few pinned downloads for those rendering tools; the
 [install guide](./docs/install.md#a-global-command) lists them and shows how to skip them.
 
-> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex doctor`.
+> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex doctor`.
 
 The [install guide](./docs/install.md) also covers trying LitCodex in a home of its own, Windows, and pictures of
 every screen the installer shows. Coming from the old unscoped package (`litcodex-ai`)? The
@@ -193,13 +193,13 @@ Install LitCodex, a plugin for Codex CLI, on this machine. Follow these steps in
 2. Use only the official npm package @litfamily/litcodex. Do not install a package with a similar
    name, and do not download install scripts from anywhere else.
 3. Show me the plan first. Run this command, which prints every step and writes nothing:
-   npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex --dry-run install
+   npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex --dry-run install
    Summarize what it will change, then ask me whether to go ahead. Do not continue until I say yes.
 4. After I say yes, run:
-   npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex install --yes
+   npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex install --yes
    (--yes keeps the recommended models and my current output style.)
 5. Run the check and report its result to me, quoting any issue or warning exactly:
-   npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex doctor
+   npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex doctor
 6. Remind me to restart Codex so it loads the plugin, and to approve the LitCodex hooks when Codex
    asks me to review them.
 ```
@@ -739,7 +739,7 @@ kept as `.bak` so you can recover it. The state stays on your machine, out of Gi
 ## Check the install
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex doctor
 ```
 
 `litcodex doctor` checks registration, hooks, config and host capabilities, and a clean run ends with
@@ -773,7 +773,7 @@ To remove LitCodex, run this from any folder. It removes the plugin and the conf
 other settings alone.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex uninstall
 ```
 
 ## Troubleshooting
