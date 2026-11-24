@@ -515,26 +515,32 @@ It finds the Codex session where LIT was active most recently and keeps its card
 session when you work there. `--session <id>` keeps it on one session, `--once` prints a single frame and exits, and
 Ctrl-C quits and leaves the terminal as it was.
 
+<p><img src="./docs/assets/app-card/hud-lanes.webp" width="760" alt="litcodex hud on a dark terminal: a rounded neon frame titled LIT · lit-loop with WORK on the right, the stage map interview, plan, work 2/5, review, done, the task gauge, three child agents in columns, a setting sun over a sea, and the figures ctx 24%, 5h 22%, 1w 54%, git main and the project folder on the bottom edge." /></p>
+
+<p><img src="./docs/assets/app-card/hud-done.webp" width="760" alt="The same card after a recorded completion: a green frame, DONE on the right, task 5/5 and the sun standing still." /></p>
+
 <details>
 <summary>What the HUD shows and what it never touches</summary>
 
 The card shows which LIT skill is running, the workflow map with the stage it is on, the next open task, and the tool
-working right now with a clock beside it. The top line names the session, its project folder and when LIT last heard
-from it.
+working right now with a clock beside it. It also names the session, its project folder and when LIT last heard from
+it.
 
-The HUD only reads the small records LIT already keeps for that card. It never writes a file, never reads Codex's own
-session logs and never talks to Codex, so closing it or killing it changes nothing in the session. A record it cannot
-read shows up as one `cannot read …` line.
+On a dark truecolor terminal the HUD is one framed card. The title names the running skill and says where things stand
+(`WORK ●`, `YOUR TURN`, `REVIEW 3/5`, `DONE ✓`). Inside are the stage map in words, the task gauge, the live child
+agents and the LIT skill in use; the bottom edge holds context use, the five-hour and weekly limits, the branch and
+the folder. Only what LIT has a record of is drawn. A half-sunk sun with stars and a sea sits in the cells the card
+leaves empty and moves while LIT works; the frame turns amber on your turn and green on a recorded completion.
 
-On a dark truecolor terminal a sunset stands under the card: a half-sunk sun, stars, a sea and a neon line. It moves
-while LIT works and stands still the rest of the time. It uses only cells the card leaves empty, slides up beside the
-short lines when the window is low, and stays away when the window is narrower than 60 columns or the card needs the
-room. The ` 🔥 LIT ` pill at the start of the first line runs from orange to pink and the current stage sits on a pill
-from violet to mint. Windows Terminal and the VS Code terminal draw round ends on the pills and gauges.
+The frame needs a window at least 40 columns wide and the sun 60. Narrower windows, terminals without truecolor, a
+light background reported through `COLORFGBG`, `NO_COLOR` and `--once` get the card as plain lines. Pills
+and gauges end round in terminals known to draw the caps and wherever a Nerd Font is installed;
+`LITCODEX_HUD_GLYPHS=nerd` or `basic` settles it when the guess is wrong.
 
-A terminal that reports a light background through `COLORFGBG` keeps the plain card with the mint pill; terminals
-without truecolor keep the plain first line. Colour, and the sunset with it, follows `NO_COLOR`. Tested on macOS; Linux
-and Windows terminals are not tested yet.
+The HUD reads the small records LIT already keeps. For the context and limit figures on the framed card it also looks
+at the end of that session's own Codex log, at most once in five seconds and only when the file has changed. It never
+writes a file and never talks to Codex, so closing it or killing it changes nothing in the session. A record it cannot
+read shows up as one `cannot read …` line. Tested on macOS; Linux and Windows terminals are not tested yet.
 
 </details>
 

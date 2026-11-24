@@ -8,11 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `litcodex hud` draws a sunset on dark truecolor terminals: a half-sunk sun, twinkling stars, a sea and a neon line in
-  the cells the card leaves empty. It moves about ten times a second while LIT works, without reading any record for
-  it, and stands still otherwise. The LIT pill runs from orange to pink, the current stage sits on a violet-to-mint
-  pill, and Windows Terminal and the VS Code terminal get round pill and gauge ends. Every line keeps its words, order
-  and width; 256-colour, plain, `NO_COLOR` and light-background (`COLORFGBG`) frames are unchanged.
+- `litcodex hud` is now one framed card on dark truecolor terminals at least 40 columns wide: the running skill and a
+  state word in the title, the stage map in words with the live lanes, the task gauge, next task and running tool,
+  thread rows in aligned columns, the LIT skill in use, and context, limits, branch and folder on the bottom edge. A
+  sun, stars and a sea take empty cells from 60 columns on. The card moves about ten times a second while LIT works and
+  for two seconds after a recorded completion, without reading any record for it, and stands still otherwise. The
+  frame turns amber on your turn, green on completion and red beside an unreadable record. Pill and gauge
+  ends are round in terminals that draw them and wherever a Nerd Font is installed; `LITCODEX_HUD_GLYPHS`
+  (`auto`, `nerd`, `basic`) overrides that. The context and limit figures come from the end of that session's
+  Codex log, read at most once in five seconds and only after it changed; the HUD still writes nothing. 256-colour,
+  plain, `NO_COLOR`, `--once` and light-background (`COLORFGBG`) frames are unchanged.
 
 ## [1.0.47] - 2026-11-24
 

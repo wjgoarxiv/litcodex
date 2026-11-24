@@ -2,18 +2,27 @@
 //
 // One 1 s timer reads the small, size-capped LIT records (hud.ts), builds the frame and writes it only
 // when its text changed; a running step changes it once a second through its clock. On a dark truecolor
-// terminal the sunset (hud-scene.ts) stands under the card; only while LIT works does a second timer redraw
-// it, from the frame already composed and only the rows that changed, so it reads nothing. On a terminal the
-// frame is drawn in place on the alternate screen with the cursor hidden, and both come back on every
-// way out: a signal, an unexpected error or process exit. The command resolves its exit code and never
-// calls `process.exit`; it writes no file, starts no process and opens no Codex rollout.
+// terminal it draws the framed card (hud-card.ts) with its sunset; only while LIT works, or for the moment a
+// plan completes, does a second timer redraw it, from the card already composed and only the cells that
+// changed, so it reads nothing. For the card's usage figures it looks at the end of the thread's own Codex
+// rollout, at most once in five seconds and only after the file changed. On a terminal the frame is drawn in place
+// on the alternate screen with the cursor hidden, and both come back on every way out: a signal, an unexpected
+// error or process exit. The command resolves its exit code and never calls `process.exit`; it writes no file and
+// starts no process.
 
+import { createUsageReader } from "./card-status.js";
 import { type HudView, hudLines, readHud, renderHud } from "./hud.js";
-import { composeScene, drawsRoundCaps, type HudScene, lightBackground, sceneMood } from "./hud-scene.js";
+import { composeCard, type HudCard } from "./hud-card.js";
+import { narrowRoundCaps, roundGlyphs } from "./hud-glyphs.js";
+import { type Cell, changedRuns, rowText } from "./hud-paint.js";
+import { CARD_MIN, lightBackground, narrowLines, sceneMood } from "./hud-scene.js";
 
 const TICK_MS = 1_000;
 const FRAME_MS = 100;
+/** How long a completion is celebrated. */
+const BURST_MS = 2_000;
 const DEFAULT_WIDTH = 80;
+const DEFAULT_ROWS = 24;
 const ENTER_SCREEN = "\u001b[?1049h\u001b[?25l";
 const LEAVE_SCREEN = "\u001b[?25h\u001b[?1049l";
 const HOME = "\u001b[H";
@@ -25,12 +34,15 @@ const STOP_EVENTS = ["SIGINT", "SIGTERM", "SIGHUP"] as const;
 export const HUD_HELP_TEXT = `litcodex hud [--session <id>] [--once]
 
 Watch the LIT card of your newest Codex session from a second terminal window or tab.
-It reads only LIT's own records, never writes a file and never touches Codex. Ctrl-C quits.
+It reads LIT's own records and, for the context and limit figures, the end of that session's Codex log.
+It never writes a file and never touches Codex. Ctrl-C quits.
 
 Options:
   --session <id>   Follow this session (an exact id or a unique prefix) instead of the newest.
   --once           Print one plain frame and exit.
   --help           Show this help.
+
+LITCODEX_HUD_GLYPHS=auto|nerd|basic sets round ends on pills and gauges (auto looks for an icon font).
 `;
 
 export interface HudOutput {
@@ -96,59 +108,96 @@ export function createHudLoop(options: HudLoopOptions): HudLoop {
 	};
 }
 
-/** The same writer with the sunset in it; after the first frame it rewrites only the rows that changed. */
+/** What a scene loop last put on the screen: card rows as cells, or plain lines. */
+type Drawn = { readonly cells: readonly (readonly Cell[])[] } | { readonly lines: readonly string[] };
+
+/** A card row whole; the frame's right edge is placed by column, so odd-width text never moves it. */
+function cardRow(row: readonly Cell[]): string {
+	return `${rowText(row.slice(0, -1), true)}\u001b[${row.length}G${rowText(row.slice(-1), true)}`;
+}
+
+/** The same writer with the card and its sunset; after the first frame it rewrites only what changed. */
 function createSceneLoop(options: HudLoopOptions): HudLoop {
 	const { out } = options;
-	const caps = drawsRoundCaps(options.env);
+	// Looked up once: fonts and the terminal do not change under a running HUD.
+	const caps = roundGlyphs(options.env);
+	const narrowCaps = narrowRoundCaps(options.env);
+	const usageOf = createUsageReader(options.env);
 	let view: HudView | null = null;
-	let scene: HudScene | null = null;
-	let drawn: readonly string[] | null = null;
+	let card: HudCard | null = null;
+	let lines: readonly string[] = [];
+	let drawn: Drawn | null = null;
 	let size = "";
 	let seconds = 0;
 	let lastAt = options.now();
+	let burstAt: number | null = null;
+	const sizeNow = (): string => `${out.columns ?? DEFAULT_WIDTH}x${out.rows ?? DEFAULT_ROWS}`;
 	const compose = (now: number): void => {
 		const columns = out.columns ?? DEFAULT_WIDTH;
-		const rows = out.rows ?? 0;
-		if (size !== `${columns}x${rows}`) drawn = null;
-		size = `${columns}x${rows}`;
-		if (view !== null) scene = composeScene(hudLines(view, now), sceneMood(view), { width: columns - 1, rows, caps });
+		if (size !== sizeNow()) drawn = null;
+		size = sizeNow();
+		if (view === null) return;
+		card = null;
+		if (columns < CARD_MIN)
+			lines = narrowLines(hudLines(view, now), sceneMood(view), { width: columns - 1, caps: narrowCaps });
+		else card = composeCard(view, { width: columns - 1, rows: out.rows ?? DEFAULT_ROWS, caps, now });
 	};
-	const draw = (): boolean => {
-		const rows = scene?.paint(seconds) ?? [];
+	const bursting = (now: number): boolean => card !== null && burstAt !== null && now - burstAt < BURST_MS;
+	const draw = (now: number): boolean => {
 		const before = drawn;
-		// A card taller than the window scrolls, so its rows have no fixed place to be rewritten in.
-		const whole = before === null || before.length !== rows.length || rows.length > (out.rows ?? 0);
-		const changed = rows.flatMap((row, index) => (before?.[index] === row ? [] : [index]));
-		if (changed.length === 0 && before?.length === rows.length) return false;
-		drawn = rows;
+		if (card !== null) {
+			const cells = card.paint(seconds, bursting(now) && burstAt !== null ? (now - burstAt) / BURST_MS : null);
+			drawn = { cells };
+			const old = before !== null && "cells" in before ? before.cells : null;
+			const text =
+				old !== null && old.length === cells.length && old.every((row, y) => row.length === cells[y]?.length)
+					? cells.map((row, y) => changedRuns(old[y] ?? [], row, y)).join("")
+					: `${HOME}${cells.map(cardRow).join(`${CLEAR_LINE}\n`)}${CLEAR_LINE}${CLEAR_BELOW}`;
+			if (text !== "") out.write(text);
+			return text !== "";
+		}
+		const old = before !== null && "lines" in before ? before.lines : null;
+		// Lines taller than the window scroll, so they have no fixed place to be rewritten in.
+		const whole = old === null || old.length !== lines.length || lines.length > (out.rows ?? 0);
+		const changed = lines.flatMap((row, index) => (old?.[index] === row ? [] : [index]));
+		if (changed.length === 0 && old?.length === lines.length) return false;
+		drawn = { lines };
 		out.write(
 			whole
-				? `${HOME}${rows.join(`${CLEAR_LINE}\n`)}${CLEAR_LINE}${CLEAR_BELOW}`
-				: changed.map((index) => `\u001b[${index + 1};1H${rows[index]}${CLEAR_LINE}`).join(""),
+				? `${HOME}${lines.join(`${CLEAR_LINE}\n`)}${CLEAR_LINE}${CLEAR_BELOW}`
+				: changed.map((index) => `\u001b[${index + 1};1H${lines[index]}${CLEAR_LINE}`).join(""),
 		);
 		return true;
 	};
 	const advance = (now: number): void => {
 		// The scene's own clock runs only while it moves, so it resumes from where it stopped.
-		if (scene?.moving === true) seconds += Math.max(0, Math.min(FRAME_MS * 2, now - lastAt)) / 1_000;
+		if (card?.moving === true) seconds += Math.max(0, Math.min(FRAME_MS * 2, now - lastAt)) / 1_000;
 		lastAt = now;
 	};
 	return {
 		tick(): boolean {
 			const now = options.now();
 			advance(now);
-			view = readHud(options.env, options.wanted, now);
+			const last = view;
+			const next = readHud(options.env, options.wanted, now);
+			const usage =
+				next.session !== null && (out.columns ?? DEFAULT_WIDTH) >= CARD_MIN ? usageOf(next.session.id, now) : null;
+			view = next.status === null ? next : { ...next, status: { ...next.status, usage } };
+			if (last !== null && last.session?.id === view.session?.id && view.status?.look === "done") {
+				if (last.status !== null && last.status.look !== "done") burstAt = now;
+			}
 			compose(now);
-			return draw();
+			return draw(now);
 		},
 		frame(): boolean {
-			if (scene?.moving !== true) return false;
 			const now = options.now();
+			if (card?.moving !== true && burstAt === null) return false;
+			if (!bursting(now)) burstAt = null;
 			advance(now);
-			if (size !== `${out.columns ?? DEFAULT_WIDTH}x${out.rows ?? 0}`) compose(now);
-			return draw();
+			if (size !== sizeNow()) compose(now);
+			return draw(now);
 		},
-		moving: () => scene?.moving === true,
+		moving: () => card?.moving === true || burstAt !== null,
 	};
 }
 

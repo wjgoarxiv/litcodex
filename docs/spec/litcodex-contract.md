@@ -311,14 +311,23 @@ LC_CTYPE and LANG, and an unset locale keeps Unicode. `--json` and `--no-tui` pr
 enters hook output, activation messages or any model-visible text. Functional progress and spinner colours
 keep their own existing policy. `litcodex hud` puts a ` 🔥 LIT ` pill (dark bold ink on a gradient from
 chrome stop 1 to stop 4) at the head of its first line on truecolor terminals only; every other depth keeps
-its earlier frame. A truecolor terminal whose COLORFGBG does not name a light background gets the sunset instead:
-the pill runs from orange to pink, the current stage sits on a violet-to-mint pill, and a sun, stars, a sea and a
-neon line use only cells the card leaves empty, within the window's rows and columns. No line changes its words,
-order or width. While a LIT turn works, a 100 ms timer redraws the composed frame and writes only the rows that
-changed, reading no record; it is stopped the rest of the time. The rewind line's rainbow and its scene never move. A
-window narrower than 60 columns, a notice, a finished plan or a card taller than the window draws no scene. Gauges
-and pills end in U+E0B6/U+E0B4 only when WT_SESSION is set or TERM_PROGRAM is `vscode`, in the cells they already
-had.
+its earlier frame. A truecolor terminal whose COLORFGBG does not name a light background and whose window is at least 40 columns wide
+gets one framed card instead, one column short of the window and at most 120: a title with the brand pill, the
+breadcrumb and a state word; the stage map in words with the live lanes; the task gauge, next task and running tool;
+thread rows in aligned columns; notices; the LIT skill in use; and a bottom rule with context use, limits, branch,
+folder, age and short id. A part without a record is left out, and parts that do not fit go from the right. Control,
+format and private characters of a record never reach the terminal, and both frame edges keep their column at any
+width. From 60 columns a sun, stars and a sea use only blank cells inside the frame; the card grows by up to three
+rows for them, never past the window, and a lower window keeps the title and the newest rows. While a LIT turn works,
+and for two seconds after a recorded completion, a 100 ms timer repaints the composed card and writes only the cells
+that changed, reading no record; it is stopped the rest of the time, and the rewind card never moves. The card's usage
+figures come from the tail of the thread's own rollout, looked at once in five seconds at most and read again only when
+its lstat changed; nothing is written. A narrower window keeps the plain lines with their pills. Gauges and pills end
+in U+E0B6/U+E0B4, in the cells they already had, as LITCODEX_HUD_GLYPHS says: `nerd` always, `basic` never, `auto` (the
+default) in terminals that draw them themselves (WT_SESSION, vscode, kitty, WezTerm, ghostty) or when a font file name
+in the user or system font folders names a Nerd Font, looked up once at start, at most 4000 names and three folders
+deep, never over SSH. The narrow plain lines follow WT_SESSION and `vscode` alone under `auto`. Under DONE the done
+stage is ticked and a skipped stage reads `-`; when the stages do not fit, only the current and the next are named.
 
 Codex 0.144.0 renders statusMessage as one dimmed header span, not a multiline text body
 ([host renderer](https://github.com/openai/codex/blob/rust-v0.144.0/codex-rs/tui/src/history_cell/hook_cell.rs#L730)).

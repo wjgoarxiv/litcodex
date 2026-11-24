@@ -8,7 +8,7 @@
 // touch a path, every file read is size-capped and refuses symlinks, and nothing here writes; the one
 // write of the card server, the time a card opened, lives in live-step.ts.
 
-import { closeSync, fstatSync, readdirSync, readSync } from "node:fs";
+import { closeSync, fstatSync, lstatSync, readdirSync, readSync } from "node:fs";
 import { basename, isAbsolute, join } from "node:path";
 import { type LaneState, lookOf, REVIEW_LANE_IDS } from "./card-looks.js";
 import { cleanDeep, cleanLines } from "./control-chars.js";
@@ -269,6 +269,36 @@ function readUsage(threadId: string, env: NodeJS.ProcessEnv): Usage | null {
 	const rollout = home === null ? null : findRollout(home, threadId);
 	const text = rollout === null ? null : tail(rollout.path, MAX_ROLLOUT_TAIL_BYTES);
 	return text === null ? null : usageFromRollout(text);
+}
+
+/** How often the HUD looks at a thread's rollout, at most. */
+const USAGE_EVERY_MS = 5_000;
+
+/**
+ * The newest usage of a thread for a caller that asks every second: the rollout is looked at once in five
+ * seconds, and its tail read again only when its `lstat` identity changed.
+ */
+export function createUsageReader(
+	env: NodeJS.ProcessEnv,
+	read: typeof readUsage = readUsage,
+): (threadId: string, now: number) => Usage | null {
+	let seen: { id: string; at: number; key: string; usage: Usage | null } | null = null;
+	return (threadId, now) => {
+		if (seen !== null && seen.id === threadId && Math.abs(now - seen.at) < USAGE_EVERY_MS) return seen.usage;
+		const last = seen !== null && seen.id === threadId ? seen : null;
+		let key = "missing";
+		try {
+			const home = codexHomeFrom(env);
+			const rollout = home === null ? null : findRollout(home, threadId);
+			const stat = rollout === null ? undefined : lstatSync(rollout.path, { throwIfNoEntry: false });
+			if (stat !== undefined) key = `${stat.ino}:${stat.size}:${stat.mtimeMs}:${stat.ctimeMs}`;
+		} catch {
+			key = "unreadable";
+		}
+		const usage = last !== null && last.key === key ? last.usage : read(threadId, env);
+		seen = { id: threadId, at: now, key, usage };
+		return usage;
+	};
 }
 
 /** A small regular file read without following a symlink at any moment; null on any failure. */

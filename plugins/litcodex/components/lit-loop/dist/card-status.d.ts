@@ -67,6 +67,12 @@ export interface Usage {
 export declare function resolveThreadCwd(threadId: string | null, env: NodeJS.ProcessEnv, rollout?: boolean): string | null;
 /** Context and quota use from the newest token count in a rollout tail; null when there is none. */
 export declare function usageFromRollout(text: string): Usage | null;
+declare function readUsage(threadId: string, env: NodeJS.ProcessEnv): Usage | null;
+/**
+ * The newest usage of a thread for a caller that asks every second: the rollout is looked at once in five
+ * seconds, and its tail read again only when its `lstat` identity changed.
+ */
+export declare function createUsageReader(env: NodeJS.ProcessEnv, read?: typeof readUsage): (threadId: string, now: number) => Usage | null;
 /** A tool name as the card shows it: an MCP tool reads `server · tool` rather than its joined id. */
 export declare function toolDisplayName(tool: string): string;
 /** The card for one thread. `rollout: false` keeps every Codex rollout file unread; the usage row then stays empty. */
@@ -78,3 +84,4 @@ export declare function readCardStatus(threadId: string | null, env: NodeJS.Proc
 export declare function clock(ms: number): string;
 /** The card as plain text, for hosts that cannot draw it (the terminal `codex`). */
 export declare function cardStatusText(status: CardStatus): string;
+export {};

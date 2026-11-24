@@ -266,10 +266,10 @@ carries the line `Auto-handoff session: <session id>`, which is how the reload r
 `litcodex hud` draws, in any second terminal window or tab, the LIT card of the Codex session where LIT was active
 most recently: the running LIT skill, the workflow map, the next open task and the tool running now with its
 clock. Activity is the latest prompt, tool start or tool end the LIT hooks recorded, so the HUD follows the session
-you are working in, an older resumed one included. The header names the short session id, the project folder and
-when LIT last heard from the session. A `--session` prefix that matches several sessions says how many it matched.
+you are working in, an older resumed one included. The HUD also names the short session id, the project folder and
+when LIT last heard from the session, as far as the window has room. A `--session` prefix that matches several sessions says how many it matched.
 When `litcodex install` or the auto-updater has put a newer LitCodex in place than the one the session loaded, the
-title line of the card and the HUD ends with `↻ restart to <version>`; restart Codex to load it.
+card and the HUD say `↻ restart to <version>`; restart Codex to load it.
 
 | Flag | Effect |
 | --- | --- |
@@ -277,14 +277,29 @@ title line of the card and the HUD ends with `↻ restart to <version>`; restart
 | `--once` | Print one plain frame and exit |
 | `--help` | Show the command's usage |
 
-On a dark truecolor terminal a sunset stands under the card. It moves while LIT works and stands still otherwise,
-always in cells the card leaves empty, and it needs a window at least 60 columns wide. Moving it reads no record; it
-adds about 30 KB a second of terminal output while LIT works, and none while it stands still. Set `NO_COLOR` to turn
-colour and the sunset off. A terminal that reports a light background through `COLORFGBG` keeps the card without it.
+On a dark truecolor terminal at least 40 columns wide the HUD is one framed card:
 
-The HUD reads only the thread pointers under `$CODEX_HOME/litcodex/lit-loop/threads/` and the session's small
-records under `.litcodex/` in its project. It writes no file, starts no process and never opens Codex session
-logs. A record that exists but cannot be read (corrupt, oversized, symlinked or unreadable) shows as one
+- The title holds the running skill, or the stack of paused and running ones, and a state word at its right end.
+- The first two rows hold the stage map with the live child agents, and the task gauge, the next task and the running
+  tool. Child agents and other sessions follow in aligned columns, then the LIT skill in use.
+- The bottom edge holds context use, the five-hour and weekly limits, the branch, the folder, how long ago LIT heard
+  from the session and its short id. Each is drawn only when it is known, and the rightmost go first in a narrow
+  window.
+- In a window of 60 columns or more a sun, stars and a sea take cells the card leaves empty, and the card grows by up
+  to three rows for them when the window has the rows. A low window keeps the title and the newest rows.
+
+It moves while LIT works and for two seconds after a recorded completion, and stands still otherwise. Moving it reads
+no record and adds about 18 KB a second of terminal output. Narrower windows, a light background reported through
+`COLORFGBG`, terminals without truecolor, `NO_COLOR` and `--once` get the card as plain lines.
+
+`LITCODEX_HUD_GLYPHS=auto|nerd|basic` sets the ends of pills and gauges. `auto`, the default, draws them round in
+Windows Terminal, VS Code, kitty, WezTerm and Ghostty, or when the name of an installed font says it is a Nerd Font;
+over SSH only the terminal counts. `nerd` always draws them round, `basic` never. Use `basic` if boxes appear.
+
+The HUD reads the thread pointers under `$CODEX_HOME/litcodex/lit-loop/threads/` and the session's small records under
+`.litcodex/` in its project. For the usage figures on the framed card it also reads the end of that session's own
+Codex rollout, at most once in five seconds and only after the file changed. It writes no file and starts no process.
+A record that exists but cannot be read (corrupt, oversized, symlinked or unreadable) shows as one
 `cannot read …` line. On a terminal it uses the alternate screen; Ctrl-C, SIGTERM and SIGHUP restore the screen
 and cursor and exit 0. Output is plain text when `NO_COLOR` is set or stdout is not a terminal. Tested on macOS.
 
