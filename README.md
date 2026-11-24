@@ -46,6 +46,11 @@ fix the date parsing bug in src/dates.js lit
 Codex sets the goal, writes a failing test, fixes the bug, checks the result and tells you what it checked.
 Most tasks need nothing more.
 
+Either end works the same way. With `lit` at the end, the words before it are the request, so in a project with a
+test command the hook first asks `Set goal for this lit-loop: /goal <condition>? (yes / no)` with those words in the
+condition, exactly as it would for `lit fix the date parsing bug`. A trailing `lit-loop` or `litwork` picks the same
+mode as a leading one. `lit continue` on its own carries on the current work and asks nothing.
+
 **The full workflow.** For a bigger job, go one step at a time. Each step hands its result to the next, and you can
 skip any step you do not need.
 
@@ -90,6 +95,12 @@ models and your current output style. It then shows the route it will write and 
 does it register the plugin, its hooks and its agent roles, changing only the keys it manages in `~/.codex/config.toml`.
 
 A receipt that says `Status Ready for Codex` means the doctor check has already passed.
+
+The installer, `litcodex doctor` and `litcodex --help` open with the synthwave LIT mark, a small pixel scene sized to
+your terminal's width. With colour off (`NO_COLOR`, `CI` or `--dry-run`) it is drawn in plain block characters. When
+the output is not a terminal, or the terminal has no UTF-8 (`TERM=dumb` or a non-UTF-8 locale), you get one plain
+`LIT · codex cli` line instead, and `--json` prints no mark at all. The mark never shows up in hook output or in
+anything the model reads.
 
 | You want | Run | What changes |
 | --- | --- | --- |
@@ -515,7 +526,8 @@ The HUD only reads the small records LIT already keeps for that card. It never w
 session logs and never talks to Codex, so closing it or killing it changes nothing in the session. A record it cannot
 read shows up as one `cannot read …` line.
 
-Colour follows `NO_COLOR`. Tested on macOS; Linux and Windows terminals are not tested yet.
+On a truecolor terminal the first line starts with a small ` 🔥 LIT ` pill in a mint gradient; other terminals keep
+the plain first line. Colour follows `NO_COLOR`. Tested on macOS; Linux and Windows terminals are not tested yet.
 
 </details>
 
@@ -774,6 +786,13 @@ npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex uninstall
   your `PATH`.
 - **A native goal is paused or blocked.** Run `/goal resume`, confirm the goal is active, then retry with
   `litcodex loop run --retry-failed`. Keep the unfinished goal. [Recovery details](./docs/usage.md#troubleshooting).
+- **`lit cancel` says another LitCodex process holds the state lock.** A process that crashed halfway through a step
+  can leave its lock file behind, and LitCodex clears it on its own: a lock with no owner record after 30 seconds, a
+  lock whose process has exited, and any lock held longer than 10 minutes, even when its process id now belongs to
+  another program. When a run step itself hits the lock, its error names the lock file and its holder (process id and
+  age, or `no owner record`). If the message keeps coming back, close every Codex session in the project, delete the
+  `state.json.lock` file under the project's `.litcodex/` folder and type `lit cancel` again. The smaller locks
+  behind update checks, rules and the knowledge store recover the same way.
 
 ## Learn more
 

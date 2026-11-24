@@ -38,6 +38,10 @@ about to write, and changes only the keys it manages in `~/.codex/config.toml`. 
 `npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex --dry-run install`. To skip the
 questions, add `--yes` after `install`.
 
+The installer, `litcodex doctor` and `litcodex --help` open with the synthwave LIT mark, sized to the terminal. Without
+colour it is drawn in plain block characters, and a pipe, a CI log or a terminal without UTF-8 gets one plain
+`LIT · codex cli` line instead.
+
 ```sh
 npm install -g @litfamily/litcodex
 litcodex install
@@ -59,6 +63,10 @@ fix the date parsing bug in src/dates.js lit
 
 Codex sets the goal, writes a failing test, fixes the bug, checks the result and tells you what it checked.
 Most tasks need nothing more.
+
+Either end works the same way: with `lit` at the end, the words before it become the goal, and in a project with a
+test command the hook asks `Set goal for this lit-loop: /goal <condition>? (yes / no)` first. A trailing `lit-loop`
+or `litwork` picks the same mode as a leading one.
 
 **The full workflow.** For a bigger job, go one step at a time. Each step hands its result to the next, and you can
 skip any step you do not need.
@@ -171,7 +179,8 @@ npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex doctor
 
 `litcodex doctor` checks registration, hooks, config and host capabilities; `litcodex loop doctor` checks
 the current project's loop state. If `lit` does nothing, run doctor and check that the hooks are approved
-in Codex. More fixes are under [troubleshooting](https://github.com/wjgoarxiv/litcodex#troubleshooting).
+in Codex. A state lock left by a crashed process clears on its own. More fixes are under
+[troubleshooting](https://github.com/wjgoarxiv/litcodex#troubleshooting).
 
 ```sh
 npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex uninstall

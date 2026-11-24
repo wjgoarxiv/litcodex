@@ -38,6 +38,9 @@ npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex install
 `npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex --dry-run install`을 실행하고, 묻는 단계 없이
 설치하려면 `install` 뒤에 `--yes`를 붙이세요.
 
+설치기와 `litcodex doctor`, `litcodex --help`는 터미널 폭에 맞춘 신스웨이브 LIT 마크로 시작합니다. 색이 꺼져 있으면
+블록 문자만으로 그리고, 파이프나 CI 로그, UTF-8을 쓰지 않는 터미널에는 `LIT · codex cli` 한 줄만 나옵니다.
+
 ```sh
 npm install -g @litfamily/litcodex
 litcodex install
@@ -58,6 +61,10 @@ src/dates.js의 날짜 파싱 버그 고쳐줘 lit
 
 Codex가 목표를 정하고, 실패하는 테스트를 쓰고, 버그를 고치고, 결과를 확인한 뒤 무엇을 확인했는지 알려 줍니다.
 웬만한 작업은 이걸로 충분합니다.
+
+`lit`은 앞에 붙이든 끝에 붙이든 똑같이 움직입니다. 끝에 붙이면 그 앞의 말이 목표가 되고, 테스트 명령이 있는
+프로젝트라면 훅이 먼저 `Set goal for this lit-loop: /goal <조건>? (yes / no)`라고 묻습니다. 끝에 붙인 `lit-loop`이나
+`litwork`도 앞에 쓴 것과 같은 모드로 갑니다.
 
 **본격적으로.** 큰 작업은 한 단계씩 밟아 갑니다. 앞 단계의 결과를 다음 단계가 이어받고, 필요 없는 단계는 건너뛰어도 됩니다.
 
@@ -166,7 +173,8 @@ npm exec --yes --package @litfamily/litcodex@1.0.46 -- litcodex doctor
 ```
 
 `litcodex doctor`는 등록·훅·설정·호스트 기능을, `litcodex loop doctor`는 현재 프로젝트의 루프 상태를 확인합니다.
-`lit`을 입력해도 반응이 없다면 doctor를 실행하고 Codex에서 훅을 승인했는지 확인하세요. 다른 해결 방법은
+`lit`을 입력해도 반응이 없다면 doctor를 실행하고 Codex에서 훅을 승인했는지 확인하세요. 죽은 프로세스가 남긴
+상태 잠금은 알아서 풀립니다. 다른 해결 방법은
 [문제 해결](https://github.com/wjgoarxiv/litcodex/blob/main/README-Ko-KR.md#문제-해결)에 있습니다.
 
 ```sh
