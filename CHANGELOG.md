@@ -6,6 +6,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.46] - 2026-11-24
+
+### Changed
+
+- `litcodex install`, `doctor`, `help`, `uninstall` and the postinstall notice now draw the synthwave LIT mark on a
+  terminal. Its size follows the terminal width. `NO_COLOR`, `CI` and `--dry-run` print the mono version, and a pipe,
+  an agent's tool call or a CI log gets only the plain `LIT · codex cli` line. `--json` and `--no-tui` print no
+  banner. `litcodex hud` puts a gradient ` 🔥 LIT ` pill at the start of its first line on truecolor terminals. The
+  mark never enters hook output or model-visible text.
+
+### Fixed
+
+- A request that ends with the activation word (`fix the login button lit`, `로그인 버튼 고쳐줘. 부탁해 lit`) now gets
+  the lit-loop goal question, using the words before `lit` as the objective. A trailing `lit-loop` or `litwork`
+  behaves like a leading one. `lit continue`, `lit resume`, `lit 계속`, `lit 이어서` and a question about the word
+  (`what does lit-loop do?`) no longer ask a goal question.
+- A state lock left behind by a crashed process no longer blocks for good. The plan run's state lock, which
+  `lit cancel` takes, is reclaimed after 10 minutes even when its process id now belongs to another live process, and
+  a lock with no owner record is judged by its file age. Its busy error names the lock path and its holder. The
+  update-check lock gets the same 10-minute ceiling. The rules session lock and the knowledge lock, which had no
+  recovery at all, are reclaimed after 30 seconds.
+
 ## [1.0.45] - 2026-11-22
 
 ### Added

@@ -1,6 +1,6 @@
 {
 	"name": "litcodex",
-	"version": "1.0.45",
+	"version": "1.0.46",
 	"private": true,
 	"type": "module",
 	"packageManager": "npm@11.12.1",
