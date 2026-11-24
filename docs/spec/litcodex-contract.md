@@ -311,7 +311,14 @@ LC_CTYPE and LANG, and an unset locale keeps Unicode. `--json` and `--no-tui` pr
 enters hook output, activation messages or any model-visible text. Functional progress and spinner colours
 keep their own existing policy. `litcodex hud` puts a ` 🔥 LIT ` pill (dark bold ink on a gradient from
 chrome stop 1 to stop 4) at the head of its first line on truecolor terminals only; every other depth keeps
-its earlier frame.
+its earlier frame. A truecolor terminal whose COLORFGBG does not name a light background gets the sunset instead:
+the pill runs from orange to pink, the current stage sits on a violet-to-mint pill, and a sun, stars, a sea and a
+neon line use only cells the card leaves empty, within the window's rows and columns. No line changes its words,
+order or width. While a LIT turn works, a 100 ms timer redraws the composed frame and writes only the rows that
+changed, reading no record; it is stopped the rest of the time. The rewind line's rainbow and its scene never move. A
+window narrower than 60 columns, a notice, a finished plan or a card taller than the window draws no scene. Gauges
+and pills end in U+E0B6/U+E0B4 only when WT_SESSION is set or TERM_PROGRAM is `vscode`, in the cells they already
+had.
 
 Codex 0.144.0 renders statusMessage as one dimmed header span, not a multiline text body
 ([host renderer](https://github.com/openai/codex/blob/rust-v0.144.0/codex-rs/tui/src/history_cell/hook_cell.rs#L730)).

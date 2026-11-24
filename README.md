@@ -526,8 +526,15 @@ The HUD only reads the small records LIT already keeps for that card. It never w
 session logs and never talks to Codex, so closing it or killing it changes nothing in the session. A record it cannot
 read shows up as one `cannot read …` line.
 
-On a truecolor terminal the first line starts with a small ` 🔥 LIT ` pill in a mint gradient; other terminals keep
-the plain first line. Colour follows `NO_COLOR`. Tested on macOS; Linux and Windows terminals are not tested yet.
+On a dark truecolor terminal a sunset stands under the card: a half-sunk sun, stars, a sea and a neon line. It moves
+while LIT works and stands still the rest of the time. It uses only cells the card leaves empty, slides up beside the
+short lines when the window is low, and stays away when the window is narrower than 60 columns or the card needs the
+room. The ` 🔥 LIT ` pill at the start of the first line runs from orange to pink and the current stage sits on a pill
+from violet to mint. Windows Terminal and the VS Code terminal draw round ends on the pills and gauges.
+
+A terminal that reports a light background through `COLORFGBG` keeps the plain card with the mint pill; terminals
+without truecolor keep the plain first line. Colour, and the sunset with it, follows `NO_COLOR`. Tested on macOS; Linux
+and Windows terminals are not tested yet.
 
 </details>
 

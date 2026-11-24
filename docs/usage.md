@@ -277,6 +277,11 @@ title line of the card and the HUD ends with `↻ restart to <version>`; restart
 | `--once` | Print one plain frame and exit |
 | `--help` | Show the command's usage |
 
+On a dark truecolor terminal a sunset stands under the card. It moves while LIT works and stands still otherwise,
+always in cells the card leaves empty, and it needs a window at least 60 columns wide. Moving it reads no record; it
+adds about 30 KB a second of terminal output while LIT works, and none while it stands still. Set `NO_COLOR` to turn
+colour and the sunset off. A terminal that reports a light background through `COLORFGBG` keeps the card without it.
+
 The HUD reads only the thread pointers under `$CODEX_HOME/litcodex/lit-loop/threads/` and the session's small
 records under `.litcodex/` in its project. It writes no file, starts no process and never opens Codex session
 logs. A record that exists but cannot be read (corrupt, oversized, symlinked or unreadable) shows as one

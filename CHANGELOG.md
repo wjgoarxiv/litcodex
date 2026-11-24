@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `litcodex hud` draws a sunset on dark truecolor terminals: a half-sunk sun, twinkling stars, a sea and a neon line in
+  the cells the card leaves empty. It moves about ten times a second while LIT works, without reading any record for
+  it, and stands still otherwise. The LIT pill runs from orange to pink, the current stage sits on a violet-to-mint
+  pill, and Windows Terminal and the VS Code terminal get round pill and gauge ends. Every line keeps its words, order
+  and width; 256-colour, plain, `NO_COLOR` and light-background (`COLORFGBG`) frames are unchanged.
+
 ## [1.0.47] - 2026-11-24
 
 ### Changed

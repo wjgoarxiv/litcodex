@@ -75,6 +75,7 @@ export interface WorkflowMap {
 }
 /** The map as stages, or null when there is nothing true to draw. */
 export declare function workflowMapCells(mode: string | null, signals: WorkflowSignals): WorkflowMap | null;
+export declare function mapCellText(item: MapCell): string;
 /** One map line, or null when there is nothing true to draw. Plain text: emoji and block cells only. */
 export declare function renderWorkflowMap(mode: string | null, signals: WorkflowSignals): string | null;
 /** The text line for a map already built. */

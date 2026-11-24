@@ -437,7 +437,7 @@ export function workflowMapCells(mode, signals) {
     });
     return { family: "main", cells, next };
 }
-function cellText(item) {
+export function mapCellText(item) {
     const bar = item.progress === null
         ? ""
         : `${progressBar(item.progress.done, item.progress.total)} ${item.progress.done}/${item.progress.total}`;
@@ -459,7 +459,7 @@ export function renderWorkflowMap(mode, signals) {
 }
 /** The text line for a map already built. */
 export function workflowMapText(map) {
-    return map.cells.map(cellText).join(" › ");
+    return map.cells.map(mapCellText).join(" › ");
 }
 export function workflowMapLine(repoRoot, sessionId, mode) {
     return renderWorkflowMap(mode, readWorkflowSignals(repoRoot, sessionId));

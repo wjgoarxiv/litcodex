@@ -499,7 +499,7 @@ export function workflowMapCells(mode: string | null, signals: WorkflowSignals):
 	return { family: "main", cells, next };
 }
 
-function cellText(item: MapCell): string {
+export function mapCellText(item: MapCell): string {
 	const bar =
 		item.progress === null
 			? ""
@@ -524,7 +524,7 @@ export function renderWorkflowMap(mode: string | null, signals: WorkflowSignals)
 
 /** The text line for a map already built. */
 export function workflowMapText(map: WorkflowMap): string {
-	return map.cells.map(cellText).join(" › ");
+	return map.cells.map(mapCellText).join(" › ");
 }
 
 export function workflowMapLine(repoRoot: string, sessionId: string | null, mode: string | null): string | null {

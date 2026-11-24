@@ -1,12 +1,16 @@
 // src/hud-cli.ts — `litcodex hud`: the LIT card, kept live in a second terminal window.
 //
 // One 1 s timer reads the small, size-capped LIT records (hud.ts), builds the frame and writes it only
-// when its text changed; a running step changes it once a second through its clock. On a terminal the
+// when its text changed; a running step changes it once a second through its clock. On a dark truecolor
+// terminal the sunset (hud-scene.ts) stands under the card; only while LIT works does a second timer redraw
+// it, from the frame already composed and only the rows that changed, so it reads nothing. On a terminal the
 // frame is drawn in place on the alternate screen with the cursor hidden, and both come back on every
 // way out: a signal, an unexpected error or process exit. The command resolves its exit code and never
 // calls `process.exit`; it writes no file, starts no process and opens no Codex rollout.
-import { readHud, renderHud } from "./hud.js";
+import { hudLines, readHud, renderHud } from "./hud.js";
+import { composeScene, drawsRoundCaps, lightBackground, sceneMood } from "./hud-scene.js";
 const TICK_MS = 1_000;
+const FRAME_MS = 100;
 const DEFAULT_WIDTH = 80;
 const ENTER_SCREEN = "\u001b[?1049h\u001b[?25l";
 const LEAVE_SCREEN = "\u001b[?25h\u001b[?1049l";
@@ -31,6 +35,8 @@ Options:
  * followed by erase-to-end would lose its last glyph or wrap.
  */
 export function createHudLoop(options) {
+    if (options.scene === true && options.out.isTTY === true)
+        return createSceneLoop(options);
     let last = null;
     let lastColumns;
     return {
@@ -54,6 +60,67 @@ export function createHudLoop(options) {
             options.out.write(tty ? `${HOME}${frame.split("\n").join(`${CLEAR_LINE}\n`)}${CLEAR_LINE}${CLEAR_BELOW}` : `${frame}\n`);
             return true;
         },
+        frame: () => false,
+        moving: () => false,
+    };
+}
+/** The same writer with the sunset in it; after the first frame it rewrites only the rows that changed. */
+function createSceneLoop(options) {
+    const { out } = options;
+    const caps = drawsRoundCaps(options.env);
+    let view = null;
+    let scene = null;
+    let drawn = null;
+    let size = "";
+    let seconds = 0;
+    let lastAt = options.now();
+    const compose = (now) => {
+        const columns = out.columns ?? DEFAULT_WIDTH;
+        const rows = out.rows ?? 0;
+        if (size !== `${columns}x${rows}`)
+            drawn = null;
+        size = `${columns}x${rows}`;
+        if (view !== null)
+            scene = composeScene(hudLines(view, now), sceneMood(view), { width: columns - 1, rows, caps });
+    };
+    const draw = () => {
+        const rows = scene?.paint(seconds) ?? [];
+        const before = drawn;
+        // A card taller than the window scrolls, so its rows have no fixed place to be rewritten in.
+        const whole = before === null || before.length !== rows.length || rows.length > (out.rows ?? 0);
+        const changed = rows.flatMap((row, index) => (before?.[index] === row ? [] : [index]));
+        if (changed.length === 0 && before?.length === rows.length)
+            return false;
+        drawn = rows;
+        out.write(whole
+            ? `${HOME}${rows.join(`${CLEAR_LINE}\n`)}${CLEAR_LINE}${CLEAR_BELOW}`
+            : changed.map((index) => `\u001b[${index + 1};1H${rows[index]}${CLEAR_LINE}`).join(""));
+        return true;
+    };
+    const advance = (now) => {
+        // The scene's own clock runs only while it moves, so it resumes from where it stopped.
+        if (scene?.moving === true)
+            seconds += Math.max(0, Math.min(FRAME_MS * 2, now - lastAt)) / 1_000;
+        lastAt = now;
+    };
+    return {
+        tick() {
+            const now = options.now();
+            advance(now);
+            view = readHud(options.env, options.wanted, now);
+            compose(now);
+            return draw();
+        },
+        frame() {
+            if (scene?.moving !== true)
+                return false;
+            const now = options.now();
+            advance(now);
+            if (size !== `${out.columns ?? DEFAULT_WIDTH}x${out.rows ?? 0}`)
+                compose(now);
+            return draw();
+        },
+        moving: () => scene?.moving === true,
     };
 }
 function parseArgs(args) {
@@ -99,12 +166,14 @@ export async function hudCommand(args, io) {
     }
     const tty = io.stdout.isTTY === true;
     const color = tty && colorAllowed(io.env);
+    const truecolor = color && /truecolor|24bit/i.test(io.env["COLORTERM"] ?? "");
     const loop = createHudLoop({
         env: io.env,
         wanted: parsed.session,
         out: io.stdout,
         color,
-        truecolor: color && /truecolor|24bit/i.test(io.env["COLORTERM"] ?? ""),
+        truecolor,
+        scene: truecolor && !lightBackground(io.env),
         now,
     });
     const signals = io.signals ?? process;
@@ -113,11 +182,13 @@ export async function hudCommand(args, io) {
     return new Promise((resolve) => {
         let restored = false;
         let timer;
+        let motion;
         const restore = () => {
             if (restored)
                 return;
             restored = true;
             clearInterval(timer);
+            clearInterval(motion);
             for (const event of STOP_EVENTS)
                 signals.off(event, stop);
             signals.off("uncaughtException", crash);
@@ -140,14 +211,23 @@ export async function hudCommand(args, io) {
         signals.on("exit", restore);
         if (tty)
             io.stdout.write(ENTER_SCREEN);
-        const tick = () => {
+        const guarded = (step) => {
             try {
-                loop.tick();
+                step();
             }
             catch (error) {
                 crash(error);
             }
         };
+        const tick = () => guarded(() => {
+            loop.tick();
+            if (!loop.moving()) {
+                clearInterval(motion);
+                motion = undefined;
+            }
+            else
+                motion ??= setInterval(() => guarded(() => loop.frame()), FRAME_MS);
+        });
         timer = setInterval(tick, TICK_MS);
         tick();
     });

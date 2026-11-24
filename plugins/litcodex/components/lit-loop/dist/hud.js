@@ -14,7 +14,7 @@ import { cardStatusText, readCardStatus } from "./card-status.js";
 import { clean, cleanDeep } from "./control-chars.js";
 import { codexHomeFrom, liveStepPath, plainDirsOrMissing, readLiveStep, readSmallJson, readThreadPointer, threadPointerPath, } from "./live-step.js";
 import { LIT_LOOP_DIR, LIT_LOOP_GOALS, normalizeSessionId } from "./state-paths.js";
-import { workflowTurn } from "./workflow-map.js";
+import { mapCellText, workflowMapText, workflowTurn } from "./workflow-map.js";
 export { clean } from "./control-chars.js";
 const POINTER_DIR = "litcodex/lit-loop/threads";
 const MAX_LIVE_STEP_BYTES = 4_096;
@@ -212,7 +212,7 @@ function charWidth(char) {
     return 1;
 }
 /** The string as terminal cells; a narrow character followed by U+FE0F (emoji presentation) takes two. */
-function cells(text) {
+export function cells(text) {
     const out = [];
     for (const char of text) {
         const previous = out.at(-1);
@@ -249,13 +249,13 @@ function age(lastSeen, now) {
         return `last seen ${Math.floor(seconds / 60)} min ago`;
     return seconds < 60 ? `updated ${seconds}s ago` : `updated ${Math.floor(seconds / 60)} min ago`;
 }
-const BOLD = "\u001b[1m";
-const DIM = "\u001b[2m";
-const RESET = "\u001b[0m";
+export const BOLD = "\u001b[1m";
+export const DIM = "\u001b[2m";
+export const RESET = "\u001b[0m";
 const AMBER_FG = "\u001b[38;2;255;175;60m";
 const GREEN_FG = "\u001b[38;2;107;219;143m";
 /** 256-colour codes, one per cell: red, orange, yellow, green, cyan, blue, violet, pink. */
-const RAINBOW = [203, 209, 221, 114, 80, 75, 141, 205];
+export const RAINBOW = [203, 209, 221, 114, 80, 75, 141, 205];
 /** One line tinted cell by cell through the rainbow; still, never animated. */
 function rainbowLine(line) {
     let index = 0;
@@ -268,14 +268,14 @@ function rainbowLine(line) {
     }
     return `${out}${RESET}`;
 }
-const BRAND = "🔥 LIT";
-const PILL_TEXT = ` ${BRAND} `;
+export const BRAND = "🔥 LIT";
+export const PILL_TEXT = ` ${BRAND} `;
 /** Chrome stops 1 and 4 of the LitCodex palette in the LitFamily synthwave spec. */
 export const PILL_STOPS = [
     [0x7c, 0xf5, 0xb0],
     [0xa7, 0xf3, 0xd0],
 ];
-const PILL_INK = "\u001b[1m\u001b[38;2;11;14;20m";
+export const PILL_INK = "\u001b[1m\u001b[38;2;11;14;20m";
 /** The LIT pill: dark bold ink on a mint gradient background, one colour step per cell. Truecolor only. */
 export function litPill() {
     const pieces = cells(PILL_TEXT);
@@ -298,9 +298,21 @@ function withPill(line, style, width) {
     const tail = fit(rest, room);
     return `${litPill()}${style}${tail}${RESET}`;
 }
-/** One frame as text: a header, the card, and at most one "cannot read" line. Pure. */
-export function renderHud(view, options) {
-    const width = Math.max(10, Math.floor(options.width));
+/** The map line and the current stage's place in it. */
+function mapLine(status) {
+    const current = status.map?.cells.findIndex((cell) => cell.state === "current") ?? -1;
+    const cell = status.map?.cells[current];
+    if (status.map === null || cell === undefined)
+        return null;
+    const before = status.map.cells.slice(0, current).map((item) => `${mapCellText(item)} › `);
+    const start = before.join("").length;
+    return {
+        text: workflowMapText(status.map),
+        stage: [start, start + `${cell.icon} ${cell.label ?? cell.word.toUpperCase()}`.length],
+    };
+}
+/** The header, the card, and at most one "cannot read" line, uncut and in plain text. Pure. */
+export function hudLines(view, now) {
     const lines = [];
     if ((view.session === null || view.status === null) && view.wanted !== null && (view.matches ?? 0) > 1) {
         lines.push({ text: "🔥 LIT · which session?", style: BOLD });
@@ -320,22 +332,30 @@ export function renderHud(view, options) {
     }
     else {
         const { id, folder, lastSeen } = view.session;
-        lines.push({ text: `${id.slice(0, SHORT_ID)} · ${clean(folder)} · ${age(lastSeen, options.now)}`, style: DIM });
+        lines.push({ text: `${id.slice(0, SHORT_ID)} · ${clean(folder)} · ${age(lastSeen, now)}`, style: DIM });
         const look = view.status?.look ?? null;
         const tint = look === "turn" ? AMBER_FG : look === "done" ? GREEN_FG : "";
-        cardStatusText(cleanStatus(view.status))
+        const status = cleanStatus(view.status);
+        const map = mapLine(status);
+        cardStatusText(status)
             .split("\n")
             .forEach((text, index) => {
             lines.push({
                 text,
                 style: index === 0 ? `${BOLD}${tint}` : tint || "",
                 rainbow: index === 0 && look === "rewind",
+                ...(index === 1 && map?.text === text ? { stage: map.stage } : {}),
             });
         });
     }
     if (view.unreadable.length > 0)
         lines.push({ text: `cannot read ${view.unreadable.join(", ")}`, style: DIM });
-    return lines
+    return lines;
+}
+/** One frame as text: a header, the card, and at most one "cannot read" line. Pure. */
+export function renderHud(view, options) {
+    const width = Math.max(10, Math.floor(options.width));
+    return hudLines(view, options.now)
         .map(({ text, style, rainbow }, index) => {
         if (index === 0 && options.color && options.truecolor === true) {
             const pilled = withPill(clean(text), style, width);
