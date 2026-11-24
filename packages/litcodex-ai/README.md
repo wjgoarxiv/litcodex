@@ -34,7 +34,8 @@ npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex install
 ```
 
 The installer asks which model leads, which model helps and which output style you like, shows what it is
-about to write, and changes only the keys it manages in `~/.codex/config.toml`. To see the plan first, run
+about to write, and changes only the keys it manages in `~/.codex/config.toml`. In a terminal each question is a card
+you answer with the arrow keys or a number and Enter; pipes, CI and `TERM=dumb` keep plain prompts. To see the plan first, run
 `npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex --dry-run install`. To skip the
 questions, add `--yes` after `install`.
 

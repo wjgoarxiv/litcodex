@@ -28,6 +28,7 @@ import {
 	AGENT_FILE_QUESTION,
 	ATTRIBUTION_QUESTION,
 	agentFileDryRunLine,
+	agentFileQuestionCount,
 	removeGlobalAgentFile,
 	runInstallAgentFile,
 } from "./agent-file/cli.js";
@@ -38,16 +39,31 @@ import { type ExecuteDeps, executeInstallPlan } from "./execute.js";
 import { extensionsDoctorLine, extensionsNoticeLine } from "./extensions.js";
 import { announceExtensions } from "./extensions-notice.js";
 import { listPayloadEntries, readRegularFileBuffer } from "./file-walk.js";
-import { promptModelRoute, renderModelRouteSummary, waitForModelRouteConfirmation } from "./install-model-prompt.js";
+import {
+	CardAbort,
+	type CardInput,
+	type CardOutput,
+	cardsAvailable,
+	InstallCards,
+	type StepCard,
+} from "./install-cards.js";
+import {
+	chooseModelRoute,
+	confirmModelRoute,
+	promptModelRoute,
+	renderModelRouteSummary,
+	waitForModelRouteConfirmation,
+} from "./install-model-prompt.js";
 import type { OutputStyleId } from "./install-options.js";
 import { hasExplicitModelRouteFlags, parseInstallOptions } from "./install-options.js";
 import { renderPlainInstallResult } from "./install-output.js";
+import { renderInstallFailureCard, renderInstallSummary, stepName } from "./install-presentation.js";
 import type { MaterializeMarketplaceResult } from "./marketplace-payload.js";
 import { type MarketplaceSource, resolveBundledMarketplaceSource } from "./package-root.js";
 import { buildInstallPlan } from "./plan.js";
 import { renderInstallPlan } from "./render-plan.js";
 import { createBlockingSpinnerMotion } from "./spinner-motion.js";
-import type { InstallOptions, InstallResult } from "./types.js";
+import type { InstallOptions, InstallPreflightStage, InstallResult } from "./types.js";
 import { runUninstall, uninstallPlanSteps } from "./uninstall.js";
 
 export { renderDoctorText, runDoctor } from "./doctor.js";
@@ -159,6 +175,30 @@ function interactiveInstall(opts: InstallOptions, io: RouteIo): boolean {
 	return isTTY && !opts.noTui && !opts.json && !opts.yes && !opts.dryRun && io.env["CI"] === undefined;
 }
 
+/** The cards for a person at a capable terminal, or undefined: then every plain prompt and line stays as it is. */
+function installCards(opts: InstallOptions, io: RouteIo): InstallCards | undefined {
+	const terminal = {
+		input: process.stdin as unknown as CardInput,
+		output: io.stdout as unknown as CardOutput,
+		env: io.env,
+	};
+	if (!interactiveInstall(opts, io) || !cardsAvailable(terminal)) return undefined;
+	return new InstallCards({
+		...terminal,
+		motion: io.stdout === process.stdout ? (look) => createBlockingSpinnerMotion(process.stdout.fd, look) : undefined,
+	});
+}
+
+/** The questions this install may ask, for the cards' step count. */
+function questionCount(args: readonly string[], opts: InstallOptions, io: RouteIo): number {
+	const { codexHome, noAgentFile } = opts;
+	return (
+		(hasExplicitModelRouteFlags(args) ? 0 : 3) +
+		(opts.style === undefined ? 1 : 0) +
+		agentFileQuestionCount({ env: io.env, codexHome, version: PACKAGE_VERSION, noAgentFile })
+	);
+}
+
 function installReadline(opts: InstallOptions, io: RouteIo): readline.Interface {
 	return readline.createInterface({
 		input: process.stdin,
@@ -173,6 +213,20 @@ function installReadline(opts: InstallOptions, io: RouteIo): readline.Interface 
 	});
 }
 
+/** One plain readline exchange: the interface never outlives its question. */
+async function askPlain<Value>(
+	opts: InstallOptions,
+	io: RouteIo,
+	ask: (rl: readline.Interface) => Promise<Value>,
+): Promise<Value> {
+	const rl = installReadline(opts, io);
+	try {
+		return await ask(rl);
+	} finally {
+		rl.close();
+	}
+}
+
 /**
  * Contract §Prompt order: lead model+effort then helper model+effort, before the product's own
  * style prompt. Skipped (defaults kept) for --yes, non-TTY, --json, --no-tui, CI, or any explicit
@@ -182,41 +236,45 @@ async function promptModelRouteIfNeeded(
 	args: readonly string[],
 	opts: InstallOptions,
 	io: RouteIo,
+	cards: InstallCards | undefined,
 ): Promise<{ readonly opts: InstallOptions; readonly prompted: boolean }> {
 	if (!interactiveInstall(opts, io) || hasExplicitModelRouteFlags(args)) {
 		return { opts, prompted: false };
 	}
-	const rl = installReadline(opts, io);
-	try {
-		const route = await promptModelRoute(rl, io.stdout);
-		return {
-			opts: {
-				...opts,
-				profile: route.profile,
-				leadModel: route.leadModel,
-				effort: route.effort,
-				subagentModel: route.subagentModel,
-				subagentEffort: route.subagentEffort,
-			},
-			prompted: true,
-		};
-	} finally {
-		rl.close();
-	}
+	const route =
+		cards === undefined
+			? await askPlain(opts, io, (rl) => promptModelRoute(rl, io.stdout))
+			: await chooseModelRoute(cards);
+	return {
+		opts: {
+			...opts,
+			profile: route.profile,
+			leadModel: route.leadModel,
+			effort: route.effort,
+			subagentModel: route.subagentModel,
+			subagentEffort: route.subagentEffort,
+		},
+		prompted: true,
+	};
 }
 
 /** Contract §Summary card: print the route and wait for Enter before the first write. */
-async function confirmModelRouteSummary(opts: InstallOptions, io: RouteIo, color: boolean): Promise<void> {
+async function confirmModelRouteSummary(
+	opts: InstallOptions,
+	io: RouteIo,
+	color: boolean,
+	cards: InstallCards | undefined,
+): Promise<void> {
+	if (cards !== undefined) return confirmModelRoute(cards, opts, opts.codexHome);
 	io.stdout.write(renderModelRouteSummary(opts, opts.codexHome));
-	const rl = installReadline(opts, io);
-	try {
-		await waitForModelRouteConfirmation(rl, color);
-	} finally {
-		rl.close();
-	}
+	await askPlain(opts, io, (rl) => waitForModelRouteConfirmation(rl, color));
 }
 
-async function promptOutputStyleIfNeeded(opts: InstallOptions, io: RouteIo): Promise<OutputStyleId | undefined> {
+async function promptOutputStyleIfNeeded(
+	opts: InstallOptions,
+	io: RouteIo,
+	cards: InstallCards | undefined,
+): Promise<OutputStyleId | undefined> {
 	if (opts.style !== undefined) return opts.style as OutputStyleId;
 	if (!interactiveInstall(opts, io)) return undefined;
 
@@ -235,13 +293,33 @@ async function promptOutputStyleIfNeeded(opts: InstallOptions, io: RouteIo): Pro
 				)
 			: 0;
 
-	const rl = installReadline(opts, io);
-	try {
-		const index = await chooseStyleIndex(rl, io.stdout, defaultIndex);
-		return STYLE_MENU[index]?.styleId ?? "off";
-	} finally {
-		rl.close();
-	}
+	const index =
+		cards === undefined
+			? await askPlain(opts, io, (rl) => chooseStyleIndex(rl, io.stdout, defaultIndex))
+			: await cards.choose({
+					title: "Output style",
+					note: "How LitCodex words its replies; None leaves your current style alone.",
+					choices: STYLE_MENU.map(({ label, hint }) => ({ label, detail: hint })),
+					initial: defaultIndex,
+					initialTag: defaultIndex === 0 ? "default" : "current",
+				});
+	return STYLE_MENU[index]?.styleId ?? "off";
+}
+
+const PREFLIGHT_NAMES: Readonly<Record<InstallPreflightStage, string>> = {
+	"host-capabilities": "Host check",
+	"config-dry-run": "Config check",
+	"marketplace-payload": "Package",
+};
+
+const STEP_MARKS = { ok: "done", skipped: "skip", failed: "fail" } as const;
+
+/**
+ * A colourless prompt reads a cooked line, where Ctrl+C is the terminal's own SIGINT. A card without colour ends the
+ * process the same way; with colour the plain prompt reports an abort, and so does the card.
+ */
+function stopOnInterrupt(err: unknown, decorate: boolean): void {
+	if (err instanceof CardAbort && err.interrupted && !decorate) process.kill(process.pid, "SIGINT");
 }
 
 function emitError(io: RouteIo, err: unknown): number {
@@ -296,16 +374,22 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 				})
 			: "";
 	if (banner) io.stdout.write(banner);
+	const cards = installCards(opts, io);
+	cards?.begin(
+		questionCount(args, opts, io),
+		`Installs into ${opts.codexHome}. In config.toml only LitCodex's own keys change.`,
+	);
 
 	let prompted = false;
 	let effectiveStyle: OutputStyleId | undefined;
 	try {
-		const routePrompt = await promptModelRouteIfNeeded(args, opts, io);
+		const routePrompt = await promptModelRouteIfNeeded(args, opts, io, cards);
 		opts = routePrompt.opts;
 		prompted = routePrompt.prompted;
-		effectiveStyle = await promptOutputStyleIfNeeded(opts, io);
-		if (prompted) await confirmModelRouteSummary(opts, io, decorate);
+		effectiveStyle = await promptOutputStyleIfNeeded(opts, io, cards);
+		if (prompted) await confirmModelRouteSummary(opts, io, decorate, cards);
 	} catch (err) {
+		stopOnInterrupt(err, decorate);
 		return emitError(io, err instanceof Error ? err : new Error(String(err)));
 	}
 
@@ -319,6 +403,8 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 	}
 
 	let result: InstallResult;
+	const warnings: string[] = [];
+	let stepCard: StepCard | undefined;
 	let activeSpinner: Spinner | undefined;
 	let activityPending = false;
 	let marketplaceSource: MarketplaceSource | undefined;
@@ -343,13 +429,41 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 			...(effectiveStyle === undefined ? {} : { style: effectiveStyle }),
 			reconfigure: opts.reconfigure,
 			enforceCapabilityPreflight: true,
-			...(decorate ? {} : { onWarning: (message: string) => io.stderr.write(`Warning: ${message}\n`) }),
+			...(cards !== undefined
+				? { onWarning: (message: string) => warnings.push(message) }
+				: decorate
+					? {}
+					: { onWarning: (message: string) => io.stderr.write(`Warning: ${message}\n`) }),
 			onMarketplacePayload: (payload) => {
 				marketplacePayload = payload;
 			},
 			...(marketplaceSource === undefined ? {} : { marketplaceSourceDir: marketplaceSource.root }),
 		};
-		if (decorate) {
+		if (cards !== undefined) {
+			stepCard = cards.steps(
+				"Installing",
+				"Checks come first and may take up to 60 seconds each; config.toml is written at the Config step.",
+			);
+			result = await executeInstallPlan(plan, {
+				...executeDeps,
+				onPreflightStart: (stage) => stepCard?.start(preflightLabel(stage)),
+				onPreflightEnd: ({ stage, status, detail }) =>
+					stepCard?.end({
+						mark:
+							warnings.length > 0 && stage === "marketplace-payload"
+								? "warn"
+								: status === "ok"
+									? "done"
+									: "skip",
+						label: PREFLIGHT_NAMES[stage],
+						value: detail,
+					}),
+				onStepStart: (step) => stepCard?.start(humanLabel(step.kind)),
+				onStepEnd: ({ kind, status, detail, receipts }) =>
+					stepCard?.end({ mark: STEP_MARKS[status], label: stepName(kind), value: detail }, receipts),
+			});
+			stepCard.close();
+		} else if (decorate) {
 			io.stdout.write(`${renderPreflightIntro(opts.codexHome, true)}\n`);
 
 			const motion = io.stdout === process.stdout ? createBlockingSpinnerMotion(process.stdout.fd) : undefined;
@@ -397,6 +511,11 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 			result = await executeInstallPlan(plan, executeDeps);
 		}
 	} catch (err) {
+		stepCard?.stop("Stopped here; nothing after this ran");
+		if (cards !== undefined && (io.stderr as NodeJS.WriteStream).isTTY) {
+			io.stderr.write(renderInstallFailureCard(cards, toErrorJson(err)));
+			return err instanceof InstallError ? exitCodeForInstallError(err.code) : 1;
+		}
 		if (decorate) {
 			if (activityPending) activeSpinner?.fail("Current operation stopped");
 			io.stderr.write(renderInstallFailure(toErrorJson(err), true));
@@ -407,41 +526,65 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 		marketplaceSource?.cleanup();
 	}
 
-	const agentPrompt = interactiveInstall(opts, io)
-		? async (): Promise<boolean> => {
-				const rl = installReadline(opts, io);
-				try {
-					return !/^\s*n/iu.test((await rl.question(AGENT_FILE_QUESTION)).trim());
-				} finally {
-					rl.close();
-				}
-			}
-		: undefined;
-	const attributionPrompt = agentPrompt
-		? async (): Promise<boolean> => {
-				const rl = installReadline(opts, io);
-				try {
-					return /^\s*y/iu.test((await rl.question(ATTRIBUTION_QUESTION)).trim());
-				} finally {
-					rl.close();
-				}
-			}
-		: undefined;
-	const agentFileLine = await runInstallAgentFile({
-		env: io.env,
-		stdout: io.stdout,
-		codexHome: opts.codexHome,
-		version: PACKAGE_VERSION,
-		yes: opts.yes,
-		noAgentFile: opts.noAgentFile,
-		dryRun: false,
-		json: opts.json,
-		...(agentPrompt === undefined ? {} : { prompt: agentPrompt }),
-		...(attributionPrompt === undefined ? {} : { attributionPrompt }),
-	});
+	const agentPrompt = !interactiveInstall(opts, io)
+		? undefined
+		: cards === undefined
+			? () => askPlain(opts, io, async (rl) => !/^\s*n/iu.test((await rl.question(AGENT_FILE_QUESTION)).trim()))
+			: () =>
+					cards.confirm({
+						title: "LitFamily block",
+						note: "Adds the short LitFamily block to your global AGENTS.md and leaves your own text as it is; No leaves the file alone and remembers off.",
+						initial: true,
+						yes: "add",
+						no: "leave the file alone",
+					});
+	const attributionPrompt = !interactiveInstall(opts, io)
+		? undefined
+		: cards === undefined
+			? () => askPlain(opts, io, async (rl) => /^\s*y/iu.test((await rl.question(ATTRIBUTION_QUESTION)).trim()))
+			: () =>
+					cards.confirm({
+						title: "No-AI-attribution line",
+						note: "Yes also adds one line asking the model not to add AI attribution to commits or pull requests; No adds nothing.",
+						initial: false,
+						yes: "add the line",
+						no: "no line",
+					});
+	let agentFileLine: string;
+	try {
+		agentFileLine = await runInstallAgentFile({
+			env: io.env,
+			stdout: io.stdout,
+			codexHome: opts.codexHome,
+			version: PACKAGE_VERSION,
+			yes: opts.yes,
+			noAgentFile: opts.noAgentFile,
+			dryRun: false,
+			// The summary card shows the line itself.
+			json: opts.json || cards !== undefined,
+			...(agentPrompt === undefined ? {} : { prompt: agentPrompt }),
+			...(attributionPrompt === undefined ? {} : { attributionPrompt }),
+		});
+	} catch (err) {
+		if (!(err instanceof CardAbort)) throw err;
+		stopOnInterrupt(err, decorate);
+		return emitError(io, err);
+	}
 
 	if (opts.json) {
 		io.stdout.write(`${JSON.stringify({ ...result, agentFile: agentFileLine })}\n`);
+	} else if (cards !== undefined) {
+		io.stdout.write(
+			renderInstallSummary(cards, result, {
+				version: PACKAGE_VERSION,
+				model: opts.leadModel,
+				effort: opts.effort,
+				subagentModel: opts.subagentModel,
+				subagentEffort: opts.subagentEffort,
+				agentFile: agentFileLine,
+				warnings,
+			}),
+		);
 	} else if (decorate) {
 		io.stdout.write(
 			renderInstallReceipt(result, {
@@ -458,7 +601,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 			payload: marketplacePayload,
 			env: io.env,
 			json: opts.json,
-			write: (text) => io.stdout.write(text),
+			write: (text) => io.stdout.write(cards === undefined ? text : cards.notice(text)),
 			...checkLineFor(io),
 		});
 	}

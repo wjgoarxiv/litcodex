@@ -5,11 +5,11 @@ artwork. Like the other files under `docs/assets/`, they stay out of the npm pac
 
 How each picture was made:
 
-- `screen-install-questions`: a real `litcodex install` in a temporary home, run in a terminal and answered with Enter at
-  every question. The start banner is cut, the 40 model rows of each list are cut to the first two rows and the last
-  one, and the route box leaves out its path line. Each `…` marks a cut.
-- `screen-install-receipt`: the same install. The host checks before step 01, the description and path lines under each
-  step and several receipt rows are left out.
+- `screen-install-questions`: a real `litcodex install` with Codex CLI 0.163 in a temporary home, run in an 80-column
+  terminal. The picture stacks two moments: the first card, then the folded answers above the fourth card. The start
+  banner and the second and third cards are cut. Each `…` marks a cut.
+- `screen-install-receipt`: the same install. The lines Codex printed under the Marketplace and Plugin steps, the Models
+  and Codex host rows of the receipt card and the extensions notice are left out.
 - `screen-doctor`: a real `litcodex doctor` run in that home after the install. The start banner, the rows about model
   routes, concurrency and updates, the warnings that a home without a Codex sign-in produces, the status-line
   suggestion and the film-tool lines that follow the Office line are left out. One row for a retired option was also
@@ -30,5 +30,5 @@ with the LitCodex mark and ends on a card with the install command.
 
 Each picture comes in a dark and a light version. The terminal window is drawn around the captured text; the text
 itself was not edited. The light version darkens any color that would be hard to read on a light window, the way a
-terminal's minimum-contrast setting does. Lettering is set in MesloLGS NF Regular, licensed under the Apache License
+terminal's minimum-contrast setting does. Lettering is set in MesloLGS NF Regular and Bold, licensed under the Apache License
 2.0 ([notice](../MesloLGS-NF-LICENSE.txt)).

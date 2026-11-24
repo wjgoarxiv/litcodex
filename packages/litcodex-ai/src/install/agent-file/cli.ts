@@ -113,6 +113,32 @@ export const removeGlobalAgentFile = (codexHome: string, version: string): strin
 		}),
 	);
 
+interface AgentFileContext {
+	readonly env: NodeJS.ProcessEnv;
+	readonly codexHome: string;
+	readonly version: string;
+	readonly noAgentFile: boolean;
+}
+
+/** The line for a file the install leaves alone without asking, or undefined when it may ask. */
+const agentFileLeftAlone = (options: AgentFileContext): string | undefined => {
+	const path = agentFilePath(options.codexHome);
+	if (options.noAgentFile || readAgentFileMode({ env: options.env, codexHome: options.codexHome }) === "off") {
+		return `AGENT_FILE: off (${path} left as it is; turn on: litcodex config agentFile on)`;
+	}
+	const state = instructionFileState({ path, id: AGENT_FILE_ID, version: options.version });
+	if (state === "symlink" || state === "not-file" || state === "not-utf8") {
+		return `AGENT_FILE: ${state} ${path}; left as it is`;
+	}
+	return undefined;
+};
+
+/** How many of the two agent-file questions an interactive install may ask. */
+export const agentFileQuestionCount = (options: AgentFileContext): number => {
+	if (agentFileLeftAlone(options) !== undefined) return 0;
+	return storedAttributionMode(options.codexHome) === undefined ? 2 : 1;
+};
+
 /**
  * The install-time consent step. `--yes` writes; the skip flag and the stored `off`
  * mode leave the file alone; without a prompt a non-interactive install only says how
@@ -137,14 +163,9 @@ export const runInstallAgentFile = async (options: {
 		if (options.json !== true) options.stdout.write(`${line}\n`);
 		return line;
 	};
+	const left = agentFileLeftAlone(options);
+	if (left !== undefined) return say(left);
 	const path = agentFilePath(options.codexHome);
-	if (options.noAgentFile || readAgentFileMode({ env: options.env, codexHome: options.codexHome }) === "off") {
-		return say(`AGENT_FILE: off (${path} left as it is; turn on: litcodex config agentFile on)`);
-	}
-	const state = instructionFileState({ path, id: AGENT_FILE_ID, version: options.version });
-	if (state === "symlink" || state === "not-file" || state === "not-utf8") {
-		return say(`AGENT_FILE: ${state} ${path}; left as it is`);
-	}
 	if (options.dryRun) return say(agentFileDryRunLine(options.codexHome));
 	const attribution = (): AttributionMode => readAttributionMode({ env: options.env, codexHome: options.codexHome });
 	if (options.yes) return say(writeGlobalAgentFile(options.codexHome, options.version, attribution()));

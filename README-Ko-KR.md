@@ -93,6 +93,10 @@ npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex install
 모델과 지금 쓰는 출력 스타일이 그대로 골라집니다. 이어서 쓸 경로를 보여 주고 Enter를 한 번 더 기다린 뒤에야 플러그인과
 훅, 에이전트 역할을 등록하며, `~/.codex/config.toml`에서는 자기가 관리하는 항목만 고칩니다.
 
+터미널에서는 질문마다 작은 카드가 나옵니다. 방향키로 옮기거나 번호를 치고 Enter로 답하며, Ctrl+C로 멈춥니다. 답한 카드는
+한 줄로 접힙니다. `NO_COLOR`를 켜면 카드는 그대로이고 색만 빠집니다. 파이프, CI, `--yes`, `TERM=dumb`, 가로 40칸·세로 12줄보다
+작은 창에서는 예전처럼 글자로만 묻고 출력합니다.
+
 영수증에 `Status Ready for Codex`가 보이면 doctor 검사까지 이미 통과한 것입니다.
 
 설치기와 `litcodex doctor`, `litcodex --help`는 신스웨이브 LIT 마크로 시작합니다. 터미널 폭에 맞춰 크기가 달라지는

@@ -444,8 +444,8 @@ instructions unchanged, and treats route-looking text inside those instructions 
 unsafe routes, such as `gpt-5.6-luna` or `gpt-6-luna` with `ultra`.
 
 Since 0.4.2 the interactive installer asks for the LEAD model (plans and reviews) and the HELPER
-model (spawned/delegated agents) with numbered menus and prints a MODEL ROUTE summary card before
-any write. Normal install accepts every canonical id and alias listed by `model-catalog.json` (including
+model (spawned/delegated agents) with numbered menus, drawn as question cards on a terminal, and shows the model
+route before any write. Normal install accepts every canonical id and alias listed by `model-catalog.json` (including
 `gpt-6.1-sol`, `gpt-6-sol`, `gpt-6-luna`, and the selectable GPT-5.6 entries) with model-specific `--effort` bounds; the matching
 `--subagent-model` and effort flags select an explicit helper route. The fresh/default helper is GPT-6 Luna/max even
 when the lead is Astra. The native Codex `[agents.default].config_file`
@@ -472,7 +472,7 @@ headers. A receipt or doctor route summary does not claim child execution withou
 
 Installer contributors can run `npm run qa:installer-tty` after the native gates. This POSIX/Python 3
 regression packs and installs the actual package, uses the repository's pinned Codex CLI in disposable
-profiles, and checks 16 terminal-policy cases with bounded prompt handling. Run it serially because
+profiles, and checks 18 terminal-policy cases, the question cards among them, with bounded prompt handling. Run it serially because
 packing rebuilds the workspace. Transcripts and receipts remain under `.litcodex/installer-tty-policy/`;
 the installed prefix, profiles, and npm cache are removed after the run.
 

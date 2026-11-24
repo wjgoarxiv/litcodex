@@ -94,6 +94,10 @@ The installer asks which model leads, which model helps, and which output style 
 models and your current output style. It then shows the route it will write and waits for one more Enter. Only then
 does it register the plugin, its hooks and its agent roles, changing only the keys it manages in `~/.codex/config.toml`.
 
+In a terminal each question is a small card. Move with the arrow keys or type a number, press Enter to answer, and stop
+with Ctrl+C. An answered card folds to one line. `NO_COLOR` keeps the cards and drops the color. Pipes, CI, `--yes`,
+`TERM=dumb` and windows smaller than 40 by 12 keep the plain prompts and plain output.
+
 A receipt that says `Status Ready for Codex` means the doctor check has already passed.
 
 The installer, `litcodex doctor` and `litcodex --help` open with the synthwave LIT mark, a small pixel scene sized to

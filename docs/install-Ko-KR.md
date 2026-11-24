@@ -16,7 +16,8 @@ npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex install
 `~/.codex/config.toml`에서는 자기가 관리하는 항목만 고칩니다. 설치 중에 세 가지를 묻습니다. 어떤 모델이
 작업을 이끌지, 어떤 모델이 거들지, 답변을 어떤 스타일로 받을지입니다. 설치 자체가 끝나면 한 가지를 더 묻습니다.
 전역 `~/.codex/AGENTS.md`에 짧은 LitFamily 블록을 넣을지입니다. 예라고 하면 쓰고, 아니오라면 파일을 그대로 두고
-꺼짐으로 기억하고, `install --yes`는 예로 답하고, `--no-agent-file`은 건너뜁니다. 새로 설치하면 이끄는 쪽(리드)은
+꺼짐으로 기억하고, `install --yes`는 예로 답하고, `--no-agent-file`은 건너뜁니다. 예라고 했고 전에 정해 둔 적이 없으면
+AI 저작 표시를 넣지 말라는 한 줄도 블록에 넣을지 마지막으로 묻습니다. 새로 설치하면 이끄는 쪽(리드)은
 `gpt-6-astra`/`xhigh`, 일반 헬퍼는 `gpt-6-luna`/`max`로 시작하고, 지원되는 다른 모델과 추론 수준으로 바꿔도 됩니다.
 
 필요한 것은 npm 패키지에 다 들어 있어서 저장소를 복제할 일도, GitHub에 로그인할 일도 없습니다.
@@ -60,21 +61,26 @@ Windows에서 돌 수 없어서 `BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME`으로
 ## 설치부터 첫 작업까지 보이는 화면
 
 설치부터 첫 작업까지 LitCodex가 무엇을 출력하는지 사진 다섯 장으로 보여 줍니다. 모두 임시 홈에서 실제 프로그램을 실행해 캡처했고,
-사진을 짧게 하려고 뺀 줄은 사진마다 설명에 적었습니다. 사진은 Codex CLI 0.162에서 만들었으며, Codex 버전에 따라 훅 줄의 표현이나
+사진을 짧게 하려고 뺀 줄은 사진마다 설명에 적었습니다. 사진은 Codex CLI 0.162와 0.163에서 만들었으며, Codex 버전에 따라 훅 줄의 표현이나
 위치가 조금 다를 수 있습니다.
 
 대화형으로 실행하면 설치기가 세 가지를 묻습니다. 어떤 모델이 이끌지, 어떤 모델이 거들지, 답변을 어떤 스타일로 받을지입니다.
-그때마다 Enter를 누르면 첫 번째 선택지가 골라집니다. 권장 모델과 현재 출력 스타일입니다. 이어서 설치기가 쓰려는 경로를 상자로 보여 주고, Enter를 한 번 더 누르기 전까지는
-아무것도 쓰지 않습니다. 설치가 끝나면 한 가지를 더 묻습니다. 전역 `~/.codex/AGENTS.md`에 짧은 LitFamily 블록을 넣을지입니다.
+질문마다 카드가 하나씩 나옵니다. 방향키로 옮기거나 줄 번호를 치고 Enter를 누르세요. Enter만 누르면 강조된 기본값이
+골라집니다. 권장 모델과 현재 출력 스타일입니다. 답한 카드는 한 줄로 접힙니다. 네 번째 카드는 설치기가 쓰려는 경로를
+보여 주고, 거기서 Enter를 누르기 전까지는 아무것도 쓰지 않습니다. 설치 단계가 끝나면 전역 `~/.codex/AGENTS.md`에 짧은
+LitFamily 블록을 넣을지 묻고, `y`와 `n`이나 방향키로 답합니다. 어느 카드에서든 Ctrl+C로 멈출 수 있고, Esc는 답으로 치지 않습니다.
 
-<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-questions-dark.webp" /><img src="./assets/screens/screen-install-questions-light.webp" width="688" alt="터미널 창에서 litcodex install을 실행한 화면입니다. &quot;Choose the LEAD model (plans and reviews).&quot;에는 gpt-6-astra · xhigh가 recommended lead로 나오고 목록은 39. gpt-5.6-luna · xhigh까지 40줄입니다. &quot;Choose the HELPER model (spawned/delegated agents).&quot;에는 gpt-6-luna · max가 recommended helper로 나오고, &quot;Choose an output style for LitCodex responses.&quot;에는 선택지 다섯 개가 있습니다. MODEL ROUTE 상자에는 Provider openai, Lead gpt-6-astra · xhigh, Helpers gpt-6-luna · max가 보이고, 마지막에 &quot;Enter to continue · Ctrl-C to abort (nothing written yet)&quot;가 나옵니다." /></picture><br /><sub>임시 홈에서 실제 litcodex install을 실행하고 질문마다 Enter로 답해 캡처했습니다. 시작 배너는 뺐고, 모델 목록은 각각 마흔 줄인데 처음 두 줄과 마지막 줄만 남겼고, 경로 줄도 뺐습니다. …는 뺀 자리입니다.</sub></p>
+카드는 가로 40칸, 세로 12줄 이상인 터미널에서 나옵니다. `NO_COLOR`를 켜면 색 없이 나오고, UTF-8이 아닌 로캘에서는 ASCII로
+그립니다. 파이프, CI, `--yes`, `TERM=dumb`, 더 작은 창에서는 예전처럼 글자로만 묻고 출력합니다.
 
-마지막 Enter 뒤에 설치기는 여섯 단계를 차례로 거치고 영수증을 출력합니다. 먼저 Status 줄을 보세요. Ready for Codex라고 나오면
-플러그인, 훅, 에이전트 역할 일곱 개, 관리하는 설정 항목이 모두 자리를 잡았고 doctor 검사도 통과했다는 뜻입니다. 영수증 위의
-두 줄은 설치가 미리 준비하는 Office 도구와 영상 도구의 상태입니다. 이 준비가 끝나지 않으면 그렇다고 알리고, 나중에 실행할
-명령을 알려 줍니다.
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-questions-dark.webp" /><img src="./assets/screens/screen-install-questions-light.webp" width="688" alt="터미널 창에서 litcodex install을 실행한 화면입니다. LIT 1/6 &quot;Lead model&quot; 카드에는 &quot;Plans and reviews the work; press Enter to take gpt-6-astra · xhigh.&quot;라고 나오고, 40줄 중 첫 열두 줄이 보이며 gpt-6-astra · xhigh가 recommended lead이자 default로 강조되어 있습니다. 그 아래 접힌 답 세 줄은 Lead model gpt-6-astra · xhigh, Helper model gpt-6-luna · max, Output style ELI5 (English)입니다. LIT 4/6 &quot;Ready to install&quot; 카드에는 Provider openai, Lead, Helpers, Writes ~/.codex/config.toml (managed keys only)와 Install 버튼, &quot;Ctrl+C stop, nothing written yet&quot;가 있습니다." /></picture><br /><sub>임시 홈에서 실제 litcodex install을 실행해 캡처했습니다. 시작 배너와 두 번째, 세 번째 카드는 뺐습니다. …는 뺀 자리입니다.</sub></p>
 
-<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-receipt-dark.webp" /><img src="./assets/screens/screen-install-receipt-light.webp" width="728" alt="터미널 창에 litcodex install의 끝부분이 보입니다. 01 / 06 MARKETPLACE부터 06 / 06 HEALTH CHECK까지 여섯 단계가 각각 결과 줄과 함께 나오고, 마지막은 &quot;Running doctor: doctor passed&quot;입니다. 이어서 &quot;[litcodex] Office runtime ready for presentations and documents.&quot;와 &quot;[litcodex] Motion runtime ready for film rendering.&quot; 줄이 나옵니다. INSTALL RECEIPT 상자에는 &quot;Status Ready for Codex&quot;, &quot;Codex host codex-cli 0.162.1&quot;, &quot;Model gpt-6-astra · xhigh&quot;가 있고 &quot;Installation complete&quot;로 끝납니다." /></picture><br /><sub>같은 설치에서 캡처했습니다. 단계마다 붙는 설명과 경로 줄, 01단계 앞의 호스트 확인 줄, 영수증의 여러 줄은 뺐습니다.</sub></p>
+그 Enter 뒤에는 카드 하나에 검사와 단계가 끝나는 대로 한 줄씩 쌓입니다. 마켓플레이스와 플러그인 단계에는 Codex가 출력한 줄도
+함께 나옵니다. 마지막은 영수증 카드입니다. 먼저 Status 줄을 보세요. Ready for Codex라고 나오면 플러그인, 훅, 에이전트 역할
+일곱 개, 관리하는 설정 항목이 모두 자리를 잡았고 doctor 검사도 통과했다는 뜻입니다. 단계가 실패하면 빨간 카드가 코드와 이유,
+다음에 할 일을 알려 줍니다.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-receipt-dark.webp" /><img src="./assets/screens/screen-install-receipt-light.webp" width="620" alt="터미널 창에 litcodex install의 끝부분이 보입니다. &quot;Installing&quot; 카드에는 Host check, Config check, Package, Marketplace, Plugin, Hooks, Subagents, Config, Health check가 결과와 함께 나오고 마지막은 &quot;doctor passed&quot;입니다. 접힌 답 두 줄은 LitFamily block add와 No-AI-attribution line no line입니다. &quot;LitCodex 1.0.47 is installed&quot; 카드에는 Status Ready for Codex, Marketplace, Subagents, Config, Steps, AGENTS.md가 있고, Next 아래에는 Codex를 다시 켜고 LitCodex 훅을 승인한 뒤 lit으로 요청을 시작하라고 나옵니다." /></picture><br /><sub>같은 설치에서 캡처했습니다. Marketplace와 Plugin 단계 아래 Codex가 출력한 줄, 영수증 카드의 Models와 Codex host 줄, 그 아래 확장 안내는 뺐습니다.</sub></p>
 
 결과를 가장 빨리 확인하는 방법은 `litcodex doctor`입니다. 대부분의 줄이 yes 또는 no로 답하고, 이상이 없으면 All checks passed.로
 끝납니다.

@@ -34,7 +34,8 @@ npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex install
 ```
 
 설치기는 어떤 모델이 이끌지, 어떤 모델이 거들지, 답변 스타일은 무엇으로 할지 묻고, 쓰려는 내용을 먼저 보여 준 뒤
-`~/.codex/config.toml`에서 자기가 관리하는 항목만 고칩니다. 계획만 먼저 보려면
+`~/.codex/config.toml`에서 자기가 관리하는 항목만 고칩니다. 터미널에서는 질문마다 카드가 나와 방향키나 번호와 Enter로
+답하고, 파이프와 CI, `TERM=dumb`에서는 예전처럼 글자로만 묻습니다. 계획만 먼저 보려면
 `npm exec --yes --package @litfamily/litcodex@1.0.47 -- litcodex --dry-run install`을 실행하고, 묻는 단계 없이
 설치하려면 `install` 뒤에 `--yes`를 붙이세요.
 

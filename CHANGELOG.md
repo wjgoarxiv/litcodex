@@ -19,6 +19,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Codex log, read at most once in five seconds and only after it changed; the HUD still writes nothing. 256-colour,
   plain, `NO_COLOR`, `--once` and light-background (`COLORFGBG`) frames are unchanged.
 
+### Changed
+
+- `litcodex install` now asks its questions as cards when it runs in a terminal. Each card says what the choice does,
+  shows the default, and takes the arrow keys, a row number, `y` or `n`, and Enter; long model lists scroll. Answered
+  cards fold to one line. The steps share one card, and the receipt is a card grouped into what was installed, the
+  models, the Codex host and what to do next. A failed install ends with a red card. `NO_COLOR` keeps the cards without
+  color, a locale without UTF-8 draws them in ASCII, and 256- and 16-color terminals get matching colors. The
+  questions, their order, the defaults and what gets stored are unchanged. Pipes, CI, `--yes`, `--json`, `--no-tui`,
+  `TERM=dumb` and windows smaller than 40 by 12 print exactly what they printed before.
+
+### Fixed
+
+- Ctrl+C at the AGENTS.md questions after an interactive install now stops with the usual message instead of a stack
+  trace. The exit code is still 1.
+
 ## [1.0.47] - 2026-11-24
 
 ### Changed

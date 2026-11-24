@@ -7,6 +7,7 @@ All profiles, npm state, transcripts and receipts stay in the ignored repo state
 """
 
 import errno
+import fcntl
 import hashlib
 import json
 import os
@@ -16,14 +17,22 @@ import re
 import select
 import shutil
 import signal
+import struct
 import subprocess
 import tempfile
+import termios
 import time
 
 
 ROOT = Path(__file__).resolve().parents[1]
 ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
-QUESTION = re.compile(r"Select 0-\d+ \[\d+\]: |  Press Enter to install · Ctrl-C to abort: ")
+SGR = re.compile(rb"\x1b\[[0-9;]*m")
+AGENT_FILE = "Your own text stays as it is. [Y/n] "
+ATTRIBUTION = "commits or pull requests? [y/N] "
+QUESTION = re.compile("|".join([r"Select 0-\d+ \[\d+\]: ", "  Press Enter to install · Ctrl-C to abort: ",
+                                re.escape(AGENT_FILE), re.escape(ATTRIBUTION)]))
+# A question card, once its last line (the key hints) is on screen. Redraws repeat a step; a step is one question.
+CARD = re.compile(r"LIT (\d/\d)[\s\S]*?Ctrl\+C stop")
 
 
 def model_prompts():
@@ -45,7 +54,14 @@ def model_prompts():
 MODEL_PROMPTS = model_prompts()
 STYLE_PROMPT = [("Select 0-4 [0]: ", "3")]
 CONFIRM = [("  Press Enter to install · Ctrl-C to abort: ", "")]
-ALL_PROMPTS = MODEL_PROMPTS + STYLE_PROMPT + CONFIRM
+AGENT_PROMPTS = [(AGENT_FILE, ""), (ATTRIBUTION, "")]
+ALL_PROMPTS = MODEL_PROMPTS + STYLE_PROMPT + CONFIRM + AGENT_PROMPTS
+# The same six questions as cards: Enter, Enter, the fourth style by arrows, Enter, `y`, then Right and Enter.
+DOWN, RIGHT = "\x1b[B", "\x1b[C"
+ALL_CARDS = [("1/6", "\r"), ("2/6", "\r"), ("3/6", DOWN * 3 + "\r"), ("4/6", "\r"), ("5/6", "y"),
+             ("6/6", RIGHT + "\r")]
+CARD_STOP = [("1/6", "\r"), ("2/6", "\x03")]
+STYLE_CARDS = [("1/5", "\r"), ("2/5", "\r"), ("3/5", "\r"), ("4/5", "\r"), ("5/5", "n")]
 
 
 def environment(sandbox):
@@ -70,8 +86,15 @@ def environment(sandbox):
     return env
 
 
-def run_pty(command, cwd, env, expected):
+def asked(plain, cards):
+    if not cards:
+        return QUESTION.findall(plain)
+    return list(dict.fromkeys(CARD.findall(plain)))
+
+
+def run_pty(command, cwd, env, expected, cards, rows):
     master, slave = pty.openpty()
+    fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", rows, 100, 0, 0))
     child = None
     output = bytearray()
     answered = []
@@ -104,13 +127,15 @@ def run_pty(command, cwd, env, expected):
                 failures.append("installer exceeded transcript bound")
                 break
             plain = ANSI.sub("", output.decode("utf-8", errors="replace"))
-            questions = QUESTION.findall(plain)
+            questions = asked(plain, cards)
             if len(questions) > len(answered):
                 index = len(answered)
                 if index >= len(expected) or questions[index] != expected[index][0]:
                     failures.append(f"unexpected prompt: {questions[index]!r}")
                     break  # Never answer a forbidden prompt just to get a green exit.
-                os.write(master, (expected[index][1] + "\n").encode())
+                if cards:
+                    time.sleep(0.5)  # Past the moment in which an Enter still belongs to the letter before it.
+                os.write(master, (expected[index][1] + ("" if cards else "\n")).encode())
                 answered.append(questions[index])
         if not failures:
             try:
@@ -134,7 +159,9 @@ def run_pty(command, cwd, env, expected):
 
 
 def probe(binary, sandbox, evidence, case):
-    name, flags, extra_env, expected, color, blocks, style = case
+    name, flags, extra_env, expected, color, blocks, style = case[:7]
+    rows = case[7] if len(case) > 7 else 40
+    cards = expected in (ALL_CARDS, STYLE_CARDS, CARD_STOP)
     directory = sandbox / name
     env = environment(directory)
     env.update(extra_env)
@@ -146,17 +173,25 @@ def probe(binary, sandbox, evidence, case):
                                 stderr=subprocess.STDOUT, timeout=60, check=False)
         code, output, answered, failures = result.returncode, result.stdout, [], []
     else:
-        code, output, answered, failures = run_pty(command, project, env, expected)
+        code, output, answered, failures = run_pty(command, project, env, expected, cards, rows)
     (evidence / f"{name}.txt").write_bytes(output)
     plain = ANSI.sub("", output.decode("utf-8", errors="replace")).replace("\r", "")
-    escapes = output.count(b"\x1b")
+    # Cards move the cursor even without colour; only SGR counts as colour there.
+    escapes = len(SGR.findall(output)) if cards else output.count(b"\x1b")
     has_blocks = bool(re.search("[\u2580-\u259f]", plain))
     config = Path(env["CODEX_HOME"]) / "config.toml"
     installed = config.is_file() and (Path(env["CODEX_HOME"]) / "plugins/cache/litcodex/litcodex").is_dir()
     dry_run = "--dry-run" in flags
-    if code != 0:
-        failures.append(f"exit {code}, expected 0")
-    if installed == dry_run:
+    stopped = expected == CARD_STOP
+    if code != (1 if stopped else 0):
+        failures.append(f"exit {code}, expected {1 if stopped else 0}")
+    if cards and output.rfind(b"\x1b[?25h") < output.rfind(b"\x1b[?25l"):
+        failures.append("the cursor was left hidden")
+    if cards and QUESTION.search(plain):
+        failures.append("a card run also printed a plain prompt")
+    if not cards and CARD.search(plain):
+        failures.append("a plain run drew a card")
+    if installed == (dry_run or stopped):
         failures.append(f"installed={installed}, dryRun={dry_run}")
     if bool(escapes) != color:
         failures.append(f"escape count {escapes}, color expected={color}")
@@ -164,7 +199,7 @@ def probe(binary, sandbox, evidence, case):
         failures.append("positive color control lacks truecolor SGR")
     if has_blocks != blocks:
         failures.append(f"blocks={has_blocks}, expected={blocks}")
-    if not blocks and "--no-tui" not in flags and "--json" not in flags and "LIT" not in plain.splitlines():
+    if not blocks and "--no-tui" not in flags and "--json" not in flags and "LIT · codex cli" not in plain:
         failures.append("plain LIT wordmark line missing")
     if not expected and (QUESTION.search(plain) or "Choose an output style" in plain):
         failures.append("noninteractive invocation printed a picker")
@@ -217,13 +252,15 @@ def main():
             ("yes-non-utf8", ["--yes"], {"LC_ALL": "C"}, [], False, False, None),
             ("ci-empty", [], {"CI": ""}, [], False, True, None),
             ("explicit-style", ["--yes", "--style", "eli5"], {"NO_COLOR": ""}, [], False, True, "eli5"),
-            ("non-tty", [], {}, [], False, True, None),
+            ("non-tty", [], {}, [], False, False, None),
             ("yes-color", ["--yes"], {}, [], True, True, None),
-            ("interactive-color", [], {}, ALL_PROMPTS, True, True, "eli5"),
-            ("interactive-no-color", [], {"NO_COLOR": ""}, ALL_PROMPTS, False, True, "eli5"),
-            ("interactive-dumb", [], {"TERM": "dumb"}, ALL_PROMPTS, False, False, "eli5"),
-            ("interactive-non-utf8", [], {"LC_ALL": "C"}, ALL_PROMPTS, False, False, "eli5"),
-            ("interactive-explicit-style", ["--style", "eli5-ko"], {}, MODEL_PROMPTS + CONFIRM, True, True, "eli5-ko"),
+            ("cards-color", [], {}, ALL_CARDS, True, True, "eli5"),
+            ("cards-no-color", [], {"NO_COLOR": ""}, ALL_CARDS, False, True, "eli5"),
+            ("cards-non-utf8", [], {"LC_ALL": "C"}, ALL_CARDS, False, False, "eli5"),
+            ("cards-explicit-style", ["--style", "eli5-ko"], {}, STYLE_CARDS, True, True, "eli5-ko"),
+            ("cards-ctrl-c", [], {}, CARD_STOP, True, True, None),
+            ("plain-dumb", [], {"TERM": "dumb"}, ALL_PROMPTS, False, False, "eli5"),
+            ("plain-short-window", [], {}, ALL_PROMPTS, True, True, "eli5", 10),
             ("no-tui", ["--no-tui"], {}, [], False, False, None),
             ("json", ["--json"], {}, [], False, False, None),
             ("dry-run", ["--dry-run"], {}, [], False, True, None),
@@ -237,7 +274,7 @@ def main():
     finally:
         shutil.rmtree(sandbox)
         receipt["cleaned"] = not sandbox.exists()
-        receipt["ok"] = (not receipt.get("error") and len(receipt["cases"]) == 16
+        receipt["ok"] = (not receipt.get("error") and len(receipt["cases"]) == len(cases)
                          and all(case["ok"] for case in receipt["cases"]) and receipt["cleaned"])
         (evidence / "receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
         print(f"Evidence: {evidence.relative_to(ROOT)}/receipt.json", flush=True)

@@ -7,6 +7,7 @@ import { FALLBACK_CATALOG, type ModelDefinition } from "../config-migration/cata
 import type { Gpt56Profile, ReasoningEffort } from "../config-migration/gpt56-policy.js";
 import { dim } from "../ui-style.js";
 import { InstallError } from "./errors.js";
+import type { CardChoice, InstallCards } from "./install-cards.js";
 
 export interface ModelRouteSelection {
 	readonly profile: Gpt56Profile;
@@ -133,6 +134,10 @@ export async function promptModelRoute(
 	const lead = LEAD_MENU_ROWS[leadIndex] ?? LEAD_MENU_ROWS[0];
 	const helperIndex = await chooseIndex(rl, stdout, renderHelperModelMenu(), HELPER_MENU_ROWS.length, 0);
 	const helper = HELPER_MENU_ROWS[helperIndex] ?? HELPER_MENU_ROWS[0];
+	return routeSelection(lead, helper);
+}
+
+function routeSelection(lead: MenuRow | undefined, helper: MenuRow | undefined): ModelRouteSelection {
 	if (lead === undefined || helper === undefined) {
 		throw new InstallError("LITCODEX_INSTALL_BAD_FLAG", "Model menu selection failed.", { flag: "--model" });
 	}
@@ -143,4 +148,46 @@ export async function promptModelRoute(
 		subagentModel: helper.model,
 		subagentEffort: helper.effort,
 	};
+}
+
+function menuChoices(rows: readonly MenuRow[]): readonly CardChoice[] {
+	const width = Math.max(...rows.map((row) => row.model.length));
+	const effort = Math.max(...rows.map((row) => row.effort.length));
+	return rows.map((row) => ({
+		label: `${row.model.padEnd(width)} · ${row.effort.padEnd(effort)}`,
+		detail: row.note.replace(/^— /u, ""),
+		answer: `${row.model} · ${row.effort}`,
+	}));
+}
+
+/** The same two questions as cards. */
+export async function chooseModelRoute(cards: InstallCards): Promise<ModelRouteSelection> {
+	const pick = async (title: string, work: string, rows: readonly MenuRow[]): Promise<MenuRow | undefined> => {
+		const choices = menuChoices(rows);
+		const note = `${work}; press Enter to take ${choices[0]?.answer ?? "the first row"}.`;
+		return rows[await cards.choose({ title, note, choices, initial: 0 })];
+	};
+	const lead = await pick("Lead model", "Plans and reviews the work", LEAD_MENU_ROWS);
+	const helper = await pick("Helper model", "Runs spawned and delegated agents", HELPER_MENU_ROWS);
+	return routeSelection(lead, helper);
+}
+
+/** The route about to be written, and the Enter that starts the install. */
+export function confirmModelRoute(
+	cards: InstallCards,
+	route: Pick<ModelRouteSelection, "leadModel" | "effort" | "subagentModel" | "subagentEffort">,
+	codexHome: string,
+): Promise<void> {
+	return cards.proceed({
+		title: "Ready to install",
+		note: "Enter starts the install with this model route; nothing has been written yet.",
+		rows: [
+			{ mark: "note", label: "Provider", value: "openai" },
+			{ mark: "note", label: "Lead", value: `${route.leadModel} · ${route.effort}` },
+			{ mark: "note", label: "Helpers", value: `${route.subagentModel} · ${route.subagentEffort}` },
+			{ mark: "note", label: "Writes", value: `${codexHome}/config.toml (managed keys only)` },
+		],
+		button: "Install",
+		answer: "confirmed",
+	});
 }

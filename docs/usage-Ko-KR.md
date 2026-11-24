@@ -347,7 +347,7 @@ litcodex loop doctor
 - [CHANGELOG.md](../CHANGELOG.md) — 릴리스 이력
 
 설치기 수정 후에는 기본 검증에 이어 `npm run qa:installer-tty`를 실행할 수 있습니다. POSIX/Python 3에서
-실제 패키지를 pack·설치하고 저장소에 고정된 Codex CLI와 격리 프로필로 터미널 정책 16개를 검증합니다.
+실제 패키지를 pack·설치하고 저장소에 고정된 Codex CLI와 격리 프로필로 터미널 정책 18개를 검증합니다. 질문 카드도 포함합니다.
 질문 응답과 실행 시간에는 상한이 있으며, pack 과정에서 빌드하므로 다른 검증과 동시에 실행하지 마세요.
 기록은 `.litcodex/installer-tty-policy/`에 남고 설치 경로·프로필·npm 캐시는 실행 후 제거됩니다.
 

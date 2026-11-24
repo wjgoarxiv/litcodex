@@ -940,6 +940,8 @@
 		"packages/litcodex-ai/src/install/host-capabilities.ts",
 		"packages/litcodex-ai/src/install/index.ts",
 		"packages/litcodex-ai/src/install/install-agents.test.ts",
+		"packages/litcodex-ai/src/install/install-cards.test.ts",
+		"packages/litcodex-ai/src/install/install-cards.ts",
 		"packages/litcodex-ai/src/install/install-config-routes.test.ts",
 		"packages/litcodex-ai/src/install/install-doctor-bundled-skills.test.ts",
 		"packages/litcodex-ai/src/install/install-doctor.test.ts",

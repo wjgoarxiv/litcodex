@@ -16,7 +16,8 @@ The installer sets LitCodex up inside Codex. It registers the plugin, its hooks 
 it changes only the keys it manages in `~/.codex/config.toml`. Along the way it asks three questions:
 which model leads, which model helps, and which output style you like. Once the install itself is done,
 it asks one more: whether to add the short LitFamily block to the global `~/.codex/AGENTS.md` — yes writes
-it, no leaves the file alone and remembers off, `install --yes` answers yes, and `--no-agent-file` skips it.
+it, no leaves the file alone and remembers off, `install --yes` answers yes, and `--no-agent-file` skips it. If you
+say yes and have not chosen before, a last question asks whether the block should also ask for no AI attribution.
 On a fresh install the lead is
 `gpt-6-astra` at `xhigh` and ordinary helpers use `gpt-6-luna` at `max`. Pick another supported model
 and effort if you prefer.
@@ -63,21 +64,26 @@ descriptors cannot run there, so on Windows they stop with `BLOCKED_UNSUPPORTED_
 
 Five pictures show what LitCodex prints, from the first install to your first task. Each one was captured from the
 real program in a temporary home, and each caption says which lines were cut to keep the picture short. They come
-from Codex CLI 0.162; other Codex versions may word or place hook lines a little differently.
+from Codex CLI 0.162 and 0.163; other Codex versions may word or place hook lines a little differently.
 
 Run interactively, the installer asks three questions: which model leads, which model helps, and which output style
-you like. Pressing Enter keeps the first choice each time: the recommended models and your current output style. A box then lists the route the installer is about to write,
-and nothing is written until you press Enter once more. After the install finishes, it asks one more question —
-whether to add the short LitFamily block to the global `~/.codex/AGENTS.md`.
+you like. Each one is a card. Move with the arrow keys, or type a row's number, and press Enter; Enter alone keeps the
+highlighted default: the recommended models and your current output style. Answered cards fold to one line each. The
+fourth card lists the route the installer is about to write, and nothing is written until you press Enter there. After
+the steps it asks about the short LitFamily block for the global `~/.codex/AGENTS.md`, with `y` and `n` or the arrow
+keys. Ctrl+C stops at any card, and Esc never answers one.
 
-<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-questions-dark.webp" /><img src="./assets/screens/screen-install-questions-light.webp" width="688" alt="A terminal window running litcodex install. It asks &quot;Choose the LEAD model (plans and reviews).&quot; with gpt-6-astra · xhigh as recommended lead and 40 rows ending at 39. gpt-5.6-luna · xhigh, &quot;Choose the HELPER model (spawned/delegated agents).&quot; with gpt-6-luna · max as recommended helper, and &quot;Choose an output style for LitCodex responses.&quot; with five options. A MODEL ROUTE box shows Provider openai, Lead gpt-6-astra · xhigh and Helpers gpt-6-luna · max, then &quot;Enter to continue · Ctrl-C to abort (nothing written yet)&quot;." /></picture><br /><sub>Captured from a real litcodex install in a temporary home, answered with Enter at each question. The start banner is cut, the 40 model rows of each list are cut to the first two and the last, and the route box leaves out its path line; each … marks a cut.</sub></p>
+The cards need a terminal at least 40 columns by 12 rows. `NO_COLOR` keeps them without color, and a locale without
+UTF-8 draws them in plain ASCII. Pipes, CI, `--yes`, `TERM=dumb` and smaller windows keep the plain prompts and output.
 
-After the last Enter the installer works through six steps and prints a receipt. Start with the Status row: Ready for
-Codex means the plugin, the hook, the seven agent roles and the managed config keys are in place and the doctor
-check passed. The two lines above the receipt report the Office and film tools that the install prepares ahead of
-time. If that step cannot finish, the line says so and names the command to run later.
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-questions-dark.webp" /><img src="./assets/screens/screen-install-questions-light.webp" width="688" alt="A terminal window running litcodex install. The card LIT 1/6, &quot;Lead model&quot;, says &quot;Plans and reviews the work; press Enter to take gpt-6-astra · xhigh.&quot; and shows the first twelve of 40 rows with gpt-6-astra · xhigh highlighted as the recommended lead and default. Three folded answers follow: Lead model gpt-6-astra · xhigh, Helper model gpt-6-luna · max, Output style ELI5 (English). The card LIT 4/6, &quot;Ready to install&quot;, lists Provider openai, Lead, Helpers and Writes ~/.codex/config.toml (managed keys only), with an Install button and &quot;Ctrl+C stop, nothing written yet&quot;." /></picture><br /><sub>Captured from a real litcodex install in a temporary home. The start banner and the second and third cards are cut; each … marks a cut.</sub></p>
 
-<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-receipt-dark.webp" /><img src="./assets/screens/screen-install-receipt-light.webp" width="728" alt="A terminal window with the end of litcodex install. Six steps, 01 / 06 MARKETPLACE to 06 / 06 HEALTH CHECK, each with a result line, the last being &quot;Running doctor: doctor passed&quot;. Then &quot;[litcodex] Office runtime ready for presentations and documents.&quot; and &quot;[litcodex] Motion runtime ready for film rendering.&quot; An INSTALL RECEIPT box shows &quot;Status Ready for Codex&quot;, &quot;Codex host codex-cli 0.162.1&quot;, &quot;Model gpt-6-astra · xhigh&quot; and ends with &quot;Installation complete&quot;." /></picture><br /><sub>Captured from the same install. The description and path lines under each step, the host checks before step 01 and several receipt rows are cut.</sub></p>
+After that Enter one card lists each check and step as it finishes, with the lines Codex itself printed under the
+marketplace and plugin steps. The receipt card comes last. Start with the Status row: Ready for Codex means the plugin,
+the hook, the seven agent roles and the managed config keys are in place and the doctor check passed. If a step fails,
+a red card names the code, the reason and what to do next.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-receipt-dark.webp" /><img src="./assets/screens/screen-install-receipt-light.webp" width="620" alt="A terminal window with the end of litcodex install. The card &quot;Installing&quot; lists Host check, Config check, Package, Marketplace, Plugin, Hooks, Subagents, Config and Health check, each with a result, the last being &quot;doctor passed&quot;. Two folded answers say LitFamily block add and No-AI-attribution line no line. The card &quot;LitCodex 1.0.47 is installed&quot; shows Status Ready for Codex, Marketplace, Subagents, Config, Steps and AGENTS.md, and under Next says to restart Codex, approve the LitCodex hooks and start a request with lit." /></picture><br /><sub>Captured from the same install. The lines Codex printed under the Marketplace and Plugin steps, the Models and Codex host rows of the receipt card, and the extensions notice below it are cut.</sub></p>
 
 `litcodex doctor` is the quickest way to check the result. Most rows answer yes or no, and a clean run ends with
 All checks passed.
