@@ -21,12 +21,13 @@ How each picture was made:
 - `screen-loop`: the real `litcodex loop` commands in an empty project. The long commands are split with backslashes to
   fit, and the output of the second evidence command is cut.
 
-The demo film in the README, `../demo.webp`, is an animated WebP of one LitCodex turn in Codex CLI, in a small Node
-project shown as `~/greet`. Numbered labels name each step as it happens: the word `lit` turns LitCodex on, the hook
-picks lit-loop, the map line under the hook block shows the turn at WORK with review and done still ahead, Codex reads
-its lit-code playbook before it edits anything, writes a test and sees `npm test` fail, fixes `greet.js`, checks the CLI
-and runs `npm test` again, and the summary ends with the Stop hook's `✨ turn done` line. The film opens on a title card
-with the LitCodex mark and ends on a card with the install command.
+The demo film in the README, `../demo.webp` (`../demo-ko.webp` on the Korean page), is a silent 18-second loop of one
+LitCodex turn in a small Node project shown as `~/greet`, with Codex in the top pane and `litcodex hud` in a pane
+under it. The hud card is drawn by the HUD's own card code with the round caps on, and the hook lines are the hook's real
+output; the Codex chat around them is redrawn. In it the word `lit` turns LitCodex on, the hook names lit-loop, Codex
+reads its lit-code playbook, writes a test and sees `npm test` fail while two lanes run under the map, fixes `greet.js`,
+checks the CLI, and the card ends on DONE with its two-second burst before it rests under the sunset. The Korean
+file has the same turn with Korean lines; the card itself stays in English.
 
 Each picture comes in a dark and a light version. The terminal window is drawn around the captured text; the text
 itself was not edited. The light version darkens any color that would be hard to read on a light window, the way a

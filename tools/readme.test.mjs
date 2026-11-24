@@ -1068,24 +1068,32 @@ describe("GitHub and npm README split", () => {
 		for (const source of [INSTALL_DOC, INSTALL_DOC_KO]) {
 			assert.ok(source.includes("./assets/screens/README.md"), "install guide links the media notes");
 		}
-		// The landing READMEs show the session film, an animated WebP, in the demo slot before the first section.
-		const film = readFileSync(join(REPO_ROOT, "docs/assets/demo.webp"));
-		assert.equal(film.subarray(0, 4).toString("latin1"), "RIFF", "demo.webp is a RIFF container");
-		assert.equal(film.subarray(8, 12).toString("latin1"), "WEBP", "demo.webp is a WebP");
-		assert.ok(film.length <= 8 * 1024 * 1024, `demo.webp stays within 8 MiB (${film.length} bytes)`);
+		// The landing READMEs show the session film, an animated WebP, in the demo slot before the first section;
+		// the Korean page plays its own copy with Korean lines.
+		const films = new Map([
+			[README_PATH, "demo.webp"],
+			[README_KO_PATH, "demo-ko.webp"],
+		]);
+		for (const name of new Set(films.values())) {
+			const film = readFileSync(join(REPO_ROOT, "docs/assets", name));
+			assert.equal(film.subarray(0, 4).toString("latin1"), "RIFF", `${name} is a RIFF container`);
+			assert.equal(film.subarray(8, 12).toString("latin1"), "WEBP", `${name} is a WebP`);
+			assert.ok(film.includes(Buffer.from("ANIM")), `${name} is animated`);
+			assert.ok(film.length <= 8 * 1024 * 1024, `${name} stays within 8 MiB (${film.length} bytes)`);
+		}
 		assert.ok(!existsSync(join(REPO_ROOT, "docs/assets/demo.gif")), "the old demo GIF is gone");
 		for (const [path, source] of GITHUB_READMES) {
 			const demo = source.split("\n").find((line) => line.includes("<!-- demo-gif -->"));
 			assert.ok(demo, `${path} marks its demo slot`);
-			assert.match(
-				demo,
-				/<img src="\.\/docs\/assets\/demo\.webp" width="960" alt="[^"]{80,}"/u,
-				`${path} demo shows the session film with a full alt text`,
+			assert.ok(
+				demo.includes(`<img src="./docs/assets/${films.get(path)}" width="960" alt="`),
+				`${path} demo plays ${films.get(path)}`,
 			);
+			assert.match(demo, /alt="[^"]{80,}"/u, `${path} demo shows the session film with a full alt text`);
 			assert.ok(source.indexOf(demo) < source.indexOf("\n## "), `${path} shows the demo before the first section`);
 		}
 		const packed = join(REPO_ROOT, "packages", "litcodex-ai", "readme-assets");
-		for (const file of [...files, "demo.webp", "demo.gif"])
+		for (const file of [...files, "demo.webp", "demo-ko.webp", "demo.gif"])
 			assert.ok(!existsSync(join(packed, file)), `${file} is not in the npm payload`);
 		for (const [, source] of NPM_READMES) {
 			assert.ok(!source.includes("docs/assets/screens"), "npm cards carry no snapshots");

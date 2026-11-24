@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The README demo is a new silent loop of one turn with the rounded `litcodex hud` card in its own pane (two lanes, the
+  completion burst, the sunset), with a Korean copy for the Korean page; the Codex chat around the card is redrawn.
 - `litcodex hud` is now one framed card on dark truecolor terminals at least 40 columns wide: the running skill and a
   state word in the title, the stage map in words with the live lanes, the task gauge, next task and running tool,
   thread rows in aligned columns, the LIT skill in use, and context, limits, branch and folder on the bottom edge. A

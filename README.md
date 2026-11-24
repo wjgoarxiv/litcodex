@@ -16,10 +16,14 @@ so the next session starts where this one stopped.
 
 [한국어](./README-Ko-KR.md) · [Install](#install) · [First task](#start-with-lit) · [What you get](#what-you-get) · [Commands](#commands) · [Update](#update-and-uninstall) · [Learn more](#learn-more)
 
-The short film below is one real turn: a test written first, a failing run, the fix, and a passing run
-before Codex says the turn is done.
+The loop below is one fix in a small project, drawn the way it looks on your screen: Codex on top and `litcodex hud`
+open in a pane under it. You type `lit` and a request. A hook prints the LIT mark and names the route, and the card in
+the lower pane wakes up. While Codex reads, edits and runs the tests, the card follows each tool with its clock, shows
+two helper lanes while the first test run fails, and ends on DONE with a short burst.
 
-<p><img src="./docs/assets/demo.webp" width="960" alt="A short film of a LitCodex session in Codex CLI. It opens on a title card with the LIT mark: LitCodex, The lit workflow for Codex CLI. Numbered labels then follow one turn in a small Node project. 1: typing &quot;lit add a --shout flag that prints the greeting in capitals, with a test&quot; turns LitCodex on. 2: the hook block shows the LIT mark beside &quot;🔥 LIT IGNITED · lit-loop 🔥&quot;. 3: the line under the mark, &quot;🔨 WORK › 🔍 · › 🏁 ·&quot;, is a map of where the turn stands: work now, then review and done. 4: Codex plans first and reads its lit-code playbook, Read SKILL.md (litcodex:lit-code skill). 5: it writes the test before the fix, Edited test/greet.test.js, and npm test fails with exit 1. 6: it fixes greet.js, runs the CLI with --shout and runs npm test again. 7: the summary says the tests and the direct CLI checks pass, and the Stop hook adds &quot;✨ turn done&quot;. The film closes on a card with the install command." /></p> <!-- demo-gif -->
+<p><img src="./docs/assets/demo.webp" width="960" alt="A silent loop of a Codex CLI session with `litcodex hud` open in a pane below it. The prompt &quot;lit add a --shout flag that prints the greeting in capitals, with a test&quot; makes the hook print the LIT mark, LIT IGNITED · lit-loop and a first map row. The rounded hud card follows each tool, Read, Edit and Bash, with its clock; two lanes, Aquinas and Lagrange, run under the map while npm test fails and then passes. The card ends on DONE with a two-second burst, then rests under a sunset." /></p> <!-- demo-gif -->
+
+*The hud card and the hook text are LitCodex's own output; the Codex chat around them is redrawn.*
 
 ## What is LitCodex
 
