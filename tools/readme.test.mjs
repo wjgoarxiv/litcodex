@@ -102,7 +102,7 @@ describe("readme content invariants", () => {
 		for (const [path, expected] of [
 			["docs/assets/cover.svg", "beaebae32674155ff5f3e1e1e5ea8283184613208d3e10f9d75f4b73959d11f0"],
 			["docs/assets/cover.webp", "90099f77838a47c26ebd52fdec8c25a67071345a6c3b2bcbe7324d35d7ebb086"],
-			["docs/assets/cover-motion.webp", "f3d8a87f8172af36bcc7ac6f20cad5fc9712a512f32681534055ca912aecca98"],
+			["docs/assets/cover-motion.webp", "41293053c9439afc4ad0893d205b618d0b061bb6dcf586fd9e4cc1c7fc28adba"],
 			["plugins/litcodex/assets/logo.png", "bb718ab43988aa059b17dea1ef9e83262f0cfe2c3c9679092eb3f03e327a7674"],
 		]) {
 			assert.equal(
@@ -255,8 +255,8 @@ describe("readme content invariants", () => {
 			assert.ok(
 				source.includes(
 					path === README_KO_PATH || path === PKG_README_KO_PATH
-						? 'alt="LitFamily 모션 커버: 일곱 머신의 칸이 차례로 켜지고, 셋째 칸의 LitCodex 머신이 주황 바이저와 테두리를 밝힌 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상"'
-						: 'alt="LitFamily motion cover: seven armored machines power on bay by bay, the LitCodex machine in the third bay wakes with a glowing orange visor and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up."',
+						? 'alt="LitFamily 모션 커버: 노을빛 터미널 화면입니다. 위쪽에는 LitCodex의 hud 카드가 단계 지도, 작업 줄, 레인과 함께 있고, 가운데는 픽셀 글자 LITFAMILY와 줄무늬 해가 채우며, 일곱 제품 이름 줄에서 LITCODEX가 켜지고, 아래에서는 litcodex hud 셸 프롬프트가 기다립니다."'
+						: 'alt="LitFamily motion cover: a terminal in a sunset look. LitCodex\'s hud card sits at the top with its stage map, task line and lanes, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITCODEX, and a shell prompt with litcodex hud waits at the bottom."',
 				),
 				"README describes the motion cover",
 			);

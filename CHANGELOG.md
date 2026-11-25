@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The README cover is a new loop: a terminal in the sunset look with the `litcodex hud` card, a pixel LITFAMILY wordmark and a striped half-sunk sun, in place of the seven machine bays. The still for reduced motion is its first frame, and the package copies match.
 - The README demo is a new silent loop of one turn with the rounded `litcodex hud` card in its own pane (two lanes, the
   completion burst, the sunset), with a Korean copy for the Korean page; the Codex chat around the card is redrawn.
 - `litcodex hud` is now one framed card on dark truecolor terminals at least 40 columns wide: the running skill and a

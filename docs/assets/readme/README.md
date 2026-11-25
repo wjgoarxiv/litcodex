@@ -22,14 +22,13 @@ Their strokes use the Ignition lime color. The complete upstream
 Only these three icons are used and distributed here.
 
 The landing pages lead with the motion cover at `../cover-motion.webp`
-(SHA-256 `f3d8a87f8172af36bcc7ac6f20cad5fc9712a512f32681534055ca912aecca98`,
-1,887,056 bytes). It is a looping 960x640 animated WebP of about 11 seconds,
-made with the LitFamily motion skill: from a dark standby, seven armored machines
-power on bay by bay, the LitCodex machine in the third bay wakes with a glowing
-orange visor and a lit frame, and then LITFAMILY and KEEP THE WORK LIT. light up. When reduced motion is
+(SHA-256 `41293053c9439afc4ad0893d205b618d0b061bb6dcf586fd9e4cc1c7fc28adba`,
+1,140,562 bytes). It is a looping 960x640 animated WebP of about 8 seconds,
+made with the LitFamily motion skill: a terminal in the sunset look with the LitCodex
+hud card, a pixel LITFAMILY wordmark and a striped half-sunk sun. When reduced motion is
 preferred, the READMEs show `../cover-motion-still.webp`
-(SHA-256 `be73d7967dc24a8e9adb9742c25346a7501cc0e115c125e9904b44d3468cc6fa`,
-132,566 bytes), the fully lit hold frame. The package README loads identical
+(SHA-256 `2ff3779e87ed757af30e79a47523c7d1661de79bac702f6d65d4fd391f000d0f`,
+63,902 bytes), its first frame. The package README loads identical
 copies from the published package's `readme-assets/` directory. The cover is
 documentation artwork, not a registry-availability claim.
 

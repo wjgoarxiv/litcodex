@@ -1,4 +1,4 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 일곱 머신의 칸이 차례로 켜지고, 셋째 칸의 LitCodex 머신이 주황 바이저와 테두리를 밝힌 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 노을빛 터미널 화면입니다. 위쪽에는 LitCodex의 hud 카드가 단계 지도, 작업 줄, 레인과 함께 있고, 가운데는 픽셀 글자 LITFAMILY와 줄무늬 해가 채우며, 일곱 제품 이름 줄에서 LITCODEX가 켜지고, 아래에서는 litcodex hud 셸 프롬프트가 기다립니다." /></picture></p>
 
 # LitCodex
 

@@ -1,4 +1,4 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: seven armored machines power on bay by bay, the LitCodex machine in the third bay wakes with a glowing orange visor and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: a terminal in a sunset look. LitCodex's hud card sits at the top with its stage map, task line and lanes, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITCODEX, and a shell prompt with litcodex hud waits at the bottom." /></picture></p>
 
 # LitCodex
 
