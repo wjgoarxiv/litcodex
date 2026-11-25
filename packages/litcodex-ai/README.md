@@ -1,12 +1,12 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.50/readme-assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.50/readme-assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: a terminal in a sunset look. LitCodex's hud card sits at the top with its stage map, task line and lanes, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITCODEX, and a shell prompt with litcodex hud waits at the bottom." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.51/readme-assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.51/readme-assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: a terminal in a sunset look. LitCodex's hud card sits at the top with its stage map, task line and lanes, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITCODEX, and a shell prompt with litcodex hud waits at the bottom." /></picture></p>
 
 <p align="center">
-<a href="#install"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.50/readme-assets/badge-version.svg" alt="1.0.50" /></a>
-<a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.50/readme-assets/badge-license.svg" alt="MIT license" /></a>
+<a href="#install"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.51/readme-assets/badge-version.svg" alt="1.0.51" /></a>
+<a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.51/readme-assets/badge-license.svg" alt="MIT license" /></a>
 </p>
 
 <p align="center">
-<a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/usage.md"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.50/readme-assets/lucide-book-open.svg" width="16" alt="" /> Docs</a> &nbsp; <a href="#install">Install</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.50/readme-assets/lucide-play.svg" width="16" alt="" /> Ignition</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.50/readme-assets/lucide-shield-check.svg" width="16" alt="" /> MIT</a>
+<a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/usage.md"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.51/readme-assets/lucide-book-open.svg" width="16" alt="" /> Docs</a> &nbsp; <a href="#install">Install</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.51/readme-assets/lucide-play.svg" width="16" alt="" /> Ignition</a> &nbsp; <a href="https://github.com/wjgoarxiv/litcodex/blob/main/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litcodex@1.0.51/readme-assets/lucide-shield-check.svg" width="16" alt="" /> MIT</a>
 </p>
 
 # LitCodex
@@ -30,13 +30,13 @@ test that fails, makes it pass, and ends by telling you what it checked and what
 You need Node.js 22 or later and Codex CLI.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.50 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex install
 ```
 
 The installer asks which model leads, which model helps and which output style you like, shows what it is
 about to write, and changes only the keys it manages in `~/.codex/config.toml`. In a terminal each question is a card
 you answer with the arrow keys or a number and Enter; pipes, CI and `TERM=dumb` keep plain prompts. To see the plan first, run
-`npm exec --yes --package @litfamily/litcodex@1.0.50 -- litcodex --dry-run install`. To skip the
+`npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex --dry-run install`. To skip the
 questions, add `--yes` after `install`.
 
 The installer, `litcodex doctor` and `litcodex --help` open with the synthwave LIT mark, sized to the terminal. Without
@@ -52,7 +52,7 @@ A global install also gets the video skill's tools ready with a few pinned downl
 [install guide](https://github.com/wjgoarxiv/litcodex/blob/main/docs/install.md#a-global-command) lists them
 and shows how to skip them.
 
-> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.50 -- litcodex <command>`.
+> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex <command>`.
 
 ## Two ways to use it
 
@@ -175,7 +175,7 @@ rather have neither, set `LITCODEX_NO_UPDATE_CHECK=1`. A doctor run that failed,
 ## Check, fix, remove
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.50 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex doctor
 ```
 
 `litcodex doctor` checks registration, hooks, config and host capabilities; `litcodex loop doctor` checks
@@ -184,7 +184,7 @@ in Codex. A state lock left by a crashed process clears on its own. More fixes a
 [troubleshooting](https://github.com/wjgoarxiv/litcodex#troubleshooting).
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.50 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex uninstall
 ```
 
 This removes the plugin and the config LitCodex manages, and leaves your other settings alone.

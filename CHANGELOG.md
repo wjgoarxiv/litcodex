@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.51] - 2026-11-25
+
 ### Fixed
 
 - The sunset footer keeps its sun in a narrow window when Codex runs through its shared background server, for example on
