@@ -68,9 +68,9 @@ describe("dispatch (pure routing core)", () => {
 		expect(r.stdout).toBe(`${manifest.version}\n`);
 	});
 
-	it("--version is the pinned 1.0.47", () => {
-		expect(manifest.version).toBe("1.0.47");
-		expect(dispatch(["--version"]).stdout).toBe("1.0.47\n");
+	it("--version is the pinned 1.0.48", () => {
+		expect(manifest.version).toBe("1.0.48");
+		expect(dispatch(["--version"]).stdout).toBe("1.0.48\n");
 	});
 
 	it("-v is identical to --version", () => {

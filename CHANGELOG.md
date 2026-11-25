@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.48] - 2026-11-25
+
 ### Added
 
 - The README cover is a new loop: a terminal in the sunset look with the `litcodex hud` card, a pixel LITFAMILY wordmark and a striped half-sunk sun, in place of the seven machine bays. The still for reduced motion is its first frame, and the package copies match.
