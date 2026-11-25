@@ -35,31 +35,20 @@ const raw = (root: string, sid: string): Record<string, unknown> =>
 describe("recordLiveness", () => {
 	it("writes alive, then idle, with the record's fields", () => {
 		const root = workspace();
-		recordLiveness(root, "s1", "alive", {}, NOW);
-		expect(raw(root, "s1")).toEqual({ version: 1, sessionId: "s1", state: "alive", at: NOW, herdrPane: null });
-		recordLiveness(root, "s1", "idle", {}, NOW + 1_000);
+		recordLiveness(root, "s1", "alive", NOW);
+		expect(raw(root, "s1")).toEqual({ version: 1, sessionId: "s1", state: "alive", at: NOW });
+		recordLiveness(root, "s1", "idle", NOW + 1_000);
 		expect(raw(root, "s1")).toMatchObject({ state: "idle", at: NOW + 1_000 });
 	});
 
 	it("writes nothing for the same state again within 30 seconds", () => {
 		const root = workspace();
-		recordLiveness(root, "s1", "alive", {}, NOW);
-		recordLiveness(root, "s1", "alive", {}, NOW + LIVENESS_THROTTLE_MS - 1);
+		recordLiveness(root, "s1", "alive", NOW);
+		recordLiveness(root, "s1", "alive", NOW + LIVENESS_THROTTLE_MS - 1);
 		expect(raw(root, "s1")["at"]).toBe(NOW);
-		recordLiveness(root, "s1", "alive", {}, NOW + LIVENESS_THROTTLE_MS);
+		recordLiveness(root, "s1", "alive", NOW + LIVENESS_THROTTLE_MS);
 		expect(raw(root, "s1")["at"]).toBe(NOW + LIVENESS_THROTTLE_MS);
 		expect(LIVENESS_THROTTLE_MS).toBe(30_000);
-	});
-
-	it("keeps a well-formed pane id and drops any other", () => {
-		const root = workspace();
-		recordLiveness(root, "s1", "alive", { HERDR_PANE_ID: "w1:p_2-a" }, NOW);
-		expect(raw(root, "s1")["herdrPane"]).toBe("w1:p_2-a");
-		for (const bad of ["", "a b", "x".repeat(33), "p;rm", "p\u001b[31m", "../p"]) {
-			recordLiveness(root, "s2", "alive", { HERDR_PANE_ID: bad }, NOW);
-			expect(raw(root, "s2")["herdrPane"], bad).toBeNull();
-			rmSync(file(root, "s2"));
-		}
 	});
 
 	it("refuses a symlinked folder and never throws", () => {
@@ -67,18 +56,18 @@ describe("recordLiveness", () => {
 		const elsewhere = workspace();
 		mkdirSync(join(root, ".litcodex"), { recursive: true });
 		symlinkSync(elsewhere, join(root, ".litcodex/liveness"));
-		expect(() => recordLiveness(root, "s1", "alive", {}, NOW)).not.toThrow();
+		expect(() => recordLiveness(root, "s1", "alive", NOW)).not.toThrow();
 		expect(existsSync(join(elsewhere, "s1.json"))).toBe(false);
-		expect(() => recordLiveness("relative/path", "s1", "alive", {}, NOW)).not.toThrow();
-		expect(() => recordLiveness(root, "../bad id", "alive", {}, NOW)).not.toThrow();
+		expect(() => recordLiveness("relative/path", "s1", "alive", NOW)).not.toThrow();
+		expect(() => recordLiveness(root, "../bad id", "alive", NOW)).not.toThrow();
 	});
 });
 
 describe("readLiveness", () => {
 	it("reads a record left 15 minutes as ended", () => {
 		const root = workspace();
-		recordLiveness(root, "s1", "alive", { HERDR_PANE_ID: "p1" }, NOW);
-		expect(readLiveness(root, "s1", NOW + LIVENESS_ENDED_MS - 1)).toMatchObject({ state: "alive", herdrPane: "p1" });
+		recordLiveness(root, "s1", "alive", NOW);
+		expect(readLiveness(root, "s1", NOW + LIVENESS_ENDED_MS - 1)).toMatchObject({ state: "alive" });
 		expect(readLiveness(root, "s1", NOW + LIVENESS_ENDED_MS + 1)).toMatchObject({ state: "ended", at: NOW });
 		expect(LIVENESS_ENDED_MS).toBe(15 * 60_000);
 		expect(readLiveness(root, "missing", NOW)).toBeNull();
@@ -86,8 +75,8 @@ describe("readLiveness", () => {
 
 	it("lists every session's record in the workspace", () => {
 		const root = workspace();
-		recordLiveness(root, "s1", "alive", {}, NOW);
-		recordLiveness(root, "s2", "idle", {}, NOW);
+		recordLiveness(root, "s1", "alive", NOW);
+		recordLiveness(root, "s2", "idle", NOW);
 		const all = readSessionsLiveness(root, NOW);
 		expect(all.map((record) => [record.sessionId, record.state]).sort()).toEqual([
 			["s1", "alive"],

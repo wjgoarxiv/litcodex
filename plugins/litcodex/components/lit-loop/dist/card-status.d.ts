@@ -62,7 +62,11 @@ export interface Usage {
     readonly ctx: number | null;
     readonly fiveHour: number | null;
     readonly week: number | null;
+    /** What the longer limit is called (`1w`, `1mo`); `1w` when left out. */
+    readonly weekLabel?: string;
 }
+/** A usage window by its length: `5h`, `3d`, `1w`, `1mo`. */
+export declare function limitLabel(minutes: number): string;
 /** The workspace a thread runs in: the hook pointer, else (when `rollout` allows) the rollout header; null when unknown. */
 export declare function resolveThreadCwd(threadId: string | null, env: NodeJS.ProcessEnv, rollout?: boolean): string | null;
 /** Context and quota use from the newest token count in a rollout tail; null when there is none. */

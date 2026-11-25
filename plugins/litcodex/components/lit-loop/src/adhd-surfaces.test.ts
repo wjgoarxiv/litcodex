@@ -115,7 +115,7 @@ describe("no placeholder progress on any surface", () => {
 		);
 		recordStackEvent(s.workspace, SESSION_A, { type: "start", skill: "lit-brainstorm" }, new Date(NOW - 2_000_000));
 		const row = stackRow(readStack(s.workspace, SESSION_A));
-		expect(row).toContain("lit-loop RED step 2");
+		expect(row).toContain("lit-loop (RED, step 2)");
 		expect(row).not.toMatch(PLACEHOLDER);
 		const result = collect(s);
 		expect(renderBrief(result)).toContain("paused: lit-loop RED step 2");
@@ -260,7 +260,7 @@ describe("the brief after a finished session", () => {
 
 	it("reads a session whose turn closed as idle", () => {
 		const s = scratch();
-		recordLiveness(s.workspace, SESSION_B, "idle", {}, NOW - 60_000);
+		recordLiveness(s.workspace, SESSION_B, "idle", NOW - 60_000);
 		const result = collect(s);
 		expect(result.sessions.find((session) => session.id === SESSION_B)?.status).toBe("idle");
 		expect(renderBrief(result)).toContain("💤 **IDLE**");

@@ -1,4 +1,4 @@
-import { type ChecklistRow, type MapCell, type WorkflowMap } from "./workflow-map.js";
+import { type ChecklistRow, type WorkflowMap } from "./workflow-map.js";
 /** Codex indents hook rows by four cells; the card stays inside a common terminal width. */
 export declare const DEFAULT_CARD_WIDTH = 96;
 export interface ScreenCardInput {
@@ -13,10 +13,10 @@ export interface ScreenCardInput {
 export interface ScreenCardOptions {
     readonly color: boolean;
     readonly width?: number;
+    /** False leaves the horizon row out of the coloured card. */
+    readonly horizon?: boolean;
 }
-/** One stage as the card, the `litcodex run` panel and the status line show it: the stage word always in capitals. */
-export declare function stageText(item: MapCell): string;
-/** The card rows joined by newlines, without the leading newline the caller adds for row one. */
+/** The card rows joined by newlines. */
 export declare function renderScreenCard(input: ScreenCardInput, options: ScreenCardOptions): string;
 /**
  * The card for a session's saved state. With `quietWhenEmpty`, null when there is neither a map nor a
@@ -24,4 +24,10 @@ export declare function renderScreenCard(input: ScreenCardInput, options: Screen
  */
 export declare function workflowCard(repoRoot: string, sessionId: string | null, mode: string, note: string | null, options: ScreenCardOptions & {
     readonly quietWhenEmpty?: boolean;
+    /** Leave the path out while nothing on it is counted: the turn's own words say more than it. */
+    readonly quietMap?: boolean;
+    /** The activation banner above already names the skill, so the plain card leaves its first row out. */
+    readonly underBanner?: boolean;
+    /** The turn ended by asking the person something. */
+    readonly waiting?: boolean;
 }): string | null;

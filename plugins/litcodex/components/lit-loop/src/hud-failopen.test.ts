@@ -61,8 +61,8 @@ describe("hud fail-open reads", () => {
 	it("draws a healthy session with no cannot-read line", () => {
 		const { env } = session();
 		const text = frame(env);
-		expect(text).toContain("🔥 LIT IGNITED · start-work");
-		expect(text).toContain("⠹ Bash");
+		expect(text).toContain("🔥 LIT · start-work · working");
+		expect(text).toContain("Running: Bash");
 		expect(text).not.toContain("cannot read");
 	});
 

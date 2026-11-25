@@ -2,7 +2,7 @@
 //
 // A thread is a frame of the session's workflow stack, a child agent (lane) running under its top frame, or
 // the top frame of another session of the same project that moved lately or whose liveness record is fresh
-// (running first, then idle; named `<skill> · <pane>` when herdr gave a pane). Each takes its `k/n` from the
+// (running first, then idle). Each takes its `k/n` from the
 // first source that really knows it: the count the frame recorded, the start-work run it drives, the
 // checkboxes of the plan it works from, the open goal's criteria, the main thread's own `update_plan` list
 // (top frame only), and for a lane its own `update_plan`. A gauge is drawn only when both numbers are real;
@@ -162,7 +162,6 @@ export function readThreads(
 				...row,
 				// A session whose turn has closed waits for its person, so it reads idle rather than running.
 				...(other.liveness === "idle" && row.state === "running" ? { state: "idle" as const } : {}),
-				...(other.pane === null ? {} : { name: `${row.name} · ${other.pane}` }),
 				kind: "session",
 				session: other.id.slice(0, SHORT_SESSION),
 			};
@@ -185,59 +184,59 @@ export function readThreads(
 
 // ── Text ────────────────────────────────────────────────────────────────────
 
-/** Each state's glyph is ASCII or a plain geometric mark, and the state word always rides beside it. */
-const STATE_GLYPH: Readonly<Record<ThreadState, string>> = {
-	running: "●",
-	paused: "|",
-	blocked: "!",
-	idle: "-",
-	done: "✓",
-};
-
 /** `3 lanes in parallel`, `1 lane in parallel`. */
 export function forkLabel(laneCount: number): string {
 	return `${laneCount} ${laneCount === 1 ? "lane" : "lanes"} in parallel`;
 }
 
-function rowText(row: ThreadRow, lead: string, nameWidth: number): string {
-	const name = row.name.length >= nameWidth ? row.name : row.name.padEnd(nameWidth);
-	const tail = row.gauge ?? row.note;
-	const parts = [`${lead}${STATE_GLYPH[row.state]} ${name}`];
-	if (row.stage !== null) parts.push(row.stage);
-	if (tail !== "") parts.push(tail);
-	parts.push(row.state);
-	if (row.session !== undefined) parts.push(`· other session ${row.session}`);
-	return parts.join(" ");
+/** What a row knows beside its name: `2/5`, else its words, else nothing. */
+function saidOf(row: ThreadRow): string {
+	return /\d+\/\d+$/u.exec(row.gauge ?? "")?.[0] ?? row.note;
 }
 
+/** `lit-loop (work, 2/4)`. */
+function named(row: ThreadRow): string {
+	const facts = [row.stage ?? "", saidOf(row)].filter((fact) => fact !== "");
+	return facts.length === 0 ? row.name : `${row.name} (${facts.join(", ")})`;
+}
+
+const OTHER_STATE: Readonly<Record<ThreadState, string>> = {
+	running: "working",
+	paused: "paused",
+	blocked: "paused",
+	idle: "waiting for you",
+	done: "done",
+};
+
 /**
- * The thread rows as plain text, parent first, each child under the one before it; lanes hang under the top
- * frame with a fork line over them when two or more run in parallel; other sessions come last.
+ * The threads as short sentences. The one running skill is left out, since the map names it.
  *
- *   | lit-loop   WORK [▉▉░░░░░░░░] 3/6 paused
- *   └─ ● lit-brainstorm interview step 2 running · back: lit continue
- *      ┬ 3 lanes in parallel
- *      ├─ ● Aquinas   [▉▉░░░] 2/5 running
- *      ├─ ● Lagrange  3 steps running
- *      └─ ● Hume      starting running
+ *   Now: lit-brainstorm (interview, step 2)
+ *   Paused: lit-loop (work, 3/6) · type `lit continue` to go back
+ *   3 helpers: Aquinas 2/5, Lagrange 3 steps, Hume starting
+ *   Also open in this project: lit-loop (work), waiting for you
  */
 export function threadLines(view: ThreadView): string[] {
-	const rows = [...view.chain, ...view.lanes, ...view.others];
-	const nameWidth = Math.min(18, Math.max(0, ...rows.map((row) => row.name.length)));
 	const lines: string[] = [];
-	view.chain.forEach((row, index) => {
-		const lead = index === 0 ? "" : `${"   ".repeat(index - 1)}└─ `;
-		const back = view.back && index === view.chain.length - 1 ? " · back: lit continue" : "";
-		lines.push(`${rowText(row, lead, nameWidth)}${back}`);
+	const top = view.chain.at(-1);
+	const under = view.chain.slice(0, -1);
+	if (top !== undefined && under.length > 0) {
+		lines.push(`Now: ${named(top)}`);
+		lines.push(`Paused: ${under.map(named).join(", ")}${view.back ? " · type `lit continue` to go back" : ""}`);
+	}
+	const hidden = Math.max(0, view.laneCount - view.lanes.length);
+	if (view.laneCount > 0) {
+		const said = view.lanes.map((row) => {
+			const words = [row.name, saidOf(row)].filter((word) => word !== "").join(" ");
+			return row.state === "idle" ? `${words} (quiet)` : row.state === "done" ? `${words} (done)` : words;
+		});
+		if (hidden > 0) said.push(`${hidden} more`);
+		lines.push(`${view.laneCount} ${view.laneCount === 1 ? "helper" : "helpers"}: ${said.join(", ")}`);
+	}
+	const unseen = Math.max(0, view.more - hidden);
+	view.others.forEach((row, index) => {
+		const more = unseen > 0 && index === view.others.length - 1 ? `, and ${unseen} more` : "";
+		lines.push(`Also open in this project: ${named(row)}, ${OTHER_STATE[row.state]}${more}`);
 	});
-	const under = "   ".repeat(Math.max(0, view.chain.length - 1));
-	if (view.laneCount >= 2) lines.push(`${under}┬ ${forkLabel(view.laneCount)}`);
-	view.lanes.forEach((row, index) => {
-		const branch =
-			view.laneCount >= 2 ? (index === view.lanes.length - 1 ? "└─ " : "├─ ") : view.chain.length > 0 ? "└─ " : "";
-		lines.push(rowText(row, `${under}${branch}`, nameWidth));
-	});
-	for (const row of view.others) lines.push(rowText(row, "", nameWidth));
-	if (view.more > 0 && lines.length > 0) lines[lines.length - 1] += ` +${view.more} more`;
 	return lines;
 }

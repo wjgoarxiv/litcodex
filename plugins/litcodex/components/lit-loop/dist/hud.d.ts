@@ -32,6 +32,7 @@ export interface HudRenderOptions {
 export declare function listSessions(env: NodeJS.ProcessEnv): HudSession[];
 /** The most recently active session, or the one `wanted` names by exact id or unique prefix; else null. */
 export declare function pickSession(env: NodeJS.ProcessEnv, wanted?: string | null): HudSession | null;
+export declare function tilde(path: string, home: string | undefined): string;
 /** Everything one frame needs, read once. Never throws and never writes. */
 export declare function readHud(env: NodeJS.ProcessEnv, wanted: string | null, now: number): HudView;
 /** The card with every record-derived string stripped of control characters. */

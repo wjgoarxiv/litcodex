@@ -15,6 +15,7 @@ import { type CardStatus, cardStatusText, readCardStatus } from "./card-status.j
 import { clean, cleanDeep } from "./control-chars.js";
 import {
 	codexHomeFrom,
+	homeDirsOrMissing,
 	liveStepPath,
 	plainDirsOrMissing,
 	readLiveStep,
@@ -23,7 +24,7 @@ import {
 	threadPointerPath,
 } from "./live-step.js";
 import { LIT_LOOP_DIR, LIT_LOOP_GOALS, normalizeSessionId } from "./state-paths.js";
-import { mapCellText, workflowMapText, workflowTurn } from "./workflow-map.js";
+import { MAP_JOIN, mapCellText, stageName, workflowMapText, workflowTurn } from "./workflow-map.js";
 
 export { clean } from "./control-chars.js";
 
@@ -109,7 +110,7 @@ interface Scan {
 function scanPointers(env: NodeJS.ProcessEnv): Scan {
 	const home = codexHomeFrom(env);
 	if (home === null) return { sessions: [], brokenAt: null };
-	if (!plainDirsOrMissing(home, POINTER_DIR)) return { sessions: [], brokenAt: Number.POSITIVE_INFINITY };
+	if (!homeDirsOrMissing(home, POINTER_DIR)) return { sessions: [], brokenAt: Number.POSITIVE_INFINITY };
 	let names: string[];
 	try {
 		names = readdirSync(join(home, POINTER_DIR)).filter((name) => name.endsWith(".json"));
@@ -194,7 +195,7 @@ function unreadableRecords(cwd: string, id: string): string[] {
 		.map(([label]) => label);
 }
 
-function tilde(path: string, home: string | undefined): string {
+export function tilde(path: string, home: string | undefined): string {
 	if (home === undefined || home === "" || home === "/") return path;
 	if (path === home) return "~";
 	if (path.startsWith(`${home}/`)) return `~${path.slice(home.length)}`;
@@ -362,11 +363,11 @@ function mapLine(status: CardStatus): { text: string; stage: readonly [number, n
 	const current = status.map?.cells.findIndex((cell) => cell.state === "current") ?? -1;
 	const cell = status.map?.cells[current];
 	if (status.map === null || cell === undefined) return null;
-	const before = status.map.cells.slice(0, current).map((item) => `${mapCellText(item)} › `);
+	const before = status.map.cells.slice(0, current).map((item) => `${mapCellText(item)}${MAP_JOIN}`);
 	const start = before.join("").length;
 	return {
 		text: workflowMapText(status.map),
-		stage: [start, start + `${cell.icon} ${cell.label ?? cell.word.toUpperCase()}`.length],
+		stage: [start, start + `● ${stageName(cell)}`.length],
 	};
 }
 

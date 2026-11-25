@@ -316,7 +316,7 @@ var LANE_COLORS_D=["#5fd7ff","#b48cff","#ff6fae","#6bdb8f","#ffd75f"],LANE_RUNNI
 function laneEl(states){var w=el("div","review-lanes");w.setAttribute("aria-hidden","true");(states||[]).forEach(function(st,i){var s=el("i");s.style.background=st==="pass"?LANE_COLORS_D[i]:st==="running"?LANE_RUNNING_D[i]:st==="fail"?LANE_FAIL_D:LANE_DIM_D;w.appendChild(s);});return w;}
 function useItems(s){
  var u=s.usage||{},items=[];
- [["ctx",u.ctx],["5h",u.fiveHour],["1w",u.week]].forEach(function(x){if(typeof x[1]==="number")items.push(x);});
+ [["ctx",u.ctx],["5h",u.fiveHour],[u.weekLabel||"1w",u.week]].forEach(function(x){if(typeof x[1]==="number")items.push(x);});
  return items;
 }
 function foot(s){

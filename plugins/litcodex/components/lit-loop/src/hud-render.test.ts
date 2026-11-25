@@ -85,10 +85,10 @@ describe("hud render", () => {
 	it("draws each card state", () => {
 		const draw = (card: CardStatus): string => renderHud(view(card), { width: 160, color: false, now: NOW });
 		expect(draw(STATES["ready"] as CardStatus)).toContain("LIT · ready");
-		expect(draw(STATES["ignited"] as CardStatus)).toContain("🔥 LIT IGNITED · start-work");
-		expect(draw(STATES["ignited"] as CardStatus)).toContain("🔨 WORK ▰▰▱▱▱ 2/5");
-		expect(draw(STATES["complete"] as CardStatus)).toContain("COMPLETE ✓");
-		expect(draw(STATES["step running"] as CardStatus)).toContain("⠹ Bash · 1:05");
+		expect(draw(STATES["ignited"] as CardStatus)).toContain("🔥 LIT · start-work");
+		expect(draw(STATES["ignited"] as CardStatus)).toContain("● work 2/5");
+		expect(draw(STATES["complete"] as CardStatus)).toContain("done ✓");
+		expect(draw(STATES["step running"] as CardStatus)).toContain("Running: Bash, 1:05");
 	});
 
 	it("cuts a long line with an ellipsis at narrow widths", () => {

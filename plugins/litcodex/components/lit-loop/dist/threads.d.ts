@@ -37,14 +37,11 @@ export declare function readThreads(cwd: string, sessionId: string, now: number,
 /** `3 lanes in parallel`, `1 lane in parallel`. */
 export declare function forkLabel(laneCount: number): string;
 /**
- * The thread rows as plain text, parent first, each child under the one before it; lanes hang under the top
- * frame with a fork line over them when two or more run in parallel; other sessions come last.
+ * The threads as short sentences. The one running skill is left out, since the map names it.
  *
- *   | lit-loop   WORK [▉▉░░░░░░░░] 3/6 paused
- *   └─ ● lit-brainstorm interview step 2 running · back: lit continue
- *      ┬ 3 lanes in parallel
- *      ├─ ● Aquinas   [▉▉░░░] 2/5 running
- *      ├─ ● Lagrange  3 steps running
- *      └─ ● Hume      starting running
+ *   Now: lit-brainstorm (interview, step 2)
+ *   Paused: lit-loop (work, 3/6) · type `lit continue` to go back
+ *   3 helpers: Aquinas 2/5, Lagrange 3 steps, Hume starting
+ *   Also open in this project: lit-loop (work), waiting for you
  */
 export declare function threadLines(view: ThreadView): string[];

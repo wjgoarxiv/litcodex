@@ -1113,16 +1113,13 @@ function lanesOf(
 			const id = normalizeSessionId(record.sessionId);
 			if (record.state !== "alive" || id === null || own(id)) continue;
 			const seen = lanes.find((lane) => lane.session === id);
-			if (seen !== undefined) {
-				seen.pane ??= record.herdrPane;
-				continue;
-			}
+			if (seen !== undefined) continue;
 			// A session the records show as finished or idle is not at work, whatever its last tool call wrote.
 			const status = known.get(id);
 			if (status !== undefined && status !== "active" && status !== "waiting-on-user") continue;
 			lanes.push({
 				session: id,
-				pane: record.herdrPane,
+				pane: null,
 				waiting: false,
 				label: `${shortIdOf(id)} in ${basename(root)}`,
 				place: basename(root),

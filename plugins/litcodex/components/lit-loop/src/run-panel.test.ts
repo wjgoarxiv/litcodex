@@ -45,25 +45,26 @@ const VIEW: RunPanelView = { status: STATUS, checklist: { state: "current", labe
 describe("renderRunPanel", () => {
 	it("draws four plain rows: route with the turn clock, stage map, current step, checklist", () => {
 		expect(renderRunPanel(VIEW, { width: 100, color: false, now: 82_000 })).toEqual([
-			"┃ 🔥 LIT · lit-loop  1:12",
-			"┃ ✓ INTERVIEW  ›  🔨 WORK ▰▰▰▱▱▱▱ 3/7  ›  🔍 REVIEW",
-			"┃ ⠹ Bash · 0:12",
-			"┃ ▸ Run the tests (테스트 실행)",
+			"🔥 LIT · lit-loop · 1:12",
+			"✓ interview ── ● work 3/7 ── ○ review",
+			"Running: Bash, 0:12",
+			"▸ Run the tests (테스트 실행)",
 		]);
 	});
 
 	it("waits, dimmed, until a LIT turn starts", () => {
 		const rows = renderRunPanel({ status: null, checklist: null }, { width: 80, color: true, now: 0 });
 		expect(rows).toHaveLength(PANEL_ROWS);
-		expect(rows[0]).toContain("waiting for a LIT turn");
+		expect(rows[0]).toContain("🔥 LIT · ready");
 		expect(rows[0]?.startsWith(`${ESC}[2m`)).toBe(true);
 	});
 
-	it("is the plain panel once the colours are taken out", () => {
+	it("says the same words in colour", () => {
 		const plain = renderRunPanel(VIEW, { width: 100, color: false, now: 82_000 });
 		const coloured = renderRunPanel(VIEW, { width: 100, color: true, now: 82_000 });
 		expect(coloured.join("\n")).toContain(ESC);
-		expect(coloured.map((row) => row.replace(SGR, ""))).toEqual(plain);
+		const said = (rows: string[]): string[] => rows.map((row) => row.replace(SGR, "").replace(/[ ·]+/gu, " ").trim());
+		expect(said(coloured)).toEqual(said(plain));
 	});
 
 	it.each([40, 60, 120])("keeps every row within %i cells", (width) => {
@@ -157,7 +158,7 @@ describe("readRunPanel", () => {
 		const view = readRunPanel(env, cwd, 5_000, 8_000);
 		expect(view.status?.thread).toBe(NEW);
 		expect(view.status?.step?.tool).toBe("Bash");
-		expect(renderRunPanel(view, { width: 80, color: false, now: 8_000 })[2]).toBe("┃ ⠹ Bash · 0:01");
+		expect(renderRunPanel(view, { width: 80, color: false, now: 8_000 })[2]).toBe("Running: Bash, 0:01");
 	});
 
 	it("picks up an older session the user resumed in the run folder", () => {

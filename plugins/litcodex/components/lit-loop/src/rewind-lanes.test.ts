@@ -204,9 +204,9 @@ describe("S1: no go while other lanes work", () => {
 	it("reads a live session from its liveness record", () => {
 		const s = scratch();
 		withPlan(s.workspace);
-		recordLiveness(s.workspace, "sess-other", "alive", {}, NOW - MIN);
-		recordLiveness(s.workspace, ME, "alive", {}, NOW - MIN);
-		recordLiveness(s.workspace, "sess-idle", "idle", {}, NOW - MIN);
+		recordLiveness(s.workspace, "sess-other", "alive", NOW - MIN);
+		recordLiveness(s.workspace, ME, "alive", NOW - MIN);
+		recordLiveness(s.workspace, "sess-idle", "idle", NOW - MIN);
 		const result = collect(s);
 		expect(result.lanes.count).toBe(1);
 		expect(result.next.kind).toBe("wait-lanes");

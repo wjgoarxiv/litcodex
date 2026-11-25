@@ -9,7 +9,7 @@
 // also keeps when the newest card of the thread opened, so an older card can fold itself away. Every write
 // is atomic, skips symlinked folders and never throws; every read is size-capped and refuses symlinks.
 import { randomBytes } from "node:crypto";
-import { closeSync, constants, fstatSync, lstatSync, mkdirSync, openSync, readSync, renameSync, rmSync, writeFileSync, } from "node:fs";
+import { closeSync, constants, fstatSync, lstatSync, mkdirSync, openSync, readSync, realpathSync, renameSync, rmSync, writeFileSync, } from "node:fs";
 import { basename, isAbsolute, join } from "node:path";
 import { normalizeSessionId } from "./state-paths.js";
 const LIVE_STEP_DIR = ".litcodex/live-step";
@@ -78,10 +78,32 @@ export function plainDirsOrMissing(base, rel) {
     }
     return true;
 }
-/** Write `value` as JSON through a temp file and a rename, inside `dir` under `base`. Never throws. */
-function writeRecord(base, rel, name, value) {
+/**
+ * `<CODEX_HOME>/litcodex` as the real folder it is: itself, or the target when it is a link to a folder of the same
+ * user, as when a second Codex home shares the first one's. Null when it is anything else; nothing below may be a link.
+ */
+function homeRoot(home) {
+    const root = join(home, "litcodex");
     try {
-        if (!plainDirsOrMissing(base, rel))
+        if (lstatSync(root, { throwIfNoEntry: false })?.isSymbolicLink() !== true)
+            return root;
+        const target = realpathSync(root);
+        const stat = lstatSync(target);
+        return process.getuid === undefined || stat.uid === process.getuid() ? target : null;
+    }
+    catch {
+        return null;
+    }
+}
+/** `plainDirsOrMissing` for a path that starts with `litcodex/` under a Codex home (see `homeRoot`). */
+export function homeDirsOrMissing(home, rel) {
+    const root = homeRoot(home);
+    return root !== null && plainDirOrMissing(root) && plainDirsOrMissing(root, rel.slice("litcodex/".length));
+}
+/** Write `value` as JSON through a temp file and a rename, inside `dir` under `base`. Never throws. */
+function writeRecord(base, rel, name, value, allowed = plainDirsOrMissing) {
+    try {
+        if (!allowed(base, rel))
             return;
         const dir = join(base, rel);
         mkdirSync(dir, { recursive: true });
@@ -275,7 +297,7 @@ export function threadPointerPath(env, threadId) {
 export function readThreadPointer(env, threadId) {
     const path = threadPointerPath(env, threadId);
     const home = codexHomeFrom(env);
-    if (path === null || home === null || !plainDirs(home, POINTER_DIR))
+    if (path === null || home === null || !homeDirsOrMissing(home, POINTER_DIR))
         return null;
     const record = readSmallJson(path);
     if (!isRecord(record) || record["version"] !== 1)
@@ -300,13 +322,8 @@ export function writeThreadPointer(env, threadId, cwd, now = Date.now(), options
         current.cardOfferedAt === cardOfferedAt &&
         current.cardOpenedAt === cardOpenedAt)
         return;
-    writeRecord(home, POINTER_DIR, basename(path), {
-        version: 1,
-        cwd,
-        updatedAt: now,
-        cardOfferedAt,
-        cardOpenedAt,
-    });
+    const pointer = { version: 1, cwd, updatedAt: now, cardOfferedAt, cardOpenedAt };
+    writeRecord(home, POINTER_DIR, basename(path), pointer, homeDirsOrMissing);
 }
 /**
  * Remember that a card opened in this thread now, so every poll can tell the older cards to fold. Only a

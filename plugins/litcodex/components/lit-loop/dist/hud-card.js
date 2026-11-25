@@ -351,7 +351,7 @@ function threadRows(status, look, inner, caps) {
                     ? [BLANK, ...cut(words(pad(said(row), saidWidth), gauge === null ? DIM : WHITE), saidWidth)]
                     : []),
                 ...(showState ? [BLANK, ...words(row.state, color)] : []),
-                ...(row.session === undefined ? [] : words(` · other session ${safe(row.session)}`, DIM)),
+                ...(row.session === undefined ? [] : words(" · in another session", DIM)),
             ];
             return ends(body, tail, inner);
         };
@@ -417,7 +417,7 @@ function figures(view, look, now, caps) {
     }
     for (const [label, percent] of [
         ["5h", usage?.fiveHour ?? null],
-        ["1w", usage?.week ?? null],
+        [usage?.weekLabel ?? "1w", usage?.week ?? null],
     ]) {
         if (percent !== null)
             parts.push({ cells: [...words(`${label} `, DIM), ...words(`${percent}%`, level(percent))] });
@@ -504,7 +504,7 @@ function lineRow(parts, inner) {
     return { kind: "line", draw: () => drawn };
 }
 /** What to type, for a card with nothing running. */
-function invitation(view, inner) {
+function invitation(view, inner, docked) {
     const key = (text) => words(text, ACCENT, { bold: true });
     const say = (text) => words(text, DIM);
     const choose = (forms) => lineRow(forms.find((form) => form.length <= inner) ?? forms.at(-1) ?? [], inner);
@@ -518,6 +518,8 @@ function invitation(view, inner) {
             ], inner),
         ];
     }
+    if (docked && view.status === null)
+        return [choose([[...say("type "), ...key("lit <task>"), ...say(" in Codex to start")]])];
     if (view.session === null || view.status === null) {
         if (view.wanted !== null)
             return [lineRow([...say("waiting for session "), ...words(safe(view.wanted), TEXT, { bold: true })], inner)];
@@ -594,7 +596,7 @@ export function composeCard(view, options) {
         rows.push(...threadRows(status, look, inner, caps));
     }
     else {
-        rows.push(...invitation(view, inner));
+        rows.push(...invitation(view, inner, options.docked === true));
     }
     const notice = (mark, subject, text, color) => {
         const drawn = ends([...words(`▎${mark} `, color, { bold: true }), ...words(subject, color, { bold: true }), ...words(text, TEXT)], [], inner);
@@ -624,6 +626,9 @@ export function composeCard(view, options) {
                 break;
             }
         }
+    }
+    if (options.docked === true && body.length < room) {
+        body = [...body, ...Array(room - body.length).fill(blank)];
     }
     const layout = body.map((row) => row.draw(0));
     const top = body.length - SUN_ROWS;
@@ -658,14 +663,15 @@ export function composeCard(view, options) {
         return mix(frame(x), along(WHEEL, (x / width + burst) % 1), near);
     };
     const edge = (text, x, burst) => ({ text, fg: swept(x, burst) });
-    const word = stateWord(view, look);
+    const idleDock = options.docked === true && status === null;
+    const word = idleDock ? words("READY", DIM, { bold: true }) : stateWord(view, look);
     const brand = look === "turn"
         ? brandPill(caps, [0xffaf3c, 0xffd98a])
         : look === "rewind"
             ? brandPill(caps, WHEEL.map((color) => mix(color, WHITE, 0.3)))
             : brandPill(caps);
     const nameColor = look === "quiet" ? TEXT : look === "turn" ? AMBER_INK : look === "rewind" ? TEXT : ACCENT;
-    const title = words(titleOf(view), nameColor, { bold: true });
+    const title = words(idleDock ? "ready" : titleOf(view), nameColor, { bold: true });
     const fixed = 3 + brand.length + 3 + 1 + 1;
     const wordRoom = word.length + 4;
     const withWord = fixed + Math.min(title.length, 8) + wordRoom <= width;

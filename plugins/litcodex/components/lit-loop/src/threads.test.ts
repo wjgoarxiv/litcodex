@@ -87,7 +87,9 @@ describe("one thread", () => {
 		expect(text(env)).not.toMatch(/lanes? in parallel|other session/u);
 		stack(root, [{ type: "start", skill: "lit-brainstorm" }], SID, T0 - 20_000);
 		expect(readCardStatus(SID, env, T0).threads).toBeNull();
-		expect(text(env)).toContain("⏸ lit-loop GREEN [▉▉░░░] 2/5 ‖ ▶ lit-brainstorm interview · back: lit continue");
+		expect(text(env)).toContain(
+			"Now: lit-brainstorm (interview) · paused: lit-loop (GREEN, 2/5) · type `lit continue` to go back",
+		);
 	});
 
 	it("a lane that has not started, or has stopped, adds no row", () => {
@@ -104,21 +106,13 @@ describe("one thread", () => {
 });
 
 describe("three lanes", () => {
-	it("draws a fork line and one row per lane, names kept apart, each with a state word", () => {
+	it("names each lane once, with what it knows", () => {
 		const { root, env } = thread();
 		stack(root, LOOP_GREEN);
 		lane(root, 1, "Aquinas", [{ type: "plan", agentId: "", counts: { done: 2, total: 5 } }]);
 		steps(root, lane(root, 2, "Lagrange"), 3);
 		lane(root, 3, "Hume");
-		const lines = text(env).split("\n");
-		const start = lines.findIndex((line) => line.startsWith("● lit-loop"));
-		expect(lines.slice(start, start + 5)).toEqual([
-			"● lit-loop GREEN [▉▉░░░] 2/5 running",
-			"┬ 3 lanes in parallel",
-			"├─ ● Aquinas  [▉▉░░░] 2/5 running",
-			"├─ ● Lagrange 3 steps running",
-			"└─ ● Hume     starting running",
-		]);
+		expect(text(env).split("\n")).toContain("3 helpers: Aquinas 2/5, Lagrange 3 steps, Hume starting");
 	});
 
 	it("shows on the HUD frame too", () => {
@@ -127,7 +121,7 @@ describe("three lanes", () => {
 		lane(root, 1, "Aquinas");
 		lane(root, 2, "Lagrange");
 		const frame = hud(env);
-		expect(frame).toContain("┬ 2 lanes in parallel");
+		expect(frame).toContain("2 helpers: ");
 		expect(frame).toContain("Aquinas");
 		expect(frame).toContain("Lagrange");
 	});
@@ -138,8 +132,8 @@ describe("three lanes", () => {
 		steps(root, lane(root, 1, "Aquinas"), 1);
 		lane(root, 2, "Lagrange");
 		const out = text(env);
-		expect(out).toContain("● Aquinas  1 step running");
-		expect(out).toContain("● Lagrange starting running");
+		expect(out).toContain("Aquinas 1 step,");
+		expect(out).toContain("Lagrange starting");
 		expect(out).not.toMatch(/Aquinas.*\[/u);
 	});
 
@@ -148,8 +142,7 @@ describe("three lanes", () => {
 		stack(root, LOOP_GREEN);
 		const quiet = lane(root, 1, "Aquinas", [], T0 - 11 * 60_000);
 		lane(root, 2, "Lagrange");
-		expect(text(env)).toContain("- Aquinas");
-		expect(text(env)).toMatch(/- Aquinas\s+starting idle/u);
+		expect(text(env)).toContain("Aquinas starting (quiet)");
 		recordLaneEvent(root, SID, { type: "stopped", agentId: quiet }, T0 - 1);
 		expect(text(env)).not.toContain("Aquinas");
 	});
@@ -162,17 +155,17 @@ describe("paused parent", () => {
 		lane(root, 1, "Aquinas");
 		lane(root, 2, "Lagrange");
 		const lines = text(env).split("\n");
-		const first = lines.findIndex((line) => line.startsWith("| lit-loop"));
-		expect(lines[first]).toBe("| lit-loop       GREEN [▉▉░░░] 2/5 paused");
-		expect(lines[first + 1]).toBe("└─ ● lit-brainstorm interview running · back: lit continue");
-		expect(lines[first + 2]).toBe("   ┬ 2 lanes in parallel");
-		expect(lines[first + 3]).toBe("   ├─ ● Aquinas        starting running");
-		expect(lines[first + 4]).toBe("   └─ ● Lagrange       starting running");
+		const first = lines.indexOf("Now: lit-brainstorm (interview)");
+		expect(lines.slice(first, first + 3)).toEqual([
+			"Now: lit-brainstorm (interview)",
+			"Paused: lit-loop (GREEN, 2/5) · type `lit continue` to go back",
+			"2 helpers: Aquinas starting, Lagrange starting",
+		]);
 	});
 });
 
 describe("overflow", () => {
-	it("keeps THREAD_ROWS rows, counts the rest and keeps the fork line honest", () => {
+	it("keeps THREAD_ROWS rows and counts the rest", () => {
 		const { root, env } = thread();
 		stack(root, LOOP_GREEN);
 		for (let n = 1; n <= 6; n++) lane(root, n, `Agent ${n}`);
@@ -180,9 +173,7 @@ describe("overflow", () => {
 		expect(view?.lanes).toHaveLength(3);
 		expect(view?.more).toBe(3);
 		const lines = threadLines(view as NonNullable<typeof view>);
-		expect(lines).toContain("┬ 6 lanes in parallel");
-		expect(lines.at(-1)).toMatch(/ \+3 more$/u);
-		expect(lines.filter((line) => line.includes("Agent "))).toHaveLength(3);
+		expect(lines).toEqual(["6 helpers: Agent 1 starting, Agent 2 starting, Agent 3 starting, 3 more"]);
 		expect(THREAD_ROWS).toBe(4);
 	});
 
@@ -208,8 +199,7 @@ describe("other sessions", () => {
 			T0 - OTHER_SESSION_MS - 60_000,
 		);
 		const out = text(env);
-		expect(out).toContain("● lit-plan");
-		expect(out).toContain("other session 019a0000");
+		expect(out).toContain("Also open in this project: lit-plan (plan), working");
 		expect(out).not.toContain("litresearch");
 		const view = readCardStatus(SID, env, T0).threads;
 		expect(view?.others).toHaveLength(1);
@@ -231,11 +221,11 @@ describe("other sessions", () => {
 		const { root, env } = thread();
 		stack(root, LOOP_GREEN);
 		stack(root, [{ type: "start", skill: "lit-plan" }], A, T0 - 20_000);
-		recordLiveness(root, A, "idle", {}, T0 - 10_000);
+		recordLiveness(root, A, "idle", T0 - 10_000);
 		stack(root, [{ type: "start", skill: "litwork" }], B, T0 - 120_000);
-		recordLiveness(root, B, "alive", {}, T0 - 100_000);
+		recordLiveness(root, B, "alive", T0 - 100_000);
 		stack(root, [{ type: "start", skill: "litresearch" }], C, T0 - 60_000);
-		recordLiveness(root, C, "alive", {}, T0 - 50_000);
+		recordLiveness(root, C, "alive", T0 - 50_000);
 		const others = readCardStatus(SID, env, T0).threads?.others ?? [];
 		expect(others.map((row) => [row.name, row.state])).toEqual([
 			["litresearch", "running"],
@@ -248,7 +238,7 @@ describe("other sessions", () => {
 		const { root, env } = thread();
 		stack(root, LOOP_GREEN);
 		stack(root, [{ type: "start", skill: "lit-plan" }], A, T0 - OTHER_SESSION_MS - 60_000);
-		recordLiveness(root, A, "idle", {}, T0 - 60_000);
+		recordLiveness(root, A, "idle", T0 - 60_000);
 		expect(readCardStatus(SID, env, T0).threads?.others.map((row) => row.state)).toEqual(["idle"]);
 	});
 
@@ -271,13 +261,12 @@ describe("other sessions", () => {
 		expect(finished(61_000)).toEqual([]);
 	});
 
-	it("names a session by its herdr pane when it has one", () => {
+	it("never names a session by a terminal pane, which its hooks cannot know", () => {
 		const { root, env } = thread();
 		stack(root, LOOP_GREEN);
 		stack(root, [{ type: "start", skill: "lit-plan" }], A, T0 - 20_000);
-		recordLiveness(root, A, "alive", { HERDR_PANE_ID: "w2:p3" }, T0 - 10_000);
-		expect(readCardStatus(SID, env, T0).threads?.others[0]?.name).toBe("lit-plan · w2:p3");
-		expect(text(env)).toContain("lit-plan · w2:p3");
+		recordLiveness(root, A, "alive", T0 - 10_000);
+		expect(readCardStatus(SID, env, T0).threads?.others[0]?.name).toBe("lit-plan");
 	});
 
 	it("fits the HUD width with colour on and off", () => {
@@ -285,7 +274,7 @@ describe("other sessions", () => {
 		stack(root, LOOP_GREEN);
 		for (const [index, sid] of [A, B, C].entries()) {
 			stack(root, [{ type: "start", skill: "lit-brainstorm" }], sid, T0 - 20_000 - index * 1_000);
-			recordLiveness(root, sid, index === 1 ? "idle" : "alive", { HERDR_PANE_ID: `pane-${"x".repeat(26)}` }, T0);
+			recordLiveness(root, sid, index === 1 ? "idle" : "alive", T0);
 		}
 		const status = readCardStatus(SID, env, T0, { rollout: false });
 		const view: HudView = {
@@ -518,7 +507,7 @@ describe("hook routes", () => {
 			err: "",
 		});
 		const withLane = cardStatusText(readCardStatus(SID, env, Date.now()));
-		expect(withLane).toMatch(/● Plato\s+starting running/u);
+		expect(withLane).toMatch(/1 helper: Plato starting/u);
 		expect(route("subagent-stop", { ...base, hook_event_name: "SubagentStop" })).toEqual({
 			code: 0,
 			out: "",

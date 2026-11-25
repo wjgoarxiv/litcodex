@@ -486,7 +486,6 @@ export interface OtherStack {
 	readonly at: number;
 	/** What the session's liveness record says now (`ended` records are left out), or null without one. */
 	readonly liveness: "alive" | "idle" | null;
-	readonly pane: string | null;
 }
 
 /** Running first, then idle, then the rest (paused, done, or silent). */
@@ -531,7 +530,6 @@ export function readOtherStacks(cwd: string, selfId: string, now: number = Date.
 				frames,
 				at: Math.max(at, live?.at ?? 0),
 				liveness: live === undefined ? null : (live.state as "alive" | "idle"),
-				pane: live?.herdrPane ?? null,
 			});
 		}
 		return found
@@ -591,14 +589,21 @@ export function breadcrumb(stack: WorkflowStack): string | null {
 	return `${head} ‖ > ${names.at(-1)}`;
 }
 
+/** One frame in words: `lit-loop (work, 2/5)`. */
+function frameWords(frame: StackFrame): string {
+	const count = stackGauge(frame)?.split(" ").at(-1) ?? frameNote(frame);
+	const facts = [frame.stage ?? "", count].filter((fact) => fact !== "");
+	const name = frame.skill ?? frame.family ?? "work";
+	return facts.length === 0 ? name : `${name} (${facts.join(", ")})`;
+}
+
 /**
- * The stack as one card row: paused frames with their stage and gauge, then the running frame after `>`,
- * then the way back. Null while there is a single frame or none, since the map already shows that.
+ * The stack as one card row: the running skill, what is paused under it and the way back. Null while there is a
+ * single frame or none, since the map already shows that.
  */
 export function stackRow(stack: WorkflowStack): string | null {
 	if (stack.frames.length < 2) return null;
-	const labels = stack.frames.map((frame) => frameLabel(frame));
-	const running = labels.pop();
-	const paused = labels.join(" ‖ ");
-	return `⏸ ${paused} ‖ ▶ ${running} · back: lit continue`;
+	const words = stack.frames.map(frameWords);
+	const running = words.pop();
+	return `Now: ${running} · paused: ${words.join(", ")} · type \`lit continue\` to go back`;
 }

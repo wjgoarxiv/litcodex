@@ -62,7 +62,7 @@ describe("litcodex statusline", () => {
 		session(env, "s-two", "litresearch", NOW - 1_000);
 		const result = await run(env, JSON.stringify({ session_id: "s-one", cwd }));
 		expect(result.code).toBe(0);
-		expect(result.lines).toEqual(["🔥 LIT · lit-loop  🔨 WORK › 🔍 REVIEW › 🏁 DONE  ⠹ Bash 0:12"]);
+		expect(result.lines).toEqual(["🔥 LIT · lit-loop  ● work ── ○ review ── ○ done  · Bash 0:12"]);
 	});
 
 	it("falls back to a session in the same folder, then to the newest session", async () => {
@@ -72,7 +72,7 @@ describe("litcodex statusline", () => {
 		const byFolder = await run(env, JSON.stringify({ session_id: "not-lit", workspace: { current_dir: older } }));
 		expect(byFolder.lines[0]).toMatch(/^🔥 LIT · lit-loop/u);
 		const newest = await run(env, "");
-		expect(newest.lines[0]).toMatch(/^🔥 LIT · litresearch {2}🔎 DECOMPOSE/u);
+		expect(newest.lines[0]).toMatch(/^🔥 LIT · litresearch {2}● decompose/u);
 	});
 
 	it("cuts the line to COLUMNS display cells", async () => {

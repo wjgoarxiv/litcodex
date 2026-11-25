@@ -6,6 +6,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `litcodex run` draws the framed sunset card of `litcodex hud` under Codex on a dark truecolor terminal of at least 60
+  columns and 24 rows: seven rows, nine from 34 terminal rows on, moving only while LIT works. Elsewhere it keeps four
+  rows.
+- With `litcodex screen-status on`, the LIT card in the terminal `codex` has a sunset pill, a pill around the current
+  stage and a horizon with a low sun, and turns amber when the turn waits on you.
+
+### Changed
+
+- The LIT text in the chat says things in words: `✓ plan ── ● work 3/7 ── ○ review ── ○ done` for the map,
+  `turn done · 2 tasks done · next: …` at the end of a turn, `Now: … · paused: …` for paused work, and
+  `Also open in this project: …` for other sessions. The `┃` bars, stage emoji and bar gauges are gone from it.
+- `litcodex run` without truecolor is plain text.
+
+### Fixed
+
+- A turn that ended with a question no longer shows `DONE ✓`: every card says it is your turn, and the Stop hook says
+  `your turn · answer the question above`.
+- Sessions are no longer named after a herdr pane. Hooks can run under a Codex process shared by every session, and the
+  pane read there was another session's.
+- A Codex home whose `litcodex` folder is a symlink to a folder of the same user works; it used to end in
+  `cannot read session pointer`.
+- A monthly limit is labelled by its own length instead of `1w`.
+- A bare greeting such as `hi lit` no longer asks to set a goal.
+
 ## [1.0.48] - 2026-11-25
 
 ### Added

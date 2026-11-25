@@ -20,6 +20,14 @@ export interface AutoHandoffHookOptions {
     readonly env?: NodeJS.ProcessEnv;
     readonly now?: number;
 }
+/** The Stop line in plain words; a turn that asked something opens with whose turn it is. */
+export declare function stopNote(line: string, waitReason: string | null): string;
+/**
+ * The text after the run-route word as the objective: no leading route filler or skill-plan flags. When the word
+ * ends the prompt (`fix the login button lit`), the text before it is the objective instead. A resume word
+ * (`lit continue`), a greeting (`hi lit`) and a question about the word itself (`what does lit-loop do?`) name no objective.
+ */
+export declare function loopObjective(prompt: string): string;
 /**
  * Asks the model to open the LIT card for this LIT turn, so the live card sits next to the newest turn
  * instead of scrolling away with the first one. In the terminal `codex` the same tool returns the map as text.

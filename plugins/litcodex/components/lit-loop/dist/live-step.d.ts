@@ -31,6 +31,8 @@ export declare function openRegularFile(path: string): number | null;
 export declare function readSmallJson(path: string, maxBytes?: number): unknown;
 /** True when every folder of `rel` under `base` is missing or a real directory (no symlink on the way). */
 export declare function plainDirsOrMissing(base: string, rel: string): boolean;
+/** `plainDirsOrMissing` for a path that starts with `litcodex/` under a Codex home (see `homeRoot`). */
+export declare function homeDirsOrMissing(home: string, rel: string): boolean;
 /**
  * Write `text` to `path` through a new temp file beside it and a rename. The temp name is random and
  * opened exclusively, so a file or symlink planted at a guessable name is never written through.

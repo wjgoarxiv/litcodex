@@ -226,27 +226,27 @@ lit 회원가입 폼에 입력 검증을 추가해줘
 일이 어디까지 왔는지 한눈에 보여 줍니다.
 
 ```text
-┃ 🔥 LIT · lit-loop  turn started
-┃ ✓ INTERVIEW  ›  ✓ PLAN  ›  🔨 WORK ▰▰▰▱▱▱▱ 3/7  ›  🔍 REVIEW  ›  🏁 DONE
-┃ ✓ Render the map
-┃ ▸ Show the map in the terminal
-┃ · Write the docs
+✓ interview ── ✓ plan ── ● work 3/7 ── ○ review ── ○ done
+✓ Render the map
+▸ Show the map in the terminal
+· Write the docs
 ```
 
 <details>
 <summary>카드 읽는 법</summary>
 
-둘째 줄이 지도입니다. 왼쪽부터 인터뷰, 계획, 작업(끝낸 계획 항목을 막대로 표시), 검토, 완료 순서입니다. 끝난
-단계에는 ✓가 붙고, 카드 색을 켜면 지금 단계는 굵은 주황, 남은 단계는 흐리게 보입니다.
+첫 줄이 지도입니다. 왼쪽부터 인터뷰, 계획, 작업(끝낸 계획 항목 수), 검토, 완료 순서입니다. 끝난 단계에는 ✓, 지금
+단계에는 ●, 하다 만 단계에는 ◐, 남은 단계에는 ○가 붙습니다.
 
 그 아래에는 계획 항목이나 lit-loop 목표를 최대 세 줄 보여 줍니다. 마지막으로 끝낸 것, 지금 하는 것, 다음 것입니다.
 카드는 프로젝트에 실제로 저장된 기록을 읽어 그리기 때문에, 근거가 없는 단계는 짐작으로 채우지 않고 뺍니다. 조사에는
 분해, 웨이브, 검증, 종합으로 이어지는 지도가 따로 있는데, 진행 중인 조사 기록이 있으면 그 지점부터, 없으면 분해
 단계부터 보여 줍니다.
 
-LIT 턴이 끝나면 Stop 훅이 같은 카드를 그리고, 첫 줄에 `✨ turn done · 2 tasks ✓ · next ▸ Write the docs` 같은 요약을
-붙입니다. `lit start work`가 중간 점검 지점에 닿은 뒤 같은 턴 안에서 계속 진행할 때는 요약이
-`⏳ 3/7 tasks ✓ · continuing ▸ Write the docs`로 바뀝니다. Codex 데스크톱 앱과 IDE는 훅 문구의 색 코드를 글자
+LIT 턴이 끝나면 Stop 훅이 `🔥 LIT · lit-loop · turn done · 2 tasks done · next: Write the docs`처럼 쉬운 말로 알려 주고,
+계획이나 목표가 있으면 그 아래에 지도를 붙입니다. 질문을 남기고 끝난 턴은 `your turn · answer the question above`, 막힌
+턴은 `blocked · needs your help above`라고 말합니다. `lit start work`가 중간 점검 지점에 닿은 뒤 같은 턴 안에서 계속
+진행할 때는 `3/7 tasks done · continuing with: Write the docs`라고 말합니다. Codex 데스크톱 앱과 IDE는 훅 문구의 색 코드를 글자
 그대로 보여 주므로, 카드는 기본으로 색 없이 나옵니다.
 
 </details>
@@ -554,7 +554,7 @@ litcodex screen-status on
 ```
 
 색은 터미널 `codex`만 그리니, 터미널 `codex`를 쓸 때만 켜세요. Codex 데스크톱 앱과 IDE 확장은 색 코드를 훅 줄에
-글자 그대로 보여 주고, 훅은 어느 클라이언트가 보여 주는지 알 수 없습니다. 색을 끄면 카드는 같은 줄을 색 없이 보여 줍니다.
+글자 그대로 보여 주고, 훅은 어느 클라이언트가 보여 주는지 알 수 없습니다. 색을 끄면 카드는 같은 말을 색 없이 보여 줍니다.
 
 <details>
 <summary>끄기, 상태 확인, 우선 설정, 한 줄 상태</summary>
@@ -562,7 +562,7 @@ litcodex screen-status on
 `litcodex screen-status off`로 끄고 `status`로 확인합니다. 설정은 `$CODEX_HOME/litcodex/screen-status.json`에 남고,
 `LITCODEX_SCREEN_STATUS=1` 또는 `0`이 그보다 먼저 적용되며, `NO_COLOR`가 있으면 카드는 색 없이 나옵니다.
 
-`litcodex statusline`은 같은 상태를 `🔥 LIT · lit-loop  🔨 WORK › 🔍 REVIEW › 🏁 DONE  ⠹ Bash 0:12`처럼 한 줄로 출력합니다.
+`litcodex statusline`은 같은 상태를 `🔥 LIT · lit-loop  ● work ── ○ review ── ○ done  · Bash 0:12`처럼 한 줄로 출력합니다.
 명령을 실행해 상태 줄을 채우는 터미널이나 도구에 쓰면 됩니다. Codex 자체는 아직 그런 명령을 실행하지 못합니다.
 
 </details>
@@ -573,9 +573,10 @@ litcodex screen-status on
 litcodex run
 ```
 
-같은 터미널에서 Codex를 띄우면서 맨 아래 네 줄을 LIT 패널 자리로 남겨 둡니다. 패널에는 지금 돌아가는 LIT 스킬과 턴이
-시작된 뒤 지난 시간, 워크플로 지도, 지금 실행 중인 도구와 경과 시간, 지금 할 체크리스트 항목이 실시간으로 나옵니다.
-Codex에 넘길 인자는 `litcodex run -- resume --last`처럼 `--` 뒤에 쓰면 그대로 전달됩니다.
+같은 터미널에서 Codex를 띄우면서 맨 아래 몇 줄을 LIT 카드 자리로 남겨 둡니다. 어두운 트루컬러 터미널이 60칸 이상이면
+`litcodex hud`와 같은 테두리 카드가 나오고, LIT가 일하는 동안 해와 별, 바다가 움직입니다. 창이 34줄 이상이면 아홉 줄,
+24줄부터는 일곱 줄입니다. 그 밖의 터미널에서는 장면 없이 네 줄로 나옵니다. 지금 돌아가는 LIT 스킬과 턴이 시작된
+뒤 지난 시간, 워크플로 지도, 지금 실행 중인 일과 경과 시간, 지금 할 체크리스트 항목입니다. Codex에 넘길 인자는 `litcodex run -- resume --last`처럼 `--` 뒤에 쓰면 그대로 전달됩니다.
 
 > [!NOTE]
 > 여기서는 Ctrl-Z로 Codex를 일시 정지할 수 없습니다(macOS, Codex 0.163.0에서 확인). Ctrl-C로 끝내거나, 작업 제어가
@@ -584,11 +585,11 @@ Codex에 넘길 인자는 `litcodex run -- resume --last`처럼 `--` 뒤에 쓰�
 <details>
 <summary>패널이 제자리를 지키는 방법과 물러나는 경우</summary>
 
-Codex는 네 줄 짧은 가상 터미널에서 돌기 때문에 그 위 공간에 화면 전체를 맞추고, 입력하거나 스크롤하거나 창 크기를
+Codex는 패널 줄 수만큼 짧은 가상 터미널에서 돌기 때문에 그 위 공간에 화면 전체를 맞추고, 입력하거나 스크롤하거나 창 크기를
 바꿔도 패널은 제자리에 있습니다.
 
-패널은 `litcodex run`을 시작한 뒤 이 폴더에서 움직이기 시작한 가장 최근 LIT 세션을 따라갑니다. 그 전에는 LIT 턴을
-기다린다고 흐리게 알려 줍니다. `litcodex hud`와 같은 작은 기록만 읽고 파일은 쓰지 않으며, Codex가 끝나면 패널 줄을
+패널은 `litcodex run`을 시작한 뒤 이 폴더에서 움직이기 시작한 가장 최근 LIT 세션을 따라갑니다. 그 전에는 `lit <할 일>`을
+입력해 보라고 알려 줍니다. `litcodex hud`와 같은 작은 기록만 읽고 파일은 쓰지 않으며, Codex가 끝나면 패널 줄을
 지우고 터미널을 원래대로 돌려놓고 종료 코드는 Codex의 것을 그대로 돌려줍니다.
 
 가상 터미널은 선택 패키지 `node-pty`로 만듭니다. 미리 빌드된 바이너리가 있는 환경이면 npm이 LitCodex와 함께

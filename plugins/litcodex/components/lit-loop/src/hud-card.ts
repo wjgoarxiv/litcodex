@@ -47,6 +47,8 @@ export interface CardOptions {
 	/** The terminal draws round caps itself. */
 	readonly caps: boolean;
 	readonly now: number;
+	/** Drawn under Codex in Codex's own window: exactly `rows` high, and it never says to start Codex. */
+	readonly docked?: boolean;
 }
 
 export interface HudCard {
@@ -434,7 +436,7 @@ function threadRows(status: CardStatus, look: Look, inner: number, caps: boolean
 					? [BLANK, ...cut(words(pad(said(row), saidWidth), gauge === null ? DIM : WHITE), saidWidth)]
 					: []),
 				...(showState ? [BLANK, ...words(row.state, color)] : []),
-				...(row.session === undefined ? [] : words(` · other session ${safe(row.session)}`, DIM)),
+				...(row.session === undefined ? [] : words(" · in another session", DIM)),
 			];
 			return ends(body, tail, inner);
 		};
@@ -501,7 +503,7 @@ function figures(view: HudView, look: Look, now: number, caps: boolean): Figure[
 	}
 	for (const [label, percent] of [
 		["5h", usage?.fiveHour ?? null],
-		["1w", usage?.week ?? null],
+		[usage?.weekLabel ?? "1w", usage?.week ?? null],
 	] as const) {
 		if (percent !== null)
 			parts.push({ cells: [...words(`${label} `, DIM), ...words(`${percent}%`, level(percent))] });
@@ -596,7 +598,7 @@ function lineRow(parts: readonly Cell[], inner: number): Row {
 }
 
 /** What to type, for a card with nothing running. */
-function invitation(view: HudView, inner: number): Row[] {
+function invitation(view: HudView, inner: number, docked: boolean): Row[] {
 	const key = (text: string): Cell[] => words(text, ACCENT, { bold: true });
 	const say = (text: string): Cell[] => words(text, DIM);
 	const choose = (forms: readonly (readonly Cell[])[]): Row =>
@@ -614,6 +616,8 @@ function invitation(view: HudView, inner: number): Row[] {
 			),
 		];
 	}
+	if (docked && view.status === null)
+		return [choose([[...say("type "), ...key("lit <task>"), ...say(" in Codex to start")]])];
 	if (view.session === null || view.status === null) {
 		if (view.wanted !== null)
 			return [lineRow([...say("waiting for session "), ...words(safe(view.wanted), TEXT, { bold: true })], inner)];
@@ -694,7 +698,7 @@ export function composeCard(view: HudView, options: CardOptions): HudCard {
 		}
 		rows.push(...threadRows(status, look, inner, caps));
 	} else {
-		rows.push(...invitation(view, inner));
+		rows.push(...invitation(view, inner, options.docked === true));
 	}
 	const notice = (mark: string, subject: string, text: string, color: Color): Row => {
 		const drawn = ends(
@@ -733,6 +737,9 @@ export function composeCard(view: HudView, options: CardOptions): HudCard {
 			}
 		}
 	}
+	if (options.docked === true && body.length < room) {
+		body = [...body, ...Array<Row>(room - body.length).fill(blank)];
+	}
 	const layout = body.map((row) => row.draw(0));
 	const top = body.length - SUN_ROWS;
 	const palette = look === "turn" ? AMBER : DUSK;
@@ -762,7 +769,8 @@ export function composeCard(view: HudView, options: CardOptions): HudCard {
 	};
 	const edge = (text: string, x: number, burst: number | null): Cell => ({ text, fg: swept(x, burst) });
 
-	const word = stateWord(view, look);
+	const idleDock = options.docked === true && status === null;
+	const word = idleDock ? words("READY", DIM, { bold: true }) : stateWord(view, look);
 	const brand =
 		look === "turn"
 			? brandPill(caps, [0xffaf3c, 0xffd98a])
@@ -773,7 +781,7 @@ export function composeCard(view: HudView, options: CardOptions): HudCard {
 					)
 				: brandPill(caps);
 	const nameColor = look === "quiet" ? TEXT : look === "turn" ? AMBER_INK : look === "rewind" ? TEXT : ACCENT;
-	const title = words(titleOf(view), nameColor, { bold: true });
+	const title = words(idleDock ? "ready" : titleOf(view), nameColor, { bold: true });
 	const fixed = 3 + brand.length + 3 + 1 + 1;
 	const wordRoom = word.length + 4;
 	const withWord = fixed + Math.min(title.length, 8) + wordRoom <= width;

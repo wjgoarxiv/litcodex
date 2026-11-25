@@ -169,14 +169,18 @@ describe("workflow map", () => {
 		const root = repo();
 		writePlan(root);
 		writeWork(root, "active");
-		expect(workflowMapLine(root, "s1", "start-work")).toBe("🧭 ✓ › 📝 ✓ › 🔨 WORK ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·");
+		expect(workflowMapLine(root, "s1", "start-work")).toBe(
+			"✓ interview ── ✓ plan ── ● work 3/7 ── ○ review ── ○ done",
+		);
 	});
 
 	it("derives the stage from saved state when the skill is outside the main chain", () => {
 		const root = repo();
 		writePlan(root);
 		writeWork(root, "paused");
-		expect(workflowMapLine(root, "s9", "lit-humanizer")).toBe("🧭 ✓ › 📝 ✓ › 🔨 PAUSED ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·");
+		expect(workflowMapLine(root, "s9", "lit-humanizer")).toBe(
+			"✓ interview ── ✓ plan ── ● work paused 3/7 ── ○ review ── ○ done",
+		);
 	});
 
 	it("reads an older version's pause at a boundary as running work, never PAUSED", () => {
@@ -189,7 +193,9 @@ describe("workflow map", () => {
 		if (work === undefined) throw new Error("fixture has no w1");
 		work["pending_boundary"] = { boundary_id: "b1" };
 		writeFileSync(path, JSON.stringify(state));
-		expect(workflowMapLine(root, "s9", "lit-humanizer")).toBe("🧭 ✓ › 📝 ✓ › 🔨 WORK ▰▰▰▱▱▱▱ 3/7 › 🔍 · › 🏁 ·");
+		expect(workflowMapLine(root, "s9", "lit-humanizer")).toBe(
+			"✓ interview ── ✓ plan ── ● work 3/7 ── ○ review ── ○ done",
+		);
 	});
 
 	it("draws no map for an outside skill when nothing is saved", () => {
@@ -198,48 +204,50 @@ describe("workflow map", () => {
 
 	it("omits earlier stages that have no saved signal", () => {
 		const root = repo();
-		expect(workflowMapLine(root, "s1", "deep-interview")).toBe("🧭 INTERVIEW › 📝 · › 🔨 · › 🔍 · › 🏁 ·");
-		expect(workflowMapLine(root, "s1", "lit-plan")).toBe("📝 PLAN › 🔨 · › 🔍 · › 🏁 ·");
-		expect(workflowMapLine(root, "s1", "review-work")).toBe("🔍 REVIEW › 🏁 ·");
-		expect(workflowMapLine(root, "s1", "lit-loop")).toBe("🔨 WORK › 🔍 · › 🏁 ·");
+		expect(workflowMapLine(root, "s1", "deep-interview")).toBe(
+			"● interview ── ○ plan ── ○ work ── ○ review ── ○ done",
+		);
+		expect(workflowMapLine(root, "s1", "lit-plan")).toBe("● plan ── ○ work ── ○ review ── ○ done");
+		expect(workflowMapLine(root, "s1", "review-work")).toBe("● review ── ○ done");
+		expect(workflowMapLine(root, "s1", "lit-loop")).toBe("● work ── ○ review ── ○ done");
 	});
 
 	it("ignores later-stage state while the user is back in planning", () => {
 		const root = repo();
 		writePlan(root);
 		writeWork(root, "active");
-		expect(workflowMapLine(root, "s1", "lit-plan")).toBe("🧭 ✓ › 📝 PLAN › 🔨 · › 🔍 · › 🏁 ·");
+		expect(workflowMapLine(root, "s1", "lit-plan")).toBe("✓ interview ── ● plan ── ○ work ── ○ review ── ○ done");
 	});
 
 	it("reads the lit-plan record: drafting is the plan stage, a published plan is ready for work", () => {
 		const root = repo();
 		writePlanRecord(root, false);
-		expect(workflowMapLine(root, "s1", null)).toBe("📝 PLAN › 🔨 · › 🔍 · › 🏁 ·");
+		expect(workflowMapLine(root, "s1", null)).toBe("● plan ── ○ work ── ○ review ── ○ done");
 		writePlanRecord(root, true);
-		expect(workflowMapLine(root, "s1", null)).toBe("🧭 ✓ › 📝 ✓ › 🔨 · › 🔍 · › 🏁 ·");
+		expect(workflowMapLine(root, "s1", null)).toBe("✓ interview ── ✓ plan ── ○ work ── ○ review ── ○ done");
 		expect(workflowMapLine(root, "other", null)).toBeNull();
 	});
 
 	it("counts lit-loop goals when no start-work is running", () => {
 		const root = repo();
 		writeGoals(root, ["complete", "in_progress", "pending"]);
-		expect(workflowMapLine(root, "s1", "lit-loop")).toBe("🔨 WORK ▰▱▱ 1/3 › 🔍 · › 🏁 ·");
-		expect(workflowMapLine(root, "s2", "lit-loop")).toBe("🔨 WORK › 🔍 · › 🏁 ·");
+		expect(workflowMapLine(root, "s1", "lit-loop")).toBe("● work 1/3 ── ○ review ── ○ done");
+		expect(workflowMapLine(root, "s2", "lit-loop")).toBe("● work ── ○ review ── ○ done");
 	});
 
 	it("uses unscoped goals only while one is still open", () => {
 		const root = repo();
 		writeGoals(root, ["complete", "pending"], null);
-		expect(workflowMapLine(root, "s2", "lit-loop")).toBe("🔨 WORK ▰▱ 1/2 › 🔍 · › 🏁 ·");
+		expect(workflowMapLine(root, "s2", "lit-loop")).toBe("● work 1/2 ── ○ review ── ○ done");
 		writeGoals(root, ["complete", "complete"], null);
-		expect(workflowMapLine(root, "s2", "lit-loop")).toBe("🔨 WORK › 🔍 · › 🏁 ·");
+		expect(workflowMapLine(root, "s2", "lit-loop")).toBe("● work ── ○ review ── ○ done");
 	});
 
 	it("marks a finished plan as done only for the session that ran it", () => {
 		const root = repo();
 		writePlan(root, PLAN.replaceAll("- [ ]", "- [x]"));
 		writeWork(root, "completed");
-		expect(workflowMapLine(root, "s1", null)).toBe("🧭 ✓ › 📝 ✓ › 🔨 ✓ › 🔍 ✓ › 🏁 DONE");
+		expect(workflowMapLine(root, "s1", null)).toBe("✓ interview ── ✓ plan ── ✓ work ── ✓ review ── ✓ done");
 		expect(workflowMapLine(root, "s2", null)).toBeNull();
 	});
 
@@ -247,26 +255,30 @@ describe("workflow map", () => {
 		const root = repo();
 		writePlan(root);
 		writeWork(root, "active");
-		expect(workflowMapLine(root, "s1", "review-work")).toBe("🧭 ✓ › 📝 ✓ › 🔨 ▰▰▰▱▱▱▱ 3/7 › 🔍 REVIEW › 🏁 ·");
+		expect(workflowMapLine(root, "s1", "review-work")).toBe(
+			"✓ interview ── ✓ plan ── ◐ work 3/7 ── ● review ── ○ done",
+		);
 		writePlan(root, PLAN.replaceAll("- [ ]", "- [x]"));
-		expect(workflowMapLine(root, "s1", "review-work")).toBe("🧭 ✓ › 📝 ✓ › 🔨 ✓ › 🔍 REVIEW › 🏁 ·");
+		expect(workflowMapLine(root, "s1", "review-work")).toBe("✓ interview ── ✓ plan ── ✓ work ── ● review ── ○ done");
 	});
 
 	it("starts the research family at decomposition when no journal is open", () => {
-		expect(workflowMapLine(repo(), "s1", "litresearch")).toBe("🔎 DECOMPOSE › 🌊 · › 🔬 · › 🏁 ·");
+		expect(workflowMapLine(repo(), "s1", "litresearch")).toBe("● decompose ── ○ wave ── ○ verify ── ○ synthesis");
 	});
 
 	it("follows the saved research journal: waves, expansion, verification and synthesis", () => {
 		const root = repo();
 		const journal = join(root, ".litcodex/lit-loop/litresearch/20261012-101010");
 		mkdirSync(journal, { recursive: true });
-		expect(workflowMapLine(root, "s1", "litresearch")).toBe("🔎 DECOMPOSE › 🌊 · › 🔬 · › 🏁 ·");
+		expect(workflowMapLine(root, "s1", "litresearch")).toBe("● decompose ── ○ wave ── ○ verify ── ○ synthesis");
 		writeFileSync(join(journal, "wave-1-codebase-hooks.md"), "x");
-		expect(workflowMapLine(root, "s1", "litresearch")).toBe("🔎 ✓ › 🌊 WAVE 1 › 🔬 · › 🏁 ·");
+		expect(workflowMapLine(root, "s1", "litresearch")).toBe("✓ decompose ── ● wave 1 ── ○ verify ── ○ synthesis");
 		writeFileSync(join(journal, "wave-3-expand-lease.md"), "x");
-		expect(workflowMapLine(root, "s1", "litresearch")).toBe("🔎 ✓ › 🌊 WAVE 3 EXPAND › 🔬 · › 🏁 ·");
+		expect(workflowMapLine(root, "s1", "litresearch")).toBe(
+			"✓ decompose ── ● wave 3 expand ── ○ verify ── ○ synthesis",
+		);
 		writeFileSync(join(journal, "verify-lease-race.md"), "x");
-		expect(workflowMapLine(root, "s1", "litresearch")).toBe("🔎 ✓ › 🌊 ✓ 3 waves › 🔬 VERIFY › 🏁 ·");
+		expect(workflowMapLine(root, "s1", "litresearch")).toBe("✓ decompose ── ✓ 3 waves ── ● verify ── ○ synthesis");
 	});
 
 	it("starts a new research at decomposition once the newest journal is synthesized or stale", () => {
@@ -275,12 +287,12 @@ describe("workflow map", () => {
 		mkdirSync(journal, { recursive: true });
 		writeFileSync(join(journal, "wave-2-expand-a.md"), "x");
 		writeFileSync(join(journal, "SYNTHESIS.md"), "x");
-		expect(workflowMapLine(root, "s1", "litresearch")).toBe("🔎 DECOMPOSE › 🌊 · › 🔬 · › 🏁 ·");
+		expect(workflowMapLine(root, "s1", "litresearch")).toBe("● decompose ── ○ wave ── ○ verify ── ○ synthesis");
 		rmSync(join(journal, "SYNTHESIS.md"));
 		const old = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 		utimesSync(join(journal, "wave-2-expand-a.md"), old, old);
 		utimesSync(journal, old, old);
-		expect(workflowMapLine(root, "s1", "litresearch")).toBe("🔎 DECOMPOSE › 🌊 · › 🔬 · › 🏁 ·");
+		expect(workflowMapLine(root, "s1", "litresearch")).toBe("● decompose ── ○ wave ── ○ verify ── ○ synthesis");
 	});
 
 	it("fails open on unreadable or hostile state", () => {
@@ -296,7 +308,7 @@ describe("workflow map", () => {
 		symlinkSync(join(outside, ".litcodex/plans/boost.md"), join(root, ".litcodex/plans/boost.md"));
 		writeWork(root, "active");
 		expect(readWorkflowSignals(root, "s1").work).toBeNull();
-		expect(workflowMapLine("relative/path", "s1", "lit-loop")).toBe("🔨 WORK › 🔍 · › 🏁 ·");
+		expect(workflowMapLine("relative/path", "s1", "lit-loop")).toBe("● work ── ○ review ── ○ done");
 	});
 
 	it("never carries escape codes", () => {
@@ -523,15 +535,14 @@ async function submit(root: string, prompt: string, extra: Record<string, unknow
 	return { code, stdout: out };
 }
 
-/** The Stop card after the plan above: a leading newline for the host's hook label, then the rows. */
+/** The Stop card after the plan above: it reads on from the host's hook label. */
 function stopCard(note: string): string {
 	return [
-		"",
-		`┃ 🔥 LIT · start-work  ${note}`,
-		"┃ ✓ INTERVIEW  ›  ✓ PLAN  ›  🔨 WORK ▰▰▰▱▱▱▱ 3/7  ›  🔍 REVIEW  ›  🏁 DONE",
-		"┃ ✓ Render the map",
-		"┃ ▸ Show the map in …",
-		"┃ · Write the docs",
+		`🔥 LIT · start-work · ${note}`,
+		"✓ interview ── ✓ plan ── ● work 3/7 ── ○ review ── ○ done",
+		"✓ Render the map",
+		"▸ Show the map in …",
+		"· Write the docs",
 	].join("\n");
 }
 
@@ -592,11 +603,10 @@ describe("hook surfaces", () => {
 		expect(output.systemMessage).toBe(
 			[
 				activationMessage("start-work"),
-				"┃ 🔥 LIT · start-work  turn started",
-				"┃ ✓ INTERVIEW  ›  ✓ PLAN  ›  🔨 WORK ▰▰▰▱▱▱▱ 3/7  ›  🔍 REVIEW  ›  🏁 DONE",
-				"┃ ✓ Render the map",
-				"┃ ▸ Show the map in …",
-				"┃ · Write the docs",
+				"✓ interview ── ✓ plan ── ● work 3/7 ── ○ review ── ○ done",
+				"✓ Render the map",
+				"▸ Show the map in …",
+				"· Write the docs",
 			].join("\n"),
 		);
 		expect(output.systemMessage).not.toContain("\u001b");
@@ -621,7 +631,7 @@ describe("hook surfaces", () => {
 		const stop = await drive(runStopPlanPersistenceHookCli, stopEvent(root), root);
 		expect(stop.code).toBe(0);
 		expect(JSON.parse(stop.stdout)).toEqual({
-			systemMessage: stopCard("✨ turn done · 1 task ✓ · next ▸ Show the map in …"),
+			systemMessage: stopCard("turn done · 1 task done · next: Show the map in …"),
 		});
 		const later = await drive(runStopPlanPersistenceHookCli, stopEvent(root, "t9"), root);
 		expect(later.stdout).toBe("");
@@ -635,11 +645,11 @@ describe("hook surfaces", () => {
 		writePlan(root);
 		const stop = await drive(runStopPlanPersistenceHookCli, stopEvent(root), root);
 		expect(JSON.parse(stop.stdout)).toEqual({
-			systemMessage: stopCard("⏳ 3/7 tasks ✓ · continuing ▸ Show the map in …"),
+			systemMessage: stopCard("3/7 tasks done · continuing with: Show the map in …"),
 		});
 		const last = await drive(runStopPlanPersistenceHookCli, { ...stopEvent(root), stop_hook_active: true }, root);
 		expect(JSON.parse(last.stdout)).toEqual({
-			systemMessage: stopCard("✨ turn done · 1 task ✓ · next ▸ Show the map in …"),
+			systemMessage: stopCard("turn done · 1 task done · next: Show the map in …"),
 		});
 	});
 

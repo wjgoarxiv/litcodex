@@ -9,7 +9,7 @@
 // prints an empty line, and the exit code is always 0.
 import { clock } from "./card-status.js";
 import { cleanStatus, fit, listSessions, readHud } from "./hud.js";
-import { stageText } from "./screen-card.js";
+import { workflowMapText } from "./workflow-map.js";
 const MAX_STDIN_BYTES = 64 * 1024;
 const STDIN_BUDGET_MS = 200;
 const DEFAULT_WIDTH = 120;
@@ -84,11 +84,11 @@ export function statuslineText(status, options) {
         return "";
     const card = cleanStatus(status);
     const look = card.look;
-    const suffix = look === "turn" ? "  YOUR TURN" : look === "done" ? " ✓  DONE" : card.state === "complete" ? " ✓" : "";
+    const suffix = look === "turn" ? " · your turn" : look === "done" || card.state === "complete" ? " · done ✓" : "";
     const route = `🔥 LIT · ${card.mode ?? "lit"}${suffix}`;
-    const parts = [card.map === null ? null : card.map.cells.map(stageText).join(" › ")];
+    const parts = [card.map === null ? null : workflowMapText(card.map)];
     if (card.step !== null)
-        parts.push(`⠹ ${card.step.tool} ${clock(card.now - card.step.startedAt)}`);
+        parts.push(`· ${card.step.tool} ${clock(card.now - card.step.startedAt)}`);
     const rest = parts.filter((part) => part !== null && part !== "").join("  ");
     const line = fit(rest === "" ? route : `${route}  ${rest}`, Math.max(10, options.width));
     if (!options.color)

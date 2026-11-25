@@ -33,13 +33,16 @@ import { createRequire } from "node:module";
 import { constants as osConstants } from "node:os";
 import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { lightBackground } from "@litcodex/lit-loop/dist/hud-scene.js";
 import { createScreenFilter } from "@litcodex/lit-loop/dist/run-filter.js";
 import {
+	createRunScene,
 	MIN_RUN_COLUMNS,
 	MIN_RUN_ROWS,
 	PANEL_ROWS,
 	panelClear,
 	panelFrame,
+	panelRows,
 	readRunPanel,
 	renderRunPanel,
 } from "@litcodex/lit-loop/dist/run-panel.js";
@@ -48,9 +51,10 @@ import { ensurePtyHelperExecutable } from "./pty-helper.js";
 
 export const RUN_HELP_TEXT = `litcodex run [-- <codex args>...]
 
-Start Codex with a live LIT panel in the bottom ${PANEL_ROWS} rows of this terminal. Codex runs in a
-pseudo-terminal ${PANEL_ROWS} rows shorter, in this folder; the panel follows the newest LIT turn started
-here: the route and its clock, the stage map, the running step and the open checklist row.
+Start Codex with a live LIT panel in the bottom rows of this terminal. Codex runs in a pseudo-terminal
+that much shorter, in this folder; the panel follows the newest LIT turn started here. A dark truecolor
+terminal of at least 60×24 gets the moving sunset card of \`litcodex hud\` (7 rows, 9 in a high window);
+others get four rows: the skill and its clock, the stages, the running step and the open checklist row.
 Everything after \`--\` goes to Codex unchanged, and Codex's exit code is the command's.
 
 Without the optional node-pty package, outside a terminal, or in a terminal smaller than
@@ -62,6 +66,8 @@ Options:
 
 const HOLD_MS = 50;
 const TICK_MS = 1_000;
+/** The sunset card moves about ten times a second while LIT works. */
+const FRAME_MS = 100;
 const STOP_SIGNALS = ["SIGINT", "SIGTERM", "SIGHUP"] as const;
 /** How long Codex gets to exit after a signal or an error before the terminal is taken back anyway. */
 const GRACE_MS = 1_500;
@@ -236,12 +242,13 @@ export async function runCommand(args: readonly string[], io: RunIo): Promise<nu
 	}
 	const rows = io.stdout.rows ?? MIN_RUN_ROWS;
 	const columns = io.stdout.columns ?? MIN_RUN_COLUMNS;
+	const height = panelRows({ rows, columns }, sceneAllowed(io.env));
 	let child: PtyProcess;
 	try {
 		child = pty.spawn(codex, [...args], {
 			name: io.env["TERM"] ?? "xterm-256color",
 			cols: columns,
-			rows: rows - PANEL_ROWS,
+			rows: rows - height,
 			cwd: io.cwd,
 			env: io.env,
 			encoding: null,
@@ -254,16 +261,30 @@ export async function runCommand(args: readonly string[], io: RunIo): Promise<nu
 	return drive(child, io, { rows, columns });
 }
 
+/** Colour is drawn in 24 bits, so a terminal that does not announce it gets the plain panel. */
+function colorAllowed(env: NodeJS.ProcessEnv): boolean {
+	const noColor = env["NO_COLOR"];
+	return (noColor === undefined || noColor === "") && /truecolor|24bit/iu.test(env["COLORTERM"] ?? "");
+}
+
+/** A dark truecolor terminal, the one `litcodex hud` draws its sunset on. */
+function sceneAllowed(env: NodeJS.ProcessEnv): boolean {
+	return colorAllowed(env) && !lightBackground(env);
+}
+
 /** Pumps bytes both ways, draws the panel and resolves the exit code once the terminal is given back. */
 function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: number }): Promise<number> {
 	const now = io.now ?? Date.now;
 	const signals: Events = io.signals ?? process;
 	const startedAt = now();
-	const noColor = io.env["NO_COLOR"];
-	const color = noColor === undefined || noColor === "";
+	const color = colorAllowed(io.env);
+	const sceneOn = sceneAllowed(io.env);
 	let { rows, columns } = size;
 	let panelOn = true;
-	let childRows = rows - PANEL_ROWS;
+	let height = panelRows({ rows, columns }, sceneOn);
+	let childRows = rows - height;
+	const scene = sceneOn ? createRunScene(io.env, io.cwd, startedAt, now) : null;
+	const drawsScene = (): boolean => scene !== null && height !== PANEL_ROWS;
 	const filter = createScreenFilter(childRows);
 	const write = (data: string | Uint8Array): void => {
 		try {
@@ -272,12 +293,27 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 			// A terminal that has gone away (SIGHUP) cannot be written to; the way out continues.
 		}
 	};
-	const render = (): string[] =>
-		renderRunPanel(readRunPanel(io.env, io.cwd, startedAt, now()), { width: columns - 1, color, now: now() });
+	const render = (): string[] => {
+		if (scene !== null && drawsScene()) {
+			scene.read({ rows: height, width: columns - 1 });
+			return scene.rows();
+		}
+		return renderRunPanel(readRunPanel(io.env, io.cwd, startedAt, now()), { width: columns - 1, color, now: now() });
+	};
 	let lines = render();
 	let shown = lines.join("\n");
+	// The sunset card is redrawn whole at most every FRAME_MS, however fast Codex writes.
+	let owed = false;
+	let drawnAt = Number.NEGATIVE_INFINITY;
 	const draw = (): void => {
+		owed = true;
 		if (!panelOn || !filter.atBoundary || filter.cursorSaved) return;
+		if (scene !== null && drawsScene()) {
+			if (now() - drawnAt < FRAME_MS) return;
+			drawnAt = now();
+			lines = scene.rows();
+		}
+		owed = false;
 		if (filter.regionLost) {
 			write(`\u001b7\u001b[1;${childRows}r\u001b8`);
 			filter.regionAsserted();
@@ -287,7 +323,7 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 	};
 
 	// Make room so a cursor sitting in the bottom rows ends up above the panel, then fence Codex in.
-	write(`${"\n".repeat(PANEL_ROWS)}\u001b[${PANEL_ROWS}A\u001b7\u001b[1;${childRows}r\u001b8`);
+	write(`${"\n".repeat(height)}\u001b[${height}A\u001b7\u001b[1;${childRows}r\u001b8`);
 	io.stdin.setRawMode?.(true);
 	io.stdin.resume();
 	draw();
@@ -306,7 +342,8 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 			if (!resizePending || finished || filter.holding) return;
 			resizePending = false;
 			panelOn = rows >= MIN_RUN_ROWS && columns >= MIN_RUN_COLUMNS;
-			childRows = panelOn ? rows - PANEL_ROWS : rows;
+			height = panelRows({ rows, columns }, sceneOn);
+			childRows = panelOn ? rows - height : rows;
 			filter.setRows(childRows);
 			write(`${filter.atBoundary ? "" : CAN}${panelOn ? `\u001b[1;${childRows}r` : "\u001b[r"}\u001b[2J`);
 			filter.regionAsserted();
@@ -314,7 +351,7 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 			if (panelOn && !filter.cursorSaved) {
 				write(panelFrame(lines, { childRows, cursorVisible: filter.cursorVisible }));
 				shown = lines.join("\n");
-			}
+			} else owed = true;
 			try {
 				child.resize(columns, childRows);
 			} catch {
@@ -334,6 +371,17 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 			lines = render();
 			if (lines.join("\n") !== shown) draw();
 		}, TICK_MS);
+		// Between ticks the composed card moves by itself, reading nothing and writing only the cells that changed.
+		const motion =
+			scene === null
+				? undefined
+				: setInterval(() => {
+						if (!drawsScene()) return;
+						if (owed || filter.regionLost) return draw();
+						if (!scene.moving || !panelOn || !filter.atBoundary || filter.cursorSaved) return;
+						const moved = scene.changes(childRows);
+						if (moved !== "") write(`\u001b7${moved}\u001b8`);
+					}, FRAME_MS);
 		/** Stops Codex and waits for it, up to the grace period, before the terminal is taken back. */
 		const endAfterChild = (code: number, signal?: string): void => {
 			if (finished || ending !== null) return;
@@ -364,6 +412,7 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 			if (finished) return;
 			finished = true;
 			clearInterval(tick);
+			clearInterval(motion);
 			clearTimeout(hold);
 			clearTimeout(grace);
 			io.stdin.removeListener("data", onInput);
@@ -373,7 +422,7 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 			signals.removeListener("exit", onProcessExit);
 			const rest = filter.flush();
 			if (rest.length > 0) write(rest);
-			write(`${clean ? "" : MODE_RESET}${panelOn ? panelClear(childRows) : "\u001b[r\u001b[?25h"}`);
+			write(`${clean ? "" : MODE_RESET}${panelOn ? panelClear(childRows, height) : "\u001b[r\u001b[?25h"}`);
 			setRaw(false);
 			io.stdin.pause();
 		};

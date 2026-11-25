@@ -1373,6 +1373,7 @@
 		"plugins/litcodex/components/lit-loop/src/motion-route.test.ts",
 		"plugins/litcodex/components/lit-loop/src/motion-route.ts",
 		"plugins/litcodex/components/lit-loop/src/no-external-skill-hint.test.ts",
+		"plugins/litcodex/components/lit-loop/src/plain-words.test.ts",
 		"plugins/litcodex/components/lit-loop/src/plan-persistence.test.ts",
 		"plugins/litcodex/components/lit-loop/src/plan-persistence.ts",
 		"plugins/litcodex/components/lit-loop/src/plan-scope-roots.test.ts",

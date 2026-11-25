@@ -656,7 +656,7 @@ describe("hud scene loop", () => {
 		loop.tick();
 		expect(writes[1]?.startsWith("\u001b[H")).toBe(true);
 		expect(strip(writes[1] ?? "")).not.toContain("╭");
-		expect(strip(writes[1] ?? "")).toContain("IGNITED");
+		expect(strip(writes[1] ?? "")).toContain("working");
 	});
 
 	it("draws round caps where they are asked for", () => {
@@ -758,7 +758,7 @@ describe("hud scene loop", () => {
 		clock.now += 100;
 		expect(loop.frame()).toBe(true);
 		expect(writes[1]).not.toContain("\u001b[J");
-		expect(writes[1]).not.toContain("IGNITED");
+		expect(writes[1]).not.toContain("working");
 		expect((writes[1] ?? "").length).toBeLessThan((writes[0] ?? "").length / 2);
 	});
 

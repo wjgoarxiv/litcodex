@@ -132,7 +132,7 @@ describe("hook card colour", () => {
 	it("is plain by default and coloured once the switch is on", async () => {
 		const home = codexHome();
 		const plain = await submit({ CODEX_HOME: home }, temp());
-		expect(plain).toContain("┃ 🔥 LIT · lit-loop");
+		expect(plain).toContain("● work ── ○ review ── ○ done");
 		expect(plain).not.toContain("\\u001b");
 		run(["on"], { CODEX_HOME: home });
 		const coloured = await submit({ CODEX_HOME: home }, temp());

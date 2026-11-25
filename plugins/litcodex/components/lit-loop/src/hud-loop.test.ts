@@ -49,7 +49,7 @@ describe("hud loop", () => {
 		expect(loop.tick()).toBe(false);
 		expect(loop.tick()).toBe(false);
 		expect(writes).toHaveLength(1);
-		expect(writes[0]).toContain("🔥 LIT IGNITED · lit-loop");
+		expect(writes[0]).toContain("🔥 LIT · lit-loop · working");
 	});
 
 	it("writes once after a live-step change", () => {
@@ -60,7 +60,7 @@ describe("hud loop", () => {
 		expect(loop.tick()).toBe(true);
 		expect(loop.tick()).toBe(false);
 		expect(writes).toHaveLength(2);
-		expect(writes[1]).toContain("⠹ apply_patch · 0:00");
+		expect(writes[1]).toContain("Running: apply_patch, 0:00");
 	});
 
 	it("ticks the step clock once a second while a step runs", () => {
@@ -72,7 +72,7 @@ describe("hud loop", () => {
 		expect(loop.tick()).toBe(false);
 		clock.now += 600;
 		expect(loop.tick()).toBe(true);
-		expect(writes.at(-1)).toContain("⠹ Bash · 0:01");
+		expect(writes.at(-1)).toContain("Running: Bash, 0:01");
 	});
 
 	it("stays quiet second to second once the session has been idle a while", () => {

@@ -137,7 +137,7 @@ describe("card status", () => {
 			["review", "pending"],
 			["done", "done"],
 		]);
-		expect(cardStatusText(done)).toContain("COMPLETE");
+		expect(cardStatusText(done)).toContain("lit-loop · done ✓");
 
 		const busy = workspace();
 		recordTurnStart(busy.root, "t1", 100_000);
@@ -461,8 +461,8 @@ describe("card MCP server", () => {
 			env,
 		) as { result: { content: { type: string; text: string }[]; structuredContent: { state: string } } };
 		expect(reply.result.structuredContent.state).toBe("ignited");
-		expect(reply.result.content[0]?.text).toContain("🔥 LIT IGNITED · start-work");
-		expect(reply.result.content[0]?.text).toContain("🔨 WORK ▰▰▰▱▱▱▱ 3/7");
+		expect(reply.result.content[0]?.text).toContain("🔥 LIT · start-work · working");
+		expect(reply.result.content[0]?.text).toContain("● work 3/7");
 		expect(reply.result.content[0]?.text).toContain("Bash");
 	});
 

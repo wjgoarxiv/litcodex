@@ -28,30 +28,37 @@ const INPUT: ScreenCardInput = {
 const ESC = "\u001b";
 
 describe("renderScreenCard", () => {
-	it("draws plain rows with emoji and bars only when colour is off", () => {
+	it("draws plain rows of words and round marks when colour is off", () => {
 		expect(renderScreenCard(INPUT, { color: false, width: 100 })).toBe(
 			[
-				"┃ 🔥 LIT · lit-loop  turn started",
-				"┃ ✓ INTERVIEW  ›  🔨 WORK ▰▰▰▱▱▱▱ 3/7  ›  🔍 REVIEW",
-				"┃ ✓ Wire the store",
-				"┃ ▸ Run the tests",
-				"┃ · Write the docs",
+				"🔥 LIT · lit-loop · turn started",
+				"✓ interview ── ● work 3/7 ── ○ review",
+				"✓ Wire the store",
+				"▸ Run the tests",
+				"· Write the docs",
 			].join("\n"),
 		);
 	});
 
-	it("colours done green, the current stage bold accent and later stages dim when colour is on", () => {
-		const card = renderScreenCard(INPUT, { color: true, width: 100 });
-		const rows = card.split("\n");
-		expect(rows).toHaveLength(5);
-		expect(rows[0]).toContain(`${ESC}[1m${ESC}[38;2;255;155;94m🔥 LIT · lit-loop${ESC}[0m`);
-		expect(rows[0]).toContain(`${ESC}[2m  turn started${ESC}[0m`);
-		expect(rows[1]).toContain(`${ESC}[38;2;107;196;109m✓ INTERVIEW${ESC}[0m`);
-		expect(rows[1]).toContain(`${ESC}[1m${ESC}[38;2;255;155;94m🔨 WORK ▰▰▰▱▱▱▱ 3/7${ESC}[0m`);
-		expect(rows[1]).toContain(`${ESC}[2m🔍 REVIEW${ESC}[0m`);
-		expect(rows[3]).toContain(`${ESC}[38;2;255;155;94m▸${ESC}[0m Run the tests`);
-		// Without the escapes the coloured card is the plain card.
-		expect(card.replace(/\u001b\[[0-9;]*m/gu, "")).toBe(renderScreenCard(INPUT, { color: false, width: 100 }));
+	it("wears the sunset in colour: the same words, graded, over a horizon with a low sun", () => {
+		const rows = renderScreenCard(INPUT, { color: true, width: 100 }).split("\n");
+		expect(rows).toHaveLength(6);
+		const bare = rows.map((row) => row.replace(/\u001b\[[0-9;]*m/gu, ""));
+		const said = (row: string): string => row.replace(/[ ·]+/gu, " ").trim();
+		expect(bare.slice(0, 5).map(said)).toEqual(
+			renderScreenCard(INPUT, { color: false, width: 100 }).split("\n").map(said),
+		);
+		expect(bare[5]).toMatch(/^▁+▂▄▅▆▇▇▆▅▄▂▁+$/u);
+		// More than a few colours: a gradient along the horizon, a filled pill for the brand and the stage at work.
+		expect(new Set(rows[5]?.match(/38;2;[0-9;]+/gu)).size).toBeGreaterThan(8);
+		expect(rows[0]).toContain(`${ESC}[1;38;2;11;14;20;48;2;`);
+		expect(rows[1]).toContain("48;2;");
+	});
+
+	it("turns amber when the turn waits on the user", () => {
+		const turn = renderScreenCard({ ...INPUT, look: "turn", note: "your turn" }, { color: true, width: 100 });
+		expect(turn).toContain("38;2;255;175;60");
+		expect(turn).not.toContain("38;2;255;45;149");
 	});
 
 	it.each([60, 100])("keeps every row within %i cells", (width) => {
@@ -94,6 +101,6 @@ describe("renderScreenCard", () => {
 			},
 			{ color: false },
 		);
-		expect(card.split("\n")).toEqual(["┃ 🔥 LIT · lit-loop  turn started", "┃ · a", "┃ · b", "┃ · c"]);
+		expect(card.split("\n")).toEqual(["🔥 LIT · lit-loop · turn started", "· a", "· b", "· c"]);
 	});
 });

@@ -275,20 +275,37 @@ const LOOP_GOAL_ROUTES = new Set(["lit-loop", "litwork"]);
 const LOOP_GOAL_FALLBACK = "Goal: after a failing check, follow lit-loop's `goal propose --loop` step; never call `create_goal` first.";
 /** The model-context line for a run whose goal question the hook already put in front of the user. */
 const loopGoalContext = (line) => `Native goal: LitCodex has shown the user this goal question: ${line} Do not ask it again. Never call \`create_goal\` or type \`/goal\` yourself: the user's exact \`yes\` on a later prompt arms it and this hook then tells you to call \`create_goal\`.`;
+/** Words that greet or thank and name no work. */
+const GREETING = /^(?:hi|hello|hey|yo|hiya|good (?:morning|afternoon|evening)|thanks|thank you|thx|안녕(?:하세요|하십니까)?|하이|ㅎㅇ|고마워요?|감사합니다)(?:\s+there)?[\s,.!?~ㅎㅋ^]*$/iu;
+/** The Stop line in plain words; a turn that asked something opens with whose turn it is. */
+export function stopNote(line, waitReason) {
+    const plain = line
+        .replace(/^✨ /u, "")
+        .replace(/^⏳ /u, "")
+        .replace(/\b(tasks?|goals?) ✓/gu, "$1 done")
+        .replace(" · continuing ▸ ", " · continuing with: ")
+        .replace(" · next ▸ ", " · next: ");
+    if (waitReason === null)
+        return plain;
+    const turn = waitReason === "blocked" ? "blocked · needs your help above" : "your turn · answer the question above";
+    return plain.startsWith("turn done") ? plain.replace("turn done", turn) : `${turn} · ${plain}`;
+}
 /**
  * The text after the run-route word as the objective: no leading route filler or skill-plan flags. When the word
  * ends the prompt (`fix the login button lit`), the text before it is the objective instead. A resume word
- * (`lit continue`) and a question about the word itself (`what does lit-loop do?`) name no objective.
+ * (`lit continue`), a greeting (`hi lit`) and a question about the word itself (`what does lit-loop do?`) name no objective.
  */
-function loopObjective(prompt) {
+export function loopObjective(prompt) {
     const masked = maskMarkdownCode(prompt);
     const match = /(?:^|[^\p{L}\p{N}_])(?:lit-loop|litcodex|litwork|lit)(?![\p{L}\p{N}_-])\s*(.*)$/isu.exec(masked);
     if (match === null)
         return "";
     const before = normalizeGoalObjective(masked.slice(0, match.index));
     const tail = normalizeGoalObjective((match[1] ?? "").replace(/^(?:\+[\w-]+\s+)*(?:(?:loop|work)\b\s*)?/iu, ""));
-    if (tail === "")
+    if (tail !== "" && GREETING.test(tail))
         return before;
+    if (!/[\p{L}\p{N}]/u.test(tail))
+        return GREETING.test(before) ? "" : before;
     if (/^(?:continue|resume|계속|이어서)[.!]?$/iu.test(tail))
         return "";
     if (before !== "" && /[?？]$/u.test(tail))
@@ -344,6 +361,7 @@ function withWorkflowMap(stdout, parsed, mode, env) {
         const card = workflowCard(cwd, sessionId, mode, "turn started", {
             color: screenColor(env),
             quietWhenEmpty: true,
+            underBanner: true,
         });
         if (card === null)
             return stdout;
@@ -473,7 +491,7 @@ export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoR
         endLiveStep(scope.cwd, scope.sessionId, auto.now, true, detectWaitReason(lastMsg));
         const env = auto.env ?? process.env;
         if (workflowTurn(scope.cwd, scope.sessionId) !== null)
-            recordLiveness(scope.cwd, scope.sessionId, "idle", env, auto.now);
+            recordLiveness(scope.cwd, scope.sessionId, "idle", auto.now);
         const line = typeof record["turn_id"] === "string"
             ? workflowStopLine(scope.cwd, scope.sessionId, record["turn_id"], {
                 stopHookActive: record["stop_hook_active"] === true,
@@ -481,16 +499,22 @@ export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoR
             })
             : null;
         const turn = line === null ? null : workflowTurn(scope.cwd, scope.sessionId);
-        const card = turn === null ? null : workflowCard(scope.cwd, scope.sessionId, turn.mode, line, { color: screenColor(env) });
+        const card = turn === null || line === null
+            ? null
+            : workflowCard(scope.cwd, scope.sessionId, turn.mode, stopNote(line, detectWaitReason(lastMsg)), {
+                color: screenColor(env),
+                quietMap: true,
+                waiting: detectWaitReason(lastMsg) !== null,
+            });
         // The end of a LIT run: remember whether it reported, had nothing to report, or waits on the user.
         const opened = workflowTurn(scope.cwd, scope.sessionId);
         const outcome = opened === null ? null : outcomeFor(line, detectWaitReason(lastMsg));
         if (opened !== null && outcome !== null) {
             recordRunEnd(scope.cwd, scope.sessionId, { mode: opened.mode, outcome }, auto.now);
         }
-        // Codex puts a hook label before the first row, so the card starts on the next one.
+        // Codex puts its hook label before the first row and indents the rest, so the card reads on from it.
         if (card !== null)
-            stdout.write(`${JSON.stringify({ systemMessage: `\n${card}` })}\n`);
+            stdout.write(`${JSON.stringify({ systemMessage: card })}\n`);
     }
     return 0;
 }
@@ -631,7 +655,7 @@ export async function runPostToolUseLiveHookCli(stdin, _stdout, _stderr, options
     if (scope !== null && !OWN_CARD_TOOL.test(scope.tool)) {
         recordLiveStepEnd(scope.cwd, scope.sessionId, scope, now);
         if (workflowTurn(scope.cwd, scope.sessionId) !== null)
-            recordLiveness(scope.cwd, scope.sessionId, "alive", options.env ?? process.env, now);
+            recordLiveness(scope.cwd, scope.sessionId, "alive", now);
     }
     recordLanes(event.parsed, toolLaneEvents, now);
     return 0;

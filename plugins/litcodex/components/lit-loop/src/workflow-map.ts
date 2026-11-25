@@ -500,23 +500,31 @@ export function workflowMapCells(mode: string | null, signals: WorkflowSignals):
 }
 
 export function mapCellText(item: MapCell): string {
-	const bar =
-		item.progress === null
-			? ""
-			: `${progressBar(item.progress.done, item.progress.total)} ${item.progress.done}/${item.progress.total}`;
+	const name = stageName(item);
+	const count = item.progress === null ? "" : ` ${item.progress.done}/${item.progress.total}`;
 	switch (item.state) {
 		case "pending":
-			return `${item.icon} ·`;
+			return `○ ${name}`;
 		case "done":
-			return item.label === null ? `${item.icon} ✓` : `${item.icon} ✓ ${item.label}`;
+			return `✓ ${name}`;
 		case "partial":
-			return `${item.icon} ${bar}`;
+			return `◐ ${name}${count}`;
 		case "current":
-			return `${item.icon} ${item.label ?? item.word.toUpperCase()}${bar === "" ? "" : ` ${bar}`}`;
+			return `${item.key === "done" ? "✓" : "●"} ${name}${count}`;
 	}
 }
 
-/** One map line, or null when there is nothing true to draw. Plain text: emoji and block cells only. */
+/** A stage in small words: its own word, and what its label adds (`work paused`, `wave 2 expand`, `2 waves`). */
+export function stageName(item: MapCell): string {
+	const label = (item.label ?? "").toLowerCase();
+	if (label === "" || label === item.word) return item.word;
+	return label === "paused" ? `${item.word} paused` : label;
+}
+
+/** What stands between two stages of the map line. */
+export const MAP_JOIN = " ── ";
+
+/** One map line, or null when there is nothing true to draw. Plain text: words and round marks only. */
 export function renderWorkflowMap(mode: string | null, signals: WorkflowSignals): string | null {
 	const map = workflowMapCells(mode, signals);
 	return map === null ? null : workflowMapText(map);
@@ -524,7 +532,7 @@ export function renderWorkflowMap(mode: string | null, signals: WorkflowSignals)
 
 /** The text line for a map already built. */
 export function workflowMapText(map: WorkflowMap): string {
-	return map.cells.map(mapCellText).join(" › ");
+	return map.cells.map(mapCellText).join(MAP_JOIN);
 }
 
 export function workflowMapLine(repoRoot: string, sessionId: string | null, mode: string | null): string | null {

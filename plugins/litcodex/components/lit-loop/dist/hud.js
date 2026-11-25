@@ -12,9 +12,9 @@ import { lstatSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { cardStatusText, readCardStatus } from "./card-status.js";
 import { clean, cleanDeep } from "./control-chars.js";
-import { codexHomeFrom, liveStepPath, plainDirsOrMissing, readLiveStep, readSmallJson, readThreadPointer, threadPointerPath, } from "./live-step.js";
+import { codexHomeFrom, homeDirsOrMissing, liveStepPath, plainDirsOrMissing, readLiveStep, readSmallJson, readThreadPointer, threadPointerPath, } from "./live-step.js";
 import { LIT_LOOP_DIR, LIT_LOOP_GOALS, normalizeSessionId } from "./state-paths.js";
-import { mapCellText, workflowMapText, workflowTurn } from "./workflow-map.js";
+import { MAP_JOIN, mapCellText, stageName, workflowMapText, workflowTurn } from "./workflow-map.js";
 export { clean } from "./control-chars.js";
 const POINTER_DIR = "litcodex/lit-loop/threads";
 const MAX_LIVE_STEP_BYTES = 4_096;
@@ -64,7 +64,7 @@ function scanPointers(env) {
     const home = codexHomeFrom(env);
     if (home === null)
         return { sessions: [], brokenAt: null };
-    if (!plainDirsOrMissing(home, POINTER_DIR))
+    if (!homeDirsOrMissing(home, POINTER_DIR))
         return { sessions: [], brokenAt: Number.POSITIVE_INFINITY };
     let names;
     try {
@@ -148,7 +148,7 @@ function unreadableRecords(cwd, id) {
         .filter(([, rel, name, maxBytes]) => unreadableRecord(cwd, rel, name, maxBytes))
         .map(([label]) => label);
 }
-function tilde(path, home) {
+export function tilde(path, home) {
     if (home === undefined || home === "" || home === "/")
         return path;
     if (path === home)
@@ -304,11 +304,11 @@ function mapLine(status) {
     const cell = status.map?.cells[current];
     if (status.map === null || cell === undefined)
         return null;
-    const before = status.map.cells.slice(0, current).map((item) => `${mapCellText(item)} › `);
+    const before = status.map.cells.slice(0, current).map((item) => `${mapCellText(item)}${MAP_JOIN}`);
     const start = before.join("").length;
     return {
         text: workflowMapText(status.map),
-        stage: [start, start + `${cell.icon} ${cell.label ?? cell.word.toUpperCase()}`.length],
+        stage: [start, start + `● ${stageName(cell)}`.length],
     };
 }
 /** The header, the card, and at most one "cannot read" line, uncut and in plain text. Pure. */

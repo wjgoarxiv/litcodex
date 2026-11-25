@@ -44,7 +44,7 @@ describe("card status stack", () => {
 			running: { name: "lit-brainstorm" },
 		});
 		expect(cardStatusText(status)).toContain(
-			"⏸ lit-loop GREEN [▉▉░░░] 2/5 ‖ ▶ lit-brainstorm interview · back: lit continue",
+			"Now: lit-brainstorm (interview) · paused: lit-loop (GREEN, 2/5) · type `lit continue` to go back",
 		);
 	});
 

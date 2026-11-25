@@ -240,7 +240,7 @@ For report or proposal output, bare `lit` loads `lit-docx`; for slide or present
 | `litcodex loop doctor` | Diagnose or recover loop state |
 | `litcodex hud` | Watch the most recently active LIT session's card live from a second terminal window |
 | `litcodex statusline` | Print the LIT status as one line for a status line command; always exits 0 |
-| `litcodex run [-- <codex args>]` | Run Codex in this terminal with a live LIT panel in the bottom four rows |
+| `litcodex run [-- <codex args>]` | Run Codex in this terminal with the live LIT card in the bottom rows |
 | `litcodex screen-status on\|off\|status` | Colour the hook card; terminal `codex` only (off by default) |
 
 ## Automatic handoff
@@ -311,8 +311,8 @@ While child agents run under the main thread, or another session of the project 
 minutes, the card and the text HUD list them under the workflow row: the chain parent first, then a `N lanes in
 parallel` line and one row per child agent, with other sessions last: running ones first, then idle ones, then the
 rest, newest first in each group. A session whose turn has closed reads `idle`, a Start Work run another session
-finished shows `done` for a minute and then leaves, and a session started inside a herdr pane is named
-`<skill> · <pane>`. Each session's state comes from a small record under `.litcodex/liveness/`, written by the
+finished shows `done` for a minute and then leaves. No terminal or pane is named: hooks can run under a Codex process
+shared by every session, so a pane read there would be another session's. Each session's state comes from a small record under `.litcodex/liveness/`, written by the
 PostToolUse and Stop hooks. At most four rows are shown and the rest are counted as
 `+N more`. A row shows a gauge such as `[▉▉░░░] 2/5` only when both numbers are known; otherwise it says what is
 known in words (`step 4`, `3 steps`, `starting`) and the desktop card adds a moving pulse. The children come from
@@ -325,8 +325,9 @@ is stored, and files older than a day are dropped.
 
 `litcodex screen-status on|off|status` is a user-level switch for the colour of the LIT card that the
 UserPromptSubmit and Stop hooks print. It is off by default and stored in `$CODEX_HOME/litcodex/screen-status.json`
-(atomic write, never through a symlink); `LITCODEX_SCREEN_STATUS=1|0` overrides it. When on, the `┃` card rows get
-truecolor, bold and dim; `NO_COLOR` keeps them plain, and without colour the rows are the same. The hook input does
+(atomic write, never through a symlink); `LITCODEX_SCREEN_STATUS=1|0` overrides it. When on, the card gets a
+sunset LIT pill, a pill around the current stage and a horizon row with a low sun, and turns amber when the turn waits
+on you; `NO_COLOR` keeps it plain, and without colour the words are the same. The hook input does
 not name the client, and the Codex desktop app and IDE show colour codes as raw text, so colour is for terminal
 `codex` users only.
 
@@ -340,20 +341,23 @@ nothing runs it yet.
 
 ## Codex with a LIT panel
 
-`litcodex run [-- <codex args>]` starts the `codex` found on PATH in a pseudo-terminal four rows shorter than the
-real terminal, in the same folder and environment. Everything after `--` reaches Codex unchanged; before it the
+`litcodex run [-- <codex args>]` starts the `codex` found on PATH in a pseudo-terminal shorter than the
+real terminal by the panel's rows, in the same folder and environment. Everything after `--` reaches Codex unchanged; before it the
 command takes only `--help` and `--dry-run`. Keys pass to Codex byte for byte. Codex's output goes through a filter
 that rewrites every scroll region (`ESC[r`, `ESC[;r`, `ESC[t;br`) to end at Codex's last row, and that holds back
 an unfinished escape sequence (CSI, an OSC or DCS string until BEL or ST, a lone ESC) or UTF-8 character at the
 end of a read until the rest arrives. A held tail is written after 50 ms even when it is still unfinished.
 
-The panel is four `┃` rows: the route with the turn's clock, the stage map, the running step and one checklist
-row. It is drawn inside a cursor save and restore after each read that ends between whole sequences, never while
-Codex holds a saved cursor of its own (`ESC7` or `ESC[s` not yet restored), and once a second when its text
-changed. After a held tail was forced out, or after Codex reset the terminal (`ESC c`, `ESC[!p`), the scroll region
+On a dark truecolor terminal of at least 60 columns and 24 rows the panel is the framed card of `litcodex hud`: seven
+rows, or nine from 34 terminal rows on. It moves about ten times a second while LIT works and for two seconds after a
+recorded completion; moving it reads no record, and only changed rows are written. Elsewhere (a smaller window, a light
+background reported through `COLORFGBG`, no truecolor, `NO_COLOR`) it is four rows: the route with the turn's
+clock, the stage map, the running step and one checklist row. It is drawn inside a cursor save and restore after each read that ends between whole sequences, never while
+Codex holds a saved cursor of its own (`ESC7` or `ESC[s` not yet restored), and on its own timer when its text
+changed (once a second, or a tenth of one while the card moves). After a held tail was forced out, or after Codex reset the terminal (`ESC c`, `ESC[!p`), the scroll region
 is set again before the next draw. It shows the newest session whose thread pointer names the run's folder and whose
-LIT activity is newer than the start of the run; before that it waits, dimmed. It reads the records
-`litcodex hud` reads, never a Codex rollout, and writes no file. A resize waits until nothing is held, ending a
+LIT activity is newer than the start of the run; before that it invites you to type `lit <task>`. It reads the records
+`litcodex hud` reads, never a Codex rollout, so it shows no context or limit figures, and writes no file. A resize waits until nothing is held, ending a
 forced-out, still-open sequence with CAN, then sets the new scroll region, clears the screen, redraws the panel and
 resizes Codex; below 40×12 the panel is dropped and Codex gets the whole screen.
 

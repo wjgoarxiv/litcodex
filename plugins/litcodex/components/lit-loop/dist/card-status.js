@@ -31,6 +31,15 @@ const STALE_STEP_MS = 30 * 60 * 1000;
 const OPEN_TURN_IDLE_MS = 10 * 60 * 1000;
 /** Stages a turn can finish the workflow from; a turn that stops while interviewing or planning waits for the user. */
 const FINISHING_STAGES = new Set(["work", "review"]);
+/** A usage window by its length: `5h`, `3d`, `1w`, `1mo`. */
+export function limitLabel(minutes) {
+    const days = Math.round(minutes / 1_440);
+    if (minutes < 1_440)
+        return `${Math.max(1, Math.round(minutes / 60))}h`;
+    if (days >= 28 && days <= 31)
+        return "1mo";
+    return days === 7 ? "1w" : `${days}d`;
+}
 /** Rollout files resolved during this server's life, with the workspace each one names. */
 const rolloutCache = new Map();
 /** When a thread's rollout was last looked for and not found; the card polls often, the search waits. */
@@ -188,6 +197,7 @@ export function usageFromRollout(text) {
         const ctx = typeof input === "number" && typeof window === "number" && window > 0 ? percent((input / window) * 100) : null;
         let fiveHour = null;
         let week = null;
+        let weekLabel = null;
         const limits = isRecord(payload["rate_limits"]) ? payload["rate_limits"] : null;
         for (const key of ["primary", "secondary"]) {
             const limit = limits !== null && isRecord(limits[key]) ? limits[key] : null;
@@ -197,12 +207,14 @@ export function usageFromRollout(text) {
                 continue;
             if (minutes <= 24 * 60)
                 fiveHour = used;
-            else
+            else {
                 week = used;
+                weekLabel = limitLabel(minutes);
+            }
         }
         if (ctx === null && fiveHour === null && week === null)
             continue;
-        return { ctx, fiveHour, week };
+        return { ctx, fiveHour, week, ...(weekLabel === null || weekLabel === "1w" ? {} : { weekLabel }) };
     }
     return null;
 }
@@ -285,6 +297,13 @@ export function toolDisplayName(tool) {
     if (parts[0] === "mcp" && parts.length >= 3 && parts[1] !== "")
         return `${parts[1]} · ${parts.slice(2).join("__")}`;
     return tool;
+}
+/** The thread rows between turns: the skill on top waits with its person instead of running. */
+function restingThreads(view, working) {
+    if (view === null || working)
+        return view;
+    const chain = view.chain.map((row) => row.active && row.state === "running" ? { ...row, state: "idle" } : row);
+    return { ...view, chain };
 }
 /** The map once the turn has ended with nothing left open: the running stage and the last stage are done. */
 function finishedMap(map) {
@@ -387,7 +406,15 @@ export function readCardStatus(threadId, env, now = Date.now(), options = {}) {
     const open = (signals.work !== null && signals.work.done < signals.work.total) ||
         (signals.goals !== null && signals.goals.done < signals.goals.total);
     const stage = drawn?.cells.find((cell) => cell.state === "current")?.key;
-    const finished = !recorded && turnOver && !open && drawn?.family === "main" && stage !== undefined && FINISHING_STAGES.has(stage);
+    const waitReason = live?.waitReason ?? null;
+    // A turn that ended by asking the person something is their turn, not a finished one.
+    const finished = !recorded &&
+        turnOver &&
+        waitReason === null &&
+        !open &&
+        drawn?.family === "main" &&
+        stage !== undefined &&
+        FINISHING_STAGES.has(stage);
     const map = finished && drawn !== null ? finishedMap(drawn) : drawn;
     const state = recorded || finished ? "complete" : "ignited";
     const working = step !== null || turnWorking(live, lastStepAt, now);
@@ -409,7 +436,6 @@ export function readCardStatus(threadId, env, now = Date.now(), options = {}) {
     catch {
         // The card shows what it can; a missing stack does not break the read.
     }
-    const waitReason = live?.waitReason ?? null;
     const waitingOnUser = !working && state === "ignited" && turnOver && waitReason !== null;
     // The done look fires only for an explicit plan/goal completion (recorded signal), not for a
     // routine turn that implicitly finishes at a finishing stage.
@@ -446,7 +472,7 @@ export function readCardStatus(threadId, env, now = Date.now(), options = {}) {
         working,
         usage: rollout ? readUsage(thread, env) : null,
         stack: cardStack,
-        threads: readThreads(cwd, thread, now, signals),
+        threads: restingThreads(readThreads(cwd, thread, now, signals), working),
         reviewLanes,
         branch: readBranch(cwd),
         workspace,
@@ -460,31 +486,34 @@ export function clock(ms) {
     const seconds = Math.max(0, Math.floor(ms / 1000));
     return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
+/** What the thread is doing, in words a first-time reader knows. */
+function stateWords(status) {
+    if (status.state === "complete")
+        return "done ✓";
+    if (status.look === "turn")
+        return "your turn";
+    if (status.look === "rewind")
+        return "rewind";
+    if (status.look === "review")
+        return "review";
+    return status.working ? "working" : "waiting for your next message";
+}
 /** The card as plain text, for hosts that cannot draw it (the terminal `codex`). */
 export function cardStatusText(status) {
     if (status.state === "ready")
         return "🔥 LIT · ready — no LIT skill in this thread yet. Type `lit <task>` to start one, or `lit adhd` after a break.";
-    const lookLabel = status.look === "turn"
-        ? "  YOUR TURN"
-        : status.look === "rewind"
-            ? "  REWIND <<"
-            : status.look === "review"
-                ? "  REVIEW"
-                : "";
-    const chip = status.restart ? `  ↻ ${status.restart}` : "";
-    const lines = [
-        `🔥 LIT ${status.state === "complete" ? "COMPLETE ✓" : "IGNITED"} · ${status.mode ?? "lit"}${lookLabel}${chip}`,
-    ];
+    const chip = status.restart ? ` · ${status.restart}` : "";
+    const lines = [`🔥 LIT · ${status.mode ?? "lit"} · ${stateWords(status)}${chip}`];
     if (status.map !== null) {
         lines.push(workflowMapText(status.map));
         if (status.map.next !== null)
-            lines.push(`next ▸ ${status.map.next}`);
+            lines.push(`Next: ${status.map.next}`);
     }
     if (status.threads)
         lines.push(...threadLines(status.threads));
     else if (status.stack)
         lines.push(status.stack.row);
     if (status.step !== null)
-        lines.push(`⠹ ${status.step.tool} · ${clock(status.now - status.step.startedAt)}`);
+        lines.push(`Running: ${status.step.tool}, ${clock(status.now - status.step.startedAt)}`);
     return cleanLines(lines.join("\n"));
 }

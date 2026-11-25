@@ -107,7 +107,6 @@ export interface OtherStack {
     readonly at: number;
     /** What the session's liveness record says now (`ended` records are left out), or null without one. */
     readonly liveness: "alive" | "idle" | null;
-    readonly pane: string | null;
 }
 /**
  * The stacks of the project's other sessions that moved within OTHER_SESSION_MS, or whose liveness record is
@@ -132,8 +131,8 @@ export declare function frameLabel(frame: StackFrame): string;
 /** `lit-loop ‖ > lit-brainstorm`: paused frames, then the running one after `>`; null for one frame or none. */
 export declare function breadcrumb(stack: WorkflowStack): string | null;
 /**
- * The stack as one card row: paused frames with their stage and gauge, then the running frame after `>`,
- * then the way back. Null while there is a single frame or none, since the map already shows that.
+ * The stack as one card row: the running skill, what is paused under it and the way back. Null while there is a
+ * single frame or none, since the map already shows that.
  */
 export declare function stackRow(stack: WorkflowStack): string | null;
 export {};

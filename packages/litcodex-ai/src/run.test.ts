@@ -233,7 +233,7 @@ describe("runCommand with a pseudo-terminal", () => {
 		const start = h.out.join("");
 		expect(start).toContain(`${ESC}[1;26r`);
 		expect(start).toContain(`${ESC}[27;1H`);
-		expect(start).toContain("waiting for a LIT turn");
+		expect(start).toContain("Type `lit <task>` in Codex to start.");
 		h.child.exit(3);
 		expect(await done).toBe(3);
 	});
@@ -489,6 +489,67 @@ describe("runCommand with a pseudo-terminal", () => {
 		vi.advanceTimersByTime(1_000);
 		expect(h.out.join("")).toContain("0:01");
 		h.child.exit(0);
+		await done;
+	});
+
+	it("draws the sunset card on a dark truecolor terminal and moves it only while LIT works", async () => {
+		vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] });
+		const h = harness({ rows: 30, columns: 100 });
+		let clock = 1_000;
+		const io: RunIo = { ...h.io, env: { ...h.io.env, COLORTERM: "truecolor" }, now: () => clock };
+		const done = runCommand([], io);
+		await settle();
+		expect(h.spawned[0]?.options).toMatchObject({ cols: 100, rows: 23 });
+		const start = h.out.join("");
+		expect(start).toContain(`${ESC}[1;23r`);
+		expect(start).toContain("╭");
+		expect(start).toContain("╯");
+		expect(start).toContain("▇");
+		expect(start).toContain("48;2;");
+		h.out.length = 0;
+		for (let tick = 0; tick < 5; tick++) {
+			clock += 100;
+			vi.advanceTimersByTime(100);
+		}
+		expect(h.out.join("")).toBe("");
+		const session = "019a0000-bbbb-7000-8000-000000000002";
+		writeThreadPointer(io.env, session, io.cwd, clock);
+		recordWorkflowTurn(io.cwd, session, "turn-1", "lit-loop", clock);
+		recordTurnStart(io.cwd, session, clock);
+		clock += 500;
+		vi.advanceTimersByTime(500);
+		h.out.length = 0;
+		for (let tick = 0; tick < 5; tick++) {
+			clock += 100;
+			vi.advanceTimersByTime(100);
+		}
+		const moved = h.out.join("");
+		expect(moved).toContain(`${ESC}7`);
+		// Every row it touches belongs to the panel.
+		for (const at of moved.matchAll(/\u001b\[(\d+);\d+H/gu)) expect(Number(at[1])).toBeGreaterThan(23);
+		h.child.exit(0);
+		expect(await done).toBe(0);
+		expect(h.out.join("").endsWith(`${ESC}[24;1H${ESC}[?25h`)).toBe(true);
+	});
+
+	it("keeps the four rows in a small, light or colourless truecolor window", async () => {
+		for (const env of [
+			{ COLORTERM: "truecolor", NO_COLOR: "1" },
+			{ COLORTERM: "truecolor", COLORFGBG: "0;15" },
+			{},
+		]) {
+			const h = harness({ rows: 30, columns: 100 });
+			const done = runCommand([], { ...h.io, env: { ...h.io.env, ...env } });
+			await settle();
+			expect(h.spawned[0]?.options).toMatchObject({ rows: 26 });
+			h.child.exit(0);
+			await done;
+		}
+		const small = harness({ rows: 20, columns: 100 });
+		const done = runCommand([], { ...small.io, env: { ...small.io.env, COLORTERM: "truecolor" } });
+		await settle();
+		expect(small.spawned[0]?.options).toMatchObject({ rows: 16 });
+		small.child.exit(0);
 		await done;
 	});
 

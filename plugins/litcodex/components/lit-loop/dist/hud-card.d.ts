@@ -7,6 +7,8 @@ export interface CardOptions {
     /** The terminal draws round caps itself. */
     readonly caps: boolean;
     readonly now: number;
+    /** Drawn under Codex in Codex's own window: exactly `rows` high, and it never says to start Codex. */
+    readonly docked?: boolean;
 }
 export interface HudCard {
     /** Whether the card moves by itself: LIT is working. */
