@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.50] - 2026-11-25
+
 ### Added
 
 - `litcodex sunset on` puts the live LIT sunset in the footer of plain `codex`: the LIT skill, the workflow map and your
