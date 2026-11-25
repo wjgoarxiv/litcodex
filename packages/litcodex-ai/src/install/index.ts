@@ -11,6 +11,7 @@ import { createRequire } from "node:module";
 import { join } from "node:path";
 import readline from "node:readline/promises";
 import { migrateCodexConfig, readLitCodexOutputStyleId } from "../config-migration/index.js";
+import { type SunsetIo, sunsetQuestion, turnSunsetOff, turnSunsetOn } from "../sunset.js";
 import {
 	humanLabel,
 	preflightLabel,
@@ -92,7 +93,7 @@ export interface RouteIo {
 }
 
 /** The real default spawn: argv array, with Windows script shims routed through ComSpec. */
-const realSpawn: SpawnLike = (cmd, args, opts) => {
+export const realSpawn: SpawnLike = (cmd, args, opts) => {
 	const invocation = codexSpawnInvocation(cmd, args, opts.env ?? process.env);
 	const res = spawnSync(invocation.command, [...invocation.args], {
 		stdio: opts.stdio,
@@ -115,7 +116,7 @@ const realSpawn: SpawnLike = (cmd, args, opts) => {
 	return out;
 };
 
-const realFs: ReadonlyFsLike = {
+export const realFs: ReadonlyFsLike = {
 	existsSync,
 	readFileSync: (p, enc) => readFileSync(p, enc),
 	readFileBufferSync: readRegularFileBuffer,
@@ -210,8 +211,36 @@ function questionCount(args: readonly string[], opts: InstallOptions, io: RouteI
 	return (
 		(hasExplicitModelRouteFlags(args) ? 0 : 3) +
 		(opts.style === undefined ? 1 : 0) +
-		agentFileQuestionCount({ env: io.env, codexHome, version: PACKAGE_VERSION, noAgentFile })
+		agentFileQuestionCount({ env: io.env, codexHome, version: PACKAGE_VERSION, noAgentFile }) +
+		(sunsetQuestion(sunsetIo(opts, io)) ? 1 : 0)
 	);
+}
+
+function sunsetIo(opts: InstallOptions, io: RouteIo): SunsetIo {
+	return { env: { ...io.env, CODEX_HOME: opts.codexHome }, fs: realFs, spawn: realSpawn };
+}
+
+const SUNSET_QUESTION = "Show the live LIT sunset in the Codex footer, beside your status line items? [Y/n] ";
+
+/** Ask once about the sunset footer; the answer is remembered either way. Returns the line to show. */
+async function offerSunset(
+	opts: InstallOptions,
+	io: RouteIo,
+	cards: InstallCards | undefined,
+): Promise<string | undefined> {
+	const deps = sunsetIo(opts, io);
+	if (!interactiveInstall(opts, io) || !sunsetQuestion(deps)) return undefined;
+	const yes =
+		cards === undefined
+			? await askPlain(opts, io, async (rl) => !/^\s*n/iu.test((await rl.question(SUNSET_QUESTION)).trim()))
+			: await cards.confirm({
+					title: "LIT sunset footer",
+					note: "Shows the live sunset under Codex, beside your own status line items. It turns on an experimental Codex feature; litcodex sunset off undoes it.",
+					initial: true,
+					yes: "show",
+					no: "off",
+				});
+	return yes ? turnSunsetOn(deps).line : turnSunsetOff(deps).line;
 }
 
 function installReadline(opts: InstallOptions, io: RouteIo): readline.Interface {
@@ -579,6 +608,15 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 		return emitError(io, err);
 	}
 
+	let sunsetLine: string | undefined;
+	try {
+		if (result.ok) sunsetLine = await offerSunset(opts, io, cards);
+	} catch (err) {
+		if (!(err instanceof CardAbort)) throw err;
+		stopOnInterrupt(err, decorate);
+		return emitError(io, err);
+	}
+
 	if (opts.json) {
 		io.stdout.write(`${JSON.stringify({ ...result, agentFile: agentFileLine })}\n`);
 	} else if (cards !== undefined) {
@@ -604,6 +642,8 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 			}),
 		);
 	} else io.stdout.write(renderPlainInstallResult(result));
+	if (sunsetLine !== undefined)
+		io.stdout.write(cards === undefined ? `${sunsetLine}\n` : cards.notice(`${sunsetLine}\n`));
 	if (result.ok) {
 		announceExtensions({
 			payload: marketplacePayload,

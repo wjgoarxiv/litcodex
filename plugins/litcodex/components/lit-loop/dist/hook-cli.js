@@ -25,6 +25,7 @@ import { workflowCard } from "./screen-card.js";
 import { screenColor } from "./screen-status.js";
 import { recordLiveness } from "./session-liveness.js";
 import { applyPromptToStack, frameToResume } from "./stack-hook.js";
+import { takeSunsetHint } from "./sunset-settings.js";
 import { maskMarkdownCode } from "./trigger.js";
 import { recordWorkflowTurn, workflowStopLine, workflowTurn } from "./workflow-map.js";
 /** Hard cap on stdin to bound memory / ReDoS exposure inside the 5 s Codex hook budget. 8 MB. */
@@ -211,7 +212,8 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
     const own = decision.kind === "inject"
         ? withCardOffer(withWorkflowMap(withLoopGoal(decision, parsed, hookCwd(parsed, repoRoot), auto.now ?? Date.now()), parsed, decision.mode, env), pointer, auto, decision.entry === "continue")
         : "";
-    const noted = goNote === null || own === "" ? own : (withReloadContext(own, goNote) ?? own);
+    const hint = decision.kind === "inject" && decision.entry !== "continue" ? withSunsetHint(own, env) : own;
+    const noted = goNote === null || hint === "" ? hint : (withReloadContext(hint, goNote) ?? hint);
     const output = withAutoHandoffReload(noted, parsed, repoRoot, auto);
     if (output !== "")
         stdout.write(output);
@@ -342,6 +344,22 @@ function withLoopGoal(decision, parsed, cwd, now) {
     }
     catch {
         return decision.stdout;
+    }
+}
+/** One line about the sunset footer under the first LIT activation that can show it; never again. */
+function withSunsetHint(stdout, env) {
+    try {
+        const output = JSON.parse(stdout);
+        if (!isRecord(output) || typeof output["systemMessage"] !== "string")
+            return stdout;
+        const line = takeSunsetHint(env);
+        if (line === null)
+            return stdout;
+        output["systemMessage"] = `${output["systemMessage"]}\n${line}`;
+        return `${JSON.stringify(output)}\n`;
+    }
+    catch {
+        return stdout;
     }
 }
 /**

@@ -241,6 +241,7 @@ For report or proposal output, bare `lit` loads `lit-docx`; for slide or present
 | `litcodex hud` | Watch the most recently active LIT session's card live from a second terminal window |
 | `litcodex statusline` | Print the LIT status as one line for a status line command; always exits 0 |
 | `litcodex run [-- <codex args>]` | Run Codex in this terminal with the live LIT card in the bottom rows |
+| `litcodex sunset on\|off\|status` | Show the LIT sunset in the footer of the terminal `codex` (off by default) |
 | `litcodex screen-status on\|off\|status` | Colour the hook card; terminal `codex` only (off by default) |
 
 ## Automatic handoff
@@ -336,8 +337,27 @@ not name the client, and the Codex desktop app and IDE show colour codes as raw 
 shows that session when LIT knows it, else the newest LIT session in that folder, else the newest LIT session,
 with the same records as `litcodex hud`. The line holds the route, the stage map and the running tool with its
 clock, cut to `COLUMNS` cells. The route is coloured unless `NO_COLOR` is set. With nothing to show, or on any
-error, it prints an empty line; the exit code is always 0. Codex 0.163.0 has no command-backed status line, so
-nothing runs it yet.
+error, it prints an empty line; the exit code is always 0. Codex itself
+runs no status line command; its footer is the next section.
+
+## Codex footer
+
+`litcodex sunset on|off|status` chooses the LIT sunset for the footer of the terminal `codex`. Codex 0.172 and later let
+one MCP tool draw its status line, behind the experimental `tui_extensions_statusline` feature. `on` checks that this
+Codex lists the feature, then sets it to `true` under `[features]` and sets `status_line_provider` under `[tui]` in
+`$CODEX_HOME/config.toml` to the plugin's `lit_statusline` tool; after the write Codex loads the config once, and when it
+cannot, the file is put back. `off` removes the choice and returns the feature to its earlier value, and uninstall does
+the same. Your `status_line` items are kept and shown beside the sunset. Another provider, an explicit `"default"` and a
+config with dotted or inline `tui`/`features` keys are left alone, with a pointer to `/statusline`.
+
+The LIT card server draws the rows from Codex's snapshot of the thread and the same records as `litcodex hud`, once a
+second, and writes nothing. It asks the terminal for its size: three rows from 64 columns by 24 rows, one line below
+that, 80 columns where there is no terminal to ask (Windows and remote app servers are not tested yet). Items that need
+Git or the network (`branch-changes`, `pull-request-number`) and `task-progress` are not shown. Under `litcodex run` the
+footer goes back to the built-in one, since the panel is the sunset.
+
+The installer asks about it once in a terminal, and one line under a LIT activation mentions it once; the answer is kept
+in `$CODEX_HOME/litcodex/sunset.json`.
 
 ## Codex with a LIT panel
 

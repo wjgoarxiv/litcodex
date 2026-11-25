@@ -17,7 +17,7 @@ import { matchToken } from "./scan-legacy-tokens.mjs";
 const DEFAULT_CONTRACT_PATH = fileURLToPath(new URL("./readme-contract.json", import.meta.url));
 
 // Top-level CLI routes (M03/M12 runCli surface). Loop subcommands are validated separately.
-// Mirrors packages/litcodex-ai/src/cli.ts ROUTES keys (install/doctor/uninstall/agent-file/config/loop/hud/screen-status/statusline/run/hook)
+// Mirrors packages/litcodex-ai/src/cli.ts ROUTES keys (install/doctor/uninstall/agent-file/config/loop/hud/screen-status/sunset/statusline/run/hook)
 // plus the position-independent --help/--version. `config` and `hook` are sub-routed below.
 export const TOP_LEVEL_ROUTES = Object.freeze([
 	"install",
@@ -29,6 +29,7 @@ export const TOP_LEVEL_ROUTES = Object.freeze([
 	"loop",
 	"hud",
 	"screen-status",
+	"sunset",
 	"statusline",
 	"run",
 	"hook",

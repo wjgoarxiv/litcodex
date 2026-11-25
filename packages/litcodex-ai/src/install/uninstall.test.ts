@@ -13,8 +13,9 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { writeSunsetRecord } from "@litcodex/lit-loop/dist/sunset-settings.js";
 import { describe, expect, it } from "vitest";
-
+import { withSunset } from "../sunset.js";
 import { installedAgentPath } from "./agent-routing.js";
 import { prepareAgentSources } from "./agents-install.js";
 import { runUninstall, type UninstallFs } from "./uninstall.js";
@@ -692,6 +693,24 @@ keep = true
 			expect(readFileSync(join(agentsDir, "user-agent.toml"), "utf8")).toBe("user-owned agent");
 		} finally {
 			rmSync(root, { recursive: true, force: true });
+		}
+	});
+});
+
+describe("the sunset footer", () => {
+	it("goes with LitCodex, and Codex's own status line stays", () => {
+		const codexHome = mkdtempSync(join(tmpdir(), "litcodex-uninstall-sunset-"));
+		try {
+			const before = '[features]\nhooks = true\n\n[tui]\nstatus_line = ["model"]\n';
+			const { config, record } = withSunset(before);
+			writeFileSync(join(codexHome, "config.toml"), config);
+			writeSunsetRecord(codexHome, record);
+			writeManagedMarketplace(codexHome);
+			const result = runUninstall({ codexBin: "codex", codexHome, spawn: () => ({ status: 0 }), fs: realFs() });
+			expect(result.ok).toBe(true);
+			expect(readFileSync(join(codexHome, "config.toml"), "utf8")).toBe(before);
+		} finally {
+			rmSync(codexHome, { recursive: true, force: true });
 		}
 	});
 });

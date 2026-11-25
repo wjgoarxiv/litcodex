@@ -25,6 +25,7 @@ import {
 	recordTurnStart,
 	writeThreadPointer,
 } from "./live-step.js";
+import { FOOTER_TOOL } from "./sunset-footer.js";
 import { recordWorkflowTurn } from "./workflow-map.js";
 
 const SERVER = fileURLToPath(new URL("../dist/card-server.js", import.meta.url));
@@ -389,7 +390,7 @@ describe("card MCP server", () => {
 			result: { tools: { name: string; annotations: unknown; _meta: Record<string, unknown> }[] };
 		};
 		const [card, status] = reply.result.tools;
-		expect(reply.result.tools.map((tool) => tool.name)).toEqual([CARD_TOOL, CARD_STATUS_TOOL]);
+		expect(reply.result.tools.map((tool) => tool.name)).toEqual([CARD_TOOL, CARD_STATUS_TOOL, FOOTER_TOOL]);
 		expect(card?.annotations).toMatchObject({ readOnlyHint: true });
 		expect(card?._meta).toEqual({
 			ui: { resourceUri: cardResourceUri(), visibility: ["model", "app"] },

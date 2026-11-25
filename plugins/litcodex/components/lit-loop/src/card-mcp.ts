@@ -1,6 +1,6 @@
 // src/card-mcp.ts — the JSON-RPC side of the LIT card server (MCP over stdio, no dependencies).
 //
-// Two tools. `lit_card` is for the model: it opens the card (an MCP App: `_meta.ui.resourceUri` plus
+// Three tools. `lit_statusline` draws Codex's footer (sunset-footer.ts). `lit_card` is for the model: it opens the card (an MCP App: `_meta.ui.resourceUri` plus
 // the `openai/outputTemplate` alias the Codex desktop app also reads) and returns the text map, so a
 // host that draws no card still gets something useful. `lit_card_status` is for the card only
 // (`visibility: ["app"]`, so the model and the terminal never list it); the card polls it with the
@@ -14,6 +14,7 @@ import { createHash } from "node:crypto";
 import { CARD_HTML } from "./card-html.js";
 import { cardStatusText, readCardStatus } from "./card-status.js";
 import { recordCardOpened } from "./live-step.js";
+import { FOOTER_MIME, FOOTER_TOOL, FOOTER_URI, readFooter } from "./sunset-footer.js";
 
 export const CARD_TOOL = "lit_card";
 export const CARD_STATUS_TOOL = "lit_card_status";
@@ -73,6 +74,17 @@ function tools(): unknown[] {
 			},
 			annotations: { title: "LIT card status", readOnlyHint: true, destructiveHint: false, openWorldHint: false },
 			_meta: { ui: { visibility: ["app"] } },
+		},
+		{
+			name: FOOTER_TOOL,
+			title: "LIT sunset",
+			description: "Draws the LIT sunset in the Codex footer. Used by the Codex status line only.",
+			inputSchema: { type: "object", properties: {}, additionalProperties: false },
+			annotations: { title: "LIT sunset", readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+			_meta: {
+				ui: { visibility: ["app"] },
+				"openai/ui": { entrypoints: [{ type: "statusline", resourceUri: FOOTER_URI }] },
+			},
 		},
 	];
 }
@@ -143,15 +155,29 @@ export function handleCardMessage(message: unknown, context: CardContext): unkno
 			case "tools/list":
 				return result(id, { tools: tools() });
 			case "tools/call":
+				if (params["name"] === FOOTER_TOOL) {
+					return result(id, { content: [{ type: "text", text: `The status line resource is ${FOOTER_URI}.` }] });
+				}
 				if (params["name"] !== CARD_TOOL && params["name"] !== CARD_STATUS_TOOL) {
 					return failure(id, -32602, "unknown tool");
 				}
 				return result(id, callTool(params, context));
 			case "resources/list":
-				return result(id, { resources: [{ uri: cardResourceUri(), name: "LIT card", mimeType: CARD_MIME }] });
+				return result(id, {
+					resources: [
+						{ uri: cardResourceUri(), name: "LIT card", mimeType: CARD_MIME },
+						{ uri: FOOTER_URI, name: "LIT sunset", mimeType: FOOTER_MIME },
+					],
+				});
 			case "resources/templates/list":
 				return result(id, { resourceTemplates: [] });
 			case "resources/read":
+				if (params["uri"] === FOOTER_URI) {
+					const tree = readFooter(params, context.env, context.now());
+					return result(id, {
+						contents: [{ uri: FOOTER_URI, mimeType: FOOTER_MIME, text: JSON.stringify(tree) }],
+					});
+				}
 				if (params["uri"] !== cardResourceUri()) return failure(id, -32602, "unknown resource");
 				return result(id, {
 					contents: [

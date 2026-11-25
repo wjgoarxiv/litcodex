@@ -48,6 +48,7 @@ import {
 } from "@litcodex/lit-loop/dist/run-panel.js";
 import { codexSpawnInvocation } from "./install/codex.js";
 import { ensurePtyHelperExecutable } from "./pty-helper.js";
+import { runFooterArgs } from "./sunset.js";
 
 export const RUN_HELP_TEXT = `litcodex run [-- <codex args>...]
 
@@ -55,7 +56,7 @@ Start Codex with a live LIT panel in the bottom rows of this terminal. Codex run
 that much shorter, in this folder; the panel follows the newest LIT turn started here. A dark truecolor
 terminal of at least 60×24 gets the moving sunset card of \`litcodex hud\` (7 rows, 9 in a high window);
 others get four rows: the skill and its clock, the stages, the running step and the open checklist row.
-Everything after \`--\` goes to Codex unchanged, and Codex's exit code is the command's.
+Everything after \`--\` goes to Codex unchanged (the sunset footer, when on, rests meanwhile), and Codex's exit code is the command's.
 
 Without the optional node-pty package, outside a terminal, or in a terminal smaller than
 ${MIN_RUN_COLUMNS}×${MIN_RUN_ROWS}, Codex runs as usual after a one-line note. The command writes no file.
@@ -245,7 +246,7 @@ export async function runCommand(args: readonly string[], io: RunIo): Promise<nu
 	const height = panelRows({ rows, columns }, sceneAllowed(io.env));
 	let child: PtyProcess;
 	try {
-		child = pty.spawn(codex, [...args], {
+		child = pty.spawn(codex, [...runFooterArgs(io.env), ...args], {
 			name: io.env["TERM"] ?? "xterm-256color",
 			cols: columns,
 			rows: rows - height,

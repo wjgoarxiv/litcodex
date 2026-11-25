@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `litcodex sunset on` puts the live LIT sunset in the footer of plain `codex`: the LIT skill, the workflow map and your
+  own status line items beside the sun, moving about once a second while Codex works. It needs Codex 0.172 or later,
+  where the footer is an experimental feature, and it is off until you choose it. The installer asks once, and one line
+  under a LIT activation mentions it once. `litcodex sunset off` and uninstall put `config.toml` back.
+
 ## [1.0.49] - 2026-11-25
 
 ### Added

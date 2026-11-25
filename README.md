@@ -483,7 +483,7 @@ Where the live card shows up depends on where you run Codex.
 | --- | --- |
 | The Codex desktop app | A card in the thread |
 | The terminal `codex`, with a second window | `litcodex hud` in that window |
-| The terminal `codex`, in one window | `litcodex run`, or the hook card in colour |
+| The terminal `codex`, in one window | `litcodex sunset on` once, then plain `codex`; or `litcodex run` for smoother motion |
 
 ### In the Codex app
 
@@ -575,9 +575,23 @@ card plain.
 
 `litcodex statusline` prints the same status as a single line, such as
 `🔥 LIT · lit-loop  ● work ── ○ review ── ○ done  · Bash 0:12`, for a terminal or tool that runs a command to fill its
-status line. Codex itself cannot run one yet.
+status line.
 
 </details>
+
+### In the Codex footer
+
+```bash
+litcodex sunset on
+```
+
+Codex 0.172 can let a plugin draw the footer of the terminal `codex`. This puts the sunset there: start `codex` as you
+always do, and three rows under the prompt show the LIT skill, the workflow map and your own status line items beside
+the sun. It moves about once a second while Codex works, rests otherwise, and turns amber when the turn waits on you.
+In a window under 24 rows or 64 columns it is one line. The installer asks about it once.
+
+The footer is an experimental Codex feature, so it is off until you say yes. `litcodex sunset off` brings your own status
+line back, and a status line provider you chose yourself is left alone.
 
 ### Under Codex in one terminal
 
@@ -744,6 +758,7 @@ always sends its full activation, because its prompt carries the grant.
 | `litcodex config migrate` | Previews or applies the managed Codex config keys |
 | `litcodex hud` | Shows the LIT card of the newest session live in a second terminal window |
 | `litcodex screen-status on`, `off` or `status` | Colours the LIT card in the terminal `codex` |
+| `litcodex sunset on`, `off` or `status` | Shows the LIT sunset in the footer of the terminal `codex` |
 | `litcodex statusline` | Prints the LIT status as one line, for a terminal status line command |
 | `litcodex run` | Runs Codex with a live LIT panel in the bottom rows of the same terminal |
 | `litcodex loop create` | Derives goals and criteria from a brief |

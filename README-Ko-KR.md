@@ -477,7 +477,7 @@ Codex가 스스로 압축하지 않는 경우라면 그 한 줄이 `/compact`를
 | --- | --- |
 | Codex 데스크톱 앱 | 스레드 안의 카드 |
 | 터미널 `codex`, 두 번째 창이 있을 때 | 그 창의 `litcodex hud` |
-| 터미널 `codex`, 창 하나 | `litcodex run`, 또는 색을 넣은 훅 카드 |
+| 터미널 `codex`, 창 하나 | `litcodex sunset on`을 한 번 실행한 뒤 그냥 `codex`, 더 부드러운 움직임은 `litcodex run` |
 
 ### Codex 앱에서
 
@@ -563,9 +563,23 @@ litcodex screen-status on
 `LITCODEX_SCREEN_STATUS=1` 또는 `0`이 그보다 먼저 적용되며, `NO_COLOR`가 있으면 카드는 색 없이 나옵니다.
 
 `litcodex statusline`은 같은 상태를 `🔥 LIT · lit-loop  ● work ── ○ review ── ○ done  · Bash 0:12`처럼 한 줄로 출력합니다.
-명령을 실행해 상태 줄을 채우는 터미널이나 도구에 쓰면 됩니다. Codex 자체는 아직 그런 명령을 실행하지 못합니다.
+명령을 실행해 상태 줄을 채우는 터미널이나 도구에 쓰면 됩니다.
 
 </details>
+
+### Codex 맨 아래에
+
+```bash
+litcodex sunset on
+```
+
+Codex 0.172부터는 터미널 `codex`의 맨 아래 상태줄을 플러그인이 그릴 수 있습니다. 이 명령을 한 번 실행하면 그 자리에 노을이
+뜹니다. `codex`는 늘 쓰던 대로 켜면 되고, 입력창 아래 세 줄에 LIT 스킬, 워크플로 지도, 원래 쓰던 상태줄 항목이 해와 나란히
+나옵니다. Codex가 일하는 동안 1초에 한 번쯤 움직이고, 쉴 때는 멈추고, 내 차례가 되면 호박색으로 바뀝니다. 창이 24줄이나
+64칸보다 작으면 한 줄로 줄어듭니다. 설치할 때도 한 번 물어봅니다.
+
+Codex의 실험 기능이라 켜기 전에는 꺼져 있습니다. `litcodex sunset off`를 실행하면 원래 상태줄이 돌아오고, 직접 고른 다른
+상태줄은 건드리지 않습니다.
 
 ### 한 터미널에서 Codex 아래에
 
@@ -728,6 +742,7 @@ LitCodex가 그 도구를 직접 부르지는 않습니다. 로그인, 모델 �
 | `litcodex config migrate` | 관리되는 Codex 설정을 미리 보거나 적용 |
 | `litcodex hud` | 가장 최근 세션의 LIT 카드를 두 번째 터미널 창에 실시간으로 표시 |
 | `litcodex screen-status on`, `off` 또는 `status` | 터미널 `codex`에서 LIT 카드에 색 넣기 |
+| `litcodex sunset on`, `off` 또는 `status` | 터미널 `codex` 맨 아래에 LIT 노을 표시 |
 | `litcodex statusline` | 상태 줄 명령에 쓸 수 있게 LIT 상태를 한 줄로 출력 |
 | `litcodex run` | 같은 터미널 아래쪽에 LIT 패널을 띄운 채 Codex 실행 |
 | `litcodex loop create` | 브리프에서 목표와 성공 기준 도출 |

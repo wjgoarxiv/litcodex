@@ -8,7 +8,8 @@ export const SUN_WIDTH = 18;
 export const SUN_ROWS = 3;
 /** Blank cells kept between the scene and any word. */
 const CLEAR = 3;
-const SUN_CLEAR = 2;
+/** Blank cells kept on each side of the sun. */
+export const SUN_CLEAR = 2;
 const SLIT = 0x1a1030;
 export const DUSK = {
     sun: [

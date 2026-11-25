@@ -244,10 +244,10 @@ function classifyInvocation(first, tail) {
 		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "hook" };
 		return { ok: HOOK_SUBCOMMANDS.includes(sub), shown: `hook ${sub}` };
 	}
-	if (first === "screen-status") {
+	if (first === "screen-status" || first === "sunset") {
 		const sub = tail.find((t) => !t.startsWith("-"));
-		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: "screen-status" };
-		return { ok: ["on", "off", "status", "on|off|status"].includes(sub), shown: `screen-status ${sub}` };
+		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: first };
+		return { ok: ["on", "off", "status", "on|off|status"].includes(sub), shown: `${first} ${sub}` };
 	}
 	if (first === "agent-file") {
 		const sub = tail.find((t) => !t.startsWith("-"));

@@ -80,6 +80,11 @@ your machine.
 `litcodex screen-status` is off by default and sends nothing anywhere. It keeps one local file,
 `$CODEX_HOME/litcodex/screen-status.json`, with a format version and whether the card is coloured.
 
+`litcodex sunset` is off by default and sends nothing anywhere. It keeps one local file,
+`$CODEX_HOME/litcodex/sunset.json`, with a format version, your answer and what `off` needs to put `config.toml` back.
+While it is on, Codex hands the local LIT card server a snapshot of the thread (model, folder, usage) once a second;
+the server draws it and keeps none of it.
+
 ## Model and tool work
 
 Running model work uses your configured Codex host and provider. Prompts, selected

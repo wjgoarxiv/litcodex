@@ -1,12 +1,14 @@
 import { createHash } from "node:crypto";
 import { lstatSync as nativeLstatSync } from "node:fs";
 import { join } from "node:path";
+import { readSunsetRecord } from "@litcodex/lit-loop/dist/sunset-settings.js";
 import { acceptedModelIds, modelDefinition } from "../config-migration/catalog.js";
 import { unsafeEffectiveRoute } from "../config-migration/gpt56-policy.js";
 import { removeSubagentDefaults } from "../config-migration/multi-agent-v2-guard.js";
 import { ensureNativeDefaultAgentConfig } from "../config-migration/native-default-route.js";
 import { GPT56_PROFILE_FILE_NAMES, isManagedGpt56ProfileContent } from "../config-migration/profile-files.js";
 import { isTomlTableHeader } from "../config-migration/toml-lines.js";
+import { withoutSunset } from "../sunset.js";
 import { NATIVE_DEFAULT_AGENT_FILE } from "./agent-routing.js";
 import { prepareAgentSources } from "./agents-install.js";
 import type { SpawnLike } from "./codex.js";
@@ -52,6 +54,7 @@ export function runUninstall(deps: UninstallDeps): { readonly ok: boolean; reado
 	}
 	removeManagedAgents(deps);
 	removeManagedSubagentDefaults(deps);
+	removeSunsetFooter(deps);
 	removeManagedProfileFiles(deps);
 	return { ok: pluginOk && marketplaceOk, codexHome: deps.codexHome };
 }
@@ -63,6 +66,7 @@ export function uninstallPlanSteps(codexHome: string): readonly string[] {
 		`Remove the marketplace: codex plugin marketplace remove ${LITCODEX_MARKETPLACE}, then delete ${managedMarketplaceRoot(codexHome)} only if the marketplace removal succeeds`,
 		`Remove LitCodex agent roles from ${join(codexHome, "agents")} and the native default route ${join(codexHome, NATIVE_DEFAULT_AGENT_FILE)}, when they still match what LitCodex installed`,
 		`Remove the managed [agents] defaults from ${join(codexHome, "config.toml")} and LitCodex-generated profile files from ${codexHome}`,
+		`Remove the LIT sunset footer from ${join(codexHome, "config.toml")} when it is on`,
 		`Remove the LitFamily block from ${join(codexHome, "AGENTS.md")} (your own text stays; a file the block alone created is deleted)`,
 		`If the marketplace root or config.toml is a symlink or otherwise unsafe, uninstall refuses to change anything`,
 	];
@@ -82,6 +86,21 @@ function isSafeUninstallPaths(deps: UninstallDeps): boolean {
 		}
 	} catch (error) {
 		return (error as NodeJS.ErrnoException).code === "ENOENT";
+	}
+}
+
+/** Give Codex its own status line back when the LIT sunset footer draws it. Best-effort. */
+function removeSunsetFooter(deps: UninstallDeps): void {
+	const { readFileSync, writeFileSync } = deps.fs;
+	if (readFileSync === undefined || writeFileSync === undefined) return;
+	const configPath = join(deps.codexHome, "config.toml");
+	if (!deps.fs.existsSync(configPath)) return;
+	try {
+		const before = readFileSync(configPath, "utf8");
+		const after = withoutSunset(before, readSunsetRecord(deps.codexHome));
+		if (after !== before) writeFileSync(configPath, after);
+	} catch {
+		// Config cleanup must not hide the authoritative Codex removal result.
 	}
 }
 

@@ -130,14 +130,14 @@ function appendSection(config: string, header: string, key: string, value: strin
 	return `${prefix}${header}\n${key} = ${value}\n`;
 }
 
-function ensureSectionSetting(config: string, header: string, key: string, value: string): string {
+export function ensureSectionSetting(config: string, header: string, key: string, value: string): string {
 	const section = findSection(config, header);
 	if (section === null) return appendSection(config, header, key, value);
 	const patched = replaceOrInsertSectionSetting(section.text, key, value);
 	return config.slice(0, section.start) + patched + config.slice(section.end);
 }
 
-function removeSectionSetting(config: string, header: string, key: string): string {
+export function removeSectionSetting(config: string, header: string, key: string): string {
 	const section = findSection(config, header);
 	if (section === null) return config;
 	const pattern = new RegExp(`^\\s*${key}\\s*=.*(?:\\n|$)`, "m");
@@ -161,7 +161,7 @@ function hasSectionSetting(section: string, key: string, value: string): boolean
 }
 
 /** Span of the table whose header is `headerLine`, ending at the next header the shared line scan finds. */
-function findSection(config: string, headerLine: string): SectionSpan | null {
+export function findSection(config: string, headerLine: string): SectionSpan | null {
 	const lines = config.split("\n");
 	const kinds = tomlLineKinds(lines);
 	let offset = 0;

@@ -1,6 +1,8 @@
 import { type Cell, type Color } from "./hud-paint.js";
 export declare const SUN_WIDTH = 18;
 export declare const SUN_ROWS = 3;
+/** Blank cells kept on each side of the sun. */
+export declare const SUN_CLEAR = 2;
 export interface Palette {
     /** Each sun row's resting colour and the colour the light lifts it to. */
     readonly sun: readonly (readonly [Color, Color])[];

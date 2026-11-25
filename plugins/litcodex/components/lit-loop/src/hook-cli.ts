@@ -59,6 +59,7 @@ import { workflowCard } from "./screen-card.js";
 import { screenColor } from "./screen-status.js";
 import { recordLiveness } from "./session-liveness.js";
 import { applyPromptToStack, frameToResume } from "./stack-hook.js";
+import { takeSunsetHint } from "./sunset-settings.js";
 import { maskMarkdownCode } from "./trigger.js";
 import { recordWorkflowTurn, workflowStopLine, workflowTurn } from "./workflow-map.js";
 
@@ -284,7 +285,8 @@ export async function runUserPromptSubmitHookCli(
 					decision.entry === "continue",
 				)
 			: "";
-	const noted = goNote === null || own === "" ? own : (withReloadContext(own, goNote) ?? own);
+	const hint = decision.kind === "inject" && decision.entry !== "continue" ? withSunsetHint(own, env) : own;
+	const noted = goNote === null || hint === "" ? hint : (withReloadContext(hint, goNote) ?? hint);
 	const output = withAutoHandoffReload(noted, parsed, repoRoot, auto);
 	if (output !== "") stdout.write(output);
 	return 0;
@@ -432,6 +434,20 @@ function withLoopGoal(
 		return withContextAfterBanner(base, note) ?? withReloadContext(base, note) ?? decision.stdout;
 	} catch {
 		return decision.stdout;
+	}
+}
+
+/** One line about the sunset footer under the first LIT activation that can show it; never again. */
+function withSunsetHint(stdout: string, env: NodeJS.ProcessEnv): string {
+	try {
+		const output = JSON.parse(stdout) as Record<string, unknown>;
+		if (!isRecord(output) || typeof output["systemMessage"] !== "string") return stdout;
+		const line = takeSunsetHint(env);
+		if (line === null) return stdout;
+		output["systemMessage"] = `${output["systemMessage"]}\n${line}`;
+		return `${JSON.stringify(output)}\n`;
+	} catch {
+		return stdout;
 	}
 }
 

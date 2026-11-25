@@ -15,7 +15,7 @@ import { acceptedModelIds, FALLBACK_CATALOG } from "./config-migration/catalog.j
 import { runConfigMigrateCli } from "./config-migration/cli.js";
 import { runAgentFileProjectCli, runConfigAgentFileCli, runConfigAttributionCli } from "./install/agent-file/cli.js";
 import { resolveCodexHome } from "./install/codex.js";
-import { renderDryRunPlan, runDoctorCli, runInstallCli, runUninstallCli } from "./install/index.js";
+import { realFs, realSpawn, renderDryRunPlan, runDoctorCli, runInstallCli, runUninstallCli } from "./install/index.js";
 import { managedMarketplaceRoot } from "./install/marketplace.js";
 import { buildInstallPlan } from "./install/plan.js";
 import { renderInstallPlan } from "./install/render-plan.js";
@@ -98,6 +98,10 @@ const ROUTES: Readonly<Record<string, RouteHandler>> = {
 		rest.length === 1 && (rest[0] === "on" || rest[0] === "off" || rest[0] === "status")
 			? ok(`litcodex screen-status ${rest[0]}\n`)
 			: { stdout: "", stderr: "Usage: litcodex screen-status on|off|status\n", exitCode: 64 },
+	sunset: (rest) =>
+		rest.length === 1 && (rest[0] === "on" || rest[0] === "off" || rest[0] === "status")
+			? ok(`litcodex sunset ${rest[0]}\n`)
+			: { stdout: "", stderr: "Usage: litcodex sunset on|off|status\n", exitCode: 64 },
 	hook: () => ok("litcodex hook\n"),
 };
 
@@ -144,6 +148,7 @@ function renderHelp(): string {
 		"  litcodex hud [--session <id>] [--once]   Watch the LIT card live from a second terminal window",
 		"  litcodex screen-status on|off|status     Colour the LIT card; terminal `codex` only (off by default)",
 		"  litcodex statusline                      Print the newest LIT status as one line for a status line command",
+		"  litcodex sunset on|off|status            Show the LIT sunset in the footer of the terminal `codex` (off by default)",
 		"  litcodex run [-- <codex args>]           Run Codex with a live LIT panel in the bottom rows of this terminal",
 		"  litcodex hook user-prompt-submit         Run the UserPromptSubmit hook",
 		"  litcodex --dry-run <command>             Resolve a command without applying it",
@@ -285,6 +290,23 @@ export async function runCli(rawArgv: readonly string[]): Promise<number> {
 			]);
 		}
 		return screenStatusCommand(rest.slice(1), { stdout: process.stdout, stderr: process.stderr, env: process.env });
+	}
+
+	if (head === "sunset") {
+		const { sunsetCommand } = await import("./sunset.js");
+		const verb = rest[1];
+		if (dryRun && (verb === "on" || verb === "off") && rest.length === 2) {
+			return writeDryRun(`litcodex sunset ${verb}`, [
+				`${verb === "on" ? "Choose" : "Remove"} the LIT sunset footer in ${resolveCodexHome(process.env)}/config.toml`,
+			]);
+		}
+		return sunsetCommand(rest.slice(1), {
+			stdout: process.stdout,
+			stderr: process.stderr,
+			env: process.env,
+			fs: realFs,
+			spawn: realSpawn,
+		});
 	}
 
 	if (!isHelp && !isVersion) {
