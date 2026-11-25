@@ -41,7 +41,7 @@ export function doctorDeps(
 	fsFiles: string[],
 	rootConfig?: string,
 	marketplaceSource = join(codexHome, "marketplaces", "litcodex"),
-	pluginVersion = "1.0.48",
+	pluginVersion = "1.0.49",
 	codexVersion = "0.144.0",
 	handoffAvailable = true,
 	// Kept so positional callers keep their argument order; lit-scientific-visualization is a stub now and the

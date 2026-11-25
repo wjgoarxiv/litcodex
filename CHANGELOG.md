@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.49] - 2026-11-25
+
 ### Added
 
 - `litcodex run` draws the framed sunset card of `litcodex hud` under Codex on a dark truecolor terminal of at least 60
