@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The sunset footer keeps its sun in a narrow window when Codex runs through its shared background server, for example on
+  a phone over SSH. That server has no terminal to measure, so the footer drew 76 columns and the sun was cut off; the
+  sun now comes first and the words follow it.
+
 ## [1.0.50] - 2026-11-25
 
 ### Added

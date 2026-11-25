@@ -22,6 +22,8 @@ export interface SunsetOptions {
     readonly dim: boolean;
     /** A colour by column, for the rewind look; the sunset then stands still in it. */
     readonly wheel: ((x: number) => Color) | null;
+    /** The sun's first cell; right of centre when left out. */
+    readonly left?: number;
 }
 export interface Sunset {
     /** Whether the sun found room. */
@@ -34,6 +36,6 @@ export interface Sunset {
 /** Right of centre, and never so far left that the three usage figures lose their place beside it. */
 export declare const sunLeft: (width: number) => number;
 /** Whether the sun fits on rows `top` to `top + 2`, with its margin, without touching text. */
-export declare function sunFits(rows: readonly (readonly Cell[])[], top: number, width: number): boolean;
+export declare function sunFits(rows: readonly (readonly Cell[])[], top: number, width: number, left?: number): boolean;
 /** The scene laid out on `rows`, its sun's first row at `top`; the rows are read once, here. */
 export declare function layoutSunset(rows: readonly (readonly Cell[])[], top: number, width: number, options: SunsetOptions): Sunset;

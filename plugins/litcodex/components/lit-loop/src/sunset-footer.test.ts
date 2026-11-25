@@ -120,8 +120,16 @@ describe("the sunset footer's shape", () => {
 		}
 	});
 
-	it("assumes 80 columns where there is no terminal to ask", () => {
-		expect(lines(draw(snapshot(), null)).map(displayWidth)).toEqual([76, 76, 76]);
+	it("puts the sun first where no terminal says how wide it is, so any cut keeps the sun", () => {
+		const drawn = lines(draw(snapshot(), null));
+		expect(drawn).toHaveLength(3);
+		for (const line of drawn) {
+			expect(/[▁▃▅▆▇█]/u.test(line.slice(0, 24))).toBe(true);
+			expect(/[▁▃▅▆▇█]/u.test(line.slice(24))).toBe(false);
+			expect(line.slice(24)).not.toContain("-");
+		}
+		expect(drawn[0]?.slice(24)).toContain("lit-loop".replace("-", "\u2011"));
+		expect(countNodes(draw(snapshot(), null))).toBeLessThan(256);
 	});
 
 	it("uses no plain space, which Codex drops at an element's edge, and only colours Codex knows", () => {

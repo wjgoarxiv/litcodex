@@ -6,8 +6,9 @@
 // thread's LIT state and the user's own status line items. Codex draws three lines and cuts the rest. `litcodex sunset on` selects it.
 //
 // A read draws from the snapshot and from LIT's own records (card-status.ts) and writes nothing. The snapshot
-// does not say how wide the terminal is, so the size comes from the controlling terminal and falls back to 80
-// columns. A tree stays under Codex's limit of 256 nodes by giving neighbouring cells one colour.
+// does not say how wide the terminal is, so the size comes from the controlling terminal. A server under Codex's
+// background daemon has none; the sun then stands first and the words after it, so a window of any width shows
+// the sun and Codex cuts only the end of a line. A tree stays under Codex's limit of 256 nodes by giving neighbouring cells one colour.
 
 import { closeSync, openSync } from "node:fs";
 import { hostname } from "node:os";
@@ -18,7 +19,7 @@ import { clean } from "./control-chars.js";
 import { displayWidth, fit, tilde } from "./hud.js";
 import { roundGlyphs } from "./hud-glyphs.js";
 import { BLANK, brandPill, type Cell, type Color } from "./hud-paint.js";
-import { AMBER, DUSK, layoutSunset, SUN_CLEAR, SUN_ROWS, sunLeft } from "./hud-sunset.js";
+import { AMBER, DUSK, layoutSunset, SUN_CLEAR, SUN_ROWS, SUN_WIDTH, sunLeft } from "./hud-sunset.js";
 import { workflowMapText } from "./workflow-map.js";
 
 export const FOOTER_TOOL = "lit_statusline";
@@ -28,7 +29,8 @@ export const FOOTER_STATE_KEY = "com.openai/codex-statusline-state";
 
 /** Codex draws the footer this many columns short of the terminal. */
 const MARGIN = 4;
-const DEFAULT_WIDTH = 76;
+/** How far the sky reaches when nobody knows the width. */
+const OPEN_WIDTH = 72;
 const MAX_WIDTH = 110;
 /** Narrower footers, and terminals with fewer rows, get one line. */
 const MIN_SCENE_WIDTH = 60;
@@ -189,7 +191,7 @@ function itemWords(
 }
 
 /** The user's status line items in their order, in short words when the full ones do not all fit. */
-function infoWords(state: Record<string, unknown>, status: CardStatus | null, width: number): Words[] {
+function infoWords(state: Record<string, unknown>, status: CardStatus | null, width: number, brief = false): Words[] {
 	const chosen = record(state["config"])["statusline_items"];
 	const ids = Array.isArray(chosen) ? chosen.filter((id) => typeof id === "string") : [];
 	const write = (short: boolean): { words: Words[]; whole: boolean } => {
@@ -213,8 +215,8 @@ function infoWords(state: Record<string, unknown>, status: CardStatus | null, wi
 		}
 		return { words, whole };
 	};
-	const full = write(false);
-	return full.whole ? full.words : write(true).words;
+	const full = write(brief);
+	return brief || full.whole ? full.words : write(true).words;
 }
 
 function wordsWidth(words: readonly Words[]): number {
@@ -325,10 +327,8 @@ export interface FooterOptions {
 export function footerTree(snapshot: unknown, options: FooterOptions): UiNode {
 	const state = record(snapshot);
 	const { status } = options;
-	const width = Math.min(
-		MAX_WIDTH,
-		Math.max(10, options.size === null ? DEFAULT_WIDTH : options.size.columns - MARGIN),
-	);
+	const open = options.size === null;
+	const width = Math.min(MAX_WIDTH, Math.max(10, options.size === null ? MAX_WIDTH : options.size.columns - MARGIN));
 	const { words: head, moving, waiting } = headline(state, status);
 	const brand = brandPill(options.caps);
 	const pill = runsOf(brand, 1).map(runNode);
@@ -351,33 +351,44 @@ export function footerTree(snapshot: unknown, options: FooterOptions): UiNode {
 		map !== null
 			? [{ text: workflowMapText(map), color: "status-progress" }]
 			: [{ text: place.join(" · "), color: "status-path" }];
-	const limit = Math.max(20, sunLeft(width) - SUN_CLEAR);
-	const left: (readonly Words[])[] = [
+	const at = open ? 2 * SUN_CLEAR + SUN_WIDTH : 0;
+	const limit = open ? width - at : Math.max(20, sunLeft(width) - SUN_CLEAR);
+	const lines: (readonly Words[])[] = [
 		cutWords([{ text: " ", color: "primary" }, ...head], limit - brand.length),
 		cutWords(second, limit),
-		infoWords(state, status, limit),
+		infoWords(state, status, limit, open),
 	];
-	const used = left.map((words, index) => wordsWidth(words) + (index === 0 ? brand.length : 0));
-	const grid = used.map((size) => Array.from({ length: width }, (_, x): Cell => (x < size ? { text: "x" } : BLANK)));
-	const scene = layoutSunset(grid, 0, width, {
+	// Codex breaks a line at a hyphen before it cuts it, so a line that may be cut has none to break at.
+	const said: (readonly Words[])[] = open
+		? lines.map((words) => words.map((word) => ({ ...word, text: word.text.replaceAll("-", "\u2011") })))
+		: lines;
+	const ends = said.map((words, index) => at + wordsWidth(words) + (index === 0 ? brand.length : 0));
+	const reach = open ? Math.max(OPEN_WIDTH, ...ends) : width;
+	const grid = ends.map((end) =>
+		Array.from({ length: reach }, (_, x): Cell => (x >= at && x < end ? { text: "x" } : BLANK)),
+	);
+	const scene = layoutSunset(grid, 0, reach, {
 		palette: waiting ? AMBER : DUSK,
 		moving,
 		dim: false,
 		wheel: null,
+		...(open ? { left: SUN_CLEAR } : {}),
 	});
 	// A still scene stands at one moment; a moving one keeps small numbers, which the sine waves need.
 	scene.paint(grid, moving ? (options.now / 1000) % 3600 : 0, null);
 
 	const build = (group: number): UiNode => {
-		const lines = left.map((words, y) => {
+		const drawn = said.map((words, y) => {
 			// Scene cells sit inside one text, which carries no background.
-			const sky = runsOf((grid[y] ?? []).slice(used[y] ?? 0), y === SUN_ROWS - 1 ? group : 1).map((run) =>
-				runNode({ ...run, bg: undefined }),
-			);
-			const said = textLine([...wordNodes(words), ...sky]);
-			return y === 0 ? row([...pill, said]) : said;
+			const sky = (from: number, to?: number): UiNode[] =>
+				runsOf((grid[y] ?? []).slice(from, to), y === SUN_ROWS - 1 ? group : 1).map((run) =>
+					runNode({ ...run, bg: undefined }),
+				);
+			const before = at > 0 ? [textLine(sky(0, at))] : [];
+			const after = textLine([...wordNodes(words), ...sky(ends[y] ?? 0)]);
+			return row([...before, ...(y === 0 ? pill : []), after]);
 		});
-		return { type: "row", props: { gap: LINE_GAP, wrap: "wrap" }, children: lines };
+		return { type: "row", props: { gap: LINE_GAP, wrap: "wrap" }, children: drawn };
 	};
 	let tree = build(1);
 	for (let group = 2; countNodes(tree) > MAX_NODES && group < 12; group++) tree = build(group);

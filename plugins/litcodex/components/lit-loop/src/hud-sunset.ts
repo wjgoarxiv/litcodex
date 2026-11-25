@@ -103,6 +103,8 @@ export interface SunsetOptions {
 	readonly dim: boolean;
 	/** A colour by column, for the rewind look; the sunset then stands still in it. */
 	readonly wheel: ((x: number) => Color) | null;
+	/** The sun's first cell; right of centre when left out. */
+	readonly left?: number;
 }
 
 export interface Sunset {
@@ -118,8 +120,13 @@ export interface Sunset {
 export const sunLeft = (width: number): number => Math.max(35, Math.round(width * 0.62));
 
 /** Whether the sun fits on rows `top` to `top + 2`, with its margin, without touching text. */
-export function sunFits(rows: readonly (readonly Cell[])[], top: number, width: number): boolean {
-	const from = sunLeft(width) - SUN_CLEAR;
+export function sunFits(
+	rows: readonly (readonly Cell[])[],
+	top: number,
+	width: number,
+	left: number = sunLeft(width),
+): boolean {
+	const from = left - SUN_CLEAR;
 	const to = from + SUN_WIDTH + 2 * SUN_CLEAR;
 	if (top < 0 || from < 0 || to > width) return false;
 	return Array.from({ length: SUN_ROWS }, (_, row) => rows[top + row]).every(
@@ -135,9 +142,9 @@ export function layoutSunset(
 	options: SunsetOptions,
 ): Sunset {
 	const { palette, moving, dim, wheel } = options;
-	const left = sunLeft(width);
+	const left = options.left ?? sunLeft(width);
 	const middle = left + SUN_WIDTH / 2 - 0.5;
-	const sun = sunFits(rows, top, width);
+	const sun = sunFits(rows, top, width, left);
 	const open = [-1, 0, 1, 2].map((row) => {
 		const cut = rows[top + row];
 		return Array.from({ length: width }, (_, x) => {

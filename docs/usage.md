@@ -352,7 +352,8 @@ config with dotted or inline `tui`/`features` keys are left alone, with a pointe
 
 The LIT card server draws the rows from Codex's snapshot of the thread and the same records as `litcodex hud`, once a
 second, and writes nothing. It asks the terminal for its size: three rows from 64 columns by 24 rows, one line below
-that, 80 columns where there is no terminal to ask (Windows and remote app servers are not tested yet). Items that need
+that. Codex's shared background server has no terminal; there the sun stands first and the words follow it, so a narrow
+window such as a phone's keeps the sun and loses only the end of each line (Windows is not tested yet). Items that need
 Git or the network (`branch-changes`, `pull-request-number`) and `task-progress` are not shown. Under `litcodex run` the
 footer goes back to the built-in one, since the panel is the sunset.
 

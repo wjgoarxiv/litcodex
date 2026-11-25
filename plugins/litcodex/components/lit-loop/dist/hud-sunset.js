@@ -84,8 +84,8 @@ function seaCell(dx, seconds, palette) {
 /** Right of centre, and never so far left that the three usage figures lose their place beside it. */
 export const sunLeft = (width) => Math.max(35, Math.round(width * 0.62));
 /** Whether the sun fits on rows `top` to `top + 2`, with its margin, without touching text. */
-export function sunFits(rows, top, width) {
-    const from = sunLeft(width) - SUN_CLEAR;
+export function sunFits(rows, top, width, left = sunLeft(width)) {
+    const from = left - SUN_CLEAR;
     const to = from + SUN_WIDTH + 2 * SUN_CLEAR;
     if (top < 0 || from < 0 || to > width)
         return false;
@@ -94,9 +94,9 @@ export function sunFits(rows, top, width) {
 /** The scene laid out on `rows`, its sun's first row at `top`; the rows are read once, here. */
 export function layoutSunset(rows, top, width, options) {
     const { palette, moving, dim, wheel } = options;
-    const left = sunLeft(width);
+    const left = options.left ?? sunLeft(width);
     const middle = left + SUN_WIDTH / 2 - 0.5;
-    const sun = sunFits(rows, top, width);
+    const sun = sunFits(rows, top, width, left);
     const open = [-1, 0, 1, 2].map((row) => {
         const cut = rows[top + row];
         return Array.from({ length: width }, (_, x) => {
