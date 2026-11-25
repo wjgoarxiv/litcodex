@@ -1,14 +1,16 @@
 // The installer's question cards, step card and closing summary for a person at a real terminal.
 //
 // Nothing here runs unless `cardsAvailable` says so: pipes, CI, `--yes`, dumb or tiny terminals keep the plain prompts
-// and lines in index.ts. A question is redrawn in place, never wider or taller than the window, and folds to one line
-// once answered. The step card only appends rows, because `codex` runs synchronously and the main thread cannot redraw.
+// and lines in index.ts. A card is redrawn in place, never wider or taller than the window, and folds to one line once
+// it is answered or its work is done. Whether pills, buttons and the highlighted row end in round caps is the HUD's
+// own rule, asked once; the caps stand in the cells a square form fills, so nothing moves between the two.
 
 import { emitKeypressEvents } from "node:readline";
 import { displayWidth } from "@litcodex/lit-loop/dist/hud.js";
+import { roundGlyphs } from "@litcodex/lit-loop/dist/hud-glyphs.js";
+import { lightBackground } from "@litcodex/lit-loop/dist/hud-scene.js";
 import { type ColorMode, colorMode, supportsBlocks } from "@litcodex/lit-loop/dist/lit-mark.js";
-import { CHROME_STOPS, sampleStops } from "../synthwave.js";
-import { CLEAR_LINE } from "../ui-style.js";
+import { CHROME_STOPS, SIZES, sampleStops, synthwaveRows } from "../synthwave.js";
 import type { SpinnerMotion } from "./install-ui.js";
 import type { SpinnerMotionLook } from "./spinner-motion.js";
 
@@ -16,13 +18,20 @@ const MIN_COLUMNS = 40;
 const MIN_ROWS = 12;
 const MAX_WIDTH = 100;
 const LIST_ROWS = 12;
-/** A value with less room than this goes under its label. */
-const MIN_VALUE = 22;
+/** Every value starts in this column of the window; a card's text starts in column 3. */
+const VALUE = 24;
+const TEXT = 3;
+/** Inside a narrower card a value goes under its label. */
+const WIDE = 56;
+const LEFT_CAP = "\ue0b6";
+const RIGHT_CAP = "\ue0b4";
 /** Keys typed before a card is on screen were not meant for it. */
 const SETTLE_MS = 30;
 /** `y` then Enter is a habit: the letter has already answered, so an Enter this soon belongs to it. */
 const LETTER_ENTER_MS = 400;
 const DIGIT_MS = 1000;
+/** The cells of a button's label. */
+const BUTTON = 15;
 const ESC = "\x1b[";
 
 type Listener = (...args: never[]) => void;
@@ -44,6 +53,8 @@ export interface CardOutput extends Emitter {
 	readonly columns?: number | undefined;
 	readonly rows?: number | undefined;
 	getColorDepth?(env?: object): number;
+	/** Node's own: asks the terminal for its size now, while a child process keeps the resize event waiting. */
+	_refreshSize?(): void;
 	write(text: string): unknown;
 }
 
@@ -77,7 +88,7 @@ export interface CardChoice {
 	readonly answer?: string;
 }
 
-export type RowMark = "done" | "skip" | "warn" | "fail" | "note";
+export type RowMark = "done" | "warn" | "fail" | "note";
 
 export interface PanelRow {
 	readonly mark?: RowMark;
@@ -117,7 +128,7 @@ const VIOLET: Tone = { hex: "#b48cff", ansi16: 94 };
 const ORANGE: Tone = { hex: "#ff8f3c", ansi16: 93 };
 /** LitCodex's own mint, from the top of the mark's letters. */
 const MINT: Tone = { hex: CHROME_STOPS[1] ?? "#7cf5b0", ansi16: 92 };
-const INK: Tone = { hex: "#0b0f14", ansi16: 30 };
+const INK: Tone = { hex: "#0b0e14", ansi16: 30 };
 const IVORY: Tone = { hex: "#f2efdf", ansi16: 97 };
 const SELECTED: Tone = { hex: "#34205c", ansi16: 35 };
 const GREEN: Tone = { hex: "#50e68c", ansi16: 92 };
@@ -191,7 +202,7 @@ const UNICODE = {
 	updown: "↑ ↓",
 	sides: "← →",
 	frames: "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏",
-	marks: { done: "✓", skip: "○", warn: "!", fail: "✗", note: "·" },
+	marks: { done: "✓", warn: "!", fail: "✗", note: "·" },
 } as const;
 
 const ASCII = {
@@ -206,14 +217,13 @@ const ASCII = {
 	updown: "Up Down",
 	sides: "Left Right",
 	frames: "-\\|/",
-	marks: { done: "ok", skip: "--", warn: "!!", fail: "xx", note: "-" },
+	marks: { done: "ok", warn: "!", fail: "x", note: "-" },
 } as const;
 
 const ASCII_WORDS: Readonly<Record<string, string>> = { "·": "-", "—": "-", "…": "...", "→": "->", 한국어: "Korean" };
 
 const MARK_TONES: Readonly<Record<RowMark, Tone>> = {
 	done: GREEN,
-	skip: VIOLET,
 	warn: AMBER,
 	fail: RED,
 	note: VIOLET,
@@ -232,8 +242,10 @@ export class InstallCards {
 	private drawn: readonly string[] = [];
 	private holding = false;
 	private letterAt = Number.NEGATIVE_INFINITY;
-	/** The row above is a folded answer, so the next card needs a blank row first. */
-	private afterFold = false;
+	private readonly round: boolean;
+	private drawnColumns = 0;
+	/** What stands above: one blank row goes between any two blocks, and folds stand together. */
+	private last: "nothing" | "line" | "fold" | "card" = "nothing";
 	private hungUp = false;
 	private asked = 0;
 	private total = 0;
@@ -246,13 +258,35 @@ export class InstallCards {
 		this.now = terminal.now ?? Date.now;
 		this.depth = cardDepth(terminal.output, terminal.env);
 		this.ascii = !supportsBlocks(terminal.env);
+		const { env } = terminal;
+		this.round = this.depth === "truecolor" && !lightBackground(env) && roundGlyphs(env);
+	}
+
+	/** The mark, its version and its line, centred over the cards and sized so a card still fits under it. */
+	banner(version: string, subtitle: string): void {
+		const width = this.width();
+		const rows = this.output.rows || 24;
+		const least = rows >= 48 ? 0 : rows >= 34 ? 1 : 2;
+		const size = SIZES.find(({ minCols }, index) => index >= least && minCols <= width) ?? { minCols: 24 };
+		const indent = " ".repeat(1 + Math.floor((width - size.minCols) / 2));
+		const mode = this.ascii ? "plain" : this.depth === "none" ? "mono" : this.depth === "16" ? "256" : this.depth;
+		const mark = synthwaveRows({ columns: size.minCols, mode });
+		const centred = (text: string): string => " ".repeat(1 + Math.max(0, Math.floor((width - cells(text)) / 2)));
+		const art = this.ascii
+			? mark.map((row) => centred(this.text(row)) + this.text(row))
+			: mark.map((row) => indent + row);
+		const name = `v${version}`;
+		const line = this.wrapped(subtitle, width).map((row) => centred(row) + this.quiet(row));
+		this.output.write(`\n${[...art, centred(name) + name, ...line].join("\n")}\n`);
+		this.last = "line";
 	}
 
 	/** Prints the opening line and takes how many questions this run may ask, for the `LIT 2/6` step pills. */
 	begin(total: number, line: string): void {
 		this.total = total;
 		const rows = this.wrapped(line, this.width()).map((row) => ` ${this.quiet(row)}`);
-		this.output.write(`\n${rows.join("\n")}\n\n`);
+		this.output.write(`${this.gap()}${rows.join("\n")}\n`);
+		this.last = "line";
 	}
 
 	/** One choice from a numbered list; resolves its index. Enter takes the highlighted row. */
@@ -335,14 +369,23 @@ export class InstallCards {
 			view: () => {
 				const inner = this.inner();
 				const note = this.wrapped(question.note, inner);
-				const rows = question.rows.flatMap((row) => this.panelRow(row, inner, labelWidth(question.rows)));
-				const hints = this.hints([`Enter = ${question.button}`, "Ctrl+C stop, nothing written yet"], inner);
-				const big = this.button(question.button, true, true);
-				const small = this.button(question.button, true, false);
+				const rows = question.rows.flatMap((row) => this.panelRow(row, inner));
+				const enter = `Enter = ${question.button}`;
+				const hints = this.hints([enter, "Ctrl+C stop, nothing written yet"], inner);
+				const label = `${this.glyph.pointer} ${question.button}`;
+				const big = this.button(label, true, true);
+				const small = this.button(label, true, false);
+				// The smallest window keeps the sentence, the button and the way out, and as many facts as still fit.
+				const facts = question.rows.flatMap(({ label: name = "", value }) =>
+					this.wrapped(`${name} ${value}`, inner),
+				);
+				const least = [...small, ...this.hints([enter, "Ctrl+C stop"], inner)];
+				const spare = this.height() - this.frame(tag, question.title, [...note, ...least]).length;
 				return this.fitted(tag, question.title, [
 					["", ...note, "", ...rows, "", ...big, "", ...hints],
+					[...note, ...rows, ...big, ...hints],
 					[...note, ...rows, ...small, ...hints],
-					[...rows, ...hints],
+					[...note, ...(spare > 0 ? facts.slice(-spare) : []), ...least],
 				]);
 			},
 			fold: () => question.answer,
@@ -350,75 +393,123 @@ export class InstallCards {
 		});
 	}
 
-	/** The install's steps, one appended row each; nothing above is redrawn. */
-	steps(title: string, note: string): StepCard {
-		const inner = this.inner();
-		const motion = this.terminal.motion?.({
-			before: ` ${this.border(this.glyph.side, 0)} ${this.depth === "none" ? "" : `${ESC}${sgr(MINT, 38, this.depth)}m`}`,
-			after: `${this.depth === "none" ? "" : `${ESC}39m`} `,
-			frames: [...this.glyph.frames],
-		});
-		const [top, ...head] = this.frame("LIT", title, [
-			"",
-			...this.wrapped(note, inner).map((row) => this.quiet(row)),
-			"",
-		]);
-		const foot = head.pop();
-		this.output.write(`${this.afterFold ? "\n" : ""}${[top, ...head].join("\n")}\n`);
-		this.afterFold = false;
-		let open = false;
-		let stop: (() => void) | undefined;
-		const put = (rows: readonly string[]): void => {
-			stop?.();
-			stop = undefined;
-			open = false;
-			this.output.write(`${CLEAR_LINE}${rows.map((row) => this.sided(row)).join("\n")}\n`);
+	/** The install's steps in one card: the rows wait, run and settle in place, and the whole card folds at the end. */
+	steps(title: string, list: readonly InstallCardStep[]): StepCard {
+		const marks: (RowMark | "wait" | "run")[] = list.map(() => "wait");
+		const details: (string | undefined)[] = list.map(() => undefined);
+		let active = -1;
+		let halt: (() => void) | undefined;
+		const pause = (): void => {
+			halt?.();
+			halt = undefined;
+			this.output._refreshSize?.();
 		};
+		const draw = (): void => {
+			pause();
+			const view = this.stepRows(title, list, marks, details, active);
+			if (this.drawn.length > 0 && this.drawnColumns !== this.columns()) this.redraw(view.rows);
+			// Every row again: the spinner may have left its frame elsewhere if the window changed under it.
+			else this.draw(view.rows, this.drawn.length, true);
+			if (active < 0 || marks[active] !== "run") return;
+			// `codex` runs synchronously, so another thread turns the one spinner cell and comes back below the card.
+			halt = this.terminal
+				.motion?.({
+					before: `${ESC}${view.up}A\r${ESC}${TEXT}C${this.depth === "none" ? "" : `${ESC}1;${sgr(MINT, 38, this.depth)}m`}`,
+					after: `${this.depth === "none" ? "" : `${ESC}0m`}${ESC}${view.up}B\r`,
+					frames: [...this.glyph.frames],
+				})
+				.start("");
+		};
+		const settle = (mark: RowMark, detail?: string): void => {
+			if (active < 0) return;
+			marks[active] = mark;
+			details[active] = detail;
+			draw();
+		};
+		draw();
 		return {
-			start: (label) => {
-				open = true;
-				stop = motion?.start([...this.text(label)].slice(0, inner - 3).join(""));
+			start: (name) => {
+				active = list.findIndex((step, index) => step.name === name && marks[index] === "wait");
+				if (active >= 0) marks[active] = "run";
+				draw();
 			},
-			end: (row, receipts = []) =>
-				put([
-					...this.panelRow(row, inner, STEP_LABEL),
-					...receipts.flatMap((line) =>
-						this.wrapped(line, inner - this.markWidth() - 2).map(
-							(text) => `${" ".repeat(this.markWidth() + 2)}${this.quiet(text)}`,
-						),
-					),
-				]),
-			close: () => {
-				this.output.write(`${foot ?? ""}\n\n`);
+			end: (mark, detail) => settle(mark, detail),
+			fold: (label, value, mark = "done") => {
+				pause();
+				this.replace(this.folded(mark, label, value));
 			},
-			stop: (value) => {
-				if (open) put(this.panelRow({ mark: "fail", value }, inner, STEP_LABEL));
-				this.output.write(`${foot ?? ""}\n\n`);
+			stop: () => {
+				if (marks[active] === "run") settle("fail");
+				this.drawn = [];
+				this.last = "card";
+				return list[active]?.name;
 			},
+		};
+	}
+
+	private stepRows(
+		title: string,
+		list: readonly InstallCardStep[],
+		marks: readonly (RowMark | "wait" | "run")[],
+		details: readonly (string | undefined)[],
+		active: number,
+	): { readonly rows: string[]; readonly up: number } {
+		const inner = this.inner();
+		const gap = this.markWidth();
+		const beside = VALUE - TEXT - gap;
+		const longest = Math.max(...list.map(({ name }) => cells(name))) + 2;
+		const name = list.every(({ text }) => gap + beside + cells(text) <= inner) ? beside : longest;
+		const rowsOf = list.map((step, index): string[] => {
+			const mark = marks[index] ?? "wait";
+			const sign =
+				mark === "wait"
+					? this.quiet(this.glyph.marks.note)
+					: mark === "run"
+						? this.paint(this.glyph.frames[0] ?? "", { fg: MINT, bold: true })
+						: this.paint(this.glyph.marks[mark], { fg: MARK_TONES[mark], bold: true });
+			const detail = details[index];
+			const bold = mark === "run" || mark === "fail" || mark === "warn";
+			const label = pad(this.paint(step.name, { bold }), name);
+			const fits = gap + name + cells(step.text) <= inner;
+			if (detail === undefined) return [`${pad(sign, gap)}${label}${fits ? step.text : ""}`.trimEnd()];
+			return this.wrapped(detail, inner - gap - name).map(
+				(text, row) =>
+					`${row === 0 ? pad(sign, gap) + label : " ".repeat(gap + name)}${this.paint(text, { bold: true })}`,
+			);
+		});
+		const rows = this.fitted("LIT", title, [["", ...rowsOf.flat()], rowsOf.flat()]);
+		if (rows.length <= this.height()) return { rows, up: 1 + rowsOf.slice(Math.max(0, active)).flat().length };
+		const room = this.height() - (rows.length - rowsOf.flat().length);
+		const from = Math.max(0, Math.min(active - Math.floor(room / 2), list.length - room));
+		const shown = rowsOf.slice(from, from + room);
+		return {
+			rows: this.frame("LIT", title, shown.flat().slice(-room)),
+			up: 1 + shown.slice(Math.max(0, active - from)).flat().length,
 		};
 	}
 
 	/** A finished card: sections of marked rows. A value is wrapped, never cut short. */
 	panel(card: { readonly title: string; readonly sections: readonly PanelSection[]; readonly bad?: boolean }): string {
 		const inner = this.inner();
-		const width = labelWidth(card.sections.flatMap((section) => section.rows));
 		const body = card.sections
 			.filter((section) => section.rows.length > 0)
 			.flatMap((section) => [
 				"",
 				...(section.head === undefined ? [] : [this.paint(section.head, { fg: PINK, bold: true })]),
-				...section.rows.flatMap((row) => this.panelRow(row, inner, width)),
+				...section.rows.flatMap((row) => this.panelRow(row, inner)),
 			]);
-		return `${this.afterFold ? "\n" : ""}${this.frame("LIT", card.title, body, card.bad === true).join("\n")}\n`;
+		const text = `${this.gap()}${this.frame("LIT", card.title, body, card.bad === true).join("\n")}\n`;
+		this.last = "card";
+		return text;
 	}
 
-	/** Free text under a card: a bold first line, the rest indented and wrapped to the card's width. */
+	/** Free text under a card: a bold first line, the prose wrapped to the card's width, indented commands whole. */
 	notice(text: string): string {
 		const [head = "", ...rest] = text.trim().split("\n");
 		const width = this.width();
 		const body = rest.flatMap((line) => {
-			const indent = " ".repeat(3 + (/^ */u.exec(line)?.[0].length ?? 0));
-			return this.wrapped(line, width - indent.length).map((row) => indent + row);
+			if (line.startsWith(" ")) return [`   ${line}`];
+			return this.wrapped(line, width - 3).map((row) => `   ${row}`);
 		});
 		return `\n ${this.paint(this.text(head), { bold: true })}\n${body.join("\n")}\n`;
 	}
@@ -431,6 +522,11 @@ export class InstallCards {
 
 	private columns(): number {
 		return this.output.columns || 80;
+	}
+
+	/** The blank row a new block needs under what stands above it. */
+	private gap(): string {
+		return this.last === "nothing" ? "" : "\n";
 	}
 
 	private height(): number {
@@ -503,31 +599,45 @@ export class InstallCards {
 		return ` ${this.border(side, 0, bad)} ${pad(row, this.inner())} ${this.border(side, this.width() - 1, bad)}`;
 	}
 
+	/** Text on a gradient, two cells wider than the text: padding, or the round caps in its place. */
+	private chip(text: string, stops: readonly Tone[]): string {
+		const ink = (bg: Tone): { fg: Tone; bg: Tone; bold: boolean } => ({ fg: INK, bg, bold: true });
+		const span = [...text].length + 2;
+		if (!this.round) return this.ramp(` ${text} `, stops, ink);
+		const cap = (glyph: string, fg: Tone | undefined): string => this.paint(glyph, fg === undefined ? {} : { fg });
+		return `${cap(LEFT_CAP, stops[0])}${this.ramp(text, stops, ink, 1, span)}${cap(RIGHT_CAP, stops.at(-1))}`;
+	}
+
+	/** The highlighted list row: a bar over the whole width of the card, its two gutters round where caps are drawn. */
+	private bar(body: string): string {
+		const open = `${ESC}${sgr(IVORY, 38, this.depth)};${sgr(SELECTED, 48, this.depth)}m`;
+		const text = pad(body, this.inner() - 2).replaceAll(`${ESC}0m`, `${ESC}0m${open}`);
+		if (!this.round) return `${open} ${text} ${ESC}0m`;
+		return `${this.paint(LEFT_CAP, { fg: SELECTED })}${open}${text}${ESC}0m${this.paint(RIGHT_CAP, { fg: SELECTED })}`;
+	}
+
 	private frame(tag: string, title: string, body: readonly string[], bad = false): string[] {
 		const width = this.width();
 		const { corners, line } = this.glyph;
-		const pill =
-			this.depth === "none"
-				? `[${tag}]`
-				: this.ramp(` ${tag} `, [ORANGE, PINK], (bg) => ({ fg: INK, bg, bold: true }));
+		const pill = this.depth === "none" ? `[${tag}]` : this.chip(tag, [ORANGE, PINK]);
 		const name = this.text(title);
-		const inEdge = cells(pill) + cells(name) + 8 <= width;
-		const used = 2 + cells(pill) + (inEdge ? cells(name) + 2 : 0);
+		const inEdge = cells(pill) + cells(name) + 9 <= width;
+		const used = 4 + cells(pill) + (inEdge ? cells(name) + 3 : 0);
 		const bold = (text: string): string => this.paint(text, { bold: true });
+		const label = inEdge ? ` ${this.quiet(this.glyph.marks.note)} ${bold(name)} ` : " ";
 		return [
-			` ${this.border(corners[0] + line, 0, bad)}${pill}${inEdge ? ` ${bold(name)} ` : ""}${this.border(line.repeat(Math.max(0, width - used - 1)) + corners[1], used, bad)}`,
+			` ${this.border(corners[0] + line, 0, bad)} ${pill}${label}${this.border(line.repeat(Math.max(0, width - used - 1)) + corners[1], used, bad)}`,
 			...[...(inEdge ? [] : wrapCells(name, this.inner()).map(bold)), ...body].map((row) => this.sided(row, bad)),
 			` ${this.border(corners[2] + line.repeat(width - 2) + corners[3], 0, bad)}`,
 		];
 	}
 
-	/** The roomiest of `variants` that fits the window; the last is cut from the top if even it does not. */
+	/** The roomiest of `variants` that fits the window; the blank row above a card is the first thing to go. */
 	private fitted(tag: string, title: string, variants: readonly (readonly string[])[]): string[] {
-		const cards = variants.map((body, index) => {
-			const rows = this.frame(tag, title, body);
-			return index === 0 && this.afterFold ? ["", ...rows] : rows;
-		});
-		return cards.find((rows) => rows.length <= this.height()) ?? cards.at(-1) ?? [];
+		const cards = variants.map((body) => this.frame(tag, title, body));
+		const [first = []] = cards;
+		const spaced = this.last === "nothing" ? [] : [["", ...first]];
+		return [...spaced, ...cards].find((rows) => rows.length <= this.height()) ?? cards.at(-1) ?? [];
 	}
 
 	/** Key hints, as many to a line as fit; a hint is never split. */
@@ -558,8 +668,8 @@ export class InstallCards {
 		const last = String(choices.length - 1);
 		const label = Math.max(...choices.map((choice) => cells(this.text(choice.label))));
 		const word = this.depth === "none" ? `(${question.initialTag ?? "default"})` : (question.initialTag ?? "default");
-		const mark = last.length + label + cells(word) + 5 <= inner ? word : "*";
-		const room = inner - 3 - last.length - label - 2 - (cells(mark) + 2);
+		const mark = last.length + label + cells(word) + 7 <= inner ? word : "*";
+		const room = inner - 2 - 3 - last.length - label - 2 - (cells(mark) + 2);
 		const detailed = choices.every((choice) => cells(this.text(choice.detail ?? "")) <= room);
 		const row = (choice: CardChoice, index: number): string => {
 			const on = index === at;
@@ -571,19 +681,20 @@ export class InstallCards {
 			const body = `${on ? this.glyph.pointer : " "} ${String(index).padStart(last.length)} ${pad(this.text(choice.label), label)}${
 				detail === "" ? "" : `  ${on ? detail : this.quiet(detail)}`
 			}${tagged}`;
-			if (!on || this.depth === "none") return body;
-			const bar = `${ESC}${sgr(IVORY, 38, this.depth)};${sgr(SELECTED, 48, this.depth)}m`;
-			return `${bar}${pad(body, inner).replaceAll(`${ESC}0m`, `${ESC}0m${bar}`)}${ESC}0m`;
+			return on && this.depth !== "none" ? this.bar(body) : ` ${body}`;
 		};
 		// A long list is a window that follows the highlight; the position and arrows say there is more.
 		const body = (most: number, roomy: boolean): string[] => {
 			const count = Math.max(1, Math.min(choices.length, most));
 			const start = Math.max(0, Math.min(at - Math.floor(count / 2), choices.length - count));
-			const more = `${at + 1} of ${choices.length}${start > 0 ? ` ${this.glyph.up}` : ""}${start + count < choices.length ? ` ${this.glyph.down}` : ""}`;
 			const all = count === choices.length;
+			const arrows = [
+				...(start > 0 ? [this.glyph.up] : []),
+				...(start + count < choices.length ? [this.glyph.down] : []),
+			];
 			const hints = this.hints(
 				[
-					...(all ? [] : [more]),
+					...(all ? [] : [`${at + 1}/${choices.length} ${arrows.join(" ")}`]),
 					...(roomy || all ? [`${this.glyph.updown} move`, `0-${last} jump`] : []),
 					"Enter choose",
 					"Ctrl+C stop",
@@ -593,30 +704,28 @@ export class InstallCards {
 			const list = choices.slice(start, start + count).map((choice, offset) => row(choice, start + offset));
 			return roomy ? ["", ...note, "", ...list, "", ...hints] : [...note, ...list, ...hints];
 		};
-		const spare = this.height() - this.frame(tag, question.title, body(1, false)).length + 1;
-		return this.fitted(tag, question.title, [body(LIST_ROWS, true), body(Math.min(LIST_ROWS, spare), false)]);
+		const tight = Array.from({ length: LIST_ROWS }, (_, index) => body(LIST_ROWS - index, false));
+		return this.fitted(tag, question.title, [body(LIST_ROWS, true), ...tight]);
 	}
 
-	/** A button: three rows with room, one row without. The highlighted one is filled, or double-lined without colour. */
-	private button(word: string, on: boolean, big: boolean, width = cells(word) + 2): string[] {
-		const label = pad(`${on ? this.glyph.pointer : " "} ${word}`, width);
+	/** A button: an outline around its label with room, the label alone without. The lit one holds a filled chip. */
+	private button(label: string, on: boolean, big: boolean, width = BUTTON): string[] {
 		const colour = this.depth !== "none";
-		const fill = (text: string): string => this.ramp(text, [PINK, VIOLET], (bg) => ({ fg: INK, bg, bold: true }));
+		const word = pad(label, width);
+		const lit = [PINK, VIOLET];
 		if (!big) {
-			if (on) return [colour ? fill(` ${label} `) : `[${label}]`];
-			return [` ${this.quiet(label)} `];
+			if (on) return [colour ? this.chip(word, lit) : `[${word}]`];
+			return [` ${this.quiet(word)} `];
 		}
-		if (on && colour) {
-			const edge = (char: string): string => this.ramp(char.repeat(width + 4), [PINK, VIOLET], (fg) => ({ fg }));
-			return [edge("▄"), fill(`  ${label}  `), edge("▀")];
+		const [tl, tr, bl, br, line, side] = on && !colour ? this.glyph.heavy : this.glyph.light;
+		const top = tl + line.repeat(width + 4) + tr;
+		const bottom = bl + line.repeat(width + 4) + br;
+		if (!on || !colour) {
+			return [this.quiet(top), `${this.quiet(side)}  ${word}  ${this.quiet(side)}`, this.quiet(bottom)];
 		}
-		const [tl, tr, bl, br, line, side] = on ? this.glyph.heavy : this.glyph.light;
-		const edge = line.repeat(width + 2);
-		return [
-			this.quiet(tl + edge + tr),
-			`${this.quiet(side)} ${label} ${this.quiet(side)}`,
-			this.quiet(bl + edge + br),
-		];
+		const edge = (text: string): string => this.ramp(text, lit, (fg) => ({ fg }));
+		const [left, right] = [this.paint(side, { fg: PINK }), this.paint(side, { fg: VIOLET })];
+		return [edge(top), `${left} ${this.chip(word, lit)} ${right}`, edge(bottom)];
 	}
 
 	private confirmRows(
@@ -626,10 +735,13 @@ export class InstallCards {
 	): string[] {
 		const inner = this.inner();
 		const note = this.wrapped(question.note, inner);
+		const wide = inner >= 2 * (BUTTON + 6) + 2;
 		const word = (value: boolean): string =>
-			`${value ? "Yes" : "No"}${value === question.initial ? (inner >= 36 ? " (default)" : " default") : ""}`;
-		const width = Math.max(cells(word(true)), cells(word(false))) + 2;
+			`${value === yes ? this.glyph.pointer : " "} ${value ? "Yes" : "No"}${
+				value !== question.initial ? "" : wide ? " (default)" : " default"
+			}`;
 		const pair = (big: boolean): string[] => {
+			const width = wide ? BUTTON : BUTTON - 2;
 			const right = this.button(word(false), !yes, big, width);
 			return this.button(word(true), yes, big, width).map((left, index) => `${left}  ${right[index] ?? ""}`);
 		};
@@ -645,18 +757,19 @@ export class InstallCards {
 		]);
 	}
 
-	private panelRow(row: PanelRow, inner: number, width: number): string[] {
+	private panelRow(row: PanelRow, inner: number): string[] {
 		const kind = row.mark ?? "done";
 		const gap = this.markWidth();
 		const lead = pad(this.paint(this.glyph.marks[kind], { fg: MARK_TONES[kind], bold: true }), gap);
 		const loud = kind === "warn" || kind === "fail";
 		const value = (text: string): string => (loud ? this.paint(text, { bold: true }) : text);
 		const label = this.text(row.label ?? "");
-		if (label === "" || inner - gap - width < MIN_VALUE) {
+		if (label === "" || inner < WIDE) {
 			const rows = this.wrapped(row.value, inner - gap).map(value);
 			const name = label === "" ? (rows.shift() ?? "") : this.paint(label, { bold: true });
 			return [lead + name, ...rows.map((text) => " ".repeat(gap) + text)];
 		}
+		const width = Math.max(VALUE - TEXT - gap, cells(label) + 1);
 		return this.wrapped(row.value, inner - gap - width).map((text, index) =>
 			index === 0
 				? lead + pad(this.paint(label, { bold: true }), width) + value(text)
@@ -664,13 +777,13 @@ export class InstallCards {
 		);
 	}
 
-	private folded(mark: "done" | "fail", title: string, value: string): string {
-		const name = this.text(title);
+	private folded(mark: RowMark, title: string, value: string): string {
 		const text = this.text(value);
-		const aligned = pad(name, Math.max(24, cells(name) + 2));
-		const label = cells(aligned) + cells(text) + 4 < this.columns() ? aligned : `${name} `;
 		const sign = this.paint(this.glyph.marks[mark], { fg: MARK_TONES[mark], bold: true });
-		return ` ${sign} ${label}${this.paint(text, { bold: true })}`;
+		const name = ` ${sign} ${this.text(title)}`;
+		const aligned = `${pad(name, VALUE - 1)} `;
+		const label = cells(aligned) + cells(text) < this.columns() ? aligned : `${name} `;
+		return `${label}${this.paint(text, { bold: true })}`;
 	}
 
 	// ---- asking ----
@@ -680,26 +793,35 @@ export class InstallCards {
 		return this.total < this.asked ? "LIT" : `LIT ${this.asked}/${this.total}`;
 	}
 
-	/** Draws over what is on screen in one write, so nothing flickers. */
-	private draw(rows: readonly string[], above = this.drawn.length): void {
+	/** Draws over what is on screen in one write, so nothing flickers; a row that did not change is stepped over. */
+	private draw(rows: readonly string[], above = this.drawn.length, whole = false): void {
 		const shown = rows.slice(-this.height());
 		const lift = above > 0 ? `${ESC}${above}A` : "";
-		this.output.write(`${lift}${shown.map((row) => `\r${row}${ESC}K\r\n`).join("")}${ESC}J`);
+		const old = !whole && above > 0 && this.drawn.length === shown.length ? this.drawn : [];
+		const text = shown.map((row, index) => (old[index] === row ? "\r\n" : `\r${row}${ESC}K\r\n`)).join("");
+		this.output.write(`${lift}${text}${ESC}J`);
 		this.drawn = shown;
+		this.drawnColumns = this.columns();
 	}
 
-	/** After a resize the old rows may have wrapped: step over what they take up now. */
+	/** The rows the drawn card takes up now: after a resize some may have wrapped. */
+	private taken(): number {
+		const rows = this.drawn.reduce((sum, row) => sum + Math.max(1, Math.ceil(cells(row) / this.columns())), 0);
+		return Math.min(rows, this.height());
+	}
+
 	private redraw(rows: readonly string[]): void {
-		const taken = this.drawn.reduce((sum, row) => sum + Math.max(1, Math.ceil(cells(row) / this.columns())), 0);
-		const above = Math.min(taken, this.height());
+		const above = this.taken();
 		this.output.write(`${above > 0 ? `${ESC}${above}A` : ""}\r${ESC}J`);
 		this.draw(rows, 0);
 	}
 
 	private replace(row: string): void {
-		this.output.write(`${this.drawn.length > 0 ? `${ESC}${this.drawn.length}A` : ""}\r${ESC}J${row}\r\n`);
+		const above = this.taken();
+		const gap = this.last === "fold" || this.last === "nothing" ? "" : "\r\n";
+		this.output.write(`${above > 0 ? `${ESC}${above}A` : ""}\r${ESC}J${gap}${row}\r\n`);
 		this.drawn = [];
-		this.afterFold = true;
+		this.last = "fold";
 	}
 
 	private readonly restore = (): void => {
@@ -831,16 +953,16 @@ export class CardAbort extends Error {
 	}
 }
 
-export interface StepCard {
-	readonly start: (label: string) => void;
-	readonly end: (row: PanelRow, receipts?: readonly string[]) => void;
-	readonly close: () => void;
-	/** Ends the card after a failure; a step that never reported gets `value` as its row. */
-	readonly stop: (value: string) => void;
+export interface InstallCardStep {
+	readonly name: string;
+	readonly text: string;
 }
 
-const STEP_LABEL = 15;
-
-function labelWidth(rows: readonly PanelRow[]): number {
-	return Math.max(0, ...rows.map((row) => cells(row.label ?? ""))) + 2;
+export interface StepCard {
+	readonly start: (name: string) => void;
+	readonly end: (mark: RowMark, detail?: string) => void;
+	/** Every step reported: the card becomes one line. */
+	readonly fold: (label: string, value: string, mark?: RowMark) => void;
+	/** Leaves the card on screen; a step that never reported is marked failed, and its name returned. */
+	readonly stop: () => string | undefined;
 }

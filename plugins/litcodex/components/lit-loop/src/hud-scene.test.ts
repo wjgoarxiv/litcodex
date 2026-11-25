@@ -564,17 +564,50 @@ describe("hud card pills and gauges", () => {
 
 describe("hud lines in a window too narrow for the card", () => {
 	it("keeps every word of every line where it is", () => {
+		const words = (text: string): string => text.replace(/[▰▱]|\[[▉░]+\]?/gu, (gauge) => "=".repeat(gauge.length));
 		for (const card of [WORKING, WIDE, LANES, WAITING]) {
 			for (let width = 10; width < 39; width++) {
 				const lines = hudLines(card, NOW);
 				const rows = narrowLines(lines, sceneMood(card), { width, caps: false }).map(strip);
 				expect(rows).toHaveLength(lines.length);
 				lines.forEach((line, index) => {
-					if (index > 0) expect(rows[index]).toBe(fit(clean(line.text), width));
+					if (index > 0) expect(words(rows[index] ?? "")).toBe(words(fit(clean(line.text), width)));
 					expect(displayWidth(rows[index] ?? "")).toBeLessThanOrEqual(width);
 				});
 			}
 		}
+	});
+});
+
+describe("one form at a time in a window too narrow for the card", () => {
+	for (const caps of [false, true]) {
+		it(`draws every gauge and pill ${caps ? "round" : "square"}`, () => {
+			for (const card of [WORKING, WIDE, LANES, WAITING]) {
+				for (let width = 10; width < 39; width++) {
+					const text = narrowLines(hudLines(card, NOW), sceneMood(card), { width, caps }).join("\n");
+					expect(strip(text)).not.toMatch(/\[[▉░]/u);
+					if (caps) {
+						expect(strip(text)).not.toMatch(/[▰▱▉░]/u);
+						expect((strip(text).match(/\ue0b6/gu) ?? []).length).toBe(
+							(strip(text).match(/\ue0b4/gu) ?? []).length,
+						);
+					} else expect(text).not.toMatch(CAPS);
+				}
+			}
+		});
+	}
+
+	it("follows the same answer as the card", () => {
+		const { env } = session();
+		const narrow = (glyphs: object): string => {
+			const { writes, out, loop } = harness({ ...env, ...glyphs });
+			out.columns = 39;
+			loop.tick();
+			return writes.join("");
+		};
+		expect(narrow({ LITCODEX_HUD_GLYPHS: "auto", TERM_PROGRAM: "ghostty" })).toMatch(CAPS);
+		expect(narrow({ LITCODEX_HUD_GLYPHS: "auto", TERM_PROGRAM: "WezTerm" })).toMatch(CAPS);
+		expect(narrow({ LITCODEX_HUD_GLYPHS: "basic", WT_SESSION: "1" })).not.toMatch(CAPS);
 	});
 });
 
@@ -597,23 +630,23 @@ function session(): { env: NodeJS.ProcessEnv; cwd: string } {
 	return { env, cwd };
 }
 
-describe("hud scene loop", () => {
-	function harness(env: NodeJS.ProcessEnv) {
-		const writes: string[] = [];
-		const clock = { now: NOW };
-		const out = { write: (text: string) => writes.push(text), isTTY: true, columns: 111, rows: 30 };
-		const loop = createHudLoop({
-			env: { LITCODEX_HUD_GLYPHS: "basic", ...env },
-			wanted: null,
-			out,
-			color: true,
-			truecolor: true,
-			scene: true,
-			now: () => clock.now,
-		});
-		return { writes, clock, out, loop };
-	}
+function harness(env: NodeJS.ProcessEnv) {
+	const writes: string[] = [];
+	const clock = { now: NOW };
+	const out = { write: (text: string) => writes.push(text), isTTY: true, columns: 111, rows: 30 };
+	const loop = createHudLoop({
+		env: { LITCODEX_HUD_GLYPHS: "basic", ...env },
+		wanted: null,
+		out,
+		color: true,
+		truecolor: true,
+		scene: true,
+		now: () => clock.now,
+	});
+	return { writes, clock, out, loop };
+}
 
+describe("hud scene loop", () => {
 	it("draws the card, and the plain lines in a window under 40 columns", () => {
 		const { env } = session();
 		const { writes, out, loop } = harness(env);

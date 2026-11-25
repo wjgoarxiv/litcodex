@@ -57,13 +57,22 @@ import {
 import type { OutputStyleId } from "./install-options.js";
 import { hasExplicitModelRouteFlags, parseInstallOptions } from "./install-options.js";
 import { renderPlainInstallResult } from "./install-output.js";
-import { renderInstallFailureCard, renderInstallSummary, stepName } from "./install-presentation.js";
+import {
+	cardSteps,
+	preflightName,
+	renderInstallFailureCard,
+	renderInstallSummary,
+	renderUninstallCard,
+	renderUninstallPlanCard,
+	stepName,
+	type UninstallCall,
+} from "./install-presentation.js";
 import type { MaterializeMarketplaceResult } from "./marketplace-payload.js";
 import { type MarketplaceSource, resolveBundledMarketplaceSource } from "./package-root.js";
 import { buildInstallPlan } from "./plan.js";
 import { renderInstallPlan } from "./render-plan.js";
 import { createBlockingSpinnerMotion } from "./spinner-motion.js";
-import type { InstallOptions, InstallPreflightStage, InstallResult } from "./types.js";
+import type { InstallOptions, InstallResult } from "./types.js";
 import { runUninstall, uninstallPlanSteps } from "./uninstall.js";
 
 export { renderDoctorText, runDoctor } from "./doctor.js";
@@ -134,6 +143,8 @@ function defaultIo(): RouteIo {
 	};
 }
 
+const BANNER_LINE = "loop-native agent harness for Codex";
+
 const STYLE_MENU = [
 	{ styleId: "off" as OutputStyleId, label: "None / keep current", hint: "Leave output style unchanged" },
 	{ styleId: "asd-ste100" as OutputStyleId, label: "ASD-STE100 (English)", hint: "Simplified Technical English" },
@@ -176,17 +187,21 @@ function interactiveInstall(opts: InstallOptions, io: RouteIo): boolean {
 }
 
 /** The cards for a person at a capable terminal, or undefined: then every plain prompt and line stays as it is. */
-function installCards(opts: InstallOptions, io: RouteIo): InstallCards | undefined {
+function terminalCards(io: RouteIo): InstallCards | undefined {
 	const terminal = {
 		input: process.stdin as unknown as CardInput,
 		output: io.stdout as unknown as CardOutput,
 		env: io.env,
 	};
-	if (!interactiveInstall(opts, io) || !cardsAvailable(terminal)) return undefined;
+	if (!cardsAvailable(terminal)) return undefined;
 	return new InstallCards({
 		...terminal,
 		motion: io.stdout === process.stdout ? (look) => createBlockingSpinnerMotion(process.stdout.fd, look) : undefined,
 	});
+}
+
+function installCards(opts: InstallOptions, io: RouteIo): InstallCards | undefined {
+	return interactiveInstall(opts, io) ? terminalCards(io) : undefined;
 }
 
 /** The questions this install may ask, for the cards' step count. */
@@ -306,13 +321,7 @@ async function promptOutputStyleIfNeeded(
 	return STYLE_MENU[index]?.styleId ?? "off";
 }
 
-const PREFLIGHT_NAMES: Readonly<Record<InstallPreflightStage, string>> = {
-	"host-capabilities": "Host check",
-	"config-dry-run": "Config check",
-	"marketplace-payload": "Package",
-};
-
-const STEP_MARKS = { ok: "done", skipped: "skip", failed: "fail" } as const;
+const STEP_MARKS = { ok: "done", skipped: "done", failed: "fail" } as const;
 
 /**
  * A colourless prompt reads a cooked line, where Ctrl+C is the terminal's own SIGINT. A card without colour ends the
@@ -363,8 +372,9 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 		noTui: opts.noTui,
 		json: opts.json,
 	});
+	const cards = installCards(opts, io);
 	const banner =
-		!opts.json && !opts.noTui
+		!opts.json && !opts.noTui && cards === undefined
 			? renderBanner({
 					version: PACKAGE_VERSION,
 					env: io.env,
@@ -374,7 +384,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 				})
 			: "";
 	if (banner) io.stdout.write(banner);
-	const cards = installCards(opts, io);
+	cards?.banner(PACKAGE_VERSION, BANNER_LINE);
 	cards?.begin(
 		questionCount(args, opts, io),
 		`Installs into ${opts.codexHome}. In config.toml only LitCodex's own keys change.`,
@@ -440,29 +450,27 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 			...(marketplaceSource === undefined ? {} : { marketplaceSourceDir: marketplaceSource.root }),
 		};
 		if (cards !== undefined) {
-			stepCard = cards.steps(
-				"Installing",
-				"Checks come first and may take up to 60 seconds each; config.toml is written at the Config step.",
-			);
+			const steps = cardSteps(plan);
+			stepCard = cards.steps(`Installing LitCodex ${PACKAGE_VERSION}`, steps);
 			result = await executeInstallPlan(plan, {
 				...executeDeps,
-				onPreflightStart: (stage) => stepCard?.start(preflightLabel(stage)),
-				onPreflightEnd: ({ stage, status, detail }) =>
-					stepCard?.end({
-						mark:
-							warnings.length > 0 && stage === "marketplace-payload"
-								? "warn"
-								: status === "ok"
-									? "done"
-									: "skip",
-						label: PREFLIGHT_NAMES[stage],
-						value: detail,
-					}),
-				onStepStart: (step) => stepCard?.start(humanLabel(step.kind)),
-				onStepEnd: ({ kind, status, detail, receipts }) =>
-					stepCard?.end({ mark: STEP_MARKS[status], label: stepName(kind), value: detail }, receipts),
+				onPreflightStart: (stage) => stepCard?.start(preflightName(stage)),
+				onPreflightEnd: ({ stage, detail }) =>
+					warnings.length > 0 && stage === "marketplace-payload"
+						? stepCard?.end("warn", detail)
+						: stepCard?.end("done"),
+				onStepStart: (step) => stepCard?.start(stepName(step.kind)),
+				onStepEnd: ({ status, detail }) =>
+					stepCard?.end(STEP_MARKS[status], status === "failed" ? detail : undefined),
 			});
-			stepCard.close();
+			if (!result.ok) stepCard.stop();
+			else if (warnings.length === 0) stepCard.fold("Install steps", `${steps.length} of ${steps.length} checked`);
+			else
+				stepCard.fold(
+					"Install steps",
+					`${steps.length} of ${steps.length} checked, ${warnings.length} to read`,
+					"warn",
+				);
 		} else if (decorate) {
 			io.stdout.write(`${renderPreflightIntro(opts.codexHome, true)}\n`);
 
@@ -511,9 +519,9 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 			result = await executeInstallPlan(plan, executeDeps);
 		}
 	} catch (err) {
-		stepCard?.stop("Stopped here; nothing after this ran");
+		const stage = stepCard?.stop();
 		if (cards !== undefined && (io.stderr as NodeJS.WriteStream).isTTY) {
-			io.stderr.write(renderInstallFailureCard(cards, toErrorJson(err)));
+			io.stderr.write(renderInstallFailureCard(cards, toErrorJson(err), stage));
 			return err instanceof InstallError ? exitCodeForInstallError(err.code) : 1;
 		}
 		if (decorate) {
@@ -536,7 +544,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 						note: "Adds the short LitFamily block to your global AGENTS.md and leaves your own text as it is; No leaves the file alone and remembers off.",
 						initial: true,
 						yes: "add",
-						no: "leave the file alone",
+						no: "off",
 					});
 	const attributionPrompt = !interactiveInstall(opts, io)
 		? undefined
@@ -544,11 +552,11 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 			? () => askPlain(opts, io, async (rl) => /^\s*y/iu.test((await rl.question(ATTRIBUTION_QUESTION)).trim()))
 			: () =>
 					cards.confirm({
-						title: "No-AI-attribution line",
+						title: "No-attribution line",
 						note: "Yes also adds one line asking the model not to add AI attribution to commits or pull requests; No adds nothing.",
 						initial: false,
-						yes: "add the line",
-						no: "no line",
+						yes: "add",
+						no: "no",
 					});
 	let agentFileLine: string;
 	try {
@@ -642,23 +650,50 @@ export function renderDryRunPlan(title: string, steps: readonly string[]): strin
  */
 export function runUninstallCli(args: readonly string[], io: RouteIo = defaultIo()): number {
 	const json = args.includes("--json");
-	writeCommandBanner(io, args);
+	const plain = ["--json", "--no-tui"].some((flag) => args.includes(flag));
+	const cards = plain ? undefined : terminalCards(io);
+	if (cards === undefined) writeCommandBanner(io, args);
+	else cards.banner(PACKAGE_VERSION, BANNER_LINE);
 	const codexHome = resolveCodexHome(io.env);
 	if (args.includes("--dry-run")) {
 		const steps = uninstallPlanSteps(codexHome);
 		io.stdout.write(
-			json
-				? `${JSON.stringify({ ok: true, dryRun: true, codexHome, steps })}\n`
-				: renderDryRunPlan("litcodex uninstall", steps),
+			cards !== undefined
+				? renderUninstallPlanCard(cards, steps)
+				: json
+					? `${JSON.stringify({ ok: true, dryRun: true, codexHome, steps })}\n`
+					: renderDryRunPlan("litcodex uninstall", steps),
 		);
 		return 0;
 	}
 	const env = io.env;
 	const codexBin = env["CODEX_BIN"]?.trim() && existsSync(env["CODEX_BIN"].trim()) ? env["CODEX_BIN"].trim() : "codex";
+	// On a card what Codex prints becomes rows, or stands above the card when the uninstall fails; everywhere else it
+	// goes straight to the terminal as before.
+	const calls: UninstallCall[] = [];
+	const said: (() => void)[] = [];
+	const cardSpawn: SpawnLike = (cmd, argv, opts) => {
+		const res = realSpawn(cmd, argv, { ...opts, stdio: "pipe" });
+		const [stdout, stderr] = [res.stdout ?? "", res.stderr ?? ""];
+		said.push(
+			() => io.stdout.write(stdout),
+			() => io.stderr.write(stderr),
+		);
+		calls.push({
+			target: argv.includes("marketplace") ? "Marketplace" : "Plugin",
+			command: `codex ${argv.join(" ")}`,
+			failure: res.error?.message ?? (res.status === 0 ? undefined : `exit ${res.status ?? "by signal"}`),
+			lines: `${stdout}\n${stderr}`
+				.split(/\r?\n/u)
+				.map((line) => line.trim())
+				.filter((line) => line !== ""),
+		});
+		return res;
+	};
 	const result = runUninstall({
 		codexBin,
 		codexHome,
-		spawn: realSpawn,
+		spawn: cards === undefined ? realSpawn : cardSpawn,
 		fs: {
 			existsSync,
 			readdirSync: (path) => readdirSync(path),
@@ -677,6 +712,11 @@ export function runUninstallCli(args: readonly string[], io: RouteIo = defaultIo
 	if (json) {
 		io.stdout.write(`${JSON.stringify({ ...result, agentFile: agentRemoval })}\n`);
 	} else {
+		if (cards !== undefined) {
+			if (!result.ok && said.length > 0) io.stdout.write("\n");
+			if (!result.ok) for (const write of said) write();
+			io.stdout.write(`${renderUninstallCard(cards, { ok: result.ok, calls, agentFile: agentRemoval })}\n`);
+		}
 		io.stdout.write(`${agentRemoval}\n`);
 		if (result.ok) {
 			io.stdout.write("litcodex uninstall: complete\n");

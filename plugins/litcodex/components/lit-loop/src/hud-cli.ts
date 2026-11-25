@@ -13,7 +13,7 @@
 import { createUsageReader } from "./card-status.js";
 import { type HudView, hudLines, readHud, renderHud } from "./hud.js";
 import { composeCard, type HudCard } from "./hud-card.js";
-import { narrowRoundCaps, roundGlyphs } from "./hud-glyphs.js";
+import { roundGlyphs } from "./hud-glyphs.js";
 import { type Cell, changedRuns, rowText } from "./hud-paint.js";
 import { CARD_MIN, lightBackground, narrowLines, sceneMood } from "./hud-scene.js";
 
@@ -121,7 +121,6 @@ function createSceneLoop(options: HudLoopOptions): HudLoop {
 	const { out } = options;
 	// Looked up once: fonts and the terminal do not change under a running HUD.
 	const caps = roundGlyphs(options.env);
-	const narrowCaps = narrowRoundCaps(options.env);
 	const usageOf = createUsageReader(options.env);
 	let view: HudView | null = null;
 	let card: HudCard | null = null;
@@ -138,8 +137,7 @@ function createSceneLoop(options: HudLoopOptions): HudLoop {
 		size = sizeNow();
 		if (view === null) return;
 		card = null;
-		if (columns < CARD_MIN)
-			lines = narrowLines(hudLines(view, now), sceneMood(view), { width: columns - 1, caps: narrowCaps });
+		if (columns < CARD_MIN) lines = narrowLines(hudLines(view, now), sceneMood(view), { width: columns - 1, caps });
 		else card = composeCard(view, { width: columns - 1, rows: out.rows ?? DEFAULT_ROWS, caps, now });
 	};
 	const bursting = (now: number): boolean => card !== null && burstAt !== null && now - burstAt < BURST_MS;

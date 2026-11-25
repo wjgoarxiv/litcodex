@@ -180,7 +180,7 @@ export function confirmModelRoute(
 ): Promise<void> {
 	return cards.proceed({
 		title: "Ready to install",
-		note: "Enter starts the install with this model route; nothing has been written yet.",
+		note: "Enter starts the install with this route; nothing has been written yet.",
 		rows: [
 			{ mark: "note", label: "Provider", value: "openai" },
 			{ mark: "note", label: "Lead", value: `${route.leadModel} · ${route.effort}` },
@@ -188,6 +188,6 @@ export function confirmModelRoute(
 			{ mark: "note", label: "Writes", value: `${codexHome}/config.toml (managed keys only)` },
 		],
 		button: "Install",
-		answer: "confirmed",
+		answer: "yes",
 	});
 }

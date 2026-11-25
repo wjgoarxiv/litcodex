@@ -307,7 +307,9 @@ gradient with a white edge, in 24-bit colour when COLORTERM advertises truecolor
 (including an empty value), CI and `--dry-run` turn colour off on a TTY: the spec's mono glyph scene (█▀▄
 letters, ░ sun, · stars, ━ horizon, ─┼╱│╲ floor) prints as given, then the plain tagline. TERM=dumb or an
 explicitly non-UTF-8 locale prints the one plain line with an ASCII rule; LC_ALL takes precedence over
-LC_CTYPE and LANG, and an unset locale keeps Unicode. `--json` and `--no-tui` print no banner. The mark never
+LC_CTYPE and LANG, and an unset locale keeps Unicode. Where install and uninstall draw cards the mark is centred over
+them and the window's height caps its size as well (large from 48 rows, medium from 34); without UTF-8 they print
+`LIT - codex cli`, all ASCII. `--json` and `--no-tui` print no banner. The mark never
 enters hook output, activation messages or any model-visible text. Functional progress and spinner colours
 keep their own existing policy. `litcodex hud` puts a ` 🔥 LIT ` pill (dark bold ink on a gradient from
 chrome stop 1 to stop 4) at the head of its first line on truecolor terminals only; every other depth keeps
@@ -326,7 +328,9 @@ its lstat changed; nothing is written. A narrower window keeps the plain lines w
 in U+E0B6/U+E0B4, in the cells they already had, as LITCODEX_HUD_GLYPHS says: `nerd` always, `basic` never, `auto` (the
 default) in terminals that draw them themselves (WT_SESSION, vscode, kitty, WezTerm, ghostty) or when a font file name
 in the user or system font folders names a Nerd Font, looked up once at start, at most 4000 names and three folders
-deep, never over SSH. The narrow plain lines follow WT_SESSION and `vscode` alone under `auto`. Under DONE the done
+deep, never over SSH. The truecolor lines of a narrower window follow the same answer: every pill and gauge, a cut one
+included, ends round, or none does. The install cards ask the same rule and use it only at truecolor on a background
+not reported as light. Under DONE the done
 stage is ticked and a skipped stage reads `-`; when the stages do not fit, only the current and the next are named.
 
 Codex 0.144.0 renders statusMessage as one dimmed header span, not a multiline text body

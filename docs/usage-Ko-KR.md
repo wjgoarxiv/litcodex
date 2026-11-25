@@ -284,7 +284,8 @@ LIT가 일하는 동안, 그리고 완료가 기록된 뒤 2초 동안만 움직
 
 `LITCODEX_HUD_GLYPHS=auto|nerd|basic`은 알약과 게이지 끝 모양을 정합니다. 기본값 `auto`는 Windows Terminal, VS Code, kitty,
 WezTerm, Ghostty이거나 설치된 글꼴 이름이 Nerd Font이면 둥글게 그리고, SSH에서는 터미널만 봅니다. `nerd`는 항상 둥글게,
-`basic`은 각지게 그립니다. 네모 글자가 보이면 `basic`을 쓰세요.
+`basic`은 각지게 그립니다. 네모 글자가 보이면 `basic`을 쓰세요. 테두리 카드, 더 좁은 창의 트루컬러 줄, 설치 카드가 모두 이
+기준 하나를 따르므로 둥근 끝과 각진 끝이 섞이지 않습니다.
 
 테두리 카드의 사용량 숫자를 위해 그 세션의 Codex 로그 끝부분을 5초에 한 번까지만, 파일이 바뀌었을 때만 읽습니다.
 

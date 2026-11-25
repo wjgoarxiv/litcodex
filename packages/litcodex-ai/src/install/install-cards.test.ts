@@ -3,10 +3,28 @@ import { displayWidth } from "@litcodex/lit-loop/dist/hud.js";
 import { describe, expect, it } from "vitest";
 import { CardAbort, type CardTerminal, cardsAvailable, InstallCards, wrapCells } from "./install-cards.js";
 import { chooseModelRoute, confirmModelRoute, HELPER_MENU_ROWS, LEAD_MENU_ROWS } from "./install-model-prompt.js";
-import { renderInstallFailureCard, renderInstallSummary } from "./install-presentation.js";
+import {
+	cardSteps,
+	renderInstallFailureCard,
+	renderInstallSummary,
+	renderUninstallCard,
+	renderUninstallPlanCard,
+} from "./install-presentation.js";
+import { buildInstallPlan } from "./plan.js";
+import type { SpinnerMotionLook } from "./spinner-motion.js";
+import type { InstallOptions } from "./types.js";
 
 const SGR = /\x1b\[[0-9;]*m/gu;
-const UTF8 = { TERM: "xterm-256color", COLORTERM: "truecolor", LC_ALL: "en_US.UTF-8", HOME: "/home/me" };
+const UTF8 = {
+	TERM: "xterm-256color",
+	COLORTERM: "truecolor",
+	LC_ALL: "en_US.UTF-8",
+	HOME: "/home/me",
+	LITCODEX_HUD_GLYPHS: "basic",
+};
+const ROUND = { ...UTF8, LITCODEX_HUD_GLYPHS: "nerd" };
+const LEFT_CAP = "\ue0b6";
+const RIGHT_CAP = "\ue0b4";
 
 class FakeInput extends EventEmitter {
 	isTTY = true;
@@ -178,16 +196,16 @@ describe("choosing from a list", () => {
 		expect(frames[0]).toMatch(/❯ 1 ASD \(한국어\) {2}simple {2}default/u);
 		expect(frames[1]).toMatch(/❯ 2 ELI5/u);
 		expect(frames[1]).toMatch(/ {2}1 ASD \(한국어\) {2}simple {2}default/u);
-		expect(output.screen.trim()).toBe("✓ Output style            ELI5");
+		expect(output.screen.trim()).toBe("✓ Output style         ELI5");
 	});
 
 	it("shows a long list as a window that follows the highlight", async () => {
 		const { frames } = await answer((cards) => cards.choose(MANY), ["\x1b[6~", "3", "9", "\r"]);
-		expect(frames[0]).toContain("1 of 40 ↓");
+		expect(frames[0]).toContain("1/40 ↓");
 		expect(frames[0]).not.toContain("model-12");
-		expect(frames[1]).toContain("11 of 40 ↑ ↓");
+		expect(frames[1]).toContain("11/40 ↑ ↓");
 		expect(frames[3]).toMatch(/❯ 39 model-39/u);
-		expect(frames[3]).toContain("40 of 40 ↑ ");
+		expect(frames[3]).toContain("40/40 ↑ ");
 	});
 });
 
@@ -256,7 +274,7 @@ describe("stopping", () => {
 		expect(error).toMatchObject({ message, interrupted });
 		expect(fake.input.raw).toBe(false);
 		expect(fake.output.raw.lastIndexOf("\x1b[?25h")).toBeGreaterThan(fake.output.raw.lastIndexOf("\x1b[?25l"));
-		expect(fake.output.screen.trim()).toBe("✗ Output style            stopped");
+		expect(fake.output.screen.trim()).toBe("✗ Output style         stopped");
 		expect([...fake.proc.eventNames(), ...fake.output.eventNames()]).toEqual([]);
 	});
 
@@ -345,16 +363,16 @@ describe("how the cards look", () => {
 				expect(output.widest).toBeLessThan(columns);
 				for (const frame of frames) expect(frame.trimEnd().split("\n").length).toBeLessThan(rows);
 				expect(frames[0]).toMatch(/Enter/u);
-				// Only a very long path in the smallest window may push the title off the top.
-				if (rows > 12 || ask !== asks.at(-1)) expect(frames[0]).toMatch(/LIT/u);
+				expect(frames[0]).toMatch(/LIT/u);
+				expect(frames[0]).toMatch(/Ctrl\+C stop/u);
 			}
 		}
 	});
 
 	it("folds a long answer without wrapping a narrow window", async () => {
-		const choices = [{ label: "ELI5 (English)" }];
+		const choices = [{ label: "ELI5 (English), long" }];
 		const { output } = await answer((cards) => cards.choose({ ...STYLES, choices }), ["\r"], { columns: 40 });
-		expect(output.screen.trim()).toBe("✓ Output style ELI5 (English)");
+		expect(output.screen.trim()).toBe("✓ Output style ELI5 (English), long");
 	});
 
 	it("keeps every border in line around wide characters", async () => {
@@ -382,12 +400,12 @@ describe("how the cards look", () => {
 	it("draws plain ASCII where the locale is not UTF-8", async () => {
 		const { output } = await answer((cards) => cards.choose(STYLES), [DOWN, "\r"], { env: { LC_ALL: "C" } });
 		expect(output.raw).not.toMatch(/[^\x00-\x7e]/u);
-		expect(output.screen.trim()).toBe("ok Output style            ASD (Korean)");
+		expect(output.screen.trim()).toBe("ok Output style        ASD (Korean)");
 	});
 
 	it("marks the choice without colour", async () => {
 		const { frames } = await answer((cards) => cards.confirm(BLOCK), ["\r"], { env: { ...UTF8, NO_COLOR: "1" } });
-		expect(frames[0]).toMatch(/║ ❯ Yes \(default\) +║ {2}│ {3}No +│/u);
+		expect(frames[0]).toMatch(/║ {2}❯ Yes \(default\) {2}║ {2}│ {4}No {13}│/u);
 	});
 
 	it("draws afresh after a resize", async () => {
@@ -422,10 +440,10 @@ describe("the installer's own questions", () => {
 		const pending = chooseModelRoute(fake.cards);
 		await fake.ready();
 		expect(fake.output.screen).toMatch(/❯ {2}0 gpt-6-astra +· xhigh +recommended lead {2}default/u);
-		expect(fake.output.screen).toContain(`1 of ${LEAD_MENU_ROWS.length}`);
+		expect(fake.output.screen).toContain(`1/${LEAD_MENU_ROWS.length}`);
 		fake.input.key("\r");
 		await fake.ready();
-		expect(fake.output.screen).toContain("✓ Lead model              gpt-6-astra · xhigh");
+		expect(fake.output.screen).toContain("✓ Lead model           gpt-6-astra · xhigh");
 		for (const digit of String(HELPER_MENU_ROWS.length - 1)) fake.input.key(digit);
 		fake.input.key("\r");
 		const last = HELPER_MENU_ROWS.at(-1);
@@ -459,39 +477,127 @@ describe("the installer's own questions", () => {
 		}
 		expect(frames[0]).toContain("nothing has been written yet");
 		expect(frames[4]).toBe(frames[0]);
-		expect(output.screen.trim()).toBe("✓ Ready to install        confirmed");
+		expect(output.screen.trim()).toBe("✓ Ready to install     yes");
 	});
 });
 
 describe("the step card and the closing cards", () => {
-	it("appends one framed row per step and never moves up", () => {
+	const PLAN = [
+		{ name: "Host check", text: "Codex version" },
+		{ name: "Plugin", text: "install the hooks" },
+		{ name: "Verify", text: "confirm every surface" },
+	];
+
+	it("waits, runs and settles each step in place, then folds to one line", () => {
 		const { cards, output } = setup({ columns: 80 });
-		const card = cards.steps("Installing", "Checks come first.");
-		card.start("Registering marketplace");
-		card.end({ label: "Marketplace", value: "registered" }, ["Added /home/me/.codex/marketplaces/litcodex."]);
-		card.end({ mark: "skip", label: "Hooks", value: "wired" });
-		card.close();
-		expect(output.raw).not.toMatch(/\x1b\[\d+A/u);
-		const rows = output.screen.trim().split("\n");
-		expect(rows.at(0)).toMatch(/LIT {2}Installing ─+╮$/u);
-		expect(output.screen).toMatch(/│ ✓ Marketplace +registered +│/u);
-		expect(output.screen).toMatch(/│ {5}Added ~\/\.codex\/marketplaces\/litcodex\. +│/u);
-		expect(output.screen).toMatch(/│ ○ Hooks +wired +│/u);
-		expect(rows.at(-1)).toMatch(/╰─+╯/u);
+		cards.begin(1, "Installs into /home/me/.codex.");
+		const card = cards.steps("Installing LitCodex 9.9.9", PLAN);
+		expect(output.screen).toMatch(/LIT {2}· Installing LitCodex 9\.9\.9 ─+╮/u);
+		expect(output.screen).toMatch(/│ · Host check {9}Codex version +│/u);
+		card.start("Host check");
+		expect(output.screen).toMatch(/│ ⠋ Host check {9}Codex version +│/u);
+		card.end("done");
+		card.start("Plugin");
+		expect(output.screen).toMatch(
+			/│ ✓ Host check +Codex version +│\n │ ⠋ Plugin +install the hooks +│\n │ · Verify /u,
+		);
+		card.end("warn", "a warning that stays whole");
+		expect(output.screen).toMatch(/│ ! Plugin +a warning that stays whole +│/u);
+		card.start("Verify");
+		card.end("done");
+		card.fold("Install steps", "3 of 3 checked");
+		expect(output.screen).toBe("\n Installs into ~/.codex.\n\n ✓ Install steps        3 of 3 checked\n".slice(1));
 	});
 
-	it("says where the steps stopped when a check never reported", () => {
+	it("turns the spinner in the running row's own cell and comes back below the card", () => {
+		const looks: { look: SpinnerMotionLook; row: number }[] = [];
+		const output = new FakeOutput(80, 30);
+		const cards = new InstallCards({
+			input: new FakeInput(),
+			output,
+			proc: new FakeProcess(),
+			env: UTF8,
+			motion: (look: SpinnerMotionLook) => ({
+				start: () => {
+					looks.push({ look, row: output.row });
+					return () => undefined;
+				},
+			}),
+		} as unknown as CardTerminal);
+		const card = cards.steps("Installing", PLAN);
+		for (const { name } of PLAN) {
+			card.start(name);
+			const { look, row } = looks.at(-1) ?? { look: { before: "", after: "", frames: [] }, row: 0 };
+			const up = Number(/^\x1b\[(\d+)A\r\x1b\[3C/u.exec(look.before)?.[1]);
+			expect(output.lines[row - up]).toMatch(new RegExp(`^ │ ⠋ ${name} `, "u"));
+			expect(look.after).toBe(`\x1b[0m\x1b[${up}B\r`);
+			card.end("done");
+		}
+		expect(looks).toHaveLength(3);
+	});
+
+	it("rewrites every row at the next step, so nothing the spinner left behind stays", () => {
+		const { cards, output } = setup({ columns: 80 });
+		const card = cards.steps("Installing", PLAN);
+		card.start("Host check");
+		output.lines = output.lines.map((line) => line.replace("Verify", "Ver⠙fy"));
+		card.end("done");
+		expect(output.screen).not.toContain("⠙");
+	});
+
+	it("draws over its old rows after the window changed while a step ran", () => {
+		const { cards, output } = setup({ columns: 80 });
+		const card = cards.steps("Installing", PLAN);
+		card.start("Host check");
+		// The resize event waits while `codex` runs; only asking the terminal tells.
+		Object.assign(output, {
+			_refreshSize: () => {
+				output.columns = 100;
+			},
+		});
+		card.end("done");
+		expect(output.screen.match(/Installing/gu)).toHaveLength(1);
+		expect(
+			new Set(
+				output.screen
+					.trimEnd()
+					.split("\n")
+					.map((line) => displayWidth(line)),
+			),
+		).toEqual(new Set([99]));
+	});
+
+	it("says where the steps stopped and leaves the card on screen", () => {
 		const { cards, output } = setup();
-		const card = cards.steps("Installing", "Checks come first.");
-		card.start("Inspecting the host");
-		card.stop("Stopped here; nothing after this ran");
-		expect(output.screen).toMatch(/│ ✗ Stopped here; nothing after this ran +│\n ╰/u);
+		const card = cards.steps("Installing", PLAN);
+		card.start("Host check");
+		expect(card.stop()).toBe("Host check");
+		expect(output.screen).toMatch(/│ ✗ Host check +Codex version +│\n │ · Plugin /u);
+		expect(cards.panel({ title: "x", sections: [] }).startsWith("\n")).toBe(true);
+	});
+
+	it("lists the checks and every plan step by name", () => {
+		const plan = buildInstallPlan({ codexHome: "/home/me/.codex", profile: "astra" } as unknown as InstallOptions);
+		const names = cardSteps(plan).map(({ name }) => name);
+		expect(names.slice(0, 3)).toEqual(["Host check", "Config check", "Package"]);
+		expect(names.length).toBe(plan.length + 3);
+		expect(new Set(names).size).toBe(names.length);
 	});
 
 	const RESULT = {
 		ok: true,
 		codexHome: "/home/me/.codex",
 		steps: [
+			{
+				kind: "plugin-add",
+				status: "ok",
+				detail: "litcodex@litcodex plugin registered",
+				receipts: [
+					"Added plugin `litcodex` from marketplace `litcodex`.",
+					"Installed plugin root: /home/me/.codex/plugins/cache/litcodex",
+					"a line nobody expected from Codex",
+				],
+			},
 			{ kind: "agents-install", status: "ok", detail: "7 agent role(s) installed" },
 			{ kind: "config-update", status: "skipped", detail: "config preserved; review --dry-run" },
 			{ kind: "verify", status: "ok", detail: "doctor passed" },
@@ -521,15 +627,22 @@ describe("the step card and the closing cards", () => {
 			"7 agent role(s) installed",
 			"! Config",
 			"created ~/.codex/AGENTS.md",
-			"! kept 2 of your files in ~/.codex/backup",
+			"! Warning            kept 2 of your files in ~/.codex/backup",
 			"Requested model",
 			"gpt-6-astra · xhigh",
 			"Effective child",
 			"use --reconfigure only by intent",
 			"approve the LitCodex hooks",
+			"Plugin path",
+			"~/.codex/plugins/cache/litcodex",
+			"! Codex said",
+			"a line nobody expected from Codex",
 		]) {
 			expect(text).toContain(part);
 		}
+		expect(text).not.toContain("Added plugin");
+		const heads = ["Installed", "Settings", "Next"].map((head) => text.search(new RegExp(`│ ${head} +│`, "u")));
+		expect(heads.every((at, index) => at > (heads[index - 1] ?? -1))).toBe(true);
 		for (const line of summary({}, 40).split("\n")) expect(displayWidth(line)).toBeLessThan(40);
 	});
 
@@ -543,16 +656,21 @@ describe("the step card and the closing cards", () => {
 
 	it("shows a stopped install with its code, reason and next step", () => {
 		const { cards } = setup();
-		const text = renderInstallFailureCard(cards, {
-			ok: false,
-			error: {
-				code: "LITCODEX_INSTALL_CODEX_NOT_FOUND",
-				message: "Codex CLI not found",
-				details: { stderr: "no codex" },
+		const text = renderInstallFailureCard(
+			cards,
+			{
+				ok: false,
+				error: {
+					code: "LITCODEX_INSTALL_CODEX_NOT_FOUND",
+					message: "Codex CLI not found",
+					details: { stderr: "no codex" },
+				},
 			},
-		}).replace(SGR, "");
+			"Host check",
+		).replace(SGR, "");
 		for (const part of [
-			"Install stopped",
+			"INSTALL STOPPED",
+			"✗ Stage              Host check",
 			"LITCODEX_INSTALL_CODEX_NOT_FOUND",
 			"Codex CLI not found",
 			"no codex",
@@ -567,5 +685,227 @@ describe("the step card and the closing cards", () => {
 		const path = "/a/very/long/path/without/any/space/in/it.toml";
 		expect(wrapCells(path, 12).join("")).toBe(path);
 		expect(wrapCells("한국어 두 단어", 6)).toEqual(["한국어", "두", "단어"]);
+	});
+});
+
+describe("uninstall on a card", () => {
+	const call = (over: object) => ({
+		target: "Plugin" as const,
+		command: "codex plugin remove litcodex@litcodex",
+		failure: undefined,
+		lines: ["Removed plugin `litcodex` from marketplace `litcodex`."],
+		...over,
+	});
+	const agentFile = "AGENT_FILE: removed /home/me/.codex/AGENTS.md";
+	const draw = (result: Parameters<typeof renderUninstallCard>[1]): string =>
+		renderUninstallCard(setup().cards, result).replace(SGR, "");
+
+	it("says what went, and any line Codex added of its own", () => {
+		const text = draw({
+			ok: true,
+			calls: [call({ lines: ["Removed plugin `x`.", "warning: cache kept"] })],
+			agentFile,
+		});
+		expect(text).toContain("LitCodex is removed");
+		expect(text).toContain("✓ Plugin             Removed plugin `x`.");
+		expect(text).toContain("! Codex said         warning: cache kept");
+		expect(text).toContain("✓ AGENTS.md          removed ~/.codex/AGENTS.md");
+	});
+
+	it("names the call that failed and never says removed", () => {
+		const text = draw({
+			ok: false,
+			calls: [call({}), call({ target: "Marketplace", failure: "exit 1" })],
+			agentFile,
+		});
+		expect(text).toContain("UNINSTALL STOPPED");
+		expect(text).toContain("✗ Marketplace        codex plugin remove litcodex@litcodex failed (exit 1)");
+		expect(text).not.toContain("LitCodex is removed");
+		expect(draw({ ok: false, calls: [], agentFile })).toContain("✗ Safety");
+	});
+
+	it("shows the whole plan of a dry run", () => {
+		const steps = ["Remove the plugin: /home/me/.codex/x", "two", "three", "four", "five", "six", "seven"];
+		const text = renderUninstallPlanCard(setup().cards, steps).replace(SGR, "");
+		for (const part of ["~/.codex/x", "two", "three", "four", "five", "six", "seven", "Nothing was changed"]) {
+			expect(text).toContain(part);
+		}
+	});
+});
+
+describe("round and square", () => {
+	const ROUTE = {
+		leadModel: "gpt-6-astra",
+		effort: "xhigh",
+		subagentModel: "gpt-6-luna",
+		subagentEffort: "max",
+	} as const;
+	const ASKS: readonly ((cards: InstallCards) => Promise<unknown>)[] = [
+		(cards) => cards.choose(MANY),
+		(cards) => cards.choose(STYLES),
+		(cards) => cards.confirm(BLOCK),
+		(cards) => cards.confirm({ ...BLOCK, initial: false, note: BLOCK.note.repeat(2) }),
+		(cards) => confirmModelRoute(cards, ROUTE, "/home/me/.codex"),
+	];
+	/** The rows of the first drawing of a question, with their colours. */
+	const question = async (ask: (typeof ASKS)[number], options: Setup): Promise<string[]> => {
+		const fake = setup(options);
+		const pending = ask(fake.cards);
+		await fake.ready();
+		const rows = fake.output.raw.split("\x1b[?25l")[1]?.split("\r\n") ?? [];
+		fake.input.key("\r");
+		await pending;
+		return rows.slice(0, -1).map((row) => row.replaceAll("\r", "").replaceAll("\x1b[K", ""));
+	};
+	const work = (options: Setup): string[] => {
+		const { cards, output } = setup(options);
+		const list = Array.from({ length: 9 }, (_, index) => ({ name: `Step ${index}`, text: "does one thing" }));
+		const card = cards.steps("Installing LitCodex 9.9.9", list);
+		card.start("Step 0");
+		card.end("done");
+		card.start("Step 1");
+		return (output.raw.split("\x1b[J").at(-2) ?? "")
+			.split("\r\n")
+			.slice(0, -1)
+			.map((row) => row.replace(/\r|\x1b\[\d*[AK]/gu, ""));
+	};
+	const closing = (options: Setup): string[] =>
+		setup(options)
+			.cards.panel({
+				title: "LitCodex 9.9.9 is installed",
+				sections: [
+					{
+						head: "Installed",
+						rows: [
+							{ label: "Plugin", value: "litcodex@litcodex" },
+							{ mark: "warn", value: "read me" },
+						],
+					},
+					{
+						head: "Next",
+						rows: [{ mark: "note", label: "Codex", value: "restart Codex if it is open ".repeat(4) }],
+					},
+				],
+			})
+			.trimEnd()
+			.split("\n");
+	const bare = (row: string): string => row.replace(SGR, "");
+	/** The cells of a row: its character and whether it is filled. */
+	const filled = (row: string): { char: string; on: boolean }[] => {
+		let on = false;
+		return [...row.matchAll(/\x1b\[([0-9;]*)m|(.)/gsu)].flatMap(([, code, char]) => {
+			if (char !== undefined) return [{ char, on }];
+			if (code === "0" || code === "") on = false;
+			else if (/(?:^|;)48;/u.test(code ?? "")) on = true;
+			return [];
+		});
+	};
+	const NONE = { ...ROUND, NO_COLOR: "1" };
+	const ASCII = { ...ROUND, LC_ALL: "C" };
+	const SQUARES: readonly (readonly [string, Setup])[] = [
+		["basic", { env: UTF8 }],
+		["a light background", { env: { ...ROUND, COLORFGBG: "0;15" } }],
+		["256 colours", { env: { ...ROUND, COLORTERM: "" }, depth: 8 }],
+		["16 colours", { env: { ...ROUND, COLORTERM: "", TERM: "xterm" }, depth: 4 }],
+		["no colour", { env: NONE }],
+		["no UTF-8", { env: ASCII }],
+	];
+
+	it.each([40, 60, 80, 100, 120].flatMap((columns) => [12, 16, 24, 60].map((rows) => [columns, rows] as const)))(
+		"says the same in both forms, inside a %i by %i window",
+		async (columns, rows) => {
+			const size = { columns, rows };
+			const draw = async (options: Setup): Promise<string[][]> => [
+				...(await Promise.all(ASKS.map((ask) => question(ask, { ...size, ...options })))),
+				work({ ...size, ...options }),
+			];
+			const round = [...(await draw({ env: ROUND })), closing({ ...size, env: ROUND })];
+			for (const [index, card] of round.entries()) {
+				const text = card.map(bare);
+				if (index < round.length - 1) expect(card.length).toBeLessThan(rows);
+				for (const row of text) expect(displayWidth(row)).toBe(Math.min(columns - 1, 101));
+				expect(text[0]).toMatch(/^ ╭─ .*╮$/u);
+				expect(text.at(-1)).toMatch(/^ ╰─+╯$/u);
+				for (const row of text.slice(1, -1)) expect(row).toMatch(/^ │ .* │$/u);
+				expect(text.join("")).not.toMatch(/[░▒▓▯▰▱▌▐▄▀]|\[LIT/u);
+				for (const row of card) {
+					const cells = filled(row);
+					cells.forEach(({ on }, at) => {
+						if (on && cells[at - 1]?.on !== true) expect(cells[at - 1]?.char).toBe(LEFT_CAP);
+						if (on && cells[at + 1]?.on !== true) expect(cells[at + 1]?.char).toBe(RIGHT_CAP);
+					});
+				}
+			}
+			const smooth = (cards: string[][]): string =>
+				cards
+					.flat()
+					.map(bare)
+					.join("\n")
+					.replace(/[\ue0b6\ue0b4]/gu, " ");
+			for (const [name, options] of SQUARES) {
+				const square = [...(await draw(options)), closing({ ...size, ...options })];
+				expect(square.flat().join("")).not.toMatch(/[\ue0b6\ue0b4]/u);
+				if (!/no /u.test(name)) expect(smooth(square)).toBe(smooth(round));
+				for (const row of square.flat()) expect(displayWidth(bare(row))).toBe(Math.min(columns - 1, 101));
+			}
+		},
+	);
+
+	it("puts every value in column 24 and one blank row between blocks", async () => {
+		for (const env of [ROUND, UTF8, NONE, ASCII]) {
+			const fake = setup({ env });
+			fake.cards.banner("9.9.9", "loop-native agent harness for Codex");
+			fake.cards.begin(2, "Installs into /home/me/.codex.");
+			for (const ask of [ASKS[1], ASKS[4]]) {
+				const pending = ask?.(fake.cards);
+				await fake.ready();
+				fake.input.key("\r");
+				await pending;
+			}
+			fake.cards.steps("Installing", [{ name: "One", text: "thing" }]).fold("Install steps", "1 of 1 checked");
+			fake.output.write(
+				fake.cards.panel({
+					title: "Done",
+					sections: [{ head: "Installed", rows: [{ label: "Plugin", value: "litcodex" }] }],
+				}),
+			);
+			const lines = fake.output.screen.split("\n");
+			const at = lines.findIndex((line) => line.includes("Installs into"));
+			const text = lines.slice(at);
+			const sign = env === ASCII ? "ok" : "✓";
+			expect(text.slice(0, 6)).toEqual([
+				" Installs into ~/.codex.",
+				"",
+				`${` ${sign} Output style`.padEnd(24)}None`,
+				`${` ${sign} Ready to install`.padEnd(24)}yes`,
+				`${` ${sign} Install steps`.padEnd(24)}1 of 1 checked`,
+				"",
+			]);
+			expect(text.join("\n")).not.toMatch(/\n\n\n/u);
+			expect(text.find((line) => line.includes("Plugin"))?.indexOf("litcodex")).toBe(24);
+			expect(lines[0]).toBe("");
+			expect(lines[at - 1]).toBe("");
+			expect(lines[at - 2]).toMatch(/loop-native/u);
+		}
+	});
+
+	it("sizes the mark by the height of the window and centres it over the cards", () => {
+		const heights = [
+			[100, 60, 23 + 1],
+			[100, 40, 13 + 1],
+			[100, 24, 7 + 1],
+			[40, 60, 7 + 1],
+		] as const;
+		for (const [columns, rows, art] of heights) {
+			const { cards, output } = setup({ columns, rows });
+			cards.banner("9.9.9", "line");
+			expect(output.screen.trimEnd().split("\n")).toHaveLength(1 + art + 2);
+			expect(output.widest).toBeLessThan(columns);
+		}
+	});
+
+	it("keeps the commands of a notice whole", () => {
+		const command = `  litcodex ${"extensions ".repeat(8)}--yes`;
+		expect(setup({ columns: 60 }).cards.notice(`Head\n${command}\n`)).toContain(`   ${command}\n`);
 	});
 });

@@ -7,7 +7,7 @@
 import type { CardStatus } from "./card-status.js";
 import { clean } from "./control-chars.js";
 import { BOLD, BRAND, cells, displayWidth, fit, type HudLine, type HudView, PILL_TEXT, RAINBOW } from "./hud.js";
-import { along, brandPill, type Cell, gradePill, MUTED, mix, push, rowText, SUNSET, TRACK } from "./hud-paint.js";
+import { along, bar, brandPill, type Cell, gradePill, MUTED, mix, push, rowText, SUNSET, TRACK } from "./hud-paint.js";
 import { AMBER, DUSK } from "./hud-sunset.js";
 
 /** Narrower windows keep the plain lines. */
@@ -39,19 +39,24 @@ export function lightBackground(env: NodeJS.ProcessEnv): boolean {
 	return /;(?:7|15)$/u.test(env["COLORFGBG"] ?? "");
 }
 
-/** Each gauge (`▰▰▱▱▱`, `[▉▉░░░]`) as one rounded bar over exactly the cells it already has. */
-function roundGauges(row: Cell[]): void {
+/** Each gauge (`▰▰▱▱▱`, `[▉▉░░░]`, or what a cut left of one) as one bar over exactly the cells it already has. */
+function drawGauges(row: Cell[], caps: boolean): void {
 	const plain = row.map((cell) => cell.text).map((text) => (text.length === 1 ? text : " "));
-	for (const found of plain.join("").matchAll(/[▰▱]{3,}|\[[▉░]{2,}\]/gu)) {
+	for (const found of plain.join("").matchAll(/[▰▱]+|\[[▉░]+\]?/gu)) {
 		const [start, size] = [found.index, found[0].length];
-		const bracketed = found[0].startsWith("[");
-		const filled = (x: number): boolean => {
-			const glyph = found[0][bracketed ? Math.max(1, Math.min(size - 2, x)) : x];
-			return glyph === "▰" || glyph === "▉";
-		};
+		const inner = found[0].replace(/[[\]]/gu, "");
+		const lit = [...inner].filter((glyph) => glyph === "▰" || glyph === "▉").length;
+		// A bracket counts as the cell beside it, so a begun gauge lights its first cell and a full one its last.
+		const open = found[0].startsWith("[") && lit > 0 ? 1 : 0;
+		const close = found[0].endsWith("]") && lit === inner.length ? 1 : 0;
+		const filled = lit + open + close;
+		if (!caps) {
+			row.splice(start, size, ...bar(size, filled, SUNSET, false));
+			continue;
+		}
 		for (let x = 0; x < size; x++) {
-			const color = filled(x) ? along(SUNSET, x / size) : TRACK;
-			const cap = x === 0 ? CAP_LEFT : x === size - 1 ? CAP_RIGHT : null;
+			const color = x < filled ? along(SUNSET, x / size) : TRACK;
+			const cap = size < 2 ? null : x === 0 ? CAP_LEFT : x === size - 1 ? CAP_RIGHT : null;
 			row[start + x] = cap === null ? { text: " ", bg: color } : { text: cap, fg: color };
 		}
 	}
@@ -81,13 +86,15 @@ function textRow(line: HudLine, index: number, mood: SceneMood, options: SceneOp
 		offset += piece.text.length;
 		if (offset === stageEnd && pill !== null) pill[1] = row.length;
 	}
-	if (options.caps) roundGauges(row);
+	drawGauges(row, options.caps);
 	if (pill !== null && pill[1] > pill[0] && mood !== "rewind") {
 		const stage = (mood === "turn" ? AMBER : DUSK).stage;
 		const stops = mood === "work" || mood === "turn" ? stage : stage.map((color) => mix(color, MUTED, 0.25));
 		if (pill[0] > 0) pill[0]--;
 		if (row[pill[1]]?.text === " ") pill[1]++;
-		gradePill(row, pill[0], pill[1], stops, options.caps);
+		// A pill the edge of the window cuts has no cell for its cap; in the round form it stays words.
+		const whole = row[pill[0]]?.text === " " && row[pill[1] - 1]?.text === " ";
+		if (whole || !options.caps) gradePill(row, pill[0], pill[1], stops, options.caps);
 	}
 	return row;
 }

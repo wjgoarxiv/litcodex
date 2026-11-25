@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { hasIconFont, narrowRoundCaps, roundGlyphs } from "./hud-glyphs.js";
+import { hasIconFont, roundGlyphs } from "./hud-glyphs.js";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -54,13 +54,6 @@ describe("roundGlyphs", () => {
 		expect(roundGlyphs({ LITCODEX_HUD_GLYPHS: "basic", WT_SESSION: "1" }, some)).toBe(false);
 		expect(roundGlyphs({ LITCODEX_HUD_GLYPHS: "auto" }, some)).toBe(true);
 		expect(roundGlyphs({ LITCODEX_HUD_GLYPHS: "yes" }, none)).toBe(false);
-	});
-
-	it("keeps the narrow lines on the terminal's word alone, unless the setting speaks", () => {
-		expect(narrowRoundCaps({ TERM_PROGRAM: "vscode" })).toBe(true);
-		expect(narrowRoundCaps({ TERM_PROGRAM: "ghostty" })).toBe(false);
-		expect(narrowRoundCaps({ LITCODEX_HUD_GLYPHS: "nerd" })).toBe(true);
-		expect(narrowRoundCaps({ LITCODEX_HUD_GLYPHS: "basic", TERM_PROGRAM: "vscode" })).toBe(false);
 	});
 });
 

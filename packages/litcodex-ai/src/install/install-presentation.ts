@@ -2,8 +2,8 @@ import { EXPLICIT_GPT56_SOL_MODEL, GPT56_MODELS } from "../config-migration/gpt5
 import { amber, bold, dim, green, orange, red } from "../ui-style.js";
 import { routingReport } from "./agent-routing.js";
 import type { InstallErrorEnvelope } from "./errors.js";
-import type { InstallCards, PanelRow, RowMark } from "./install-cards.js";
-import type { InstallResult, InstallStep, InstallStepKind, InstallStepResult } from "./types.js";
+import type { InstallCardStep, InstallCards, PanelRow, RowMark } from "./install-cards.js";
+import type { InstallPreflightStage, InstallResult, InstallStep, InstallStepKind, InstallStepResult } from "./types.js";
 
 const STEP_PRESENTATION: Readonly<Record<InstallStepKind, { readonly title: string; readonly purpose: string }>> = {
 	"marketplace-add": {
@@ -164,7 +164,11 @@ export function renderInstallReceipt(
 	return lines.join("\n");
 }
 
-/** The closing card: the receipt's rows by section, the warnings, and what to do next. */
+/** Codex's own lines for a finished registration; any other line it prints is shown whole. */
+const ROUTINE_RECEIPT = /^(?:Added|Installed|Removed) (?:plugin|marketplace)\b/u;
+const PLUGIN_ROOT = /^Installed plugin root: (.+)$/u;
+
+/** The closing card: what was installed and every warning, the settings the install left, and what to do next. */
 export function renderInstallSummary(
 	cards: InstallCards,
 	result: InstallResult,
@@ -177,8 +181,11 @@ export function renderInstallSummary(
 	const rows = receiptRows(result, opts);
 	const group = (name: ReceiptRow["group"], mark: RowMark): PanelRow[] =>
 		rows.filter((entry) => entry.group === name).map(({ label, value }) => ({ mark, label, value }));
-	const agentFile = opts.agentFile.replace(/^AGENT_FILE: /u, "");
 	const preserved = configDetail(result).includes("preserved");
+	const receipts = result.steps.flatMap((step) => step.receipts ?? []);
+	const pluginRoot = receipts.map((line) => PLUGIN_ROOT.exec(line)?.[1]).find((path) => path !== undefined);
+	const plugin = result.steps.find((step) => step.kind === "plugin-add");
+	const routes = result.steps.find((step) => step.kind === "agents-install")?.agentRoutes ?? [];
 	return cards.panel({
 		title: result.ok ? `LitCodex ${opts.version} is installed` : `LitCodex ${opts.version}: action required`,
 		bad: !result.ok,
@@ -191,23 +198,40 @@ export function renderInstallSummary(
 						label: "Status",
 						value: result.ok ? "Ready for Codex" : "Action required",
 					},
+					...(plugin === undefined
+						? []
+						: [
+								{
+									mark: plugin.status === "failed" ? "fail" : "done",
+									label: "Plugin",
+									value: plugin.detail,
+								} as const,
+							]),
+					...(pluginRoot === undefined
+						? []
+						: [{ mark: "done", label: "Plugin path", value: pluginRoot } as const]),
 					...group("installed", "done").map(
 						(entry): PanelRow => (entry.label === "Config" && preserved ? { ...entry, mark: "warn" } : entry),
 					),
-					{
-						mark: /^(?:refused|symlink|not-)/u.test(agentFile)
-							? "warn"
-							: /^off/u.test(agentFile)
-								? "skip"
-								: "done",
-						label: "AGENTS.md",
-						value: agentFile,
-					},
+					agentFileRow(opts.agentFile),
+					...opts.warnings.map((value): PanelRow => ({ mark: "warn", label: "Warning", value })),
+					...receipts
+						.filter((line) => !ROUTINE_RECEIPT.test(line))
+						.map((value): PanelRow => ({ mark: "warn", label: "Codex said", value })),
 				],
 			},
-			{ head: "Warnings", rows: opts.warnings.map((value): PanelRow => ({ mark: "warn", value })) },
-			{ head: "Models", rows: group("models", "note") },
-			{ head: "Codex host", rows: group("host", "note") },
+			{
+				head: "Settings",
+				rows: [
+					...group("models", "note").map(
+						(entry): PanelRow =>
+							entry.label === "Installed TOMLs" && routes.length > 3 && entry.value.includes(",")
+								? { ...entry, value: `${routes.length} roles (list: litcodex doctor)` }
+								: entry,
+					),
+					...group("host", "note"),
+				],
+			},
 			{
 				head: "Next",
 				rows: [
@@ -238,21 +262,22 @@ function failureRows(envelope: InstallErrorEnvelope): readonly (readonly [label:
 	];
 }
 
-/** The same stop as a red card. */
-export function renderInstallFailureCard(cards: InstallCards, envelope: InstallErrorEnvelope): string {
-	return cards.panel({
-		title: "Install stopped",
-		bad: true,
-		sections: [
-			{
-				rows: failureRows(envelope).map(([label, value], index) => ({
-					mark: index < 3 ? "fail" : "note",
-					label,
-					value: label === "Safety" ? `${value} Exit without reporting success.` : value,
-				})),
-			},
-		],
-	});
+/** The same stop as a red card; the step it stopped at comes first. */
+export function renderInstallFailureCard(
+	cards: InstallCards,
+	envelope: InstallErrorEnvelope,
+	stage: string | undefined,
+): string {
+	const [code, reason, ...rest] = failureRows(envelope).map(
+		([label, value]): PanelRow => ({
+			mark: label === "Safety" || label === "Next" ? "note" : "fail",
+			label,
+			value: label === "Safety" ? `${value} Exit without reporting success.` : value,
+		}),
+	);
+	const at: PanelRow | undefined = stage === undefined ? undefined : { mark: "fail", label: "Stage", value: stage };
+	const rows = [at, reason, code, ...rest].filter((entry) => entry !== undefined);
+	return cards.panel({ title: "INSTALL STOPPED", bad: true, sections: [{ rows }] });
 }
 
 export function renderInstallFailure(envelope: InstallErrorEnvelope, color: boolean): string {
@@ -336,4 +361,116 @@ function detailRow(label: string, value: string, color: boolean): string {
 export function stepName(kind: InstallStepKind): string {
 	const { title } = STEP_PRESENTATION[kind];
 	return title.charAt(0) + title.slice(1).toLowerCase();
+}
+
+const CARD_STEP_TEXT: Readonly<Record<InstallStepKind, string>> = {
+	"marketplace-add": "register the local plugin source",
+	"plugin-add": "install the hooks, skills and runtime",
+	"hooks-register": "confirm the UserPromptSubmit hook",
+	"agents-install": "install the agent roles",
+	"config-update": "write config.toml, LitCodex's own keys only",
+	verify: "confirm every installed surface",
+};
+
+/** The checks that run before the first step. A host probe may take a minute, so its row says so. */
+const CARD_CHECKS: Readonly<Record<InstallPreflightStage, InstallCardStep>> = {
+	"host-capabilities": { name: "Host check", text: "Codex version and strict config, up to 60 seconds" },
+	"config-dry-run": { name: "Config check", text: "validate config.toml, nothing written" },
+	"marketplace-payload": { name: "Package", text: "stage the bundled marketplace payload" },
+};
+
+export function preflightName(stage: InstallPreflightStage): string {
+	return CARD_CHECKS[stage].name;
+}
+
+/** The rows of the step card, in the order they run. */
+export function cardSteps(plan: readonly InstallStep[]): readonly InstallCardStep[] {
+	return [
+		...Object.values(CARD_CHECKS),
+		...plan.map(({ kind }) => ({ name: stepName(kind), text: CARD_STEP_TEXT[kind] })),
+	];
+}
+
+const agentFileRow = (line: string): PanelRow => {
+	const value = line.replace(/^AGENT_FILE: /u, "");
+	const mark = /^(?:refused|symlink|not-)/u.test(value) ? "warn" : /^off/u.test(value) ? "note" : "done";
+	return { mark, label: "AGENTS.md", value };
+};
+
+/** One `codex` call an uninstall made, with every line it printed. */
+export interface UninstallCall {
+	readonly target: "Plugin" | "Marketplace";
+	readonly command: string;
+	readonly failure: string | undefined;
+	readonly lines: readonly string[];
+}
+
+/** What an uninstall did, as a card. After a failure Codex's own output stands above it, as it printed it. */
+export function renderUninstallCard(
+	cards: InstallCards,
+	result: { readonly ok: boolean; readonly calls: readonly UninstallCall[]; readonly agentFile: string },
+): string {
+	const { ok, calls } = result;
+	const rows = calls.flatMap(({ target, command, failure, lines }): PanelRow[] => {
+		if (failure !== undefined) return [{ mark: "fail", label: target, value: `${command} failed (${failure})` }];
+		const others = lines.filter((line) => !ROUTINE_RECEIPT.test(line));
+		return [
+			{ mark: "done", label: target, value: lines.find((line) => ROUTINE_RECEIPT.test(line)) ?? "removed" },
+			...(ok ? others : []).map((value): PanelRow => ({ mark: "warn", label: "Codex said", value })),
+		];
+	});
+	const refused = !ok && calls.every(({ failure }) => failure === undefined);
+	return cards.panel({
+		title: ok ? "LitCodex is removed" : "UNINSTALL STOPPED",
+		bad: !ok,
+		sections: [
+			{
+				head: ok ? "Removed" : "What happened",
+				rows: [
+					...rows,
+					...(refused
+						? [
+								{
+									mark: "fail",
+									label: "Safety",
+									value: "the marketplace root or config.toml is a link or cannot be read, so LitCodex stopped",
+								} as const,
+							]
+						: []),
+					agentFileRow(result.agentFile),
+				],
+			},
+			{
+				head: "Next",
+				rows: [
+					ok
+						? { mark: "note", label: "Codex", value: "restart Codex if it is open" }
+						: {
+								mark: "note",
+								label: "Uninstall",
+								value: "resolve the reason above, then rerun `litcodex uninstall`",
+							},
+				],
+			},
+		],
+	});
+}
+
+/** The `uninstall --dry-run` steps as a card. */
+const PLAN_LABELS = ["Plugin", "Marketplace", "Agent roles", "Config", "AGENTS.md", "Safety"];
+
+export function renderUninstallPlanCard(cards: InstallCards, steps: readonly string[]): string {
+	return cards.panel({
+		title: "Uninstall plan",
+		sections: [
+			{
+				head: "Would be removed",
+				rows: steps.map((value, index) => ({ mark: "note", label: PLAN_LABELS[index] ?? "Also", value }) as const),
+			},
+			{
+				head: "Next",
+				rows: [{ mark: "note", value: "Nothing was changed. Run litcodex uninstall to remove these." }],
+			},
+		],
+	});
 }

@@ -294,7 +294,9 @@ no record and adds about 18 KB a second of terminal output. Narrower windows, a 
 
 `LITCODEX_HUD_GLYPHS=auto|nerd|basic` sets the ends of pills and gauges. `auto`, the default, draws them round in
 Windows Terminal, VS Code, kitty, WezTerm and Ghostty, or when the name of an installed font says it is a Nerd Font;
-over SSH only the terminal counts. `nerd` always draws them round, `basic` never. Use `basic` if boxes appear.
+over SSH only the terminal counts. `nerd` always draws them round, `basic` never. Use `basic` if boxes appear. One answer
+holds for the framed card, the truecolor lines of a narrower window and the install cards, so round and square ends never
+mix.
 
 The HUD reads the thread pointers under `$CODEX_HOME/litcodex/lit-loop/threads/` and the session's small records under
 `.litcodex/` in its project. For the usage figures on the framed card it also reads the end of that session's own

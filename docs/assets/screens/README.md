@@ -6,10 +6,10 @@ artwork. Like the other files under `docs/assets/`, they stay out of the npm pac
 How each picture was made:
 
 - `screen-install-questions`: a real `litcodex install` with Codex CLI 0.163 in a temporary home, run in an 80-column
-  terminal. The picture stacks two moments: the first card, then the folded answers above the fourth card. The start
+  terminal with the round ends on. The picture stacks two moments: the first card, then the folded answers above the fourth card. The start
   banner and the second and third cards are cut. Each `…` marks a cut.
-- `screen-install-receipt`: the same install. The lines Codex printed under the Marketplace and Plugin steps, the Models
-  and Codex host rows of the receipt card and the extensions notice are left out.
+- `screen-install-receipt`: the same install, also two moments: the step card while the plugin step runs, then the folded
+  steps above the receipt card. The Settings rows of the receipt card and the extensions notice are cut.
 - `screen-doctor`: a real `litcodex doctor` run in that home after the install. The start banner, the rows about model
   routes, concurrency and updates, the warnings that a home without a Codex sign-in produces, the status-line
   suggestion and the film-tool lines that follow the Office line are left out. One row for a retired option was also

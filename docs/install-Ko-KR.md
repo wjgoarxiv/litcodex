@@ -71,16 +71,22 @@ Windows에서 돌 수 없어서 `BLOCKED_UNSUPPORTED_PYTHON_POSIX_RUNTIME`으로
 LitFamily 블록을 넣을지 묻고, `y`와 `n`이나 방향키로 답합니다. 어느 카드에서든 Ctrl+C로 멈출 수 있고, Esc는 답으로 치지 않습니다.
 
 카드는 가로 40칸, 세로 12줄 이상인 터미널에서 나옵니다. `NO_COLOR`를 켜면 색 없이 나오고, UTF-8이 아닌 로캘에서는 ASCII로
-그립니다. 파이프, CI, `--yes`, `TERM=dumb`, 더 작은 창에서는 예전처럼 글자로만 묻고 출력합니다.
+그립니다. 파이프, CI, `--yes`, `TERM=dumb`, 더 작은 창에서는 예전처럼 글자로만 묻고 출력합니다. 배경이 어두운 트루컬러
+터미널에서는 알약과 강조된 줄, 버튼의 끝이 HUD와 똑같은 기준으로 둥글게 나옵니다. 어긋나면 `LITCODEX_HUD_GLYPHS=nerd`나
+`basic`으로 정하세요.
 
-<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-questions-dark.webp" /><img src="./assets/screens/screen-install-questions-light.webp" width="688" alt="터미널 창에서 litcodex install을 실행한 화면입니다. LIT 1/6 &quot;Lead model&quot; 카드에는 &quot;Plans and reviews the work; press Enter to take gpt-6-astra · xhigh.&quot;라고 나오고, 40줄 중 첫 열두 줄이 보이며 gpt-6-astra · xhigh가 recommended lead이자 default로 강조되어 있습니다. 그 아래 접힌 답 세 줄은 Lead model gpt-6-astra · xhigh, Helper model gpt-6-luna · max, Output style ELI5 (English)입니다. LIT 4/6 &quot;Ready to install&quot; 카드에는 Provider openai, Lead, Helpers, Writes ~/.codex/config.toml (managed keys only)와 Install 버튼, &quot;Ctrl+C stop, nothing written yet&quot;가 있습니다." /></picture><br /><sub>임시 홈에서 실제 litcodex install을 실행해 캡처했습니다. 시작 배너와 두 번째, 세 번째 카드는 뺐습니다. …는 뺀 자리입니다.</sub></p>
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-questions-dark.webp" /><img src="./assets/screens/screen-install-questions-light.webp" width="688" alt="터미널 창에서 litcodex install을 실행한 화면입니다. LIT 1/6 &quot;Lead model&quot; 카드에는 &quot;Plans and reviews the work; press Enter to take gpt-6-astra · xhigh.&quot;라고 나오고, 40줄 중 첫 열두 줄이 보이며 gpt-6-astra · xhigh가 recommended lead이자 default로 강조되어 있습니다. 그 아래 접힌 답 세 줄은 Lead model gpt-6-astra · xhigh, Helper model gpt-6-luna · max, Output style ELI5 (English)입니다. LIT 4/6 &quot;Ready to install&quot; 카드에는 Provider openai, Lead, Helpers, Writes ~/.codex/config.toml (managed keys only)와 Install 버튼, &quot;Ctrl+C stop, nothing written yet&quot;가 있습니다." /></picture><br /><sub>임시 홈에서 끝을 둥글게 켜고 실제 litcodex install을 실행해 캡처했습니다. 시작 배너와 두 번째, 세 번째 카드는 뺐습니다. …는 뺀 자리입니다.</sub></p>
 
-그 Enter 뒤에는 카드 하나에 검사와 단계가 끝나는 대로 한 줄씩 쌓입니다. 마켓플레이스와 플러그인 단계에는 Codex가 출력한 줄도
-함께 나옵니다. 마지막은 영수증 카드입니다. 먼저 Status 줄을 보세요. Ready for Codex라고 나오면 플러그인, 훅, 에이전트 역할
-일곱 개, 관리하는 설정 항목이 모두 자리를 잡았고 doctor 검사도 통과했다는 뜻입니다. 단계가 실패하면 빨간 카드가 코드와 이유,
-다음에 할 일을 알려 줍니다.
+그 Enter 뒤에는 카드 하나가 모든 검사와 단계를 먼저 보여 주고, 도는 단계와 끝난 단계를 차례로 표시합니다. 탈 없이 끝나면
+카드가 한 줄로 접힙니다. Codex가 늘 하는 말은 빼고, 다른 말을 하면 영수증 카드에 남깁니다. 마지막은 영수증
+카드입니다. 먼저 Status 줄을 보세요. Ready for Codex라고 나오면 플러그인, 훅, 에이전트 역할 일곱 개, 관리하는 설정 항목이
+모두 자리를 잡았고 doctor 검사도 통과했다는 뜻입니다. 단계가 실패하면 단계 카드가 그대로 남고, 빨간 카드가 멈춘 단계와 이유,
+코드, 건드리지 않은 것, 다음에 할 일을 알려 줍니다.
 
-<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-receipt-dark.webp" /><img src="./assets/screens/screen-install-receipt-light.webp" width="620" alt="터미널 창에 litcodex install의 끝부분이 보입니다. &quot;Installing&quot; 카드에는 Host check, Config check, Package, Marketplace, Plugin, Hooks, Subagents, Config, Health check가 결과와 함께 나오고 마지막은 &quot;doctor passed&quot;입니다. 접힌 답 두 줄은 LitFamily block add와 No-AI-attribution line no line입니다. &quot;LitCodex 1.0.47 is installed&quot; 카드에는 Status Ready for Codex, Marketplace, Subagents, Config, Steps, AGENTS.md가 있고, Next 아래에는 Codex를 다시 켜고 LitCodex 훅을 승인한 뒤 lit으로 요청을 시작하라고 나옵니다." /></picture><br /><sub>같은 설치에서 캡처했습니다. Marketplace와 Plugin 단계 아래 Codex가 출력한 줄, 영수증 카드의 Models와 Codex host 줄, 그 아래 확장 안내는 뺐습니다.</sub></p>
+터미널에서 `litcodex uninstall`을 실행하면 지운 것이 카드 한 장에 나옵니다. Codex가 거절하면 Codex가 출력한 내용을 먼저
+그대로 다 보여 주고, 그 아래에 빨간 카드가 나옵니다.
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-receipt-dark.webp" /><img src="./assets/screens/screen-install-receipt-light.webp" width="620" alt="터미널 창에 litcodex install의 두 순간이 보입니다. &quot;Installing LitCodex 1.0.47&quot; 카드에는 Host check, Config check, Package, Marketplace에 체크가 있고 Plugin이 도는 중이며 Hooks, Subagents, Config, Health check가 기다립니다. 그 아래 접힌 세 줄은 Install steps 9 of 9 checked, LitFamily block add, No-attribution line no입니다. &quot;LitCodex 1.0.47 is installed&quot; 카드에는 Status Ready for Codex, Plugin, Plugin path, Marketplace, Subagents, Config, Steps, AGENTS.md가 있고, Next 아래에는 Codex를 다시 켜고 LitCodex 훅을 승인한 뒤 lit으로 요청을 시작하라고 나옵니다." /></picture><br /><sub>같은 설치의 두 순간을 캡처했습니다. 영수증 카드의 Settings 줄과 그 아래 확장 안내는 뺐습니다. …는 뺀 자리입니다.</sub></p>
 
 결과를 가장 빨리 확인하는 방법은 `litcodex doctor`입니다. 대부분의 줄이 yes 또는 no로 답하고, 이상이 없으면 All checks passed.로
 끝납니다.

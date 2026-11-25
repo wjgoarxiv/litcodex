@@ -199,7 +199,9 @@ def probe(binary, sandbox, evidence, case):
         failures.append("positive color control lacks truecolor SGR")
     if has_blocks != blocks:
         failures.append(f"blocks={has_blocks}, expected={blocks}")
-    if not blocks and "--no-tui" not in flags and "--json" not in flags and "LIT · codex cli" not in plain:
+    # Cards without UTF-8 keep every byte they draw ASCII, the wordmark line included.
+    wordmark = "LIT - codex cli" if cards else "LIT · codex cli"
+    if not blocks and "--no-tui" not in flags and "--json" not in flags and wordmark not in plain:
         failures.append("plain LIT wordmark line missing")
     if not expected and (QUESTION.search(plain) or "Choose an output style" in plain):
         failures.append("noninteractive invocation printed a picker")

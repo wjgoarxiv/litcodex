@@ -1,4 +1,4 @@
-// src/hud-glyphs.ts — whether pills and gauges of the HUD end in round caps (U+E0B6, U+E0B4).
+// src/hud-glyphs.ts — whether pills and gauges of the HUD and the installer end in round caps (U+E0B6, U+E0B4).
 //
 // `LITCODEX_HUD_GLYPHS` is `nerd` (always round), `basic` (never) or `auto`: round in a terminal known to draw
 // the caps itself, or when an icon font is installed on this machine, told by font file names alone. Over SSH
@@ -22,13 +22,7 @@ export function drawsRoundCaps(env: NodeJS.ProcessEnv): boolean {
 	return (env["WT_SESSION"] ?? "") !== "" || env["TERM_PROGRAM"] === "vscode";
 }
 
-/** Whether the plain lines of a narrow window use the caps. */
-export function narrowRoundCaps(env: NodeJS.ProcessEnv): boolean {
-	const chosen = setting(env);
-	return chosen === "auto" ? drawsRoundCaps(env) : chosen === "nerd";
-}
-
-/** Whether the card uses the caps. */
+/** Whether every pill, gauge and button uses the caps: the one answer for the HUD and the installer. */
 export function roundGlyphs(env: NodeJS.ProcessEnv, iconFont: () => boolean = () => hasIconFont(env)): boolean {
 	const chosen = setting(env);
 	if (chosen !== "auto") return chosen === "nerd";

@@ -18,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for two seconds after a recorded completion, without reading any record for it, and stands still otherwise. The
   frame turns amber on your turn, green on completion and red beside an unreadable record. Pill and gauge
   ends are round in terminals that draw them and wherever a Nerd Font is installed; `LITCODEX_HUD_GLYPHS`
-  (`auto`, `nerd`, `basic`) overrides that. The context and limit figures come from the end of that session's
+  (`auto`, `nerd`, `basic`) overrides that. The truecolor lines under 40 columns follow the same answer, so round and
+  square ends never mix. The context and limit figures come from the end of that session's
   Codex log, read at most once in five seconds and only after it changed; the HUD still writes nothing. 256-colour,
   plain, `NO_COLOR`, `--once` and light-background (`COLORFGBG`) frames are unchanged.
 
@@ -26,8 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `litcodex install` now asks its questions as cards when it runs in a terminal. Each card says what the choice does,
   shows the default, and takes the arrow keys, a row number, `y` or `n`, and Enter; long model lists scroll. Answered
-  cards fold to one line. The steps share one card, and the receipt is a card grouped into what was installed, the
-  models, the Codex host and what to do next. A failed install ends with a red card. `NO_COLOR` keeps the cards without
+  cards fold to one line. One card names every check and step, marks them as they run and folds when all passed; Codex's
+  routine messages are left out and anything else it says stays on screen. The receipt is a card grouped into what was
+  installed, the settings and what to do next. A failed install ends with a red card. `litcodex uninstall` and its
+  dry run draw cards too, and a failed uninstall prints all of Codex's own output above the red card. The mark is
+  centred over the cards, and their pills, highlighted row and buttons end round by the HUD's rule. `NO_COLOR` keeps the cards without
   color, a locale without UTF-8 draws them in ASCII, and 256- and 16-color terminals get matching colors. The
   questions, their order, the defaults and what gets stored are unchanged. Pipes, CI, `--yes`, `--json`, `--no-tui`,
   `TERM=dumb` and windows smaller than 40 by 12 print exactly what they printed before.
