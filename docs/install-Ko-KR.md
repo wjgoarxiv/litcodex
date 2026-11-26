@@ -9,7 +9,7 @@
 Node.js 22 이상과 Codex CLI가 있으면 아래 명령 하나로 설치합니다.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex install
 ```
 
 설치기는 Codex 안에 LitCodex 자리를 만듭니다. 플러그인과 훅, 에이전트를 등록하고,
@@ -25,8 +25,8 @@ Codex 로그인과 모델 사용 권한은 실제 모델 작업을 시작할 때
 
 알아 두면 좋은 변형이 두 가지 있습니다.
 
-- 설치 전에 무엇이 바뀌는지 먼저 보고 싶다면 `npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex --dry-run install`을 실행하세요.
-- 사람이 지켜보지 않는 환경에서 한 번에 설치하려면 `npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex install --yes`를 실행하세요. 직접 넘긴 `--style <id>`는 그대로 반영됩니다.
+- 설치 전에 무엇이 바뀌는지 먼저 보고 싶다면 `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex --dry-run install`을 실행하세요.
+- 사람이 지켜보지 않는 환경에서 한 번에 설치하려면 `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex install --yes`를 실행하세요. 직접 넘긴 `--style <id>`는 그대로 반영됩니다.
 
 실행하기 전에 설치기가 무엇을 출력하는지 보고 싶다면 [설치부터 첫 작업까지 보이는 화면](#설치부터-첫-작업까지-보이는-화면)에 질문 화면과 영수증, doctor 검사가 있습니다.
 
@@ -45,7 +45,7 @@ litcodex install
 보여 주고, 아무것도 내려받지 않습니다. 빼고 싶다면 `npm install -g`에 `--ignore-scripts`를 붙이거나 그 명령에만
 `CI=1`을 설정하세요.
 
-> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex doctor`.
+> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex doctor`.
 
 ### 기존 설정과 떼어 놓고 써 보기
 
@@ -96,7 +96,7 @@ LitFamily 블록을 넣을지 묻고, `y`와 `n`이나 방향키로 답합니다
 터미널에서 `litcodex uninstall`을 실행하면 지운 것이 카드 한 장에 나옵니다. Codex가 거절하면 Codex가 출력한 내용을 먼저
 그대로 다 보여 주고, 그 아래에 빨간 카드가 나옵니다.
 
-<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-receipt-dark.webp" /><img src="./assets/screens/screen-install-receipt-light.webp" width="620" alt="터미널 창에 litcodex install의 두 순간이 보입니다. &quot;Installing LitCodex 1.0.51&quot; 카드에는 Host check, Config check, Package, Marketplace에 체크가 있고 Plugin이 도는 중이며 Hooks, Subagents, Config, Health check가 기다립니다. 그 아래 접힌 세 줄은 Install steps 9 of 9 checked, LitFamily block add, No-attribution line no입니다. &quot;LitCodex 1.0.51 is installed&quot; 카드에는 Status Ready for Codex, Plugin, Plugin path, Marketplace, Subagents, Config, Steps, AGENTS.md가 있고, Next 아래에는 Codex를 다시 켜고 LitCodex 훅을 승인한 뒤 lit으로 요청을 시작하라고 나옵니다." /></picture><br /><sub>같은 설치의 두 순간을 캡처했습니다. 영수증 카드의 Settings 줄과 그 아래 확장 안내는 뺐습니다. …는 뺀 자리입니다.</sub></p>
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-receipt-dark.webp" /><img src="./assets/screens/screen-install-receipt-light.webp" width="620" alt="터미널 창에 litcodex install의 두 순간이 보입니다. &quot;Installing LitCodex 1.0.52&quot; 카드에는 Host check, Config check, Package, Marketplace에 체크가 있고 Plugin이 도는 중이며 Hooks, Subagents, Config, Health check가 기다립니다. 그 아래 접힌 세 줄은 Install steps 9 of 9 checked, LitFamily block add, No-attribution line no입니다. &quot;LitCodex 1.0.52 is installed&quot; 카드에는 Status Ready for Codex, Plugin, Plugin path, Marketplace, Subagents, Config, Steps, AGENTS.md가 있고, Next 아래에는 Codex를 다시 켜고 LitCodex 훅을 승인한 뒤 lit으로 요청을 시작하라고 나옵니다." /></picture><br /><sub>같은 설치의 두 순간을 캡처했습니다. 영수증 카드의 Settings 줄과 그 아래 확장 안내는 뺐습니다. …는 뺀 자리입니다.</sub></p>
 
 결과를 가장 빨리 확인하는 방법은 `litcodex doctor`입니다. 대부분의 줄이 yes 또는 no로 답하고, 이상이 없으면 All checks passed.로
 끝납니다.

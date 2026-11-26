@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.52] - 2026-11-26
+
 ### Added
 
 - `litcodex install --agent` prints an install guide for coding agents: the preview, the questions to ask, the install and

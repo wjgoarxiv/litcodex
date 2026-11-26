@@ -70,7 +70,7 @@ Codex가 목표를 정하고, 실패하는 테스트를 쓰고, 버그를 고치
 (자세한 내용은 [설치](#설치)에 있습니다).
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex install
 ```
 
 ## 경로 고르기
@@ -90,7 +90,7 @@ npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex install
 Node.js 22 이상과 Codex CLI가 필요합니다. 아무 폴더에서나 실행하세요.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex install
 ```
 
 설치기는 어떤 모델이 작업을 이끌지, 어떤 모델이 거들지, 답변을 어떤 스타일로 받을지 묻습니다. Enter만 누르면 권장
@@ -110,14 +110,14 @@ npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex install
 
 | 원하는 것 | 실행 | 바뀌는 것 |
 | --- | --- | --- |
-| 계획부터 보기 | `npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex --dry-run install` | 모든 단계를 출력하고 아무것도 쓰지 않음 |
+| 계획부터 보기 | `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex --dry-run install` | 모든 단계를 출력하고 아무것도 쓰지 않음 |
 | 묻지 않고 기본값으로 | `install` 뒤에 `--yes` 추가 | 묻는 단계 없이 기본값으로 설치 |
 | `PATH`에서 `litcodex` 부르기 | `npm install -g @litfamily/litcodex` 다음 `litcodex install` | 영상 스킬의 렌더링 도구도 미리 준비 |
 
 전역으로 설치하면 그 렌더링 도구를 준비하느라 버전이 고정된 파일 몇 개를 내려받습니다. 무엇을 받는지와 건너뛰는
 방법은 [설치 안내](./docs/install-Ko-KR.md#전역-명령으로-쓰기)에 있습니다.
 
-> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex doctor`.
+> 전역 설치가 없다면 `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex <command>` 형식을 사용하세요. 예: `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex doctor`.
 
 [설치 안내](./docs/install-Ko-KR.md)에는 기존 설정과 떼어 놓고 써 보는 법, Windows, 설치기가 보여 주는 화면
 사진도 모두 있습니다. 범위 없는 예전 패키지(`litcodex-ai`)로 설치했다면 [기존 설치 이전 안내](./docs/npm-migration.md)가
@@ -797,7 +797,7 @@ LitCodex가 그 도구를 직접 부르지는 않습니다. 로그인, 모델 �
 ## 설치 확인
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex doctor
 ```
 
 `litcodex doctor`는 등록·훅·설정·호스트 기능을 확인하고, 문제가 없으면 All checks passed로 끝납니다.
@@ -830,7 +830,7 @@ LitCodex를 지우려면 아무 폴더에서나 아래 명령을 실행하세요
 설정은 그대로 둡니다.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex uninstall
 ```
 
 ## 문제 해결
