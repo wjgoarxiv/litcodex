@@ -17,13 +17,20 @@ export function formatAdditionalContextOutput(
 }
 
 export function prepareAdditionalContext(additionalContext: string): string {
-	return limitAdditionalContext(additionalContext.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim());
+	// Codex refuses hook JSON that holds half a surrogate pair.
+	return limitAdditionalContext(additionalContext.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim()).replace(
+		/[\ud800-\udfff]/gu,
+		"\ufffd",
+	);
 }
 
 function limitAdditionalContext(additionalContext: string): string {
 	if (additionalContext.length <= MAX_ADDITIONAL_CONTEXT_CHARS) return additionalContext;
 	const marker = `\n\n[Truncated hook additional context to ${MAX_ADDITIONAL_CONTEXT_CHARS} chars to avoid Codex context overflow.]`;
 	if (marker.length >= MAX_ADDITIONAL_CONTEXT_CHARS) return marker.slice(0, MAX_ADDITIONAL_CONTEXT_CHARS);
-	const head = additionalContext.slice(0, MAX_ADDITIONAL_CONTEXT_CHARS - marker.length).replace(/[ \t\r\n]+$/, "");
+	const head = additionalContext
+		.slice(0, MAX_ADDITIONAL_CONTEXT_CHARS - marker.length)
+		.replace(/[\ud800-\udbff]$/u, "")
+		.replace(/[ \t\r\n]+$/, "");
 	return `${head}${marker}`;
 }

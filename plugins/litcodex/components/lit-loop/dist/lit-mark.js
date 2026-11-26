@@ -95,9 +95,8 @@ const ACTIVATION_MARK_WIDTH = 12;
 export function activationMessage(discipline, _env = process.env) {
     const rows = micro.map((row) => row.trimEnd());
     const width = Math.max(ACTIVATION_MARK_WIDTH, ...rows.map((row) => [...row].length));
-    const paddedRows = rows.map((row) => row.padEnd(width));
-    const label = `🔥 LIT IGNITED · ${discipline} 🔥`;
-    return `\n${paddedRows.map((row, index) => `${row}${index === 2 ? `  ${label}` : ""}`).join("\n")}`;
+    // Beside the mark the label would wrap in a narrow pane and split it; a hook cannot measure the pane.
+    return `\n${[...rows.map((row) => row.padEnd(width)), `🔥 LIT IGNITED · ${discipline} 🔥`].join("\n")}`;
 }
 export function colorMode(opts) {
     const { env } = opts;

@@ -7,10 +7,12 @@
 // changed, so it reads nothing. For the card's usage figures it looks at the end of the thread's own Codex
 // rollout, at most once in five seconds and only after the file changed. On a terminal the frame is drawn in place
 // on the alternate screen with the cursor hidden, and both come back on every way out: a signal, an unexpected
-// error or process exit. The command resolves its exit code and never calls `process.exit`; it writes no file and
-// starts no process.
+// error or process exit. In colour it asks the terminal once for its ground (OSC 11) and holds the keyboard raw while
+// it runs, so the answer is never echoed, however late; a light one gets the plain frame, and no answer is dark. The
+// command resolves its exit code and never calls `process.exit`; it writes no file and starts no process.
 
 import { createUsageReader } from "./card-status.js";
+import { createGroundReader, drawsTruecolor, GROUND_QUERY } from "./ground.js";
 import { type HudView, hudLines, readHud, renderHud } from "./hud.js";
 import { composeCard, type HudCard } from "./hud-card.js";
 import { roundGlyphs } from "./hud-glyphs.js";
@@ -21,6 +23,10 @@ const TICK_MS = 1_000;
 const FRAME_MS = 100;
 /** How long a completion is celebrated. */
 const BURST_MS = 2_000;
+/** How long a terminal's answer about its ground may still be on its way. */
+const ANSWER_MS = 800;
+/** Long enough for a stop signal to take hold. */
+const ASIDE_MS = 250;
 const DEFAULT_WIDTH = 80;
 const DEFAULT_ROWS = 24;
 const ENTER_SCREEN = "\u001b[?1049h\u001b[?25l";
@@ -42,7 +48,8 @@ Options:
   --once           Print one plain frame and exit.
   --help           Show this help.
 
-LITCODEX_HUD_GLYPHS=auto|nerd|basic sets round ends on pills and gauges (auto looks for an icon font).
+LITCODEX_HUD_GLYPHS=auto|round|square sets the ends of pills and gauges (auto looks for an icon font); nerd and basic
+mean round and square. Without it the choice saved by litcodex install --glyphs holds.
 `;
 
 export interface HudOutput {
@@ -59,6 +66,7 @@ export interface HudLoopOptions {
 	readonly out: HudOutput;
 	readonly color: boolean;
 	readonly truecolor?: boolean;
+	readonly light?: boolean;
 	/** Draw the sunset: a dark truecolor terminal. */
 	readonly scene?: boolean;
 	readonly now: () => number;
@@ -81,21 +89,25 @@ export interface HudLoop {
 export function createHudLoop(options: HudLoopOptions): HudLoop {
 	if (options.scene === true && options.out.isTTY === true) return createSceneLoop(options);
 	let last: string | null = null;
-	let lastColumns: number | undefined;
+	let lastSize = "";
 	return {
 		tick(): boolean {
 			const now = options.now();
 			const tty = options.out.isTTY === true;
-			const columns = options.out.columns;
-			if (columns !== lastColumns) last = null;
-			lastColumns = columns;
+			const { columns, rows } = options.out;
+			const size = `${columns}x${rows}`;
+			if (size !== lastSize) last = null;
+			lastSize = size;
 			const width = columns ?? DEFAULT_WIDTH;
-			const frame = renderHud(readHud(options.env, options.wanted, now), {
+			const whole = renderHud(readHud(options.env, options.wanted, now), {
 				width: tty ? width - 1 : width,
 				color: options.color,
 				truecolor: options.truecolor === true,
+				light: options.light === true,
 				now,
 			});
+			// A frame taller than the window would scroll its first lines away.
+			const frame = tty && rows !== undefined ? whole.split("\n").slice(0, Math.max(1, rows)).join("\n") : whole;
 			if (frame === last) return false;
 			last = frame;
 			options.out.write(
@@ -111,9 +123,9 @@ export function createHudLoop(options: HudLoopOptions): HudLoop {
 /** What a scene loop last put on the screen: card rows as cells, or plain lines. */
 type Drawn = { readonly cells: readonly (readonly Cell[])[] } | { readonly lines: readonly string[] };
 
-/** A card row whole; the frame's right edge is placed by column, so odd-width text never moves it. */
+/** A card row whole; the frame's right edge is placed by column over an erased end, so odd-width text never moves it or leaves old cells before it. */
 function cardRow(row: readonly Cell[]): string {
-	return `${rowText(row.slice(0, -1), true)}\u001b[${row.length}G${rowText(row.slice(-1), true)}`;
+	return `${rowText(row.slice(0, -1), true)}${CLEAR_LINE}\u001b[${row.length}G${rowText(row.slice(-1), true)}`;
 }
 
 /** The same writer with the card and its sunset; after the first frame it rewrites only what changed. */
@@ -137,7 +149,11 @@ function createSceneLoop(options: HudLoopOptions): HudLoop {
 		size = sizeNow();
 		if (view === null) return;
 		card = null;
-		if (columns < CARD_MIN) lines = narrowLines(hudLines(view, now), sceneMood(view), { width: columns - 1, caps });
+		if (columns < CARD_MIN)
+			lines = narrowLines(hudLines(view, now), sceneMood(view), { width: columns - 1, caps }).slice(
+				0,
+				Math.max(1, out.rows ?? DEFAULT_ROWS),
+			);
 		else card = composeCard(view, { width: columns - 1, rows: out.rows ?? DEFAULT_ROWS, caps, now });
 	};
 	const bursting = (now: number): boolean => card !== null && burstAt !== null && now - burstAt < BURST_MS;
@@ -155,8 +171,7 @@ function createSceneLoop(options: HudLoopOptions): HudLoop {
 			return text !== "";
 		}
 		const old = before !== null && "lines" in before ? before.lines : null;
-		// Lines taller than the window scroll, so they have no fixed place to be rewritten in.
-		const whole = old === null || old.length !== lines.length || lines.length > (out.rows ?? 0);
+		const whole = old === null || old.length !== lines.length;
 		const changed = lines.flatMap((row, index) => (old?.[index] === row ? [] : [index]));
 		if (changed.length === 0 && old?.length === lines.length) return false;
 		drawn = { lines };
@@ -181,8 +196,8 @@ function createSceneLoop(options: HudLoopOptions): HudLoop {
 			const usage =
 				next.session !== null && (out.columns ?? DEFAULT_WIDTH) >= CARD_MIN ? usageOf(next.session.id, now) : null;
 			view = next.status === null ? next : { ...next, status: { ...next.status, usage } };
-			if (last !== null && last.session?.id === view.session?.id && view.status?.look === "done") {
-				if (last.status !== null && last.status.look !== "done") burstAt = now;
+			if (last !== null && last.session?.id === view.session?.id && view.status?.recorded === true) {
+				if (last.status !== null && last.status.recorded !== true) burstAt = now;
 			}
 			compose(now);
 			return draw(now);
@@ -205,12 +220,25 @@ interface HudSignals {
 	off(event: string, listener: (...args: unknown[]) => void): unknown;
 }
 
+/** The keyboard; left alone where it is no terminal. */
+export interface HudInput {
+	readonly isTTY?: boolean;
+	setRawMode?(mode: boolean): unknown;
+	resume(): unknown;
+	pause(): unknown;
+	on(event: string, listener: (data: unknown) => void): unknown;
+	removeListener(event: string, listener: (data: unknown) => void): unknown;
+}
+
 export interface HudIo {
+	readonly stdin?: HudInput;
 	readonly stdout: HudOutput;
 	readonly stderr: { write(text: string): unknown };
 	readonly env: NodeJS.ProcessEnv;
 	readonly signals?: HudSignals;
 	readonly now?: () => number;
+	/** Stops this job for the shell. */
+	readonly suspend?: () => void;
 }
 
 type HudArgs = { readonly help: boolean; readonly once: boolean; readonly session: string | null } | string;
@@ -255,47 +283,131 @@ export async function hudCommand(args: readonly string[], io: HudIo): Promise<nu
 	}
 	const tty = io.stdout.isTTY === true;
 	const color = tty && colorAllowed(io.env);
-	const truecolor = color && /truecolor|24bit/i.test(io.env["COLORTERM"] ?? "");
-	const loop = createHudLoop({
-		env: io.env,
-		wanted: parsed.session,
-		out: io.stdout,
-		color,
-		truecolor,
-		scene: truecolor && !lightBackground(io.env),
-		now,
-	});
+	const truecolor = color && drawsTruecolor(io.env);
+	let light = lightBackground(io.env);
+	const open = (): HudLoop =>
+		createHudLoop({
+			env: io.env,
+			wanted: parsed.session,
+			out: io.stdout,
+			color,
+			truecolor,
+			light,
+			scene: truecolor && !light,
+			now,
+		});
+	let loop = open();
 	const signals: HudSignals = io.signals ?? process;
-	// A write to a terminal that has gone away (SIGHUP) fails with EIO; it must not become a stack trace.
+	// The keyboard is held only where the ground is asked for: its answer would be echoed or typed into the shell.
+	const asks = color && !/^dumb$/iu.test(io.env["TERM"] ?? "");
+	const keyboard = asks && io.stdin?.isTTY === true && io.stdin.setRawMode !== undefined ? io.stdin : null;
+	const reader = createGroundReader();
+	// A terminal that has gone away (SIGHUP) fails with EIO; it must not become a stack trace.
 	io.stdout.on?.("error", () => undefined);
+	keyboard?.on("error", () => undefined);
 	return new Promise<number>((resolve) => {
-		let restored = false;
+		let closed = false;
+		let held = false;
+		let answered = keyboard === null;
+		const askedAt = now();
 		let timer: NodeJS.Timeout | undefined;
 		let motion: NodeJS.Timeout | undefined;
-		const restore = (): void => {
-			if (restored) return;
-			restored = true;
+		let grace: NodeJS.Timeout | undefined;
+		/** Set while the screen is given back for Ctrl-Z. */
+		let aside: NodeJS.Timeout | undefined;
+		const setRaw = (mode: boolean): void => {
+			try {
+				keyboard?.setRawMode?.(mode);
+			} catch {
+				// The terminal is gone.
+			}
+		};
+		/** Gives the screen back. */
+		const close = (): void => {
+			if (closed) return;
+			closed = true;
 			clearInterval(timer);
 			clearInterval(motion);
-			for (const event of STOP_EVENTS) signals.off(event, stop);
-			signals.off("uncaughtException", crash);
-			signals.off("exit", restore);
 			if (tty) io.stdout.write(LEAVE_SCREEN);
 		};
-		const stop = (): void => {
+		const restore = (): void => {
+			close();
+			clearTimeout(grace);
+			clearTimeout(aside);
+			for (const event of STOP_EVENTS) signals.off(event, stop);
+			signals.off("SIGCONT", resume);
+			signals.off("uncaughtException", crash);
+			signals.off("exit", restore);
+			if (!held) return;
+			held = false;
+			keyboard?.removeListener("data", onKeys);
+			setRaw(false);
+			keyboard?.pause();
+		};
+		const finish = (code: number): void => {
 			restore();
-			resolve(0);
+			resolve(code);
+		};
+		/** The screen comes back at once; the keyboard a moment later while the ground's answer is still on its way. */
+		const stop = (): void => {
+			const wait = answered || closed ? 0 : ANSWER_MS - (now() - askedAt);
+			if (wait <= 0) finish(0);
+			else {
+				close();
+				grace = setTimeout(() => finish(0), wait);
+			}
 		};
 		const crash = (error: unknown): void => {
 			restore();
 			io.stderr.write(`litcodex hud: stopped: ${error instanceof Error ? error.message : String(error)}\n`);
 			resolve(1);
 		};
+		/** Raw keys send no signals, so Ctrl-Z is passed on by hand. */
+		const suspend = (): void => {
+			if (aside !== undefined) return;
+			io.stdout.write(LEAVE_SCREEN);
+			setRaw(false);
+			(io.suspend ?? (() => process.kill(0, "SIGTSTP")))();
+			// In a pane with no shell over it the signal stops nothing and SIGCONT never comes.
+			aside = setTimeout(() => resume(), ASIDE_MS);
+		};
+		const resume = (): void => {
+			if (closed) return;
+			clearTimeout(aside);
+			aside = undefined;
+			setRaw(true);
+			io.stdout.write(ENTER_SCREEN);
+			loop = open();
+			tick();
+		};
+		const onKeys = (data: unknown): void => {
+			const read = reader.push(Buffer.isBuffer(data) ? data.toString("latin1") : String(data));
+			if (read.light !== null) {
+				answered = true;
+				if (closed) finish(0);
+				else if (read.light !== light) {
+					light = read.light;
+					loop = open();
+					tick();
+				}
+			}
+			if (held && /[\u0003\u001c]/u.test(read.keys)) stop();
+			else if (read.keys.includes("\u001a") && !closed && process.platform !== "win32") suspend();
+		};
 		for (const event of STOP_EVENTS) signals.on(event, stop);
 		signals.on("uncaughtException", crash);
 		signals.on("exit", restore);
 		if (tty) io.stdout.write(ENTER_SCREEN);
+		if (keyboard !== null) {
+			held = true;
+			setRaw(true);
+			keyboard.on("data", onKeys);
+			keyboard.resume();
+			signals.on("SIGCONT", resume);
+			io.stdout.write(GROUND_QUERY);
+		}
 		const guarded = (step: () => void): void => {
+			if (aside !== undefined) return;
 			try {
 				step();
 			} catch (error) {

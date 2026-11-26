@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
 import { displayWidth } from "@litcodex/lit-loop/dist/hud.js";
 import { describe, expect, it } from "vitest";
+import { AGENT_POINTER } from "./agent-guide.js";
 import { CardAbort, type CardTerminal, cardsAvailable, InstallCards, wrapCells } from "./install-cards.js";
 import { chooseModelRoute, confirmModelRoute, HELPER_MENU_ROWS, LEAD_MENU_ROWS } from "./install-model-prompt.js";
 import {
@@ -13,6 +14,7 @@ import {
 import { buildInstallPlan } from "./plan.js";
 import type { SpinnerMotionLook } from "./spinner-motion.js";
 import type { InstallOptions } from "./types.js";
+import { uninstallPlanSteps } from "./uninstall.js";
 
 const SGR = /\x1b\[[0-9;]*m/gu;
 const UTF8 = {
@@ -420,6 +422,63 @@ describe("how the cards look", () => {
 		await pending;
 	});
 
+	/** What the rows of a card say, as one line. */
+	const said = (rows: readonly string[]): string =>
+		rows
+			.filter((row) => row.startsWith(" │"))
+			.map((row) => row.slice(2, -1).trim())
+			.join(" ")
+			// The package is cut after its `/` in the narrowest windows.
+			.replace("@litfamily/ litcodex", "@litfamily/litcodex");
+
+	it.each(
+		[40, 48, 49, 60, 69, 70, 80, 110].flatMap((columns) => [12, 14, 24, 50].map((rows) => [columns, rows] as const)),
+	)("shows the pointer for an agent on the first card of a %i by %i window", async (columns, rows) => {
+		const first = async (words: string): Promise<string[]> => {
+			const fake = setup({ columns, rows });
+			fake.cards.begin(2, "Installs.", words);
+			const pending = fake.cards.choose(MANY);
+			await fake.ready();
+			const card = fake.output.screen.split("\n");
+			expect(fake.output.widest).toBeLessThan(columns);
+			expect(card.slice(card.findIndex((row) => row.startsWith(" ╭"))).length).toBeLessThanOrEqual(rows);
+			fake.input.key(DOWN);
+			expect(said(fake.output.screen.split("\n")).includes("Agent?")).toBe(words !== "");
+			fake.input.key("\r");
+			await pending;
+			const next = fake.cards.confirm(BLOCK);
+			await fake.ready();
+			expect(said(fake.output.screen.split("\n"))).not.toContain("Agent?");
+			fake.input.key("y");
+			await next;
+			return card;
+		};
+		const [plain, hinted] = [await first(""), await first(AGENT_POINTER)];
+		expect(said(hinted)).toContain(AGENT_POINTER);
+		expect(hinted.join("\n")).toContain("LIT 1/2");
+		expect(said(hinted)).toMatch(/Enter choose/u);
+		expect(hinted.filter((row) => /model-\d/u.test(row)).length).toBeGreaterThanOrEqual(3);
+		expect(hinted.filter((row) => row.includes("Agent?"))).toHaveLength(1);
+		// The smallest window's card keeps its height, and a wide card shows it in a row it had.
+		if (rows === 12) expect(hinted).toHaveLength(plain.length);
+		if (columns >= 70 && rows >= 24) {
+			expect(hinted).toHaveLength(plain.length);
+			const changed = hinted.filter((row, at) => row !== plain[at]);
+			expect(changed).toHaveLength(1);
+			expect(changed[0]).toContain(AGENT_POINTER);
+		}
+	});
+
+	it.each([40, 60, 80])("shows it on a yes or no card %i columns wide that comes first", async (columns) => {
+		const fake = setup({ columns, rows: 24 });
+		fake.cards.begin(1, "Installs.", AGENT_POINTER);
+		const pending = fake.cards.confirm(BLOCK);
+		await fake.ready();
+		expect(said(fake.output.screen.split("\n"))).toContain(AGENT_POINTER);
+		fake.input.key("y");
+		await pending;
+	});
+
 	it("numbers the questions and shows the home folder as ~", async () => {
 		const fake = setup();
 		fake.cards.begin(2, "Installs into /home/me/.codex.");
@@ -725,11 +784,22 @@ describe("uninstall on a card", () => {
 	});
 
 	it("shows the whole plan of a dry run", () => {
-		const steps = ["Remove the plugin: /home/me/.codex/x", "two", "three", "four", "five", "six", "seven"];
+		const steps = uninstallPlanSteps("/home/me/.codex");
 		const text = renderUninstallPlanCard(setup().cards, steps).replace(SGR, "");
-		for (const part of ["~/.codex/x", "two", "three", "four", "five", "six", "seven", "Nothing was changed"]) {
-			expect(text).toContain(part);
-		}
+		for (const label of [
+			"Plugin",
+			"Marketplace",
+			"Agent roles",
+			"Config",
+			"Footer",
+			"Round ends",
+			"AGENTS.md",
+			"Safety",
+		])
+			expect(text).toMatch(new RegExp(`│ +\\S+ +${label} +\\S`, "u"));
+		expect(text).toMatch(/AGENTS\.md +Remove the LitFamily block/u);
+		expect(text).toMatch(/Round ends +Remove the icon font files/u);
+		expect(text).toContain("Nothing was changed");
 	});
 });
 

@@ -11,8 +11,9 @@
 
 import { lstatSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { type CardStatus, cardStatusText, readCardStatus } from "./card-status.js";
-import { clean, cleanDeep } from "./control-chars.js";
+import { type CardStatus, cardStatusText, readCardStatus, spokenMap } from "./card-status.js";
+import { clean, cleanDeep, graphemes } from "./control-chars.js";
+import { brandPill, rowText } from "./hud-paint.js";
 import {
 	codexHomeFrom,
 	homeDirsOrMissing,
@@ -23,6 +24,7 @@ import {
 	readThreadPointer,
 	threadPointerPath,
 } from "./live-step.js";
+import { STATE_COLOURS, stateOf } from "./state-colours.js";
 import { LIT_LOOP_DIR, LIT_LOOP_GOALS, normalizeSessionId } from "./state-paths.js";
 import { MAP_JOIN, mapCellText, stageName, workflowMapText, workflowTurn } from "./workflow-map.js";
 
@@ -60,6 +62,8 @@ export interface HudRenderOptions {
 	readonly color: boolean;
 	/** The terminal takes 24-bit colour; only then does the first line carry the LIT pill. */
 	readonly truecolor?: boolean;
+	/** The window is light: words in its own ink, and one line in a tint that reads on white. */
+	readonly light?: boolean;
 	readonly now: number;
 }
 
@@ -195,6 +199,26 @@ function unreadableRecords(cwd: string, id: string): string[] {
 		.map(([label]) => label);
 }
 
+/** What cannot be read now: a pointer, or a record of `session`. */
+function unreadableNow(
+	brokenAt: number | null,
+	session: { readonly id: string; readonly cwd: string; readonly pointerMtime: number } | null,
+): string[] {
+	// A broken pointer written after the chosen one may be the session the user is actually in.
+	const pointer = brokenAt !== null && (session === null || brokenAt > session.pointerMtime);
+	return [
+		...(pointer ? ["session pointer"] : []),
+		...(session === null ? [] : unreadableRecords(session.cwd, session.id)),
+	];
+}
+
+/** The same for a panel that follows session `id` (null while it follows none) and began at `since`. */
+export function unreadableSince(env: NodeJS.ProcessEnv, id: string | null, since: number): string[] {
+	const { sessions, brokenAt } = scanPointers(env);
+	const session = sessions.find((candidate) => candidate.id === id) ?? null;
+	return unreadableNow(brokenAt !== null && brokenAt >= since ? brokenAt : null, session);
+}
+
 export function tilde(path: string, home: string | undefined): string {
 	if (home === undefined || home === "" || home === "/") return path;
 	if (path === home) return "~";
@@ -213,20 +237,17 @@ export function readHud(env: NodeJS.ProcessEnv, wanted: string | null, now: numb
 				wanted,
 				session: null,
 				status: null,
-				unreadable: brokenAt !== null ? ["session pointer"] : [],
+				unreadable: unreadableNow(brokenAt, null),
 				matches,
 			};
 		}
 		const status = readCardStatus(session.id, env, now, { rollout: false });
 		const lastSeen = Math.min(now, session.activeAt);
-		// A broken pointer written after the chosen one may be the session the user is actually in.
-		const pointer = brokenAt !== null && brokenAt > session.pointerMtime ? ["session pointer"] : [];
-		const unreadable = [...pointer, ...unreadableRecords(session.cwd, session.id)];
 		return {
 			wanted,
 			session: { id: session.id, folder: tilde(session.cwd, env["HOME"]), lastSeen },
 			status,
-			unreadable,
+			unreadable: unreadableNow(brokenAt, session),
 		};
 	} catch {
 		return { wanted, session: null, status: null, unreadable: ["LIT records"] };
@@ -239,11 +260,20 @@ export function cleanStatus(status: CardStatus): CardStatus {
 }
 
 const MARK = /^\p{M}$/u;
+/** Format characters no one sees, such as a word joiner. */
+const UNSEEN = /^(?=\p{Cf})\p{Default_Ignorable_Code_Point}$/u;
+const SOFT_HYPHEN = 0xad;
 const WIDE_EMOJI = /^\p{Emoji_Presentation}$/u;
+const FLAG = /^\p{Regional_Indicator}{2}$/u;
+const SKIN_TONE = /^\p{Emoji_Modifier}$/u;
+const ASCII = /^[ -~]*$/u;
 
 function charWidth(char: string): number {
 	const code = char.codePointAt(0) ?? 0;
-	if (MARK.test(char) || (code >= 0x200b && code <= 0x200f) || (code >= 0xfe00 && code <= 0xfe0f)) return 0;
+	if (MARK.test(char) || (code >= 0xfe00 && code <= 0xfe0f)) return 0;
+	if (code !== SOFT_HYPHEN && UNSEEN.test(char)) return 0;
+	// Hangul vowels and finals stand inside the syllable their initial began.
+	if ((code >= 0x1160 && code <= 0x11ff) || (code >= 0xd7b0 && code <= 0xd7ff)) return 0;
 	if (WIDE_EMOJI.test(char)) return 2;
 	if (
 		(code >= 0x1100 && code <= 0x115f) ||
@@ -259,19 +289,24 @@ function charWidth(char: string): number {
 	return 1;
 }
 
-/** The string as terminal cells; a narrow character followed by U+FE0F (emoji presentation) takes two. */
-export function cells(text: string): { text: string; width: number }[] {
-	const out: { text: string; width: number }[] = [];
-	for (const char of text) {
-		const previous = out.at(-1);
-		if (char === "\ufe0f" && previous !== undefined) {
-			previous.text += char;
-			previous.width = Math.max(previous.width, 2);
-			continue;
-		}
-		out.push({ text: char, width: charWidth(char) });
+function clusterWidth(cluster: string): number {
+	if (FLAG.test(cluster)) return 2;
+	let width = 0;
+	for (const char of cluster) {
+		// Emoji presentation widens a narrow character; a skin tone colours the emoji before it.
+		if (char === "\ufe0f" && width > 0) width = Math.max(width, 2);
+		else if (width === 0 || !SKIN_TONE.test(char)) width += charWidth(char);
 	}
-	return out;
+	return width;
+}
+
+/** The string, composed, as the characters a reader sees and the terminal cells each takes. */
+export function cells(text: string): { text: string; width: number }[] {
+	if (ASCII.test(text)) return Array.from(text, (char) => ({ text: char, width: 1 }));
+	return Array.from(graphemes.segment(text.normalize("NFC")), ({ segment }) => ({
+		text: segment,
+		width: clusterWidth(segment),
+	}));
 }
 
 /** Terminal cells a plain string takes: CJK and emoji take two, combining marks none. */
@@ -292,6 +327,46 @@ export function fit(line: string, width: number): string {
 	return `${out}…`;
 }
 
+/**
+ * The line in rows of at most `width` cells, `first` on the first one: broken at ` · ` where its parts fit, else between
+ * words. A code span stays in one piece while it fits a row, an indented line keeps its indent, and a first row with
+ * room for nothing is "".
+ */
+export function wrapped(line: string, width: number, first: number = width): string[] {
+	const lead = /^\s+(?:\S+\s+→ )?/u.exec(line)?.[0] ?? "";
+	const indent = " ".repeat(displayWidth(lead));
+	const rows: string[] = [];
+	let row = lead;
+	let limit = first;
+	const turn = (): void => {
+		rows.push(row);
+		row = indent;
+		limit = width;
+	};
+	const empty = (): boolean => row === (rows.length === 0 ? lead : indent);
+	const put = (text: string, join: string): boolean => {
+		const next = empty() ? `${row}${text}` : `${row}${join}${text}`;
+		if (displayWidth(next) > limit) return false;
+		row = next;
+		return true;
+	};
+	for (const part of line.slice(lead.length).split(" · ")) {
+		if (put(part, " · ")) continue;
+		if (!empty() || limit < width) turn();
+		if (put(part, "")) continue;
+		for (const word of part.match(/`[^`]*`\S*|\S+/gu) ?? []) {
+			if (put(word, " ")) continue;
+			if (!empty()) turn();
+			for (const piece of put(word, "") ? [] : cells(word)) {
+				if (put(piece.text, "")) continue;
+				turn();
+				put(piece.text, "");
+			}
+		}
+	}
+	return [...rows, row];
+}
+
 function age(lastSeen: number, now: number): string {
 	const seconds = Math.max(0, Math.floor((now - lastSeen) / 1000));
 	if (now - lastSeen > LAST_SEEN_MS) return `last seen ${Math.floor(seconds / 60)} min ago`;
@@ -303,6 +378,12 @@ export const DIM = "\u001b[2m";
 export const RESET = "\u001b[0m";
 const AMBER_FG = "\u001b[38;2;255;175;60m";
 const GREEN_FG = "\u001b[38;2;107;219;143m";
+/** Inks of the 256-colour cube that read on white (4.7:1 or more), for windows that may draw no more than that. */
+export const LIGHT_INK = {
+	turn: "\u001b[38;5;94m",
+	done: "\u001b[38;5;28m",
+	live: "\u001b[38;5;130m",
+} as const;
 /** 256-colour codes, one per cell: red, orange, yellow, green, cyan, blue, violet, pink. */
 export const RAINBOW = [203, 209, 221, 114, 80, 75, 141, 205];
 
@@ -340,33 +421,54 @@ export function litPill(): string {
 }
 
 /** The first line with the pill in front, or null when pill plus a cut line cannot fit `width`. */
-function withPill(line: string, style: string, width: number): string | null {
+function withPill(line: string, style: string, width: number, stops?: readonly number[]): string | null {
 	const pillWidth = displayWidth(PILL_TEXT);
 	const rest = line.startsWith(BRAND) ? line.slice(BRAND.length).trimStart() : line;
 	const room = width - pillWidth;
 	if (room < 2) return null;
 	const tail = fit(rest, room);
-	return `${litPill()}${style}${tail}${RESET}`;
+	const pill = stops === undefined ? litPill() : `${RESET}${rowText(brandPill(false, stops))}`;
+	return `${pill}${style}${tail}${RESET}`;
 }
 
 /** One line of the card before it is cut to a width. */
 export interface HudLine {
 	readonly text: string;
+	/** Shorter forms of the text, longest first, for a window it does not fit. */
+	readonly short?: readonly string[];
 	readonly style: string;
+	/** The style on a light window, where dim words are too faint; none when left out. */
+	readonly light?: string;
 	readonly rainbow?: boolean;
+	/** The brand pill's colours on this line, for a state that has its own. */
+	readonly pill?: readonly number[];
 	/** Where the current stage's name stands in `text`, as a string slice. */
 	readonly stage?: readonly [start: number, end: number];
 }
 
+const WAITING_SHORT = ["Start `codex`, type `lit <task>`.", "Type `lit <task>` in Codex."];
+const READY_SHORT = [
+	"🔥 LIT · ready — no LIT skill in this thread yet. Type `lit <task>`.",
+	"🔥 LIT · ready · type `lit <task>`",
+	"Type `lit <task>`.",
+];
+
+/** The line's text, or the longest of its forms that `width` cells hold. */
+export function lineText(line: HudLine, width: number): string {
+	const forms = [line.text, ...(line.short ?? [])].map(clean);
+	return forms.find((form) => displayWidth(form) <= width) ?? forms.at(-1) ?? "";
+}
+
 /** The map line and the current stage's place in it. */
 function mapLine(status: CardStatus): { text: string; stage: readonly [number, number] } | null {
-	const current = status.map?.cells.findIndex((cell) => cell.state === "current") ?? -1;
-	const cell = status.map?.cells[current];
-	if (status.map === null || cell === undefined) return null;
-	const before = status.map.cells.slice(0, current).map((item) => `${mapCellText(item)}${MAP_JOIN}`);
+	const map = spokenMap(status);
+	const current = map?.cells.findIndex((cell) => cell.state === "current") ?? -1;
+	const cell = map?.cells[current];
+	if (map === null || cell === undefined) return null;
+	const before = map.cells.slice(0, current).map((item) => `${mapCellText(item)}${MAP_JOIN}`);
 	const start = before.join("").length;
 	return {
-		text: workflowMapText(status.map),
+		text: workflowMapText(map),
 		stage: [start, start + `● ${stageName(cell)}`.length],
 	};
 }
@@ -375,23 +477,29 @@ function mapLine(status: CardStatus): { text: string; stage: readonly [number, n
 export function hudLines(view: HudView, now: number): HudLine[] {
 	const lines: HudLine[] = [];
 	if ((view.session === null || view.status === null) && view.wanted !== null && (view.matches ?? 0) > 1) {
-		lines.push({ text: "🔥 LIT · which session?", style: BOLD });
+		lines.push({ text: "🔥 LIT · which session?", style: BOLD, light: BOLD });
 		lines.push({
 			text: `--session ${clean(view.wanted)} matches ${view.matches} sessions; give more of the id`,
 			style: DIM,
 		});
 	} else if (view.session === null || view.status === null) {
-		lines.push({ text: "🔥 LIT · waiting for a LIT session", style: BOLD });
+		lines.push({ text: "🔥 LIT · waiting for a LIT session", style: BOLD, light: BOLD });
 		lines.push({
 			text:
 				view.wanted === null
 					? "Start `codex` in a project and type `lit <task>`."
 					: `waiting for session ${clean(view.wanted)}`,
+			...(view.wanted === null ? { short: WAITING_SHORT } : {}),
 			style: DIM,
 		});
 	} else {
 		const { id, folder, lastSeen } = view.session;
-		lines.push({ text: `${id.slice(0, SHORT_ID)} · ${clean(folder)} · ${age(lastSeen, now)}`, style: DIM });
+		const state = stateOf(view.status);
+		lines.push({
+			text: `${id.slice(0, SHORT_ID)} · ${clean(folder)} · ${age(lastSeen, now)}`,
+			style: DIM,
+			...(state === null ? {} : { pill: STATE_COLOURS[state].pill }),
+		});
 		const look = view.status?.look ?? null;
 		const tint = look === "turn" ? AMBER_FG : look === "done" ? GREEN_FG : "";
 		const status = cleanStatus(view.status);
@@ -401,7 +509,9 @@ export function hudLines(view: HudView, now: number): HudLine[] {
 			.forEach((text, index) => {
 				lines.push({
 					text,
+					...(status.state === "ready" ? { short: READY_SHORT } : {}),
 					style: index === 0 ? `${BOLD}${tint}` : tint || "",
+					...(index === 0 ? { light: `${BOLD}${look === "turn" || look === "done" ? LIGHT_INK[look] : ""}` } : {}),
 					rainbow: index === 0 && look === "rewind",
 					...(index === 1 && map?.text === text ? { stage: map.stage } : {}),
 				});
@@ -415,14 +525,16 @@ export function hudLines(view: HudView, now: number): HudLine[] {
 export function renderHud(view: HudView, options: HudRenderOptions): string {
 	const width = Math.max(10, Math.floor(options.width));
 	return hudLines(view, options.now)
-		.map(({ text, style, rainbow }, index) => {
+		.map((line, index) => {
+			const rainbow = options.light === true ? false : line.rainbow;
+			const style = options.light === true ? (line.light ?? "") : line.style;
 			if (index === 0 && options.color && options.truecolor === true) {
-				const pilled = withPill(clean(text), style, width);
+				const pilled = withPill(clean(line.text), style, width, line.pill);
 				if (pilled !== null) return pilled;
 			}
-			const line = fit(clean(text), width);
-			if (options.color && rainbow === true) return rainbowLine(line);
-			return options.color && style !== "" ? `${style}${line}${RESET}` : line;
+			const shown = fit(lineText(line, width), width);
+			if (options.color && rainbow === true) return rainbowLine(shown);
+			return options.color && style !== "" ? `${style}${shown}${RESET}` : shown;
 		})
 		.join("\n");
 }

@@ -7,6 +7,11 @@ export declare const STACK_DROP_MS: number;
 /** Disciplines that only read: they neither pause the work under them nor appear as a frame. */
 export declare const READ_ONLY_DISCIPLINES: readonly string[];
 export declare const WORKFLOW_FAMILIES: Readonly<Record<string, readonly string[]>>;
+/** Where each discipline enters the map. A discipline not listed here is always a side frame. */
+export declare const DISCIPLINE_ENTRY: Readonly<Record<string, {
+    readonly family: string;
+    readonly stage: string;
+}>>;
 export type FrameStatus = "active" | "paused";
 export type FrameRole = "spine" | "side";
 export interface StackFrame {

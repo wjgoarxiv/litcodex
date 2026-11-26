@@ -18,10 +18,13 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { clipped } from "./control-chars.js";
 import { answerChoice, markdownGuide } from "./goal-guide.js";
 import { plainDirsOrMissing, writeFileAtomic } from "./live-step.js";
 import { redactSecrets } from "./redaction.js";
 import { chooseNext, openPlanNamed } from "./rewind.js";
+import { normalizeSessionId, resolveLoopScope } from "./state-paths.js";
+import { startWorkSelector } from "./trigger.js";
 export const GOAL_DIR = ".litcodex/goal";
 export const GOAL_MAX_CHARS = 500;
 export const CONSENT_TTL_MS = 30 * 60 * 1000;
@@ -175,6 +178,15 @@ export function falsifyLoop(args) {
     }
     return { ok: true, exit: result.status };
 }
+function askedIn(sessionId) {
+    const id = normalizeSessionId(sessionId);
+    return id === null ? {} : { sessionId: id };
+}
+/** Whether this session asked a goal question that still waits for its answer. */
+export function goalQuestionOpen(cwd, sessionId, now) {
+    const asked = liveConsent(cwd, now)?.sessionId;
+    return asked !== undefined && asked === normalizeSessionId(sessionId);
+}
 /** `goal propose <plan>`: the one line to add to the approval question, and the consent it recorded. */
 export function proposeGoal(args) {
     const { cwd } = args;
@@ -199,6 +211,7 @@ export function proposeGoal(args) {
         id: goal.ok ? goal.id : goalId(plan, ""),
         plan,
         askedAt: new Date(args.now ?? Date.now()).toISOString(),
+        ...askedIn(args.sessionId),
     };
     if (!writeGoalFile(cwd, "consent.json", consent))
         return { line: GOAL_STATUS.skipped(`${GOAL_DIR} is not writable`) };
@@ -238,7 +251,7 @@ export function normalizeGoalObjective(value) {
         .split(/\r?\n/gu)
         .filter((line) => !line.trimStart().startsWith("/"))
         .join(" ");
-    return redactSecrets(joined).replace(/\s+/gu, " ").slice(0, MAX_OBJECTIVE_CHARS).trim();
+    return clipped(redactSecrets(joined).replace(/\s+/gu, " "), MAX_OBJECTIVE_CHARS).trim();
 }
 /** The project's own test command, for the question the prompt hook shows; null when there is none. */
 export function detectCheck(cwd) {
@@ -295,6 +308,7 @@ export function proposeLoopGoal(args) {
         id: built.id,
         plan: null,
         askedAt: new Date(args.now ?? Date.now()).toISOString(),
+        ...askedIn(args.sessionId),
     };
     if (!writeGoalFile(args.cwd, "consent.json", { ...consent, objective }))
         return { line: GOAL_STATUS.skipped(`${GOAL_DIR} is not writable`) };
@@ -340,6 +354,18 @@ const dropGoalFile = (cwd, name) => {
         // A file that cannot be removed only expires.
     }
 };
+/** A typed `start-work` answers the question of the plan it names; one that names none, the question of its own session. */
+export function startAnswers(cwd, prompt, sessionId) {
+    const record = readGoalFile(cwd, "consent.json");
+    const plan = record?.["plan"];
+    const named = startWorkSelector(prompt);
+    if (typeof plan !== "string" || named === null)
+        return;
+    const asker = record?.["sessionId"];
+    const own = asker === normalizeSessionId(sessionId);
+    if (named === "" ? own : basename(named, ".md") === basename(plan, ".md"))
+        dropGoalFile(cwd, "consent.json");
+}
 /** The consent the user is answering: fresh, and its hash still binds its condition. */
 export function liveConsent(cwd, now) {
     const record = readGoalFile(cwd, "consent.json");
@@ -353,14 +379,15 @@ export function liveConsent(cwd, now) {
     const asked = Date.parse(askedAt);
     if (!Number.isFinite(asked) || now - asked > CONSENT_TTL_MS)
         return null;
+    const session = askedIn(typeof record["sessionId"] === "string" ? record["sessionId"] : null);
     if (record["kind"] === "loop") {
         if (plan !== null || typeof condition !== "string" || hash !== conditionHash(condition))
             return null;
-        return { version: 1, kind: "loop", condition, hash, id, plan: null, askedAt };
+        return { version: 1, kind: "loop", condition, hash, id, plan: null, askedAt, ...session };
     }
     if (typeof plan !== "string" || hash !== consentHash(plan, condition))
         return null;
-    return { version: 1, condition, hash, id, plan, askedAt };
+    return { version: 1, condition, hash, id, plan, askedAt, ...session };
 }
 /** The goal LitCodex armed in this project and has not seen finish, if any. */
 export function ownedGoal(cwd) {
@@ -529,10 +556,12 @@ export function goalCommand(argv, io) {
         return 2;
     }
     const cwd = io.cwd ?? process.cwd();
+    // Codex names the thread in the environment of what it runs.
+    const sessionId = resolveLoopScope({ env: io.env ?? process.env })?.sessionId ?? null;
     // `--loop --check "<cmd>" <objective...>` is a lit-loop's question; a plan path is a plan's.
     const result = argv[1] === "--loop" && argv[2] === "--check"
-        ? proposeLoopGoal({ cwd, check: argv[3], objective: argv.slice(4).join(" ") })
-        : proposeGoal({ cwd, planArg: argv[1] });
+        ? proposeLoopGoal({ cwd, check: argv[3], objective: argv.slice(4).join(" "), sessionId })
+        : proposeGoal({ cwd, planArg: argv[1], sessionId });
     // The model ends its reply with this output, so an asked question carries its answer guide below it.
     const guide = result.asked === undefined ? "" : `\n\n${markdownGuide(result.asked, result.consent?.condition ?? null)}`;
     io.stdout.write(`${result.line}${guide}\n`);

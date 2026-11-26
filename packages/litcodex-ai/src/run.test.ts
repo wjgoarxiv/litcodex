@@ -553,6 +553,137 @@ describe("runCommand with a pseudo-terminal", () => {
 		await done;
 	});
 
+	const WHITE = `${ESC}]11;rgb:ffff/ffff/ffff${ESC}\\`;
+	const DARK = `${ESC}]11;rgb:0d0d/1111/1717${ESC}\\`;
+
+	it.each([
+		["whole", [WHITE]],
+		["split", [WHITE.slice(0, 1), WHITE.slice(1, 12), WHITE.slice(12, -1), WHITE.slice(-1)]],
+		["among typed keys", [`ab${WHITE.slice(0, 5)}`, `${WHITE.slice(5)}cd`]],
+	])("turns light on the answer Codex asked for (%s) and passes every byte on", async (_name, parts) => {
+		const h = harness({ rows: 30, columns: 100 });
+		const done = runCommand([], { ...h.io, env: { ...h.io.env, COLORTERM: "truecolor" } });
+		await settle();
+		expect(h.spawned[0]?.options).toMatchObject({ rows: 23 });
+		h.out.length = 0;
+		for (const part of parts) h.stdin.emit("data", Buffer.from(part));
+		expect(Buffer.concat(h.child.written.map((part) => Buffer.from(part))).toString()).toBe(parts.join(""));
+		// The four plain rows, words in the terminal's own ink.
+		expect(h.child.resized).toEqual([[100, 26]]);
+		const after = h.out.join("");
+		expect(after).toContain(`${ESC}[1;26r`);
+		expect(after).toContain("LIT · ready");
+		expect(after).not.toContain("╭");
+		expect(after).not.toContain(`${ESC}[2m`);
+		expect(after).not.toContain("38;2;");
+		expect(after).not.toMatch(/\]11|rgb:/u);
+		h.child.exit(0);
+		expect(await done).toBe(0);
+	});
+
+	it("goes back to the sunset when the theme turns dark, and stays with it without an answer", async () => {
+		const h = harness({ rows: 30, columns: 100 });
+		const done = runCommand([], { ...h.io, env: { ...h.io.env, COLORTERM: "truecolor" } });
+		await settle();
+		h.stdin.emit("data", Buffer.from(DARK));
+		h.stdin.emit("data", Buffer.from("hello"));
+		expect(h.child.resized).toEqual([]);
+		h.stdin.emit("data", Buffer.from(WHITE));
+		h.out.length = 0;
+		h.stdin.emit("data", Buffer.from(DARK));
+		expect(h.child.resized).toEqual([
+			[100, 26],
+			[100, 23],
+		]);
+		expect(h.out.join("")).toContain("╭");
+		h.child.exit(0);
+		await done;
+	});
+
+	/** Every row the bytes clear or draw on, by the cursor moves in them. */
+	const touched = (bytes: string): number[] => [...bytes.matchAll(/\u001b\[(\d+);\d+H/gu)].map((at) => Number(at[1]));
+
+	it("leaves Codex's rows alone when the ground turns and the panel takes another height", async () => {
+		const h = harness({ rows: 30, columns: 100 });
+		const done = runCommand([], { ...h.io, env: { ...h.io.env, COLORTERM: "truecolor" } });
+		await settle();
+		h.out.length = 0;
+		h.stdin.emit("data", Buffer.from(WHITE));
+		const smaller = h.out.join("");
+		expect(smaller).not.toMatch(/\u001b\[[0-3]?J/u);
+		// The cursor stays where Codex left it: a new scroll region would send it home.
+		expect(smaller.startsWith(`${ESC}7${ESC}[1;26r`)).toBe(true);
+		for (const row of [24, 25, 26]) expect(smaller).toContain(`${ESC}[${row};1H${ESC}[2K`);
+		expect(Math.min(...touched(smaller))).toBe(24);
+		expect(smaller.split(`${ESC}7`)).toHaveLength(smaller.split(`${ESC}8`).length);
+
+		h.out.length = 0;
+		h.stdin.emit("data", Buffer.from(DARK));
+		const taller = h.out.join("");
+		expect(taller).not.toMatch(/\u001b\[[0-3]?J/u);
+		// The three rows the panel takes are made free the way a lower window makes them: by scrolling within Codex's.
+		expect(
+			taller.startsWith(`${ESC}7${ESC}[1;26r${ESC}8${ESC}D${ESC}D${ESC}D${ESC}[3A${ESC}7${ESC}[1;23r`),
+			JSON.stringify(taller.slice(0, 60)),
+		).toBe(true);
+		expect(Math.min(...touched(taller))).toBe(24);
+		expect(h.child.resized).toEqual([
+			[100, 26],
+			[100, 23],
+		]);
+		h.child.emitData(`${ESC}[r`);
+		expect(h.out.join("")).toContain(`${ESC}[1;23r`);
+		h.child.exit(0);
+		await done;
+	});
+
+	it("clears nothing when the ground turns while a low window has no panel", async () => {
+		const h = harness({ rows: 30, columns: 100 });
+		const done = runCommand([], { ...h.io, env: { ...h.io.env, COLORTERM: "truecolor" } });
+		await settle();
+		h.stdout.rows = 10;
+		h.stdout.emit("resize");
+		expect(h.child.resized).toEqual([[100, 10]]);
+		h.out.length = 0;
+		h.stdin.emit("data", Buffer.from(WHITE));
+		expect(h.out.join("")).toBe("");
+		expect(h.child.resized).toHaveLength(1);
+		h.stdout.rows = 30;
+		h.stdout.emit("resize");
+		expect(h.child.resized.at(-1)).toEqual([100, 26]);
+		expect(h.out.join("")).not.toContain("╭");
+		h.child.exit(0);
+		await done;
+	});
+
+	it.each([
+		["holds a saved cursor", `${ESC}7abc`, `${ESC}8`],
+		["is inside a sequence", `x${ESC}[3`, "1m"],
+	])("waits with another height while codex %s", async (_name, first, then) => {
+		const h = harness({ rows: 30, columns: 100 });
+		const done = runCommand([], { ...h.io, env: { ...h.io.env, COLORTERM: "truecolor" } });
+		await settle();
+		h.child.emitData(first);
+		h.out.length = 0;
+		h.stdin.emit("data", Buffer.from(WHITE));
+		expect(h.out.join("")).toBe("");
+		expect(h.child.resized).toEqual([]);
+		h.child.emitData(then);
+		expect(h.child.resized).toEqual([[100, 26]]);
+		expect(h.out.join("")).not.toMatch(/\u001b\[[0-3]?J/u);
+		h.child.exit(0);
+		await done;
+	});
+
+	it("draws the sunset in Windows Terminal, which names itself and not its colours", async () => {
+		const h = harness({ rows: 30, columns: 100 });
+		const done = runCommand([], { ...h.io, env: { ...h.io.env, WT_SESSION: "8f1c" } });
+		await settle();
+		expect(h.spawned[0]?.options).toMatchObject({ rows: 23 });
+		h.child.exit(0);
+		await done;
+	});
+
 	it("on a resize, sets the new scroll region, clears, redraws and resizes codex", async () => {
 		const h = harness({ rows: 30, columns: 100 });
 		const done = runCommand([], h.io);

@@ -32,7 +32,11 @@ import {
 	proposeLoopGoal,
 	sweepGoalState,
 } from "./goal-pipeline.js";
-import { runPostToolUseLiveHookCli, runUserPromptSubmitHookCli } from "./hook-cli.js";
+import { runPostToolUseLiveHookCli, runStopPlanPersistenceHookCli, runUserPromptSubmitHookCli } from "./hook-cli.js";
+import { displayWidth } from "./hud.js";
+import { readLiveStep } from "./live-step.js";
+import { readRunEnds } from "./run-end.js";
+import { SUNSET_HINT } from "./sunset-settings.js";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -257,7 +261,7 @@ async function firePrompt(
 	prompt: string,
 	turn = 1,
 	sessionId = "loop-s1",
-): Promise<{ stdout: string; context: string; message: string }> {
+): Promise<{ stdout: string; context: string; message: string; rows: string[] }> {
 	const stdin = new PassThrough();
 	const stdout = new PassThrough();
 	let out = "";
@@ -269,6 +273,7 @@ async function firePrompt(
 	);
 	const home = join(cwd, ".home");
 	mkdirSync(home, { recursive: true });
+	writeFileSync(join(home, "config.toml"), "");
 	await runUserPromptSubmitHookCli(stdin, stdout, new PassThrough(), cwd, { env: { CODEX_HOME: home } });
 	const parsed =
 		out === ""
@@ -277,7 +282,9 @@ async function firePrompt(
 	return {
 		stdout: out,
 		context: parsed.hookSpecificOutput?.additionalContext ?? "",
-		message: parsed.systemMessage ?? "",
+		// Long lines are broken between words for a narrow pane.
+		message: (parsed.systemMessage ?? "").replace(/\s+/gu, " "),
+		rows: (parsed.systemMessage ?? "").split("\n"),
 	};
 }
 
@@ -431,6 +438,15 @@ describe("lit-loop goal question", () => {
 		expect(repeat.message).not.toContain("Set goal for this lit-loop");
 	});
 
+	it("keeps the question, its answers and the sunset hint inside the card", async () => {
+		const { rows, message } = await firePrompt(loopProject(), "lit-loop 로그인 버튼을 고치고 fix the retry bug");
+		for (const row of rows) expect(displayWidth(row), row).toBeLessThanOrEqual(44);
+		expect(message).toContain("yes → set this goal now; the loop keeps going");
+		expect(message).toContain(SUNSET_HINT);
+		// A command stays in one piece.
+		expect(rows.join("\n")).toContain("`npx @litfamily/litcodex sunset on`");
+	});
+
 	it("a request that ends with lit asks the goal question with the words before it", async () => {
 		const cases: ReadonlyArray<readonly [string, string]> = [
 			["fix the retry bug lit", "fix the retry bug"],
@@ -526,6 +542,109 @@ describe("lit-loop goal question", () => {
 			"Set goal for this lit-loop",
 		);
 		expect(readFileSync(join(pending, GOAL_DIR, "consent.json"), "utf8")).toBe(before);
+	});
+
+	/** The Stop card of a turn whose last message asks nothing, in one line. */
+	const stopCard = async (cwd: string, sessionId: string, turn = 1): Promise<string> => {
+		const stdin = new PassThrough();
+		const stdout = new PassThrough();
+		let out = "";
+		stdout.on("data", (chunk) => {
+			out += chunk.toString();
+		});
+		stdin.end(
+			JSON.stringify({
+				hook_event_name: "Stop",
+				session_id: sessionId,
+				turn_id: `t${turn}`,
+				cwd,
+				transcript_path: null,
+				stop_hook_active: false,
+				last_assistant_message: "The tests are written.",
+			}),
+		);
+		const env = { CODEX_HOME: join(cwd, ".home"), LITCODEX_AUTO_HANDOFF: "0" };
+		await runStopPlanPersistenceHookCli(stdin, stdout, new PassThrough(), cwd, { env });
+		return out === "" ? "" : (JSON.parse(out) as { systemMessage: string }).systemMessage.replace(/\s+/gu, " ");
+	};
+
+	it("a plain no ends the wait, whether or not a tool runs after it", async () => {
+		const cwd = loopProject();
+		await firePrompt(cwd, "lit-loop fix the retry bug");
+		await stopCard(cwd, "loop-s1");
+		expect(readLiveStep(cwd, "loop-s1")?.waitReason).toBe("question");
+		await firePrompt(cwd, "no", 2);
+		expect(readLiveStep(cwd, "loop-s1")).toMatchObject({ turnEndedAt: null });
+		await stopCard(cwd, "loop-s1", 2);
+		expect(readLiveStep(cwd, "loop-s1")?.waitReason ?? null).toBeNull();
+	});
+
+	it("an open goal question is your turn on the card, in the live step and in the run's end", async () => {
+		const cwd = loopProject();
+		await firePrompt(cwd, "lit-loop fix the retry bug");
+		expect(consentFile(cwd)).toMatchObject({ sessionId: "loop-s1" });
+		expect(await stopCard(cwd, "loop-s1")).toContain("your turn · answer the question above");
+		expect(readLiveStep(cwd, "loop-s1")?.waitReason).toBe("question");
+		expect(readRunEnds(cwd).map((end) => end.outcome)).toEqual(["waiting"]);
+		// Answered, it no longer waits.
+		await firePrompt(cwd, "yes", 2);
+		await firePrompt(cwd, "lit-loop and add a test", 3);
+		expect(await stopCard(cwd, "loop-s1", 3)).toContain("turn done");
+	});
+
+	it("another session's goal question leaves this session's card neutral", async () => {
+		const ask = (sessionId: string | null): string => {
+			const cwd = project();
+			proposeGoal({ cwd, planArg: ".litcodex/plans/retry.md", run: exits(1), sessionId });
+			return cwd;
+		};
+		for (const [asked, said] of [
+			["loop-s1", "your turn"],
+			["loop-s2", "turn done"],
+			[null, "turn done"],
+		] as const) {
+			const cwd = ask(asked);
+			await firePrompt(cwd, "lit-loop fix the retry bug");
+			expect(await stopCard(cwd, "loop-s1"), String(asked)).toContain(`lit-loop · ${said}`);
+			expect(readLiveStep(cwd, "loop-s1")?.waitReason ?? null).toBe(asked === "loop-s1" ? "question" : null);
+		}
+	});
+
+	it.each([
+		["$start-work retry", true],
+		["start-work .litcodex/plans/retry.md", true],
+		["$start-work", true],
+		["$start-work other", false],
+		["what does start-work retry do?", false],
+		["lit start work retry", true],
+		["lit start work other", false],
+		["$start-work --worktree /tmp/wt", true],
+		["$start-work retry --worktree /tmp/wt", true],
+		["$start-work other --worktree /tmp/start-work retry", false],
+	])("%s answers the plan question: %s", async (prompt, answered) => {
+		const cwd = project();
+		proposeGoal({ cwd, planArg: ".litcodex/plans/retry.md", run: exits(1), sessionId: "loop-s1" });
+		await firePrompt(cwd, prompt);
+		expect(consentFile(cwd) === null).toBe(answered);
+	});
+
+	it.each([
+		["$start-work", false, "loop-s1"],
+		["$start-work retry", true, "loop-s1"],
+		["$start-work", false, null],
+	])("%s from another session answers the plan question: %s (asked by %s)", async (prompt, answered, asker) => {
+		const cwd = project();
+		proposeGoal({ cwd, planArg: ".litcodex/plans/retry.md", run: exits(1), sessionId: asker });
+		await firePrompt(cwd, prompt, 1, "loop-s2");
+		expect(consentFile(cwd) === null).toBe(answered);
+	});
+
+	it("`goal propose` keeps the thread Codex runs it in with the question", () => {
+		const cwd = loopProject({ "package.json": JSON.stringify({ scripts: { test: "node -e process.exit(1)" } }) });
+		const sink = new PassThrough();
+		const io = { stdout: sink, stderr: sink, cwd, env: { CODEX_THREAD_ID: "thread-a" } };
+		goalCommand(["propose", "--loop", "--check", "node --test missing.mjs", "fix it"], io);
+		expect(consentFile(cwd)).toMatchObject({ kind: "loop", sessionId: "thread-a" });
 	});
 
 	it("a secret in the activating prompt never reaches the question or the consent file", async () => {

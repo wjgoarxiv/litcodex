@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { PassThrough } from "node:stream";
 import { afterEach, describe, expect, it } from "vitest";
 import { runUserPromptSubmitHookCli } from "./hook-cli.js";
-import { readScreenStatus, SCREEN_STATUS_ENV, screenColor, screenStatusCommand } from "./screen-status.js";
+import { readScreenStatus, SCREEN_STATUS_ENV, screenColor, screenLook, screenStatusCommand } from "./screen-status.js";
 
 const roots: string[] = [];
 
@@ -94,6 +94,50 @@ describe("screen-status switch (card colour)", () => {
 		expect(readFileSync(target, "utf8")).toBe('{"version":1,"enabled":true}');
 	});
 
+	it("keeps a white window and fewer colours as choices of their own", () => {
+		const home = codexHome();
+		const env = { CODEX_HOME: home };
+		const stored = (): unknown => JSON.parse(readFileSync(join(home, "litcodex/screen-status.json"), "utf8"));
+		expect(readScreenStatus(env)).not.toHaveProperty("light");
+		run(["on"], env);
+		expect(run(["light"], env).stdout).toContain("white window");
+		expect(stored()).toEqual({ version: 1, enabled: true, light: true });
+		expect(run(["256"], env).stdout).toContain("256 colours");
+		expect(stored()).toEqual({ version: 1, enabled: true, light: true, depth: 256 });
+		expect(readScreenStatus(env)).toMatchObject({ enabled: true, light: true, depth: 256 });
+		expect(screenLook(env)).toEqual({ color: true, light: true, depth: 256 });
+		expect(run(["status"], env).stdout).toBe("LIT card colour is ON, for a white window, in 256 colours.\n");
+		run(["off"], env);
+		expect(stored()).toEqual({ version: 1, enabled: false, light: true, depth: 256 });
+		expect(screenLook(env).color).toBe(false);
+		run(["on"], env);
+		run(["dark"], env);
+		run(["truecolor"], env);
+		expect(stored()).toEqual({ version: 1, enabled: true });
+		expect(screenLook(env)).toEqual({ color: true });
+	});
+
+	it("never takes the window's colours or ground from the environment", () => {
+		const home = codexHome();
+		run(["on"], { CODEX_HOME: home });
+		const look = screenLook({ CODEX_HOME: home });
+		for (const env of [
+			{ COLORTERM: "truecolor" },
+			{ SSH_CONNECTION: "1 2 3 4" },
+			{ COLORFGBG: "0;15" },
+			{ WT_SESSION: "x" },
+			{ TERM: "xterm" },
+		])
+			expect(screenLook({ CODEX_HOME: home, ...env })).toEqual(look);
+	});
+
+	it("applies the saved look when the environment turns the colour on", () => {
+		const home = codexHome();
+		run(["light"], { CODEX_HOME: home });
+		expect(screenLook({ CODEX_HOME: home })).toEqual({ color: false, light: true });
+		expect(screenLook({ CODEX_HOME: home, [SCREEN_STATUS_ENV]: "1" })).toEqual({ color: true, light: true });
+	});
+
 	it("answers usage errors with exit 64 and warns about other clients in its help", () => {
 		const env = { CODEX_HOME: codexHome() };
 		expect(run([], env).code).toBe(64);
@@ -139,6 +183,20 @@ describe("hook card colour", () => {
 		// JSON carries the escape as the six characters \u001b.
 		expect(coloured).toContain("\\u001b[");
 		expect(await submit({ CODEX_HOME: home, NO_COLOR: "1" }, temp())).not.toContain("\\u001b");
+	});
+
+	it("wears the saved look", async () => {
+		const home = codexHome();
+		const env = { CODEX_HOME: home };
+		run(["on"], env);
+		const dark = await submit(env, temp());
+		run(["256"], env);
+		const fewer = await submit(env, temp());
+		expect(dark).toContain("38;2;");
+		expect(fewer).toContain("38;5;");
+		expect(fewer).not.toContain("38;2;");
+		run(["light"], env);
+		expect(await submit(env, temp())).not.toBe(fewer);
 	});
 
 	it("leaves no per-session screen-status record in the project", async () => {

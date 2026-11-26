@@ -41,7 +41,7 @@ const REVIEW_LANES: readonly string[] = ["goal", "quality", "security", "qa", "c
 const MAX_VERDICTS = 8;
 
 /** Where each discipline enters the map. A discipline not listed here is always a side frame. */
-const DISCIPLINE_ENTRY: Readonly<Record<string, { readonly family: string; readonly stage: string }>> = {
+export const DISCIPLINE_ENTRY: Readonly<Record<string, { readonly family: string; readonly stage: string }>> = {
 	"deep-interview": { family: "main", stage: "interview" },
 	"lit-brainstorm": { family: "main", stage: "interview" },
 	"lit-crucible": { family: "main", stage: "plan" },

@@ -37,7 +37,7 @@ const VERDICT_STATES = ["pass", "fail", "pending", "running"];
 const REVIEW_LANES = ["goal", "quality", "security", "qa", "context"];
 const MAX_VERDICTS = 8;
 /** Where each discipline enters the map. A discipline not listed here is always a side frame. */
-const DISCIPLINE_ENTRY = {
+export const DISCIPLINE_ENTRY = {
     "deep-interview": { family: "main", stage: "interview" },
     "lit-brainstorm": { family: "main", stage: "interview" },
     "lit-crucible": { family: "main", stage: "plan" },

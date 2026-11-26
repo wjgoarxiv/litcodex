@@ -117,4 +117,19 @@ describe("hud loop", () => {
 		out.columns = 120;
 		expect(loop.tick()).toBe(true);
 	});
+
+	it("brings its top lines back after a lower window, and never scrolls them off one", () => {
+		const { env } = session();
+		const writes: string[] = [];
+		const out = { write: (text: string) => writes.push(text), isTTY: true, columns: 100, rows: 24 };
+		const loop = createHudLoop({ env, wanted: null, out, color: false, now: () => START });
+		loop.tick();
+		out.rows = 2;
+		expect(loop.tick()).toBe(true);
+		expect(writes[1]?.split("\n")).toHaveLength(2);
+		expect(writes[1]).toContain("lit-loop · working");
+		out.rows = 24;
+		expect(loop.tick()).toBe(true);
+		expect(writes[2]).toBe(writes[0]);
+	});
 });

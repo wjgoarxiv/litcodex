@@ -8,9 +8,7 @@ export declare const LOOKS: Readonly<Record<string, Readonly<Look>>>;
 export declare const LOOK_BY_SKILL: Readonly<Record<string, string>>;
 /** The look a skill or discipline id brings, or null for one that keeps the card's own look. */
 export declare function lookOf(id: string): string | null;
-/** The five review-work lanes in the order the border draws them. */
-export declare const REVIEW_LANE_NAMES: readonly ["scope", "tests", "package", "security", "surface"];
-/** The review-work lane ids as the workflow stack stores them. */
+/** The five review-work lanes as the workflow stack stores them, in the order the border draws them. */
 export declare const REVIEW_LANE_IDS: readonly ["goal", "quality", "security", "qa", "context"];
 /** One colour per review lane in border-draw order, and each one dimmed while the lane is still running. */
 export declare const LANE_COLORS: readonly string[];

@@ -181,6 +181,30 @@ describe("card status", () => {
 		expect(readCardStatus("t1", env, 120_000).branch).toBe("feat/tree");
 	});
 
+	it.each([
+		"기능/한글-#12@a+b",
+		"fix/#42",
+		"dependabot/npm_and_yarn/@types/node-22.1.0",
+		"feat/c++",
+		`long/${"x".repeat(120)}`,
+	])("reads the branch %s", (name) => {
+		const { root, env } = workspace();
+		mkdirSync(join(root, ".git"));
+		writeFileSync(join(root, ".git/HEAD"), `ref: refs/heads/${name}\n`);
+		expect(readCardStatus("t1", env, 120_000).branch).toBe(name);
+	});
+
+	it("bounds a branch name and keeps controls out of it", () => {
+		const { root, env } = workspace();
+		mkdirSync(join(root, ".git"));
+		writeFileSync(join(root, ".git/HEAD"), `ref: refs/heads/${"한".repeat(250)}\n`);
+		expect(readCardStatus("t1", env, 120_000).branch).toBe("한".repeat(200));
+		writeFileSync(join(root, ".git/HEAD"), "ref: refs/heads/a\u001b[31mb\u0007\n");
+		expect(readCardStatus("t1", env, 120_000).branch).toBe("ab");
+		writeFileSync(join(root, ".git/HEAD"), "ref: refs/heads/a\nb\n");
+		expect(readCardStatus("t1", env, 120_000).branch).toBeNull();
+	});
+
 	it("reads context and quota use from the thread's rollout tail and the branch from the workspace", () => {
 		const { home, root, env } = workspace();
 		const day = join(home, "sessions/2026/10/14");

@@ -9,8 +9,10 @@
 import { createHash } from "node:crypto";
 import { lstatSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, sep } from "node:path";
+import { clipped, withoutCodes } from "./control-chars.js";
 import { plainDirs, plainDirsOrMissing, writeFileAtomic } from "./live-step.js";
 import { LIT_LOOP_DIR, LIT_LOOP_GOALS, normalizeSessionId } from "./state-paths.js";
+import { DISCIPLINE_ENTRY } from "./workflow-stack.js";
 const STAGES = [
     ["interview", "🧭", "INTERVIEW"],
     ["plan", "📝", "PLAN"],
@@ -18,19 +20,6 @@ const STAGES = [
     ["review", "🔍", "REVIEW"],
     ["done", "🏁", "DONE"],
 ];
-/** Where each LIT skill sits in the main chain; `research` is its own short family. */
-const MODE_STAGE = {
-    "deep-interview": "interview",
-    "lit-brainstorm": "interview",
-    "lit-crucible": "interview",
-    "lit-plan": "plan",
-    litgoal: "plan",
-    "start-work": "work",
-    litwork: "work",
-    "lit-loop": "work",
-    "review-work": "review",
-    litresearch: "research",
-};
 const MAX_STATE_BYTES = 1_000_000;
 const MAX_TITLE = 48;
 const BAR_CELLS = 10;
@@ -168,8 +157,8 @@ function isTechnical(word) {
  * with fewer than three words left before the cut is dropped.
  */
 export function safeTitle(label) {
-    const words = label
-        .replace(/[\u0000-\u001f\u007f-\u009f]/gu, "")
+    const words = withoutCodes(label)
+        .replace(/[\u0000-\u001f\u007f-\u009f\ud800-\udfff]/gu, "")
         .replace(/^(?:F?\d+\.\s+)/iu, "")
         .split(/\s+/u)
         .filter((word) => word.length > 0);
@@ -182,7 +171,7 @@ export function safeTitle(label) {
     if (title.length === 0)
         return null;
     if (title.length > MAX_TITLE)
-        return `${title.slice(0, MAX_TITLE - 1)}…`;
+        return `${clipped(title, MAX_TITLE - 1)}…`;
     return cut < 0 ? title : `${title} …`;
 }
 /** The start-work plan this session shows, with its status and text; null when there is none. */
@@ -395,15 +384,15 @@ function researchCells(research) {
 }
 /** The map as stages, or null when there is nothing true to draw. */
 export function workflowMapCells(mode, signals) {
-    const fromMode = mode === null ? undefined : MODE_STAGE[mode];
+    const entry = mode === null ? undefined : DISCIPLINE_ENTRY[mode];
     const { work } = signals;
     const progress = work ?? signals.goals;
     const next = progress === null || progress.next === null ? null : safeTitle(progress.next);
-    if (fromMode === "research")
+    if (entry?.family === "research")
         return { family: "research", cells: researchCells(signals.research), next: null };
-    const position = fromMode === undefined
+    const position = entry === undefined
         ? stageFromState(signals)
-        : { index: STAGES.findIndex(([stage]) => stage === fromMode), active: true };
+        : { index: STAGES.findIndex(([stage]) => stage === entry.stage), active: true };
     if (position === null)
         return null;
     const planKnown = work !== null || signals.plan === "published";
@@ -518,7 +507,25 @@ function readTurn(repoRoot, path) {
         startedAt: record["startedAt"],
         workDone: count(record["workDone"]),
         goalsDone: count(record["goalsDone"]),
+        ...(typeof record["shown"] === "string" ? { shown: record["shown"] } : {}),
     };
+}
+/** Remember what a card of this turn shows; true when the card before it already showed the same. Never throws. */
+export function rememberShown(repoRoot, sessionId, content) {
+    const path = turnPath(repoRoot, sessionId);
+    const turn = path === null ? null : readTurn(repoRoot, path);
+    if (path === null || turn === null)
+        return false;
+    const shown = createHash("sha256").update(content).digest("hex");
+    if (turn.shown === shown)
+        return true;
+    try {
+        writeFileAtomic(path, `${JSON.stringify({ ...turn, shown })}\n`);
+    }
+    catch {
+        // Without the record the next card shows everything again.
+    }
+    return false;
 }
 /** The LIT activation this session last recorded: its skill and when it started; null when none. */
 export function workflowTurn(repoRoot, sessionId) {
@@ -565,7 +572,7 @@ function transcriptClear(path) {
  * work this session owns with authority and open rows, and the lease that nudges each plan state once
  * per turn), so the answer is the same whichever Stop hook the host runs first.
  */
-function continuingWork(repoRoot, sessionId, turnId, stop) {
+export function continuingWork(repoRoot, sessionId, turnId, stop) {
     if (stop.stopHookActive || !transcriptClear(stop.transcriptPath))
         return null;
     const state = readJson(repoRoot, join(repoRoot, ".litcodex/start-work/state.json"));
@@ -633,7 +640,7 @@ export function workflowStopLine(repoRoot, sessionId, turnId, stop = NO_STOP_CON
             parts.push(counted(progress.done - before, unit));
         if (progress.done >= progress.total)
             parts.push(`all ${progress.total} ${unit}s ✓`);
-        else {
+        else if (stop.next !== false) {
             const next = progress.next === null ? null : safeTitle(progress.next);
             if (next !== null)
                 parts.push(`next ▸ ${next}`);

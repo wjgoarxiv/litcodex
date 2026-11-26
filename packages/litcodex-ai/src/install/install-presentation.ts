@@ -3,6 +3,7 @@ import { amber, bold, dim, green, orange, red } from "../ui-style.js";
 import { routingReport } from "./agent-routing.js";
 import type { InstallErrorEnvelope } from "./errors.js";
 import type { InstallCardStep, InstallCards, PanelRow, RowMark } from "./install-cards.js";
+import { NEXT_STEPS } from "./install-output.js";
 import type { InstallPreflightStage, InstallResult, InstallStep, InstallStepKind, InstallStepResult } from "./types.js";
 
 const STEP_PRESENTATION: Readonly<Record<InstallStepKind, { readonly title: string; readonly purpose: string }>> = {
@@ -159,7 +160,10 @@ export function renderInstallReceipt(
 		),
 	];
 	if (configDetail(result).includes("preserved")) lines.push(detailRow("Next", CONFIG_REVIEW, opts.color));
-	if (result.ok) lines.push(`  ${orange("╰─ Installation complete", opts.color)}`);
+	if (result.ok) {
+		for (const step of NEXT_STEPS) lines.push(row("Next", step));
+		lines.push(`  ${orange("╰─ Installation complete", opts.color)}`);
+	}
 	lines.push("");
 	return lines.join("\n");
 }
@@ -457,7 +461,7 @@ export function renderUninstallCard(
 }
 
 /** The `uninstall --dry-run` steps as a card. */
-const PLAN_LABELS = ["Plugin", "Marketplace", "Agent roles", "Config", "AGENTS.md", "Safety"];
+const PLAN_LABELS = ["Plugin", "Marketplace", "Agent roles", "Config", "Footer", "Round ends", "AGENTS.md", "Safety"];
 
 export function renderUninstallPlanCard(cards: InstallCards, steps: readonly string[]): string {
 	return cards.panel({

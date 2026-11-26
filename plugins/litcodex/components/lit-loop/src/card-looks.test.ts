@@ -2,15 +2,7 @@
 // the HUD tint and the statusline label. Tests per look and per route.
 
 import { describe, expect, it } from "vitest";
-import {
-	LANE_COLORS,
-	LOOK_BY_SKILL,
-	LOOKS,
-	laneColor,
-	lookOf,
-	REVIEW_LANE_IDS,
-	REVIEW_LANE_NAMES,
-} from "./card-looks.js";
+import { LANE_COLORS, LOOK_BY_SKILL, LOOKS, laneColor, lookOf, REVIEW_LANE_IDS } from "./card-looks.js";
 
 describe("lookOf", () => {
 	it("lit-adhd maps to rewind", () => expect(lookOf("lit-adhd")).toBe("rewind"));
@@ -59,7 +51,6 @@ describe("LOOK_BY_SKILL", () => {
 });
 
 describe("review lanes", () => {
-	it("has five lane names", () => expect(REVIEW_LANE_NAMES).toHaveLength(5));
 	it("has five lane ids", () => expect(REVIEW_LANE_IDS).toHaveLength(5));
 	it("has five lane colours", () => expect(LANE_COLORS).toHaveLength(5));
 

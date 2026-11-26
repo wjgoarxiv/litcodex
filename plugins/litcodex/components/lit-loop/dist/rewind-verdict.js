@@ -15,6 +15,7 @@
 // is never the action, only `네 확인 필요: <question>` in the queue. `지금 할 일 없음` needs full coverage.
 // Pure: the cursor file is read and written by the CLI.
 import { createHash } from "node:crypto";
+import { clipped } from "./control-chars.js";
 export const VERDICT_RULES_VERSION = "adhd-verdict.v1";
 const TEXT_MAX = 60;
 const clip = (text) => {
@@ -22,7 +23,7 @@ const clip = (text) => {
         .replace(/[`*_<>|]/gu, "")
         .replace(/\s+/gu, " ")
         .trim();
-    return flat.length <= TEXT_MAX ? flat : `${flat.slice(0, TEXT_MAX - 1)}…`;
+    return flat.length <= TEXT_MAX ? flat : `${clipped(flat, TEXT_MAX - 1)}…`;
 };
 export const fingerprint = (parts) => createHash("sha256").update(JSON.stringify(parts)).digest("hex").slice(0, 6);
 /** Proven finished items only: plans with every row ticked, completed start-work runs, and commits. */

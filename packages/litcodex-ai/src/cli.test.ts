@@ -206,12 +206,15 @@ describe("self-contained published bin (replaces SUPERSEDED forwarder tests #25-
 	});
 });
 
+/** The one line that names a command to run from a shell: where an agent finds the install guide. */
+const withoutGuideLine = (text: string): string => text.replace(/^(?:Agent\?|Are you an agent\?) .*\n/mu, "");
+
 describe("published bin end-to-end (process exit owner)", () => {
 	it("--help exits 0 with LitCodex usage and no spawn token", () => {
 		const r = runBin(["--help"]);
 		expect(r.code).toBe(0);
 		expect(r.stdout).toMatch(/^litcodex/);
-		expect(r.stdout).not.toContain(NPX_TOKEN);
+		expect(withoutGuideLine(r.stdout)).not.toContain(NPX_TOKEN);
 	});
 
 	it("--version exits 0 printing the manifest version", () => {
@@ -232,7 +235,7 @@ describe("published bin end-to-end (process exit owner)", () => {
 		const r = runBin(["--dry-run", "install", "--no-tui"]);
 		expect(r.code).toBe(0);
 		expect(r.stdout).toContain("litcodex install plan (Codex)");
-		expect(r.stdout).not.toContain(NPX_TOKEN);
+		expect(withoutGuideLine(r.stdout)).not.toContain(NPX_TOKEN);
 	});
 });
 

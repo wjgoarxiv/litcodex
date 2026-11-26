@@ -247,7 +247,9 @@ function classifyInvocation(first, tail) {
 	if (first === "screen-status" || first === "sunset") {
 		const sub = tail.find((t) => !t.startsWith("-"));
 		if (sub === undefined || sub.startsWith("<")) return { ok: true, shown: first };
-		return { ok: ["on", "off", "status", "on|off|status"].includes(sub), shown: `${first} ${sub}` };
+		const verbs = ["on", "off", "status", "on|off|status"];
+		if (first === "screen-status") verbs.push("light", "dark", "truecolor", "256", "light|dark|truecolor|256");
+		return { ok: verbs.includes(sub), shown: `${first} ${sub}` };
 	}
 	if (first === "agent-file") {
 		const sub = tail.find((t) => !t.startsWith("-"));

@@ -59,4 +59,6 @@ export declare function isLitTriggerPrompt(prompt: string): boolean;
  * @throws TypeError if `prompt` is not a string.
  */
 export declare function matchLitTrigger(prompt: string): LitTriggerMatch | null;
+/** The plan a typed start-work names, "" where it names none, or null where the line is no start-work. */
+export declare function startWorkSelector(prompt: string): string | null;
 export declare function maskMarkdownCode(input: string): string;

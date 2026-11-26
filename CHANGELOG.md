@@ -6,6 +6,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `litcodex install --agent` prints an install guide for coding agents: the preview, the questions to ask, the install and
+  update lines, the check, the rounded ends and what only the user can do. The README prompts carry the same steps,
+  `--help` names it, and an install without a person at the terminal points at it.
+- `litcodex install --round` adds the icon font for round pill ends (Symbols Nerd Font Mono, one pinned archive) to your
+  own font folder when no icon font is here. It never overwrites a file or follows a link, a failure never stops the
+  install, and uninstall removes it while it is unchanged.
+- `litcodex install --glyphs auto|round|square` saves how pills end for `litcodex hud`, `litcodex run`, the install cards
+  and the sunset footer, which no environment variable reaches. The coloured chat card is round where `round` is saved.
+  `LITCODEX_HUD_GLYPHS` also takes these words.
+- Install, update and doctor end with one `ROUND_ENDS:` line: what holds here and the one thing that changes it.
+- `litcodex install --sunset-footer` turns the sunset footer on without a question.
+
+### Changed
+
+- A finished install tells you to restart Codex and to approve the LitCodex hooks, also without a terminal, and `--json`
+  gains `nextSteps` and `roundEnds`.
+
+### Fixed
+
+- The LIT chat card fits a phone's pane: the banner's label has its own row under the mark, the sun's line is 32 columns,
+  and the checklist, the workflow path, the goal question and the sunset hint stay within 44. A longer path goes on to a
+  second row, notes past 72 columns break between words, and a stage's pill at the end of a row keeps its end.
+  Hooks cannot measure the window, so these rows used to run on and break.
+- White terminals get words they can be read in. `litcodex hud` asks the terminal for its background and `litcodex run`
+  reads the answer Codex asked for; on a light one both draw plain lines with words in the window's own ink. The chat card
+  has saved choices, since a hook cannot see the window: `litcodex screen-status light` or `dark`, and `256` or
+  `truecolor`, both named by `litcodex sunset status`. Windows Terminal counts as truecolor for `hud` and `run`. The dark
+  look is the same as before.
+- A state looks the same everywhere: the LIT pill is amber while it is your turn and green once the work is done, in the
+  footer, the chat card, `litcodex hud` and `litcodex run`. An open goal question of this session counts as your turn.
+- The card at the end of a turn leaves out the path and the checklist when the last card showed the same ones, and names
+  the next task once. While a side run or research has the turn, the paused plan's checklist stays out. A skill's stage
+  is the same word on the path and on the paused row: `litgoal` is at work, `lit-crucible` at plan.
+- The footer's pill keeps square ends on terminals whose TERM names no colours to fill it.
+- Where the footer cannot measure the window, its path starts at the stage at work, so the cut falls on later stages.
+- Titles are cut between whole characters. A title whose cut fell inside an emoji made Codex refuse the hook's answer, and
+  the turn lost its LIT card and instructions.
+- The review lanes on the card carry the names of the lanes that are stored.
+- Decomposed Korean, flags and skin tones take the cells a terminal gives them, so the sun and the card's edges stay in
+  their columns, and a card row clears what an earlier one left in it.
+- Where the footer cannot measure the window, a long Korean folder name is cut at the edge and the sun stays whole.
+- `litcodex hud` brings its top lines back after a window was made low, and a window lower than its lines keeps the first
+  ones in place. The words on a paused or blocked stage can be read, the tree of lanes ends in its last branch with the
+  number left out, the age stays beside long folder and branch names, a branch may have any name git allows, and a long
+  tool name is cut so that its clock and the next task stay. Under 40 columns the hint says what to type in one line.
+- `litcodex run` says which LIT record it cannot read, as `litcodex hud` does.
+- A path in words ticks the last stage of finished work and leaves out a stage that was skipped.
+- The footer's path starts at the stage at work where the whole path is too wide. Before LIT runs, the branch, the context
+  and the thread's id are there as in Codex itself; where the window cannot be measured they stand on the second line. A
+  long tool name is cut and its clock stays whole, a one-line footer keeps the context while a tool runs, and a first item
+  that is too long is cut to half the line.
+
 ## [1.0.51] - 2026-11-25
 
 ### Fixed

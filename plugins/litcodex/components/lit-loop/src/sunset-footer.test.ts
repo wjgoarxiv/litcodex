@@ -6,8 +6,18 @@ import { afterEach, describe, expect, it } from "vitest";
 import { handleCardMessage } from "./card-mcp.js";
 import type { CardStatus } from "./card-status.js";
 import { displayWidth } from "./hud.js";
-import { countNodes, FOOTER_STATE_KEY, FOOTER_TOOL, FOOTER_URI, footerTree, type UiNode } from "./sunset-footer.js";
+import { endLiveStep, recordTurnStart, writeThreadPointer } from "./live-step.js";
+import {
+	countNodes,
+	FOOTER_STATE_KEY,
+	FOOTER_TOOL,
+	FOOTER_URI,
+	footerTree,
+	readFooter,
+	type UiNode,
+} from "./sunset-footer.js";
 import { readSunsetRecord, SUNSET_HINT, takeSunsetHint, writeSunsetRecord } from "./sunset-settings.js";
+import { recordWorkflowTurn, type WorkflowSignals, workflowMapCells } from "./workflow-map.js";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -74,8 +84,12 @@ const draw = (
 	now = 1_000,
 ) => footerTree(state, { now, size, caps: false, status: card });
 
+/** The words as a reader sees them: the joiners of an uncut line take no cell and Codex drops them. */
 function text(node: UiNode): string {
-	return typeof node === "string" ? node : node.children.map(text).join("");
+	return raw(node).replaceAll("\u2060", "");
+}
+function raw(node: UiNode): string {
+	return typeof node === "string" ? node : node.children.map(raw).join("");
 }
 function lines(node: UiNode): string[] {
 	if (typeof node === "string" || node.type !== "row" || node.props.wrap !== "wrap") return [text(node)];
@@ -132,11 +146,214 @@ describe("the sunset footer's shape", () => {
 		expect(countNodes(draw(snapshot(), null))).toBeLessThan(256);
 	});
 
+	it("gives Codex no place to break a word where the line may be cut, and spells the folder as it is", () => {
+		const items = ["model-with-reasoning", "project-name", "current-dir"];
+		for (const folder of ["한글폴더연구자료", "👍🏽❤️🇰🇷", "a/b", "หน้า"]) {
+			const state = snapshot("ready", items);
+			const cwd = folder.includes("/") ? `/w/${folder}` : `/w/${folder.normalize("NFD")}`;
+			const named = { ...state, thread: { ...state.thread, workspace: { cwd } } };
+			const tree = draw(named, null, null);
+			const name = (folder.split("/").at(-1) ?? "").normalize("NFC");
+			const unbroken = Array.from(new Intl.Segmenter().segment(name), (part) => part.segment).join("\u2060");
+			expect(raw(tree).split(unbroken)).toHaveLength(4);
+			expect(text(tree)).toContain(name);
+			expect(raw(draw(named, undefined, null))).not.toContain("\u2060");
+			expect(countNodes(tree)).toBeLessThan(256);
+		}
+		const path = draw({ ...snapshot(), thread: { ...snapshot().thread, workspace: { cwd: "/w/a/b" } } }, null, null);
+		expect(raw(path)).not.toMatch(/[^\u2060]\/[^\u2060]/u);
+	});
+
+	it("starts the path at the stage at work where the line may be cut", () => {
+		const stage = (word: string, state: "done" | "current" | "pending") => ({
+			key: word,
+			icon: "",
+			word,
+			state,
+			label: state === "current" ? word.toUpperCase() : null,
+			progress: null,
+		});
+		const map = {
+			family: "main" as const,
+			next: null,
+			cells: [
+				stage("interview", "done"),
+				stage("plan", "done"),
+				stage("work", "current"),
+				stage("review", "pending"),
+			],
+		};
+		expect(lines(draw(snapshot(), null, status({ map })))[1]?.slice(22)).toMatch(/^●\swork\s──\s○\sreview/u);
+		expect(lines(draw(snapshot(), { columns: 110, rows: 40 }, status({ map })))[1]).toMatch(/^✓\sinterview/u);
+	});
+
 	it("uses no plain space, which Codex drops at an element's edge, and only colours Codex knows", () => {
 		const tree = draw(snapshot());
 		expect(text(tree)).not.toContain(" ");
 		for (const color of colors(tree))
 			expect(color).toMatch(/^(?:#[0-9A-F]{6}|primary|accent|yellow|green|status-[a-z]+)$/u);
+	});
+});
+
+const tasks = (done: number, total: number, state: "active" | "paused" | "completed" = "active") => {
+	const signals: WorkflowSignals = {
+		work: { done, total, next: null, status: state },
+		goals: null,
+		plan: "published",
+		research: null,
+	};
+	return workflowMapCells("start-work", signals);
+};
+const at = (columns: number, rows = 40) => ({ columns, rows });
+const sky = /[▁▃▅▆▇█]/u;
+
+describe("a path wider than its line", () => {
+	const second = (columns: number, card: Partial<CardStatus>) =>
+		(lines(draw(snapshot(), at(columns), status(card)))[1] ?? "").replaceAll("\u00a0", " ");
+
+	it("starts at the stage at work, with its whole count", () => {
+		for (let columns = 64; columns <= 80; columns++) {
+			expect(second(columns, { map: tasks(118, 240) }), String(columns)).toMatch(/^● work 118\/240 ── ○ rev/u);
+			expect(second(columns, { map: tasks(118, 240, "paused") })).toMatch(/^● work paused 118\/240 /u);
+			expect(
+				second(columns, {
+					map: workflowMapCells("review-work", {
+						work: { done: 5, total: 5, next: null, status: "completed" },
+						goals: null,
+						plan: "published",
+						research: null,
+					}),
+				}),
+			).toMatch(/^● review/u);
+		}
+		expect(second(110, { map: tasks(118, 240) })).toMatch(
+			/^✓ interview ── ✓ plan ── ● work 118\/240 ── ○ review ── ○ done/u,
+		);
+	});
+
+	it("ticks no stage over one left open once the work is done", () => {
+		const card = { map: tasks(5, 5, "completed"), state: "complete", look: "done", working: false } as const;
+		expect(second(110, card)).toMatch(/^✓ interview ── ✓ plan ── ✓ work ── ✓ done /u);
+	});
+});
+
+describe("the items of a thread before its first turn", () => {
+	const items = ["git-branch", "context-remaining", "context-used", "thread-title", "approval-mode"];
+	const fresh = () => {
+		const state = snapshot("ready", items);
+		return { ...state, thread: { ...state.thread, usage: {}, approval: { policy: "on-request" } } };
+	};
+	const said = (branch: string | null, size: { columns: number; rows: number } | null = at(114)) =>
+		lines(footerTree(fresh(), { now: 1_000, size, caps: false, status: null, branch })).map((line) =>
+			line.replaceAll("\u00a0", " "),
+		);
+
+	it("are the ones Codex itself would show", () => {
+		const rows = said("기능/한글-#12");
+		expect(rows[1]).toMatch(/^shop · 기능\/한글-#12 /u);
+		expect(rows.join("\n").replaceAll("\u2060", "")).toContain(
+			"기능/한글-#12  ctx 100%  context 0% used  t1  Ask for approval",
+		);
+		const named = { ...fresh(), thread: { ...fresh().thread, name: "한글 이름" } };
+		expect(text(draw(named, at(114), null))).toContain("한글\u00a0이름");
+	});
+
+	it("read the branch from the thread's folder", () => {
+		const cwd = dir();
+		mkdirSync(join(cwd, ".git"));
+		writeFileSync(join(cwd, ".git/HEAD"), "ref: refs/heads/fix/#42\n");
+		const state = { ...fresh(), thread: { ...fresh().thread, workspace: { cwd } } };
+		const tree = readFooter({ _meta: { [FOOTER_STATE_KEY]: state } }, { HOME: dir(), CODEX_HOME: dir() }, 4_000);
+		expect(text(tree)).toContain("fix/#42");
+	});
+
+	it("come second where no terminal says how low it is, so a low one keeps them", () => {
+		const rows = said("main", null).map((line) => line.slice(22));
+		expect(rows[1]).toContain("ctx 100%");
+		expect(rows[2]).toMatch(/^shop · main/u);
+		const lit = lines(draw(snapshot(), null, status({ map: tasks(2, 5) })));
+		expect(lit[1]?.slice(22)).toMatch(/^●\swork/u);
+		expect(lit[2]).toContain("gpt");
+	});
+});
+
+describe("what gives way on a short line", () => {
+	const plain = (...args: Parameters<typeof draw>) =>
+		lines(draw(...args)).map((line) => line.replaceAll("\u00a0", " "));
+	const step = { tool: "my-gateway · search_documents_with_filters", startedAt: -633_000 };
+
+	it("ends a line of unknown width at its last word or sky cell", () => {
+		for (const card of [null, status(), status({ map: tasks(2, 5) })])
+			for (let now = 0; now < 20_000; now += 1_300)
+				for (const line of plain(snapshot(), null, card, now)) expect(line).toBe(line.trimEnd());
+	});
+
+	it("cuts the tool's name and keeps its whole clock, or leaves the step out", () => {
+		for (let columns = 24; columns <= 120; columns++) {
+			const first = plain(snapshot(), at(columns), status({ step }))[0] ?? "";
+			const words = first.split(sky)[0] ?? "";
+			if (words.includes(" · ")) expect(words, String(columns)).toMatch(/working · \S.* 10:43(?: |$)/u);
+			else expect(words).not.toContain("10:");
+		}
+		expect(plain(snapshot(), at(110), status({ step }))[0]).toMatch(/working · my-gateway · search\S*… 10:43/u);
+		expect(plain(snapshot(), at(64), status({ step: { tool: "Bash", startedAt: 4_000 } }))[0]).not.toMatch(
+			/Bash 0(?!:06)/u,
+		);
+		expect(plain(snapshot(), null, status({ step }))[0]?.trimEnd()).toMatch(/… 10:43/u);
+	});
+
+	it("keeps the context figure of a one-line footer while a tool runs", () => {
+		const state = snapshot("working", ["model-with-reasoning", "context-remaining", "project-name"]);
+		for (const tool of ["Bash", step.tool])
+			for (let columns = 40; columns <= 63; columns++) {
+				const idle = plain(state, at(columns), status())[0] ?? "";
+				const busy = plain(state, at(columns), status({ step: { tool, startedAt: 4_000 } }))[0] ?? "";
+				if (idle.includes("ctx 82%")) expect(busy, String(columns)).toContain("ctx 82%");
+				expect(displayWidth(busy)).toBeLessThanOrEqual(columns - 4);
+			}
+	});
+
+	it("shows the context before the model while work runs and only one of them fits", () => {
+		const state = snapshot("working", ["model", "context-remaining", "project-name"]);
+		for (let columns = 39; columns <= 63; columns++) {
+			const busy = plain(state, at(columns), status())[0] ?? "";
+			if (/gpt-6|shop/u.test(busy)) expect(busy, String(columns)).toMatch(/ctx 82%|context 82% left/u);
+		}
+		expect(plain(state, at(40), status())[0]).toContain("ctx 82%");
+	});
+
+	it("cuts a first item that is too long to half the room, and keeps the next one", () => {
+		const state = snapshot("ready", ["model", "project-name"]);
+		const long = { ...state, thread: { ...state.thread, model: { display_name: "local-lab-".repeat(6) } } };
+		expect(plain(long, at(80))[2]).toMatch(/^local-lab-local-lab\S*… {2}shop /u);
+	});
+
+	it("keeps the sun in line beside a name of flags and skin tones", () => {
+		const state = snapshot("ready");
+		const named = { ...state, thread: { ...state.thread, workspace: { cwd: "/w/🇰🇷-👍🏽-app" } } };
+		for (const line of lines(draw(named, at(100), null))) expect(displayWidth(line)).toBe(96);
+	});
+
+	it("stays at 256 nodes with every long thing at once", () => {
+		const state = snapshot("working", [
+			"model",
+			"git-branch",
+			"project-name",
+			"thread-title",
+			"context-remaining",
+			"approval-mode",
+		]);
+		const full = {
+			...state,
+			thread: { ...state.thread, name: "한글 ".repeat(40), workspace: { cwd: `/w/${"긴이름".repeat(30)}` } },
+		};
+		for (const size of [null, ...[30, 52, 64, 80, 110, 200].map((columns) => at(columns))])
+			for (let now = 0; now < 30_000; now += 1_100)
+				for (const card of [
+					status({ step, map: tasks(118, 240), branch: "기능/한글-#12@a+b" }),
+					status({ state: "ready", mode: null, branch: "기능/한글-#12@a+b" }),
+				])
+					expect(countNodes(draw(full, size, card, now))).toBeLessThanOrEqual(256);
 	});
 });
 
@@ -220,6 +437,20 @@ describe("the card server's footer", () => {
 		const [content] = read["contents"] as { uri: string; mimeType: string; text: string }[];
 		expect(content).toMatchObject({ uri: FOOTER_URI, mimeType: "application/json" });
 		expect(text(JSON.parse(content?.text ?? "") as UiNode)).toContain("working");
+	});
+});
+
+describe("a Codex home outside the user's home", () => {
+	it("gives the footer its LIT records", () => {
+		const [home, codexHome, cwd] = [dir(), dir(), dir()];
+		const env = { HOME: home, CODEX_HOME: codexHome };
+		writeThreadPointer(env, "t1", cwd, 1_000);
+		recordWorkflowTurn(cwd, "t1", "turn-1", "lit-loop", 1_000);
+		recordTurnStart(cwd, "t1", 1_000);
+		endLiveStep(cwd, "t1", 3_000);
+		const params = { _meta: { [FOOTER_STATE_KEY]: snapshot("ready") } };
+		expect(text(readFooter(params, env, 4_000))).toMatch(/lit.loop/u);
+		expect(text(readFooter(params, { HOME: home }, 4_000))).not.toMatch(/lit.loop/u);
 	});
 });
 

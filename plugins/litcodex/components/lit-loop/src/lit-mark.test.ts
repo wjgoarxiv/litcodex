@@ -23,13 +23,14 @@ const fixtureBytes = readFileSync(fixturePath);
 const fixture = JSON.parse(fixtureBytes.toString("utf8")) as Record<"standard" | "banner" | "micro", CellRow[]>;
 // Independent pin of the selected B study; changing copied rows cannot redefine the oracle.
 const ROWS_SHA256 = "e7f3e2be168bedc5c15836d105ffed570f3bfd8745522502293de8718f503aec";
-const PREVIOUS_PLAIN_ACTIVATION = [
+const PLAIN_ACTIVATION = [
 	"",
 	"▗▖  ▄▄ █▌".padEnd(12),
 	"▐▌▗█▀▀▀▀▀▀▘".padEnd(12),
-	`${"▐▌ ▄▌▀▝▀▀▘".padEnd(12)}  🔥 LIT IGNITED · lit-loop 🔥`,
+	"▐▌ ▄▌▀▝▀▀▘".padEnd(12),
 	"▐▌▛▘  ▐▌".padEnd(12),
 	"▝▀▀▘  ▝▘".padEnd(12),
+	"🔥 LIT IGNITED · lit-loop 🔥",
 ].join("\n");
 const PALETTE: Record<string, { rgb: string; ansi256: number }> = {
 	"#FF6337": { rgb: "255;99;55", ansi256: 203 },
@@ -129,7 +130,12 @@ describe("canonical Ignition B LIT mark", () => {
 		expect(supportsBlocks({ LANG: "ko_KR.UTF-8" })).toBe(true);
 		expect(supportsBlocks({ LANG: "C", LC_ALL: "en_US.utf8" })).toBe(true);
 	});
-	it("preserves the previous plain activation bytes regardless of terminal color settings", () => {
+	it("puts the label under the mark, so no pane a phone has breaks the mark", () => {
+		const rows = activationMessage("lit-scientific-visualization").split("\n");
+		expect(rows.slice(1, 6).map((row) => row.trimEnd())).toEqual(micro.map((row) => row.trimEnd()));
+		expect(rows.slice(6)).toEqual(["🔥 LIT IGNITED · lit-scientific-visualization 🔥"]);
+	});
+	it("prints the same plain activation bytes regardless of terminal color settings", () => {
 		const environments = [
 			{ LANG: "en_US.UTF-8", TERM: "xterm-256color", COLORTERM: "truecolor" },
 			{ LANG: "en_US.UTF-8", TERM: "xterm-256color", COLORTERM: "truecolor", NO_COLOR: "1" },
@@ -139,7 +145,7 @@ describe("canonical Ignition B LIT mark", () => {
 		for (const env of environments) {
 			const message = activationMessage("lit-loop", env);
 			expect(message).not.toContain("\x1b");
-			expect(message).toBe(PREVIOUS_PLAIN_ACTIVATION);
+			expect(message).toBe(PLAIN_ACTIVATION);
 		}
 	});
 	it.each([{ NO_COLOR: "" }, { NO_COLOR: "1" }, { CI: "1" }, { TERM: "dumb" }])(

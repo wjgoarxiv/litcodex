@@ -16,6 +16,7 @@ import { PathRobustnessError } from "./errors.mjs";
 import { expectedInstallPlan } from "./install-plan.mjs";
 import { defaultScanRoots, scanForbiddenPathPatterns } from "./no-import-meta-pathname.mjs";
 import { runPathRobustness } from "./runner.mjs";
+import { withoutAgentPointer } from "./smoke-battery.mjs";
 
 const repoRoot = process.cwd();
 
@@ -97,7 +98,7 @@ describe("full path-robustness suite on built artifacts", () => {
 		const probe = c.probes.find((p) => p.probe === "install-dry-run");
 		assert.equal(probe.ok, true, `install-dry-run failures: ${JSON.stringify(probe.failures)}`);
 		assert.match(probe.stdout, /litcodex install plan \(Codex\)/);
-		assert.ok(!/\bnpx\b/.test(probe.stdout), "no npx forwarder line");
+		assert.ok(!/\bnpx\b/.test(withoutAgentPointer(probe.stdout)), "no npx forwarder line");
 	});
 
 	it("hook-activate loads the directive from the hostile-path staged ../directive.md (G6)", async () => {

@@ -49,4 +49,14 @@ describe("comment-checker hook newline rendering", () => {
 		});
 		expect(output).not.toContain("\r");
 	});
+
+	it("#given a warning with a character on the cut or half of one #when hook runs #then Codex can read the feedback", async () => {
+		for (const message of ["🚀".repeat(9_000), `x${"🚀".repeat(9_000)}`, "a\ud83db"]) {
+			const output = await runCommentCheckerPostToolUse(postToolUseInput(), {
+				run: async () => ({ status: "warning", message }),
+			});
+			expect(output).not.toMatch(/\\ud[89a-f]/iu);
+			expect(JSON.parse(output)).toHaveProperty("reason");
+		}
+	});
 });

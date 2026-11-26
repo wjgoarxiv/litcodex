@@ -179,9 +179,12 @@ function probeInstallDryRun(ctx) {
 	return probeResult("install-dry-run", run, failures);
 }
 
+/** The pointer to the guide for coding agents names the published command; it is the one such line. */
+export const withoutAgentPointer = (stdout) => stdout.replace(/^Agent\? See .*\n/m, "");
+
 /** Self-contained installer prints a plan, NEVER an npx forwarder line (A3 D1). */
 function checkNotContainsNpx(stdout) {
-	return /\bnpx\b/.test(stdout) ? `install-dry-run: unexpected npx forwarder line present` : null;
+	return /\bnpx\b/.test(withoutAgentPointer(stdout)) ? `install-dry-run: unexpected npx forwarder line present` : null;
 }
 
 /**

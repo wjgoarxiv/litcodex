@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { type CardStatus, cardStatusText } from "./card-status.js";
+import { clean, clipped, hookJson } from "./control-chars.js";
 import { cleanStatus, renderHud } from "./hud.js";
 import { collectRewind, renderBrief } from "./rewind.js";
 
@@ -27,6 +28,28 @@ function strings(value: unknown): string[] {
 const roots: string[] = [];
 afterEach(() => {
 	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+});
+
+describe("a text taken from a record", () => {
+	it("loses a whole colour code and half a character, and keeps every other letter", () => {
+		expect(clean(`${ESC}[1;31mred${ESC}[0m [31m] \u009b4mline`)).toBe("red [31m] line");
+		expect(clean("a\ud83db\ude80c🚀")).toBe("abc🚀");
+	});
+
+	it("is cut between whole characters", () => {
+		expect(clipped("abc", 3)).toBe("abc");
+		expect(clipped("abcd", 3)).toBe("abc");
+		expect(clipped("ab🚀", 3)).toBe("ab");
+		expect(clipped("a\u1100\u1161\u11a8b", 3)).toBe("a");
+		expect(clipped("👩‍💻", 3)).toBe("");
+	});
+
+	it("is replaced in hook output only where half a character stands", () => {
+		const whole = JSON.stringify({ text: "🚀 \\ud83d \\\\ud83d" });
+		expect(hookJson(whole)).toBe(whole);
+		const half = JSON.stringify({ text: "a\ud83db \\\ude80" });
+		expect(JSON.parse(hookJson(half))).toEqual({ text: "a\ufffdb \\\ufffd" });
+	});
 });
 
 describe("the rewind brief prints repo and rollout text as inert data", () => {

@@ -222,7 +222,11 @@ function reasonFor(code: string): string {
 }
 
 function stepOf(boundary: AuthorityBoundary): string {
-	return `${inert(boundary.action)} ${inert(boundary.root).slice(0, 120)}`;
+	// Half a character in the JSON makes Codex refuse the whole hook output.
+	const root = inert(boundary.root)
+		.slice(0, 120)
+		.replace(/[\ud800-\udfff]/gu, "");
+	return `${inert(boundary.action)} ${root}`;
 }
 
 function listOf(boundaries: readonly AuthorityBoundary[]): string {

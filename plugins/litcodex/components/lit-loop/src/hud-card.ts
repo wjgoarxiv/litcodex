@@ -14,7 +14,7 @@
 // LIT works or for the moment a plan completes. Record text is data: controls, format characters and private
 // glyphs never reach the terminal.
 
-import { LANE_COLORS, laneColor, REVIEW_LANE_NAMES } from "./card-looks.js";
+import { LANE_COLORS, laneColor, REVIEW_LANE_IDS } from "./card-looks.js";
 import { type CardStatus, clock } from "./card-status.js";
 import { cells, displayWidth, type HudView } from "./hud.js";
 import {
@@ -37,6 +37,7 @@ import {
 	words,
 } from "./hud-paint.js";
 import { AMBER, DUSK, layoutSunset, SUN_ROWS, SUN_WIDTH, sunFits, sunLeft, WHEEL } from "./hud-sunset.js";
+import { STATE_COLOURS } from "./state-colours.js";
 import type { ThreadRow, ThreadState } from "./threads.js";
 import type { MapCell } from "./workflow-map.js";
 
@@ -78,7 +79,7 @@ const ROSE: Color = 0xff6fae;
 const MUTED_INK: Color = 0xb6bec8;
 const WARM: readonly Color[] = [FLAME, ROSE, ACCENT];
 const NEON: readonly Color[] = [PINK, VIOLET, ACCENT];
-const LIT_GREEN: readonly Color[] = [0x3ddc84, 0x7cf5b0, 0xb8ffd9];
+const LIT_GREEN: readonly Color[] = STATE_COLOURS.done.pill;
 const UNSAFE = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}\p{Cs}\p{Co}]/gu;
 
 type Look = "work" | "quiet" | "turn" | "rewind" | "done" | "lit";
@@ -207,17 +208,16 @@ function track(stages: readonly MapCell[], look: Look, form: TrackForm, caps: bo
 		const name = stageName(cell);
 		if (cell.state === "current") {
 			const paused = cell.label === "PAUSED";
+			const muted = paused && look !== "rewind" && look !== "turn";
 			const stops =
 				look === "rewind"
 					? [mix(wheelAt(0.45), WHITE, 0.3), mix(wheelAt(0.7), WHITE, 0.3)]
 					: look === "turn"
 						? AMBER.stage
-						: paused
+						: muted
 							? [MUTED, MUTED]
 							: DUSK.stage.map((color) => (resting ? mix(color, MUTED, 0.25) : color));
-			row.push(
-				...pill(`${paused ? "|| " : ""}${name}${countOf(cell)}`, stops, caps, paused ? MUTED_INK : undefined),
-			);
+			row.push(...pill(`${paused ? "|| " : ""}${name}${countOf(cell)}`, stops, caps, muted ? MUTED_INK : undefined));
 		} else if (cell.state === "pending") {
 			row.push(...words(form.near === true ? name : `${name} ${ended ? "-" : "·"}`, DIM));
 		} else {
@@ -253,27 +253,29 @@ function laneDots(status: CardStatus, moving: boolean, seconds: number): Cell[] 
 }
 
 const SPINNER = "-\\|/";
+/** A tool's name keeps this many cells. */
+const TOOL_MIN = 4;
 
-/** The tool running now, else the turn's own clock or length. */
-function liveStep(status: CardStatus, moving: boolean, seconds: number): Cell[] {
+/** The tool running now, else the turn's own clock or length; only the tool's name gives way to `room`. */
+function liveStep(status: CardStatus, moving: boolean, seconds: number, room: number): Cell[] {
+	const named = (text: string, color: Color, style: { bold?: boolean }, around: number): Cell[] =>
+		cut(words(safe(text), color, style), Math.max(TOOL_MIN, room - around));
 	const spin = SPINNER[moving ? Math.floor(seconds * 4) % SPINNER.length : 0] ?? "-";
 	const lead = words(`${spin} `, ACCENT, { bold: true });
 	if (status.state === "ready") return [];
 	if (status.step !== null) {
-		return [
-			...lead,
-			...words(safe(status.step.tool), TEXT, { bold: true }),
-			...words(` · ${clock(status.now - status.step.startedAt)}`, DIM),
-		];
+		const tail = words(` · ${clock(status.now - status.step.startedAt)}`, DIM);
+		return [...lead, ...named(status.step.tool, TEXT, { bold: true }, lead.length + tail.length), ...tail];
 	}
 	if (status.working && status.turnStartedAt !== null)
 		return [...lead, ...words("turn ", DIM), ...words(clock(status.now - status.turnStartedAt), TEXT)];
-	if (status.turnStartedAt !== null && status.turnEndedAt !== null)
-		return [
-			...(status.lastTool === null ? [] : words(`last ${safe(status.lastTool)} · `, DIM)),
-			...words("turn ", DIM),
-			...words(clock(status.turnEndedAt - status.turnStartedAt), TEXT),
-		];
+	if (status.turnStartedAt !== null && status.turnEndedAt !== null) {
+		const tail = [...words("turn ", DIM), ...words(clock(status.turnEndedAt - status.turnStartedAt), TEXT)];
+		if (status.lastTool === null) return tail;
+		const [before, after] = [words("last ", DIM), words(" · ", DIM)];
+		const around = before.length + after.length + tail.length;
+		return [...before, ...named(status.lastTool, DIM, {}, around), ...after, ...tail];
+	}
 	return [];
 }
 
@@ -286,7 +288,7 @@ function reviewMarks(status: CardStatus, room: number): Cell[] {
 		lanes.flatMap((state, index) => {
 			const base = Number.parseInt((LANE_COLORS[index] ?? "#8b949e").slice(1), 16);
 			const color = state === "fail" ? RED : state === "dim" ? DIM : base;
-			const name = (REVIEW_LANE_NAMES[index] ?? "").slice(0, letters);
+			const name = (REVIEW_LANE_IDS[index] ?? "").slice(0, letters);
 			return [
 				...(index > 0 ? words(" ", DIM) : []),
 				...words(name === "" ? "" : `${name} `, state === "dim" ? DIM : TEXT),
@@ -373,8 +375,17 @@ function treeRows(status: CardStatus): readonly TreeRow[] {
 const SLIVER = 5;
 const pad = (text: string, width: number): string => text + " ".repeat(Math.max(0, width - displayWidth(text)));
 
-function threadRows(status: CardStatus, look: Look, inner: number, caps: boolean): Row[] {
-	const tree = treeRows(status);
+/** The first `limit` threads of the tree, the last of them its last branch. */
+function shortTree(tree: readonly TreeRow[], limit: number): readonly TreeRow[] {
+	const kept = tree.filter((line) => line.row !== undefined).slice(0, limit);
+	return kept.map((line, index) => (index === limit - 1 ? { ...line, lead: line.lead.replace("├", "└") } : line));
+}
+
+/** With a `limit`, the rows of that many threads, the last one saying how many more there are. */
+function threadRows(status: CardStatus, look: Look, inner: number, caps: boolean, limit = Infinity): Row[] {
+	const whole = treeRows(status);
+	const all = whole.filter((line) => line.row !== undefined).length;
+	const tree = limit < all ? shortTree(whole, limit) : whole;
 	const rows = tree.flatMap((line) => (line.row === undefined ? [] : [line.row]));
 	if (rows.length === 0) return [];
 	const parsed = new Map(
@@ -397,7 +408,7 @@ function threadRows(status: CardStatus, look: Look, inner: number, caps: boolean
 	const needed = leadWidth + 2 + nameWidth + column(barWidth) + column(saidWidth);
 	const showStage = stageWidth > 0 && needed + column(stageWidth) <= inner;
 	const showState = needed + column(stageWidth) + column(stateWidth) <= inner;
-	const more = status.threads?.more ?? 0;
+	const more = (status.threads?.more ?? 0) + Math.max(0, all - limit);
 	return tree.map((line, index) => {
 		const draw = (seconds: number): Cell[] => {
 			const tail = index === tree.length - 1 && more > 0 ? words(`+${more} more`, DIM) : [];
@@ -438,7 +449,7 @@ function threadRows(status: CardStatus, look: Look, inner: number, caps: boolean
 				...(showState ? [BLANK, ...words(row.state, color)] : []),
 				...(row.session === undefined ? [] : words(" · in another session", DIM)),
 			];
-			return ends(body, tail, inner);
+			return ends(tail.length > 0 ? cut(body, inner - tail.length - 2) : body, tail, inner);
 		};
 		return { kind: line.row === undefined ? ("fork" as const) : ("thread" as const), draw };
 	});
@@ -508,7 +519,8 @@ function figures(view: HudView, look: Look, now: number, caps: boolean): Figure[
 		if (percent !== null)
 			parts.push({ cells: [...words(`${label} `, DIM), ...words(`${percent}%`, level(percent))] });
 	}
-	if (status?.branch) parts.push({ cells: [...words("git ", DIM), ...cut(words(safe(status.branch), tint), 24)] });
+	if (status?.branch)
+		parts.push({ cells: [...words("git ", DIM), ...cut(words(safe(status.branch), tint), 24)], yields: true });
 	if (session !== null) {
 		const folder = safe(session.folder);
 		parts.push({
@@ -529,6 +541,8 @@ interface Figure {
 	readonly tail?: boolean;
 	/** A shorter form for `room` cells, or null. */
 	readonly shrunk?: (room: number) => Cell[] | null;
+	/** Left out where a later figure would have no place beside it. */
+	readonly yields?: boolean;
 }
 
 /**
@@ -559,7 +573,18 @@ function bottomGroups(
 	const shown = line(left);
 	const start = gap === null ? shown.length + 6 : gap[1];
 	const rest = next < parts.length && (gap !== null || parts[next]?.tail === true) ? parts.slice(next) : [];
-	while (rest.length > 0 && line(rest).length > width - 4 - start) rest.pop();
+	const room = width - 4 - start;
+	while (rest.length > 0 && line(rest).length > room) {
+		// A folder or branch with no room of its own goes before the age beside it does.
+		const named = rest.filter((part) => part.tail !== true);
+		const gone = named.length > 0 && line(named).length > room ? named.length - 1 : rest.length - 1;
+		rest.splice(gone, 1);
+	}
+	if (parts.slice(next).some((part) => part.yields === true && !rest.includes(part))) {
+		const firm = parts.filter((part) => part.yields !== true);
+		const without = bottomGroups(firm, width, gap);
+		if (without[0].length > shown.length) return without;
+	}
 	return [shown, line(rest)];
 }
 
@@ -687,13 +712,15 @@ export function composeCard(view: HudView, options: CardOptions): HudCard {
 		} else if (status.threads && status.threads.laneCount > 0) {
 			rows.push({ kind: "map", draw: (seconds) => ends(laneDots(status, moving, seconds), [], inner) });
 		}
-		const right = liveStep(status, moving, 0);
+		// Half the row is the most a long tool's name takes from the task beside it.
+		const half = Math.floor(inner / 2);
+		const right = liveStep(status, moving, 0, half);
 		const shown = right.length + 14 <= inner;
 		const left = detail(status, look, caps, inner - (shown && right.length > 0 ? right.length + 2 : 0));
 		if (left.length > 0 || right.length > 0) {
 			rows.push({
 				kind: "detail",
-				draw: (seconds) => ends(left, shown ? liveStep(status, moving, seconds) : [], inner),
+				draw: (seconds) => ends(left, shown ? liveStep(status, moving, seconds, half) : [], inner),
 			});
 		}
 		rows.push(...threadRows(status, look, inner, caps));
@@ -715,6 +742,12 @@ export function composeCard(view: HudView, options: CardOptions): HudCard {
 
 	const room = options.rows - 2;
 	let body = rows.length > room ? keepRows(rows, options.rows === 2 ? 1 : room) : rows;
+	const threads = (of: readonly Row[]): number => of.filter((row) => row.kind === "thread").length;
+	const shownThreads = threads(body);
+	if (status !== null && shownThreads > 0 && shownThreads < threads(rows)) {
+		const short = threadRows(status, look, inner, caps, shownThreads);
+		body = body.map((row) => (row.kind === "thread" ? (short.shift() ?? row) : row));
+	}
 	const blank: Row = { kind: "blank", draw: () => Array<Cell>(inner).fill(BLANK) };
 	const wide = width >= SUN_MIN;
 	if (wide && body.length === rows.length) {
@@ -773,13 +806,15 @@ export function composeCard(view: HudView, options: CardOptions): HudCard {
 	const word = idleDock ? words("READY", DIM, { bold: true }) : stateWord(view, look);
 	const brand =
 		look === "turn"
-			? brandPill(caps, [0xffaf3c, 0xffd98a])
-			: look === "rewind"
-				? brandPill(
-						caps,
-						WHEEL.map((color) => mix(color, WHITE, 0.3)),
-					)
-				: brandPill(caps);
+			? brandPill(caps, STATE_COLOURS.turn.pill)
+			: look === "done" || look === "lit"
+				? brandPill(caps, STATE_COLOURS.done.pill)
+				: look === "rewind"
+					? brandPill(
+							caps,
+							WHEEL.map((color) => mix(color, WHITE, 0.3)),
+						)
+					: brandPill(caps);
 	const nameColor = look === "quiet" ? TEXT : look === "turn" ? AMBER_INK : look === "rewind" ? TEXT : ACCENT;
 	const title = words(idleDock ? "ready" : titleOf(view), nameColor, { bold: true });
 	const fixed = 3 + brand.length + 3 + 1 + 1;

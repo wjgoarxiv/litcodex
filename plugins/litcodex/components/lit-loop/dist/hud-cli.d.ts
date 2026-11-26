@@ -1,4 +1,4 @@
-export declare const HUD_HELP_TEXT = "litcodex hud [--session <id>] [--once]\n\nWatch the LIT card of your newest Codex session from a second terminal window or tab.\nIt reads LIT's own records and, for the context and limit figures, the end of that session's Codex log.\nIt never writes a file and never touches Codex. Ctrl-C quits.\n\nOptions:\n  --session <id>   Follow this session (an exact id or a unique prefix) instead of the newest.\n  --once           Print one plain frame and exit.\n  --help           Show this help.\n\nLITCODEX_HUD_GLYPHS=auto|nerd|basic sets round ends on pills and gauges (auto looks for an icon font).\n";
+export declare const HUD_HELP_TEXT = "litcodex hud [--session <id>] [--once]\n\nWatch the LIT card of your newest Codex session from a second terminal window or tab.\nIt reads LIT's own records and, for the context and limit figures, the end of that session's Codex log.\nIt never writes a file and never touches Codex. Ctrl-C quits.\n\nOptions:\n  --session <id>   Follow this session (an exact id or a unique prefix) instead of the newest.\n  --once           Print one plain frame and exit.\n  --help           Show this help.\n\nLITCODEX_HUD_GLYPHS=auto|round|square sets the ends of pills and gauges (auto looks for an icon font); nerd and basic\nmean round and square. Without it the choice saved by litcodex install --glyphs holds.\n";
 export interface HudOutput {
     write(text: string): unknown;
     readonly isTTY?: boolean;
@@ -12,6 +12,7 @@ export interface HudLoopOptions {
     readonly out: HudOutput;
     readonly color: boolean;
     readonly truecolor?: boolean;
+    readonly light?: boolean;
     /** Draw the sunset: a dark truecolor terminal. */
     readonly scene?: boolean;
     readonly now: () => number;
@@ -35,7 +36,17 @@ interface HudSignals {
     on(event: string, listener: (...args: unknown[]) => void): unknown;
     off(event: string, listener: (...args: unknown[]) => void): unknown;
 }
+/** The keyboard; left alone where it is no terminal. */
+export interface HudInput {
+    readonly isTTY?: boolean;
+    setRawMode?(mode: boolean): unknown;
+    resume(): unknown;
+    pause(): unknown;
+    on(event: string, listener: (data: unknown) => void): unknown;
+    removeListener(event: string, listener: (data: unknown) => void): unknown;
+}
 export interface HudIo {
+    readonly stdin?: HudInput;
     readonly stdout: HudOutput;
     readonly stderr: {
         write(text: string): unknown;
@@ -43,6 +54,8 @@ export interface HudIo {
     readonly env: NodeJS.ProcessEnv;
     readonly signals?: HudSignals;
     readonly now?: () => number;
+    /** Stops this job for the shell. */
+    readonly suspend?: () => void;
 }
 export declare function hudCommand(args: readonly string[], io: HudIo): Promise<number>;
 export {};

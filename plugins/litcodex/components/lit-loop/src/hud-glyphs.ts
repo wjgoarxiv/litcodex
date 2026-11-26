@@ -1,21 +1,17 @@
 // src/hud-glyphs.ts — whether pills and gauges of the HUD and the installer end in round caps (U+E0B6, U+E0B4).
 //
-// `LITCODEX_HUD_GLYPHS` is `nerd` (always round), `basic` (never) or `auto`: round in a terminal known to draw
+// The choice (glyph-choice.ts) is `round` (always), `square` (never) or `auto`: round in a terminal known to draw
 // the caps itself, or when an icon font is installed on this machine, told by font file names alone. Over SSH
-// the fonts here are not the ones on screen, so only the terminal's own word counts.
+// the fonts here are not the ones on screen, so only the terminal's own word counts; a chosen `round` holds there too.
 
 import { readdirSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
+import { chosenGlyphs } from "./glyph-choice.js";
 
 const MAX_ENTRIES = 4_000;
 const MAX_DEPTH = 3;
 const FONT_FILE = /\.(?:ttf|otf|ttc)$/iu;
 const ICON_FONT = /[Nn]erd[ _-]?[Ff]ont|[a-z0-9 _-]NF[MP]?[ _.-]/u;
-
-function setting(env: NodeJS.ProcessEnv): "nerd" | "basic" | "auto" {
-	const value = (env["LITCODEX_HUD_GLYPHS"] ?? "").toLowerCase();
-	return value === "nerd" || value === "basic" ? value : "auto";
-}
 
 /** Terminals that draw the two caps without any font. */
 export function drawsRoundCaps(env: NodeJS.ProcessEnv): boolean {
@@ -24,12 +20,23 @@ export function drawsRoundCaps(env: NodeJS.ProcessEnv): boolean {
 
 /** Whether every pill, gauge and button uses the caps: the one answer for the HUD and the installer. */
 export function roundGlyphs(env: NodeJS.ProcessEnv, iconFont: () => boolean = () => hasIconFont(env)): boolean {
-	const chosen = setting(env);
-	if (chosen !== "auto") return chosen === "nerd";
-	if (drawsRoundCaps(env) || /^(?:wezterm|ghostty)$/iu.test(env["TERM_PROGRAM"] ?? "")) return true;
-	if (env["TERM"] === "xterm-kitty" || (env["KITTY_WINDOW_ID"] ?? "") !== "") return true;
+	const chosen = chosenGlyphs(env);
+	if (chosen !== "auto") return chosen === "round";
+	if (terminalDrawsCaps(env)) return true;
 	if ((env["SSH_CONNECTION"] ?? "") !== "") return false;
 	return iconFont();
+}
+
+/** Whether this terminal is known to draw the caps, with or without a font. */
+export function terminalDrawsCaps(env: NodeJS.ProcessEnv): boolean {
+	if (drawsRoundCaps(env) || /^(?:wezterm|ghostty)$/iu.test(env["TERM_PROGRAM"] ?? "")) return true;
+	return env["TERM"] === "xterm-kitty" || (env["KITTY_WINDOW_ID"] ?? "") !== "";
+}
+
+/** `XDG_DATA_HOME` when it is usable: its specification says to ignore a relative one. */
+export function xdgDataHome(env: NodeJS.ProcessEnv): string | null {
+	const dir = env["XDG_DATA_HOME"] ?? "";
+	return isAbsolute(dir) ? dir : null;
 }
 
 function fontFolders(env: NodeJS.ProcessEnv, platform: NodeJS.Platform): string[] {
@@ -38,8 +45,9 @@ function fontFolders(env: NodeJS.ProcessEnv, platform: NodeJS.Platform): string[
 	if (platform === "darwin") return [...under(home, "Library", "Fonts"), "/Library/Fonts"];
 	if (platform === "win32")
 		return [...under(env["LOCALAPPDATA"], "Microsoft", "Windows", "Fonts"), ...under(env["WINDIR"], "Fonts")];
+	const data = xdgDataHome(env);
 	return [
-		...(env["XDG_DATA_HOME"] ? under(env["XDG_DATA_HOME"], "fonts") : under(home, ".local", "share", "fonts")),
+		...(data === null ? under(home, ".local", "share", "fonts") : under(data, "fonts")),
 		...under(home, ".fonts"),
 		"/usr/local/share/fonts",
 		"/usr/share/fonts",

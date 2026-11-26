@@ -55,6 +55,16 @@ To try LitCodex without touching your existing settings, follow the
 [isolated trial guide](./npm-migration.md#isolated-local-trial). It gives the trial a whole home of its
 own, because with only `CODEX_HOME` changed, settings in your existing home can still be found.
 
+### Round ends
+
+LIT's pills end in two symbols most fonts lack. `litcodex install --round` adds an icon font to your own font folder when
+none is here, and `--glyphs round`, `square` or `auto` saves which ends to draw. Your terminal picks its fonts itself: if
+the ends show as boxes, set a full Nerd Font as its font, or add Symbols Nerd Font Mono as its fallback font. Terminal.app
+has no fallback font setting, so it takes a full Nerd Font. Install, update and doctor end with a `ROUND_ENDS:` line that
+says what holds and the one thing that changes it.
+
+A coding agent can read the whole procedure with `litcodex install --agent`.
+
 ### Windows
 
 The installer and the CLI shims work on Windows. Python routes that rely on POSIX directory
@@ -76,7 +86,7 @@ keys. Ctrl+C stops at any card, and Esc never answers one.
 The cards need a terminal at least 40 columns by 12 rows. `NO_COLOR` keeps them without color, and a locale without
 UTF-8 draws them in plain ASCII. Pipes, CI, `--yes`, `TERM=dumb` and smaller windows keep the plain prompts and output.
 On a dark truecolor terminal the pills, the highlighted row and the buttons end round where the HUD's do;
-`LITCODEX_HUD_GLYPHS=nerd` or `basic` settles it when the guess is wrong.
+`--glyphs round` or `--glyphs square` settles it when the guess is wrong (see [Round ends](#round-ends)).
 
 <p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-questions-dark.webp" /><img src="./assets/screens/screen-install-questions-light.webp" width="688" alt="A terminal window running litcodex install. The card LIT 1/6, &quot;Lead model&quot;, says &quot;Plans and reviews the work; press Enter to take gpt-6-astra · xhigh.&quot; and shows the first twelve of 40 rows with gpt-6-astra · xhigh highlighted as the recommended lead and default. Three folded answers follow: Lead model gpt-6-astra · xhigh, Helper model gpt-6-luna · max, Output style ELI5 (English). The card LIT 4/6, &quot;Ready to install&quot;, lists Provider openai, Lead, Helpers and Writes ~/.codex/config.toml (managed keys only), with an Install button and &quot;Ctrl+C stop, nothing written yet&quot;." /></picture><br /><sub>Captured from a real litcodex install in a temporary home, with the round ends on. The start banner and the second and third cards are cut; each … marks a cut.</sub></p>
 

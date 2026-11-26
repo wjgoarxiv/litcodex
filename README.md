@@ -194,22 +194,55 @@ plan and waits for your yes before it changes anything, then runs the doctor che
 <summary>The prompt to paste into the agent</summary>
 
 ```text
-Install LitCodex, a plugin for Codex CLI, on this machine. Follow these steps in order.
+Install LitCodex, a plugin for Codex CLI, on this machine. Follow these steps in order. The command
+npx --yes @litfamily/litcodex@latest install --agent prints them too.
 
-1. Check that Node.js 22 or later and Codex CLI are installed (node --version, codex --version).
-   If either is missing, stop and tell me what to install.
-2. Use only the official npm package @litfamily/litcodex. Do not install a package with a similar
-   name, and do not download install scripts from anywhere else.
-3. Show me the plan first. Run this command, which prints every step and writes nothing:
-   npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex --dry-run install
-   Summarize what it will change, then ask me whether to go ahead. Do not continue until I say yes.
-4. After I say yes, run:
-   npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex install --yes
-   (--yes keeps the recommended models and my current output style.)
-5. Run the check and report its result to me, quoting any issue or warning exactly:
-   npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex doctor
-6. Remind me to restart Codex so it loads the plugin, and to approve the LitCodex hooks when Codex
-   asks me to review them.
+Check first that Node.js 22 or later and Codex CLI are installed (node --version, codex --version).
+If either is missing, stop and tell me what to install.
+
+1. Preview. Run this, which writes nothing, and show me what it would change:
+   npx --yes @litfamily/litcodex@latest install --dry-run --yes --round --sunset-footer
+2. Ask me these questions, or whether to keep every default (the default is yes):
+   - Lead model: which model plans and reviews? Default: gpt-6-astra · xhigh.
+     Another answer: --model <id> --effort <effort>.
+   - Helper model: which model do helper agents use? Default: gpt-6-luna · max.
+     Another answer: --subagent-model <id> --subagent-effort <effort>.
+   - Output style: how should replies be worded? Default: the current style stays.
+     Another answer: --style off|asd-ste100|asd-ste100-ko|eli5|eli5-ko.
+   - Ready to install? Default: yes. I answer this with my yes in step 3.
+   - LitFamily block: add the short block to the global AGENTS.md? Default: yes. Another answer:
+     --no-agent-file; it holds for one run, so keep it in the preview and in every install line below.
+   - No-attribution line: ask the model not to add AI attribution? Default: no. I can choose it later
+     with npx --yes @litfamily/litcodex@latest config attribution off.
+   - LIT sunset footer: show the live sunset in the Codex footer? Default: yes, with --sunset-footer.
+     Another answer: leave --sunset-footer out.
+   A config.toml that already names a model keeps it; --reconfigure replaces it with the model picked here.
+   The icon font: SymbolsNerdFontMono-Regular.ttf, into ~/Library/Fonts on a Mac or ~/.local/share/fonts
+   on Linux (XDG_DATA_HOME moves it). --round adds it only when no icon font is here, and on Windows it
+   adds none.
+   On screen: the LIT sunset in the Codex footer is off by default and needs Codex 0.172 or later;
+   --sunset-footer turns it on.
+   Add the flags I pick to the preview and to every install line below, and keep them there.
+3. Wait for my yes. Use only this package; add no other source, and do not approve hooks, trust or
+   sign-in for me.
+4. Install:
+   npx --yes @litfamily/litcodex@latest install --yes --round --sunset-footer
+5. Update, whenever I ask for it: run the install line again, with the same flags. Leave
+   --sunset-footer out if I have turned the footer off.
+6. Check:
+   npx --yes @litfamily/litcodex@latest doctor
+   It must say "All checks passed." The install must print a line that starts with ROUND_ENDS:.
+   If a step fails, show me the lines and stop.
+7. Rounded ends. Show me this and ask if both ends are round:  LIT 
+   - Round: run the install line again with --glyphs round added.
+   - Boxes: run it again with --glyphs square added. For round ends I can set a full Nerd Font as the
+     terminal's font, or add Symbols Nerd Font Mono as its fallback font; Terminal.app has no fallback
+     font setting, so there it takes a full Nerd Font.
+   - Over SSH or on a phone: leave it as it is.
+   - Undo: run it again with --glyphs auto added.
+8. Remind me of what only I can do: restart Codex, so it loads the plugin and the footer;
+   approve the LitCodex hooks when Codex asks to review them; sign in to Codex; trust a project folder
+   or its Git repository when Codex asks.
 ```
 
 </details>
@@ -247,8 +280,8 @@ map of its own (decomposition, waves, verification, synthesis) that resumes from
 starts at decomposition when there is none.
 
 When a LIT turn ends, the Stop hook says so in plain words, such as
-`🔥 LIT · lit-loop · turn done · 2 tasks done · next: Write the docs`, with the map below it when a plan or a goal stands
-behind it. A turn that ends with a question to you says `your turn · answer the question above`, and a blocked one says
+`🔥 LIT · lit-loop · turn done · next: Write the docs`. When the map or the checklist moved since the last card, both
+follow below it, and the next task is named there. A turn that ends with a question to you says `your turn · answer the question above`, and a blocked one says
 `blocked · needs your help above`. If `lit start work` reaches a checkpoint and keeps going in the same turn, it says
 `3/7 tasks done · continuing with: Write the docs`. The card is plain text by default, because the Codex desktop app
 and IDE show colour codes in hook text as raw characters.
@@ -541,9 +574,10 @@ the folder. Only what LIT has a record of is drawn. A half-sunk sun with stars a
 leaves empty and moves while LIT works; the frame turns amber on your turn and green on a recorded completion.
 
 The frame needs a window at least 40 columns wide and the sun 60. Narrower windows, terminals without truecolor, a
-light background reported through `COLORFGBG`, `NO_COLOR` and `--once` get the card as plain lines. Pills
+light background (the HUD asks the terminal, or reads `COLORFGBG`), `NO_COLOR` and `--once` get the card as plain lines. Pills
 and gauges end round in terminals known to draw the caps and wherever a Nerd Font is installed;
-`LITCODEX_HUD_GLYPHS=nerd` or `basic` settles it when the guess is wrong.
+`litcodex install --yes --glyphs round` or `square` settles it for the HUD, `litcodex run` and the footer when the guess
+is wrong, and `auto` goes back.
 
 The HUD reads the small records LIT already keeps. For the context and limit figures on the framed card it also looks
 at the end of that session's own Codex log, at most once in five seconds and only when the file has changed. It never
@@ -569,7 +603,9 @@ words as plain text.
 <details>
 <summary>Off, status, overrides and the one-line status</summary>
 
-`litcodex screen-status off` turns it off and `status` reports it. The setting is kept in
+`litcodex screen-status off` turns it off and `status` reports it. A hook cannot see your window, so a white one is a
+choice: `litcodex screen-status light` keeps the words in the window's own ink and `dark` goes back. For a terminal
+without 24-bit colour there is `litcodex screen-status 256`, and `truecolor` goes back. The setting is kept in
 `$CODEX_HOME/litcodex/screen-status.json`; `LITCODEX_SCREEN_STATUS=1` or `0` overrides it, and `NO_COLOR` keeps the
 card plain.
 
@@ -757,7 +793,7 @@ always sends its full activation, because its prompt carries the grant.
 | `litcodex extensions list`, `check`, `install`, `update`, `remove`, `prune-backups` | Manages the nine LitFamily extensions in `~/.codex/skills/`; writes only with `--yes` |
 | `litcodex config migrate` | Previews or applies the managed Codex config keys |
 | `litcodex hud` | Shows the LIT card of the newest session live in a second terminal window |
-| `litcodex screen-status on`, `off` or `status` | Colours the LIT card in the terminal `codex` |
+| `litcodex screen-status on`, `off` or `status` | Colours the LIT card in the terminal `codex`; `light`, `dark`, `truecolor` and `256` fit it to the window |
 | `litcodex sunset on`, `off` or `status` | Shows the LIT sunset in the footer of the terminal `codex` |
 | `litcodex statusline` | Prints the LIT status as one line, for a terminal status line command |
 | `litcodex run` | Runs Codex with a live LIT panel in the bottom rows of the same terminal |

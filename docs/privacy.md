@@ -43,6 +43,15 @@ separate notifier eligible. The CLI also accepts `--no-auto-update` on managemen
 commands. These controls do not stop npm from downloading an explicitly requested
 package, or prevent an external tool from making network requests.
 
+## Icon font
+
+Only `litcodex install --round` can fetch a font, and only when no icon font is on this machine: one pinned archive from
+the official Nerd Fonts release on GitHub, checked by SHA-256, at most 8 MiB and 60 seconds. `LITCODEX_ICON_FONT_SOURCE`
+names a local copy of that archive to use in its place. The font and its licence go into your own font folder, never over
+a file or through a link, and `$CODEX_HOME/litcodex/icon-font.json` records them so `litcodex uninstall` can remove them
+while they are unchanged. `--glyphs` writes `$CODEX_HOME/litcodex/glyphs.json`, a format version, the choice and whether
+you or the terminal made it. The automatic update never adds the font.
+
 ## Automatic handoff
 
 The [automatic handoff](./auto-handoff.md) is on by default and sends nothing anywhere. It
@@ -78,7 +87,8 @@ your machine.
 ## Card colour
 
 `litcodex screen-status` is off by default and sends nothing anywhere. It keeps one local file,
-`$CODEX_HOME/litcodex/screen-status.json`, with a format version and whether the card is coloured.
+`$CODEX_HOME/litcodex/screen-status.json`, with a format version, whether the card is coloured and,
+once chosen, that it is for a white window or for 256 colours.
 
 `litcodex sunset` is off by default and sends nothing anywhere. It keeps one local file,
 `$CODEX_HOME/litcodex/sunset.json`, with a format version, your answer and what `off` needs to put `config.toml` back.

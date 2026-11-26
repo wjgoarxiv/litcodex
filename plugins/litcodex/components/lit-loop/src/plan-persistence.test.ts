@@ -208,7 +208,7 @@ describe("lit-plan persistence guard (hook CLI)", () => {
 		writePlan(root, "readme-badge.md", CHECKBOX_PLAN, Date.now() + 5_000);
 		const passed = await run(runStopPlanPersistenceHookCli, root, stopInput(root));
 		// A pass carries only the LIT turn summary card, never a block decision.
-		const card = "🔥 LIT · lit-plan · turn done\n✓ interview ── ● plan ── ○ work ── ○ review ── ○ done";
+		const card = "🔥 LIT · lit-plan · turn done\n✓ interview ── ● plan ── ○ work\n○ review ── ○ done";
 		expect(passed).toEqual({ code: 0, stdout: `${JSON.stringify({ systemMessage: card })}\n`, stderr: "" });
 	});
 

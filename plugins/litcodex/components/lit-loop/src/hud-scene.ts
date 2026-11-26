@@ -6,7 +6,18 @@
 
 import type { CardStatus } from "./card-status.js";
 import { clean } from "./control-chars.js";
-import { BOLD, BRAND, cells, displayWidth, fit, type HudLine, type HudView, PILL_TEXT, RAINBOW } from "./hud.js";
+import {
+	BOLD,
+	BRAND,
+	cells,
+	displayWidth,
+	fit,
+	type HudLine,
+	type HudView,
+	lineText,
+	PILL_TEXT,
+	RAINBOW,
+} from "./hud.js";
 import { along, bar, brandPill, type Cell, gradePill, MUTED, mix, push, rowText, SUNSET, TRACK } from "./hud-paint.js";
 import { AMBER, DUSK } from "./hud-sunset.js";
 
@@ -68,10 +79,10 @@ function textRow(line: HudLine, index: number, mood: SceneMood, options: SceneOp
 	let text = clean(line.text);
 	const room = options.width - displayWidth(PILL_TEXT);
 	if (index === 0 && room >= 2) {
-		row.push(...brandPill(options.caps));
+		row.push(...brandPill(options.caps, line.pill));
 		text = fit(text.startsWith(BRAND) ? text.slice(BRAND.length).trimStart() : text, room);
 	} else {
-		text = fit(text, options.width);
+		text = fit(lineText(line, options.width), options.width);
 	}
 	let tint = 0;
 	let offset = 0;

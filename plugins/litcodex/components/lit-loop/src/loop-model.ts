@@ -5,6 +5,7 @@
 // in-memory plan objects only. Imports state-types (types) and the pure redaction helper — NO
 // node:fs, NO store, NO I/O, no `process`, no clock. Every output is fully determined by its arguments.
 
+import { clipped } from "./control-chars.js";
 import type { LoopCriterion, LoopGoal, LoopPlan, LoopUserModel, PlanSummary } from "./loop-types.js";
 import { redactSecrets } from "./redaction.js";
 
@@ -76,11 +77,7 @@ export function titleFromObjective(objective: string): string {
 			.split(/\r?\n/)
 			.find((l) => l.trim().length > 0)
 			?.trim() ?? "";
-	return firstLine.length > MAX_TITLE ? `${firstLine.slice(0, MAX_TITLE - 3)}...` : firstLine;
-}
-
-function truncate(value: string, max: number): string {
-	return value.length > max ? value.slice(0, max) : value;
+	return firstLine.length > MAX_TITLE ? `${clipped(firstLine, MAX_TITLE - 3)}...` : firstLine;
 }
 
 /**
@@ -88,7 +85,7 @@ function truncate(value: string, max: number): string {
  * The objective's first 80 chars form the human-readable subject in the happy-path scenario.
  */
 export function seedDefaultSuccessCriteria(objective: string): LoopCriterion[] {
-	const subject = truncate(titleFromObjective(objective) || objective, 80);
+	const subject = clipped(titleFromObjective(objective) || objective, 80);
 	const seed = (id: string, userModel: LoopUserModel, scenario: string, expectedEvidence: string): LoopCriterion => ({
 		id,
 		scenario,

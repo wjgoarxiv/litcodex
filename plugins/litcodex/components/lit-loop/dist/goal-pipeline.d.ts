@@ -93,11 +93,16 @@ export interface GoalConsent {
     /** Null for a loop question. */
     readonly plan: string | null;
     readonly askedAt: string;
+    /** The session the question was asked in, where it is known. */
+    readonly sessionId?: string;
 }
+/** Whether this session asked a goal question that still waits for its answer. */
+export declare function goalQuestionOpen(cwd: string, sessionId: string, now: number): boolean;
 /** `goal propose <plan>`: the one line to add to the approval question, and the consent it recorded. */
 export declare function proposeGoal(args: {
     readonly cwd: string;
     readonly planArg: string | undefined;
+    readonly sessionId?: string | null;
     readonly now?: number;
     readonly timeoutMs?: number;
     readonly run?: CheckRunner;
@@ -118,6 +123,7 @@ export declare function proposeLoopGoal(args: {
     readonly cwd: string;
     readonly check: string | undefined;
     readonly objective: string | undefined;
+    readonly sessionId?: string | null;
     readonly now?: number;
     readonly timeoutMs?: number;
     readonly run?: CheckRunner;
@@ -129,6 +135,8 @@ export declare function proposeLoopGoal(args: {
 };
 /** `yes`, `edit` and `no` (exactly, any case) answer the goal question; anything else is no answer. */
 export declare function consentAnswer(prompt: string): "yes" | "edit" | "no" | null;
+/** A typed `start-work` answers the question of the plan it names; one that names none, the question of its own session. */
+export declare function startAnswers(cwd: string, prompt: string, sessionId: string | undefined): void;
 /** The consent the user is answering: fresh, and its hash still binds its condition. */
 export declare function liveConsent(cwd: string, now: number): GoalConsent | null;
 /** The goal LitCodex armed in this project and has not seen finish, if any. */
@@ -173,4 +181,5 @@ export declare function goalCommand(argv: readonly string[], io: {
     readonly stdout: NodeJS.WritableStream;
     readonly stderr: NodeJS.WritableStream;
     readonly cwd?: string;
+    readonly env?: NodeJS.ProcessEnv;
 }): number;

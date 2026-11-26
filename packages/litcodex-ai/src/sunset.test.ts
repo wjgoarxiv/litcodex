@@ -11,6 +11,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { screenStatusCommand } from "@litcodex/lit-loop/dist/screen-status.js";
 import { afterEach, describe, expect, it } from "vitest";
 import {
 	runFooterArgs,
@@ -169,10 +170,18 @@ describe("around it", () => {
 			});
 			return `${code} ${out}`;
 		};
-		expect(run("status")).toBe("0 The LIT sunset footer is OFF.\n");
+		expect(run("status")).toMatch(/^0 The LIT sunset footer is OFF\.\n/u);
 		expect(run("on")).toMatch(/^0 The LIT sunset footer is ON\. Start Codex again/u);
-		expect(run("status")).toBe("0 The LIT sunset footer is ON.\n");
+		expect(run("status")).toMatch(/^0 The LIT sunset footer is ON\.\n/u);
 		expect(run("--help")).toContain("litcodex sunset on|off|status");
+		const card = (...args: string[]) =>
+			screenStatusCommand(args, { ...io, stdout: { write: () => true }, stderr: { write: () => true } });
+		expect(run("status")).toContain(
+			"Chat card: for a dark window, 24-bit colour. Change: litcodex screen-status light|dark|truecolor|256\n",
+		);
+		card("light");
+		card("256");
+		expect(run("status")).toContain("Chat card: for a white window, 256 colours.");
 		expect(run("maybe")).toMatch(/^64 Usage/u);
 		expect(run("off", "now")).toMatch(/^64 Usage/u);
 		expect(run("off")).toMatch(/^0 The LIT sunset footer is OFF\./u);

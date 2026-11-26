@@ -4,6 +4,7 @@
 // summary, the all-criteria-pass gate, and the deterministic run-handoff text. Operates on
 // in-memory plan objects only. Imports state-types (types) and the pure redaction helper — NO
 // node:fs, NO store, NO I/O, no `process`, no clock. Every output is fully determined by its arguments.
+import { clipped } from "./control-chars.js";
 import { redactSecrets } from "./redaction.js";
 const FALLBACK_OBJECTIVE = "Complete the requested project objective.";
 const MAX_OBJECTIVE = 1200;
@@ -66,17 +67,14 @@ export function titleFromObjective(objective) {
         .split(/\r?\n/)
         .find((l) => l.trim().length > 0)
         ?.trim() ?? "";
-    return firstLine.length > MAX_TITLE ? `${firstLine.slice(0, MAX_TITLE - 3)}...` : firstLine;
-}
-function truncate(value, max) {
-    return value.length > max ? value.slice(0, max) : value;
+    return firstLine.length > MAX_TITLE ? `${clipped(firstLine, MAX_TITLE - 3)}...` : firstLine;
 }
 /**
  * Seed exactly C001(happy)/C002(edge)/C003(regression), each pending with no captured evidence.
  * The objective's first 80 chars form the human-readable subject in the happy-path scenario.
  */
 export function seedDefaultSuccessCriteria(objective) {
-    const subject = truncate(titleFromObjective(objective) || objective, 80);
+    const subject = clipped(titleFromObjective(objective) || objective, 80);
     const seed = (id, userModel, scenario, expectedEvidence) => ({
         id,
         scenario,

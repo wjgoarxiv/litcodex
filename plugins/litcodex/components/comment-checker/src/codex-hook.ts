@@ -74,7 +74,11 @@ export async function runCommentCheckerPostToolUse(
 
 	return JSON.stringify({
 		decision: "block",
-		reason: limitHookText(formatWarnings(warnings), hookFeedbackLimit(input.transcript_path)),
+		// Codex refuses hook JSON that holds half a surrogate pair.
+		reason: limitHookText(formatWarnings(warnings), hookFeedbackLimit(input.transcript_path)).replace(
+			/[\ud800-\udfff]/gu,
+			"\ufffd",
+		),
 	});
 }
 
@@ -170,7 +174,10 @@ function limitHookText(text: string, maxChars: number): string {
 	if (text.length <= maxChars) return text;
 	const marker = `\n\n[Truncated hook output to ${maxChars} chars to avoid Codex context overflow.]`;
 	if (marker.length >= maxChars) return marker.slice(0, maxChars);
-	const head = text.slice(0, maxChars - marker.length).replace(/[ \t\r\n]+$/, "");
+	const head = text
+		.slice(0, maxChars - marker.length)
+		.replace(/[\ud800-\udbff]$/u, "")
+		.replace(/[ \t\r\n]+$/, "");
 	return `${head}${marker}`;
 }
 

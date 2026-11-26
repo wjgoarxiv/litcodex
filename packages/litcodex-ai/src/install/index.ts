@@ -10,8 +10,9 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, wr
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import readline from "node:readline/promises";
+import { glyphsPath, glyphsProblem, removeGlyphs, saveGlyphs } from "@litcodex/lit-loop/dist/glyph-choice.js";
 import { migrateCodexConfig, readLitCodexOutputStyleId } from "../config-migration/index.js";
-import { type SunsetIo, sunsetQuestion, turnSunsetOff, turnSunsetOn } from "../sunset.js";
+import { type SunsetIo, sunsetQuestion, sunsetSurface, turnSunsetOff, turnSunsetOn } from "../sunset.js";
 import {
 	humanLabel,
 	preflightLabel,
@@ -33,6 +34,7 @@ import {
 	removeGlobalAgentFile,
 	runInstallAgentFile,
 } from "./agent-file/cli.js";
+import { AGENT_GUIDE, AGENT_POINTER, AGENT_STOP, inCodexAgent } from "./agent-guide.js";
 import { codexSpawnInvocation, type ReadonlyFsLike, resolveCodexHome, type SpawnLike } from "./codex.js";
 import { doctorScopeFor, renderDoctorText, runDoctor } from "./doctor.js";
 import { exitCodeForInstallError, InstallError, toErrorJson } from "./errors.js";
@@ -40,6 +42,7 @@ import { type ExecuteDeps, executeInstallPlan } from "./execute.js";
 import { extensionsDoctorLine, extensionsNoticeLine } from "./extensions.js";
 import { announceExtensions } from "./extensions-notice.js";
 import { listPayloadEntries, readRegularFileBuffer } from "./file-walk.js";
+import { addIconFont, type IconFontResult, iconFontPlanLine, removeIconFont } from "./icon-font.js";
 import {
 	CardAbort,
 	type CardInput,
@@ -57,7 +60,7 @@ import {
 } from "./install-model-prompt.js";
 import type { OutputStyleId } from "./install-options.js";
 import { hasExplicitModelRouteFlags, parseInstallOptions } from "./install-options.js";
-import { renderPlainInstallResult } from "./install-output.js";
+import { NEXT_STEPS, renderPlainInstallResult } from "./install-output.js";
 import {
 	cardSteps,
 	preflightName,
@@ -72,6 +75,7 @@ import type { MaterializeMarketplaceResult } from "./marketplace-payload.js";
 import { type MarketplaceSource, resolveBundledMarketplaceSource } from "./package-root.js";
 import { buildInstallPlan } from "./plan.js";
 import { renderInstallPlan } from "./render-plan.js";
+import { roundEndsLine, saveTerminalRound } from "./round-ends.js";
 import { createBlockingSpinnerMotion } from "./spinner-motion.js";
 import type { InstallOptions, InstallResult } from "./types.js";
 import { runUninstall, uninstallPlanSteps } from "./uninstall.js";
@@ -187,6 +191,13 @@ function interactiveInstall(opts: InstallOptions, io: RouteIo): boolean {
 	return isTTY && !opts.noTui && !opts.json && !opts.yes && !opts.dryRun && io.env["CI"] === undefined;
 }
 
+/** The pointer for an agent right after the banner's first line, which is the rule above a drawn mark. */
+function withPointer(banner: string, pointer: string): string {
+	const rows = banner.split("\n");
+	const at = rows.findIndex((row) => row.trim() !== "") + 1;
+	return [...rows.slice(0, at), pointer, ...rows.slice(at)].join("\n");
+}
+
 /** The cards for a person at a capable terminal, or undefined: then every plain prompt and line stays as it is. */
 function terminalCards(io: RouteIo): InstallCards | undefined {
 	const terminal = {
@@ -212,7 +223,7 @@ function questionCount(args: readonly string[], opts: InstallOptions, io: RouteI
 		(hasExplicitModelRouteFlags(args) ? 0 : 3) +
 		(opts.style === undefined ? 1 : 0) +
 		agentFileQuestionCount({ env: io.env, codexHome, version: PACKAGE_VERSION, noAgentFile }) +
-		(sunsetQuestion(sunsetIo(opts, io)) ? 1 : 0)
+		(opts.sunsetFooter !== true && sunsetQuestion(sunsetIo(opts, io)) ? 1 : 0)
 	);
 }
 
@@ -222,13 +233,14 @@ function sunsetIo(opts: InstallOptions, io: RouteIo): SunsetIo {
 
 const SUNSET_QUESTION = "Show the live LIT sunset in the Codex footer, beside your status line items? [Y/n] ";
 
-/** Ask once about the sunset footer; the answer is remembered either way. Returns the line to show. */
+/** Ask once about the sunset footer, or turn it on as the flag says. Returns the line to show. */
 async function offerSunset(
 	opts: InstallOptions,
 	io: RouteIo,
 	cards: InstallCards | undefined,
 ): Promise<string | undefined> {
 	const deps = sunsetIo(opts, io);
+	if (opts.sunsetFooter === true) return turnSunsetOn(deps).line;
 	if (!interactiveInstall(opts, io) || !sunsetQuestion(deps)) return undefined;
 	const yes =
 		cards === undefined
@@ -241,6 +253,48 @@ async function offerSunset(
 					no: "off",
 				});
 	return yes ? turnSunsetOn(deps).line : turnSunsetOff(deps).line;
+}
+
+/** The environment with the Codex home this run works in, for what LIT's own surfaces read. */
+const homeEnv = (io: RouteIo, codexHome: string): NodeJS.ProcessEnv => ({ ...io.env, CODEX_HOME: codexHome });
+
+/** What a dry run says about the choices beyond the plan: the footer, the icon font, the pill ends. */
+function choiceDryRunLines(opts: InstallOptions, io: RouteIo): readonly string[] {
+	const env = homeEnv(io, opts.codexHome);
+	const footer = {
+		on: "The LIT sunset footer is already on",
+		off: `Would turn on the LIT sunset footer in ${join(opts.codexHome, "config.toml")}`,
+		other: "Would leave your status line as it is: config.toml sets another one",
+	};
+	const problem = glyphsProblem(env);
+	return [
+		...(opts.sunsetFooter === true ? [footer[sunsetSurface(env)]] : []),
+		...(opts.round === true ? [iconFontPlanLine({ env, codexHome: opts.codexHome })] : []),
+		...(opts.glyphs === undefined
+			? []
+			: [
+					problem === null
+						? `Would save ${opts.glyphs} pill ends in ${glyphsPath(env) ?? ""}`
+						: `Would stop: the pill ends cannot be saved (${problem})`,
+				]),
+	];
+}
+
+/** Adds the icon font and saves the pill ends this run asked for; neither stops the install. */
+async function applyRoundEnds(
+	opts: InstallOptions,
+	io: RouteIo,
+): Promise<{ readonly font?: IconFontResult; readonly glyphs?: string }> {
+	const env = homeEnv(io, opts.codexHome);
+	const font = opts.round === true ? await addIconFont({ env, codexHome: opts.codexHome }) : undefined;
+	let glyphs: string | undefined;
+	if (opts.glyphs !== undefined)
+		glyphs = saveGlyphs(env, opts.glyphs, "user")
+			? `GLYPHS: ${opts.glyphs} pill ends saved`
+			: "GLYPHS: the pill ends could not be saved, so the choice is as it was";
+	else if (opts.round === true && saveTerminalRound(env))
+		glyphs = "GLYPHS: round pill ends saved, this terminal draws them; undo: --glyphs auto";
+	return { ...(font === undefined ? {} : { font }), ...(glyphs === undefined ? {} : { glyphs }) };
 }
 
 function installReadline(opts: InstallOptions, io: RouteIo): readline.Interface {
@@ -394,6 +448,16 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 	} catch (err) {
 		return emitError(io, err instanceof Error ? err : new Error(String(err)));
 	}
+	const unsaved = opts.glyphs === undefined || opts.dryRun ? null : glyphsProblem(homeEnv(io, opts.codexHome));
+	if (unsaved !== null)
+		return emitError(
+			io,
+			new InstallError(
+				"LITCODEX_INSTALL_CONFIG_WRITE_FAILED",
+				`--glyphs could not be saved (${unsaved}); nothing was changed.`,
+				{ flag: "--glyphs" },
+			),
+		);
 
 	const decorate = shouldDecorate({
 		isTty: Boolean((io.stdout as NodeJS.WriteStream).isTTY),
@@ -412,11 +476,14 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 					color: decorate && !opts.dryRun,
 				})
 			: "";
-	if (banner) io.stdout.write(banner);
+	const pointer = opts.dryRun && inCodexAgent(io.env) ? `${AGENT_STOP}\n\n${AGENT_GUIDE}` : AGENT_POINTER;
+	const opening = interactiveInstall(opts, io) || opts.json ? banner : withPointer(banner, pointer);
+	if (opening) io.stdout.write(opening);
 	cards?.banner(PACKAGE_VERSION, BANNER_LINE);
 	cards?.begin(
 		questionCount(args, opts, io),
 		`Installs into ${opts.codexHome}. In config.toml only LitCodex's own keys change.`,
+		AGENT_POINTER,
 	);
 
 	let prompted = false;
@@ -438,6 +505,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 		// ZERO spawns, ZERO fs writes: render and return.
 		io.stdout.write(`${renderInstallPlan(plan)}\n`);
 		io.stdout.write(`${agentFileDryRunLine(opts.codexHome)}\n`);
+		for (const line of choiceDryRunLines(opts, io)) io.stdout.write(`${line}\n`);
 		return 0;
 	}
 
@@ -617,8 +685,26 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 		return emitError(io, err);
 	}
 
+	const { font, glyphs } = result.ok ? await applyRoundEnds(opts, io) : {};
+	const ends = !result.ok
+		? undefined
+		: roundEndsLine({
+				env: homeEnv(io, opts.codexHome),
+				tty: Boolean((io.stdout as NodeJS.WriteStream).isTTY),
+				fontWhy: font?.why,
+			});
+
 	if (opts.json) {
-		io.stdout.write(`${JSON.stringify({ ...result, agentFile: agentFileLine })}\n`);
+		const report = {
+			...result,
+			agentFile: agentFileLine,
+			...(sunsetLine === undefined ? {} : { sunsetFooter: sunsetLine }),
+			...(font === undefined ? {} : { iconFont: font.line }),
+			...(glyphs === undefined ? {} : { glyphs }),
+			nextSteps: result.ok ? NEXT_STEPS : [],
+			...(ends === undefined ? {} : { roundEnds: ends }),
+		};
+		io.stdout.write(`${JSON.stringify(report)}\n`);
 	} else if (cards !== undefined) {
 		io.stdout.write(
 			renderInstallSummary(cards, result, {
@@ -642,7 +728,7 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 			}),
 		);
 	} else io.stdout.write(renderPlainInstallResult(result));
-	if (sunsetLine !== undefined)
+	if (sunsetLine !== undefined && !opts.json)
 		io.stdout.write(cards === undefined ? `${sunsetLine}\n` : cards.notice(`${sunsetLine}\n`));
 	if (result.ok) {
 		announceExtensions({
@@ -652,6 +738,10 @@ export async function runInstallCli(args: readonly string[], io: RouteIo = defau
 			write: (text) => io.stdout.write(cards === undefined ? text : cards.notice(text)),
 			...checkLineFor(io),
 		});
+	}
+	if (ends !== undefined && !opts.json) {
+		const lines = [font?.line, glyphs, ends].filter((line) => line !== undefined).join("\n");
+		io.stdout.write(cards === undefined ? `${lines}\n` : cards.notice(`Round ends\n${lines}\n`));
 	}
 	return result.ok ? 0 : 3;
 }
@@ -669,8 +759,15 @@ export function runDoctorCli(args: readonly string[], io: RouteIo = defaultIo())
 	writeCommandBanner(io, args);
 	const scope = doctorScopeFor(io.env);
 	const report = runDoctor({ spawn: realSpawn, fs: realFs, env: io.env, repoRoot: io.repoRoot, scope });
-	if (json) io.stdout.write(`${JSON.stringify(report)}\n`);
-	else io.stdout.write(`${renderDoctorText(report)}\n${extensionsDoctorLine({ env: io.env, cwd: io.repoRoot })}\n`);
+	const roundEnds = roundEndsLine({
+		env: homeEnv(io, resolveCodexHome(io.env)),
+		tty: Boolean((io.stdout as NodeJS.WriteStream).isTTY),
+	});
+	if (json) io.stdout.write(`${JSON.stringify({ ...report, roundEnds })}\n`);
+	else
+		io.stdout.write(
+			`${renderDoctorText(report)}\n${extensionsDoctorLine({ env: io.env, cwd: io.repoRoot })}\n${roundEnds}\n`,
+		);
 	return report.ok ? 0 : 4;
 }
 
@@ -748,9 +845,16 @@ export function runUninstallCli(args: readonly string[], io: RouteIo = defaultIo
 
 	const agentRemoval = removeGlobalAgentFile(codexHome, PACKAGE_VERSION);
 	clearAttributionMode(codexHome);
+	let fontRemoval: string | null = null;
+	if (result.ok) {
+		const own = homeEnv(io, codexHome);
+		fontRemoval = removeIconFont({ env: own, codexHome });
+		removeGlyphs(own);
+	}
 
 	if (json) {
-		io.stdout.write(`${JSON.stringify({ ...result, agentFile: agentRemoval })}\n`);
+		const report = { ...result, agentFile: agentRemoval, ...(fontRemoval === null ? {} : { iconFont: fontRemoval }) };
+		io.stdout.write(`${JSON.stringify(report)}\n`);
 	} else {
 		if (cards !== undefined) {
 			if (!result.ok && said.length > 0) io.stdout.write("\n");
@@ -758,6 +862,7 @@ export function runUninstallCli(args: readonly string[], io: RouteIo = defaultIo
 			io.stdout.write(`${renderUninstallCard(cards, { ok: result.ok, calls, agentFile: agentRemoval })}\n`);
 		}
 		io.stdout.write(`${agentRemoval}\n`);
+		if (fontRemoval !== null) io.stdout.write(`${fontRemoval}\n`);
 		if (result.ok) {
 			io.stdout.write("litcodex uninstall: complete\n");
 		} else {

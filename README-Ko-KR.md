@@ -191,22 +191,54 @@ Codex 같은 코딩 에이전트에게 설치를 맡길 수도 있습니다. 에
 <summary>에이전트에 붙여 넣을 프롬프트</summary>
 
 ```text
-이 컴퓨터에 Codex CLI용 플러그인 LitCodex를 설치해 줘. 아래 순서를 그대로 따라 줘.
+이 컴퓨터에 Codex CLI용 플러그인 LitCodex를 설치해 줘. 아래 순서를 그대로 따라 줘. 같은 순서를
+npx --yes @litfamily/litcodex@latest install --agent 로도 볼 수 있어.
 
-1. Node.js 22 이상과 Codex CLI가 설치되어 있는지 확인해 (node --version, codex --version).
-   하나라도 없으면 멈추고 무엇을 설치해야 하는지 알려 줘.
-2. 공식 npm 패키지 @litfamily/litcodex만 사용해. 이름이 비슷한 다른 패키지를 설치하거나
-   다른 곳에서 설치 스크립트를 내려받지 마.
-3. 먼저 계획을 보여 줘. 아래 명령은 모든 단계를 출력하고 아무것도 쓰지 않아:
-   npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex --dry-run install
-   무엇이 바뀌는지 요약한 뒤 계속할지 물어봐. 내가 좋다고 하기 전에는 진행하지 마.
-4. 내가 좋다고 하면 아래 명령을 실행해:
-   npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex install --yes
-   (--yes는 권장 모델과 지금 쓰는 출력 스타일을 그대로 써.)
-5. 검사를 실행하고 결과를 알려 줘. 문제(issue)나 경고(warning)가 있으면 그대로 옮겨 줘:
-   npm exec --yes --package @litfamily/litcodex@1.0.51 -- litcodex doctor
-6. 플러그인을 불러오도록 Codex를 다시 시작하고, Codex가 LitCodex 훅을 검토해 달라고 하면
-   승인하라고 나에게 알려 줘.
+먼저 Node.js 22 이상과 Codex CLI가 설치되어 있는지 확인해 (node --version, codex --version).
+하나라도 없으면 멈추고 무엇을 설치해야 하는지 알려 줘.
+
+1. 미리 보기. 아무것도 쓰지 않는 아래 명령을 실행하고 무엇이 바뀌는지 보여 줘:
+   npx --yes @litfamily/litcodex@latest install --dry-run --yes --round --sunset-footer
+2. 아래 질문을 하나씩 물어보거나, 전부 기본값으로 둘지 물어봐 (기본값은 "예"):
+   - 리드 모델: 어떤 모델이 계획하고 검토할까? 기본값: gpt-6-astra · xhigh.
+     다른 답: --model <id> --effort <effort>.
+   - 도우미 모델: 도우미 에이전트는 어떤 모델을 쓸까? 기본값: gpt-6-luna · max.
+     다른 답: --subagent-model <id> --subagent-effort <effort>.
+   - 출력 스타일: 답변을 어떤 말투로 쓸까? 기본값: 지금 스타일 그대로.
+     다른 답: --style off|asd-ste100|asd-ste100-ko|eli5|eli5-ko.
+   - 설치를 시작할까? 기본값: 예. 3번에서 내가 하는 허락이 이 답이야.
+   - LitFamily 블록: 전역 AGENTS.md에 짧은 블록을 넣을까? 기본값: 예. 다른 답: --no-agent-file.
+     이 플래그는 한 번만 통하니 미리 보기와 아래 모든 설치 명령에 계속 붙여 줘.
+   - AI 표기 금지 줄: 모델에게 AI 표기를 넣지 말라고 부탁할까? 기본값: 아니오. 나중에 내가
+     npx --yes @litfamily/litcodex@latest config attribution off 로 고를 수 있어.
+   - LIT 노을 푸터: Codex 푸터에 움직이는 노을을 띄울까? 기본값: 예 (--sunset-footer).
+     다른 답: --sunset-footer를 빼 줘.
+   config.toml에 모델이 이미 적혀 있으면 그대로 두고, --reconfigure를 붙이면 여기서 고른 모델로 바꿔.
+   아이콘 글꼴: SymbolsNerdFontMono-Regular.ttf를 Mac은 ~/Library/Fonts, Linux는 ~/.local/share/fonts에
+   넣어 (XDG_DATA_HOME이 있으면 그 아래). --round는 이 컴퓨터에 아이콘 글꼴이 없을 때만 넣고,
+   Windows에는 넣지 않아.
+   화면: Codex 푸터의 LIT 노을은 기본으로 꺼져 있고 Codex 0.172 이상이 필요해.
+   --sunset-footer가 켜 줘.
+   내가 고른 플래그는 미리 보기와 아래 모든 설치 명령에 붙이고, 이후에도 빼지 마.
+3. 내 허락을 기다려. 이 패키지만 쓰고 다른 출처는 더하지 마. 훅 승인, 신뢰, 로그인을 나 대신 하지 마.
+4. 설치:
+   npx --yes @litfamily/litcodex@latest install --yes --round --sunset-footer
+5. 업데이트를 부탁받으면 같은 플래그로 설치 명령을 다시 실행해. 내가 푸터를 꺼 두었다면
+   --sunset-footer는 빼 줘.
+6. 확인:
+   npx --yes @litfamily/litcodex@latest doctor
+   "All checks passed."가 나와야 해. 설치 출력에는 ROUND_ENDS: 로 시작하는 줄이 있어야 해.
+   실패한 단계가 있으면 그 줄을 보여 주고 멈춰.
+7. 둥근 끝. 이것을 보여 주고 양쪽 끝이 둥근지 물어봐:  LIT 
+   - 둥글면: 설치 명령에 --glyphs round를 붙여 다시 실행해.
+   - 네모로 보이면: --glyphs square를 붙여 다시 실행해. 둥근 끝을 쓰고 싶으면 내가 온전한 Nerd Font를
+     터미널 글꼴로 고르거나 Symbols Nerd Font Mono를 대체 글꼴로 더하면 돼. Terminal.app에는 대체 글꼴
+     설정이 없으니 온전한 Nerd Font가 필요해.
+   - SSH나 휴대폰이면: 그대로 둬.
+   - 되돌리기: --glyphs auto를 붙여 다시 실행해.
+8. 나만 할 수 있는 일을 알려 줘: 플러그인과 푸터를 불러오도록 Codex를 다시 시작하기, Codex가 검토해
+   달라고 하면 LitCodex 훅을 승인하기, Codex에 로그인하기, Codex가 물으면 프로젝트 폴더나 Git 저장소를
+   신뢰하기.
 ```
 
 </details>
@@ -243,8 +275,8 @@ lit 회원가입 폼에 입력 검증을 추가해줘
 분해, 웨이브, 검증, 종합으로 이어지는 지도가 따로 있는데, 진행 중인 조사 기록이 있으면 그 지점부터, 없으면 분해
 단계부터 보여 줍니다.
 
-LIT 턴이 끝나면 Stop 훅이 `🔥 LIT · lit-loop · turn done · 2 tasks done · next: Write the docs`처럼 쉬운 말로 알려 주고,
-계획이나 목표가 있으면 그 아래에 지도를 붙입니다. 질문을 남기고 끝난 턴은 `your turn · answer the question above`, 막힌
+LIT 턴이 끝나면 Stop 훅이 `🔥 LIT · lit-loop · turn done · next: Write the docs`처럼 쉬운 말로 알려 줍니다.
+지난 카드 뒤로 지도나 체크리스트가 바뀌었으면 그 아래에 둘을 붙이고, 다음 할 일도 거기에 적습니다. 질문을 남기고 끝난 턴은 `your turn · answer the question above`, 막힌
 턴은 `blocked · needs your help above`라고 말합니다. `lit start work`가 중간 점검 지점에 닿은 뒤 같은 턴 안에서 계속
 진행할 때는 `3/7 tasks done · continuing with: Write the docs`라고 말합니다. Codex 데스크톱 앱과 IDE는 훅 문구의 색 코드를 글자
 그대로 보여 주므로, 카드는 기본으로 색 없이 나옵니다.
@@ -533,9 +565,10 @@ LIT 스킬이 있습니다. 아래 테두리에는 컨텍스트 사용량, 5시�
 그립니다. 카드가 비워 둔 칸에는 반쯤 잠긴 해와 별, 바다가 있어 LIT가 일하는 동안 움직입니다. 내 차례가 되면 테두리가
 호박색으로, 완료가 기록되면 초록색으로 바뀝니다.
 
-테두리는 창 너비가 40칸 이상, 해는 60칸 이상일 때 나옵니다. 더 좁은 창, 트루컬러가 아닌 터미널, `COLORFGBG`로 밝은 배경을
-알리는 터미널, `NO_COLOR`, `--once`에서는 테두리 없는 줄로 나옵니다. 알약과 게이지의 끝은 둥근 모양을 직접 그리는
-터미널이거나 Nerd Font가 설치되어 있으면 둥글게 나옵니다. 어긋나면 `LITCODEX_HUD_GLYPHS=nerd`나 `basic`으로 정하세요.
+테두리는 창 너비가 40칸 이상, 해는 60칸 이상일 때 나옵니다. 더 좁은 창, 트루컬러가 아닌 터미널, 배경이 밝은 터미널(HUD가
+터미널에 묻거나 `COLORFGBG`를 읽어 압니다), `NO_COLOR`, `--once`에서는 테두리 없는 줄로 나옵니다. 알약과 게이지의 끝은 둥근 모양을 직접 그리는
+터미널이거나 Nerd Font가 설치되어 있으면 둥글게 나옵니다. 어긋나면 `litcodex install --yes --glyphs round`나 `square`로
+HUD와 `litcodex run`, 푸터를 한꺼번에 정하고, `auto`로 되돌리세요.
 
 HUD는 LIT가 남겨 두는 작은 기록을 읽습니다. 테두리 카드의 컨텍스트와 한도 숫자를 위해서는 그 세션의 Codex 로그 끝부분도
 보는데, 5초에 한 번까지만, 그리고 파일이 바뀌었을 때만 읽습니다. 파일은 하나도 쓰지 않고 Codex에 말을 걸지도 않으니 언제
@@ -559,7 +592,9 @@ litcodex screen-status on
 <details>
 <summary>끄기, 상태 확인, 우선 설정, 한 줄 상태</summary>
 
-`litcodex screen-status off`로 끄고 `status`로 확인합니다. 설정은 `$CODEX_HOME/litcodex/screen-status.json`에 남고,
+`litcodex screen-status off`로 끄고 `status`로 확인합니다. 훅은 창의 배경을 볼 수 없으니 흰 창은 직접 골라 주세요.
+`litcodex screen-status light`를 고르면 글자가 창의 글자색 그대로 나오고, `dark`로 되돌립니다. 24비트 색이 없는 터미널에서는
+`litcodex screen-status 256`을 쓰고, `truecolor`로 되돌립니다. 설정은 `$CODEX_HOME/litcodex/screen-status.json`에 남고,
 `LITCODEX_SCREEN_STATUS=1` 또는 `0`이 그보다 먼저 적용되며, `NO_COLOR`가 있으면 카드는 색 없이 나옵니다.
 
 `litcodex statusline`은 같은 상태를 `🔥 LIT · lit-loop  ● work ── ○ review ── ○ done  · Bash 0:12`처럼 한 줄로 출력합니다.
@@ -741,7 +776,7 @@ LitCodex가 그 도구를 직접 부르지는 않습니다. 로그인, 모델 �
 | `litcodex extensions list`, `check`, `install`, `update`, `remove`, `prune-backups` | `~/.codex/skills/`에 있는 LitFamily 확장 아홉 개 관리. `--yes`를 붙였을 때만 씀 |
 | `litcodex config migrate` | 관리되는 Codex 설정을 미리 보거나 적용 |
 | `litcodex hud` | 가장 최근 세션의 LIT 카드를 두 번째 터미널 창에 실시간으로 표시 |
-| `litcodex screen-status on`, `off` 또는 `status` | 터미널 `codex`에서 LIT 카드에 색 넣기 |
+| `litcodex screen-status on`, `off` 또는 `status` | 터미널 `codex`에서 LIT 카드에 색 넣기. `light`, `dark`, `truecolor`, `256`으로 창에 맞춤 |
 | `litcodex sunset on`, `off` 또는 `status` | 터미널 `codex` 맨 아래에 LIT 노을 표시 |
 | `litcodex statusline` | 상태 줄 명령에 쓸 수 있게 LIT 상태를 한 줄로 출력 |
 | `litcodex run` | 같은 터미널 아래쪽에 LIT 패널을 띄운 채 Codex 실행 |

@@ -249,6 +249,7 @@ export class InstallCards {
 	private hungUp = false;
 	private asked = 0;
 	private total = 0;
+	private hint = "";
 
 	constructor(terminal: CardTerminal) {
 		this.terminal = terminal;
@@ -281,9 +282,13 @@ export class InstallCards {
 		this.last = "line";
 	}
 
-	/** Prints the opening line and takes how many questions this run may ask, for the `LIT 2/6` step pills. */
-	begin(total: number, line: string): void {
+	/**
+	 * Prints the opening line and takes how many questions this run may ask, for the `LIT 2/6` step pills. The hint is
+	 * a dim line in an empty row of the first card, or at its foot where it has none; a narrow card takes two rows.
+	 */
+	begin(total: number, line: string, hint = ""): void {
 		this.total = total;
+		this.hint = hint;
 		const rows = this.wrapped(line, this.width()).map((row) => ` ${this.quiet(row)}`);
 		this.output.write(`${this.gap()}${rows.join("\n")}\n`);
 		this.last = "line";
@@ -634,10 +639,27 @@ export class InstallCards {
 
 	/** The roomiest of `variants` that fits the window; the blank row above a card is the first thing to go. */
 	private fitted(tag: string, title: string, variants: readonly (readonly string[])[]): string[] {
-		const cards = variants.map((body) => this.frame(tag, title, body));
-		const [first = []] = cards;
-		const spaced = this.last === "nothing" ? [] : [["", ...first]];
-		return [...spaced, ...cards].find((rows) => rows.length <= this.height()) ?? cards.at(-1) ?? [];
+		const pick = (bodies: typeof variants, most: number): string[] | undefined => {
+			const cards = bodies.map((body) => this.frame(tag, title, body));
+			const [first = []] = cards;
+			const spaced = this.last === "nothing" ? [] : [["", ...first]];
+			return [...spaced, ...cards].find((rows) => rows.length <= most);
+		};
+		const plain = pick(variants, this.height()) ?? this.frame(tag, title, variants.at(-1) ?? []);
+		if (this.asked !== 1 || tag === "LIT" || this.hint === "") return plain;
+		const hint = this.hintRows();
+		const hinted = variants.map((body) => {
+			const free = body.lastIndexOf("");
+			return free < 0 ? [...body, ...hint] : [...body.slice(0, free), ...hint, ...body.slice(free + 1)];
+		});
+		// In the smallest window the hint takes rows of a list, and the card keeps its height.
+		return pick(hinted, (this.output.rows || 24) > MIN_ROWS ? this.height() : plain.length) ?? plain;
+	}
+
+	/** The hint in at most two rows: cut between words, in the narrowest windows after the `/` of its package. */
+	private hintRows(): string[] {
+		const rows = this.wrapped(this.hint, this.inner());
+		return (rows.length > 2 ? this.hint.split(/(?<=\/)/u) : rows).map((row) => this.quiet(row));
 	}
 
 	/** Key hints, as many to a line as fit; a hint is never split. */

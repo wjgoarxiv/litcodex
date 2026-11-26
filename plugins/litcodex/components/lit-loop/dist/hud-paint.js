@@ -34,14 +34,16 @@ export function along(stops, share) {
 }
 export function push(row, text, width, style) {
     if (width === 0) {
-        const at = row.length - (row.at(-1)?.text === "" ? 2 : 1);
+        let at = row.length - 1;
+        while (row[at]?.text === "")
+            at--;
         const base = row[at];
         if (base !== undefined)
             row[at] = { ...base, text: base.text + text };
         return;
     }
     row.push({ ...style, text });
-    if (width === 2)
+    for (let taken = 1; taken < width; taken++)
         row.push({ text: "" });
 }
 /** The brand pill; round caps replace its two padding cells, so it is as wide either way. */
@@ -88,11 +90,12 @@ export function bar(size, filled, stops, caps) {
         return { text: " ", bg: color };
     });
 }
-/** `text` as cells in one style. */
+/** `text` as cells in one style; null is the terminal's own ink. */
 export function words(text, fg, style = {}) {
     const row = [];
+    const look = fg === null ? style : { fg, ...style };
     for (const piece of cells(text))
-        push(row, piece.text, piece.width, { fg, ...style });
+        push(row, piece.text, piece.width, look);
     return row;
 }
 /** The row cut to `width` cells, ending in `…` when anything was cut; a wide character is never split. */
@@ -101,14 +104,13 @@ export function cut(row, width) {
         return [...row];
     if (width <= 0)
         return [];
-    const kept = row.slice(0, width - 1);
-    const last = kept.at(-1);
-    // The cell after the cut tells whether the last kept one is the first half of a wide character.
-    if (last !== undefined && row[width - 1]?.text === "")
-        kept[kept.length - 1] = { text: " ", blank: true };
+    // The cut may fall inside a wide character, which then goes whole.
+    let end = width - 1;
+    while (end > 0 && row[end]?.text === "")
+        end--;
     const style = row[width - 2] ?? row[0];
     const { blank: _blank, sgr: _sgr, ...look } = style ?? BLANK;
-    return [...kept, { ...look, text: "…" }];
+    return [...row.slice(0, end), { ...look, text: "…" }, ...Array(width - 1 - end).fill(BLANK)];
 }
 /** A filled pill around `text`, graded along `stops`, with its two end cells. */
 export function pill(text, stops, caps, ink = INK, bold = true) {
@@ -167,6 +169,22 @@ function turnTo(from, to) {
     const plain = from.sgr === undefined && from.fg === undefined && from.bg === undefined && from.bold !== true;
     const own = codes.length === 0 ? "" : `\u001b[${codes.join(";")}m`;
     return (dropped && !plain ? RESET : "") + (dropped ? (to.sgr ?? "") : "") + own;
+}
+/** The entry of the 256-colour palette nearest to a colour; the 16 a theme owns are left out. */
+function nearest(red, green, blue) {
+    const level = (value) => (value < 48 ? 0 : value < 115 ? 1 : Math.floor((value - 35) / 40));
+    const value = (at) => (at === 0 ? 0 : 55 + at * 40);
+    const cube = [red, green, blue].map(level);
+    const step = Math.max(0, Math.min(23, Math.round(((red + green + blue) / 3 - 8) / 10)));
+    const far = (r, g, b) => (r - red) ** 2 + (g - green) ** 2 + (b - blue) ** 2;
+    const grey = 8 + step * 10;
+    return far(grey, grey, grey) < far(value(cube[0]), value(cube[1]), value(cube[2]))
+        ? 232 + step
+        : 16 + 36 * cube[0] + 6 * cube[1] + cube[2];
+}
+/** Painted text with its 24-bit colours taken to the 256-colour palette. */
+export function in256(text) {
+    return text.replace(/([34]8);2;(\d+);(\d+);(\d+)/gu, (_all, layer, red, green, blue) => `${layer};5;${nearest(Number(red), Number(green), Number(blue))}`);
 }
 /** The row as text: cells that look alike share one escape, and (unless `whole`) trailing blanks are dropped. */
 export function rowText(row, whole = false) {

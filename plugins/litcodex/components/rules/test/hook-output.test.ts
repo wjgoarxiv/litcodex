@@ -46,6 +46,16 @@ describe("formatAdditionalContextOutput", () => {
 		expect(additionalContext).not.toContain("last");
 		expect(additionalContext).toContain("[Truncated hook additional context to 32000 chars");
 	});
+
+	it("#given context with a character on the cut or half of one #when serializing hook JSON #then Codex can read it", () => {
+		for (let shift = 0; shift < 2; shift++) {
+			const output = formatAdditionalContextOutput("SessionStart", "x".repeat(shift) + "🚀".repeat(25_000));
+			expect(output).not.toMatch(/\\ud[89a-f]/iu);
+			expect(readAdditionalContext(JSON.parse(output))).toContain("[Truncated");
+		}
+		const half = formatAdditionalContextOutput("SessionStart", "a\ud83db");
+		expect(readAdditionalContext(JSON.parse(half))).toBe("a\ufffdb");
+	});
 });
 
 const tempDirs: string[] = [];

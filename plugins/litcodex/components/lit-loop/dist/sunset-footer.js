@@ -11,14 +11,16 @@
 // the sun and Codex cuts only the end of a line. A tree stays under Codex's limit of 256 nodes by giving neighbouring cells one colour.
 import { closeSync, openSync } from "node:fs";
 import { hostname } from "node:os";
-import { basename } from "node:path";
+import { basename, isAbsolute } from "node:path";
 import { WriteStream } from "node:tty";
-import { clock, limitLabel, readCardStatus } from "./card-status.js";
-import { clean } from "./control-chars.js";
+import { clock, limitLabel, readBranch, readCardStatus, spokenMap } from "./card-status.js";
+import { clean, clipped, graphemes } from "./control-chars.js";
+import { chosenGlyphs } from "./glyph-choice.js";
 import { displayWidth, fit, tilde } from "./hud.js";
 import { roundGlyphs } from "./hud-glyphs.js";
-import { BLANK, brandPill } from "./hud-paint.js";
+import { BLANK, brandPill, SUNSET } from "./hud-paint.js";
 import { AMBER, DUSK, layoutSunset, SUN_CLEAR, SUN_ROWS, SUN_WIDTH, sunLeft } from "./hud-sunset.js";
+import { STATE_COLOURS, stateOf } from "./state-colours.js";
 import { workflowMapText } from "./workflow-map.js";
 export const FOOTER_TOOL = "lit_statusline";
 export const FOOTER_URI = "ui://litcodex/sunset-footer";
@@ -34,6 +36,11 @@ const MIN_SCENE_WIDTH = 60;
 const MIN_SCENE_ROWS = 24;
 /** Codex accepts 256 nodes. */
 const MAX_NODES = 240;
+/** The least a tool's name is cut to, and the most it takes where nobody knows the width. */
+const TOOL_MIN = 4;
+const TOOL_OPEN = 24;
+/** The least a first item is cut to. */
+const ITEM_MIN = 12;
 /** A gap wider than any terminal, so every line of the footer starts its own row. */
 const LINE_GAP = 400;
 /** Codex drops a plain space at the edge of an element. */
@@ -44,7 +51,7 @@ function record(value) {
         : {};
 }
 function str(value) {
-    return typeof value === "string" && value !== "" ? clean(value).slice(0, 512) : null;
+    return typeof value === "string" && value !== "" ? clipped(clean(value), 512) : null;
 }
 function num(value) {
     return typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -66,6 +73,8 @@ export function terminalSize() {
         return null;
     }
 }
+/** Codex's own words for its approval policies, where they are known. */
+const APPROVALS = new Map([["on-request", "Ask for approval"]]);
 const thousands = (value) => (value >= 1000 ? `${Math.round(value / 100) / 10}k` : String(value));
 /** One usage window, as `5h 78% left`; `short` leaves the last word out. */
 function limitWords(state, which, short) {
@@ -78,7 +87,7 @@ function limitWords(state, which, short) {
     return `${label} ${Math.max(0, Math.round(100 - used))}%${short ? "" : " left"}`;
 }
 /** One item of the user's own status line, or null when the snapshot has nothing for it. */
-function itemWords(id, state, status, short) {
+function itemWords(id, state, branch, short) {
     const thread = record(state["thread"]);
     const model = record(thread["model"]);
     const usage = record(thread["usage"]);
@@ -91,8 +100,9 @@ function itemWords(id, state, status, short) {
         const amount = num(value);
         return amount === null ? null : `${thousands(amount)} ${unit}`;
     };
-    const used = num(context["used_percentage"]);
-    const left = used === null ? null : Math.max(0, Math.round(100 - used));
+    // A thread that has not sent anything has no figure yet; Codex shows it as an empty window.
+    const used = num(context["used_percentage"]) ?? 0;
+    const left = Math.max(0, Math.round(100 - used));
     const reasoning = str(model["reasoning_level"]);
     switch (id) {
         case "model":
@@ -114,15 +124,17 @@ function itemWords(id, state, status, short) {
         case "hostname":
             return as(str(hostname()), "status-path");
         case "git-branch":
-            return as(status?.branch ?? null, "status-branch");
+            return as(branch, "status-branch");
         case "permissions":
             return as(str(record(thread["permissions"])["display_name"]), "status-mode");
-        case "approval-mode":
-            return as(str(record(thread["approval"])["policy"]), "status-mode");
+        case "approval-mode": {
+            const policy = str(record(thread["approval"])["policy"]);
+            return as(policy === null ? null : (APPROVALS.get(policy) ?? policy), "status-mode");
+        }
         case "context-remaining":
-            return as(left === null ? null : short ? `ctx ${left}%` : `context ${left}% left`, "status-usage");
+            return as(short ? `ctx ${left}%` : `context ${left}% left`, "status-usage");
         case "context-used":
-            return as(used === null ? null : `context ${Math.round(used)}% used`, "status-usage");
+            return as(`context ${Math.round(used)}% used`, "status-usage");
         case "context-window-size":
             return as(count(context["context_window_size"], "window"), "status-usage");
         case "used-tokens":
@@ -147,7 +159,7 @@ function itemWords(id, state, status, short) {
             return as(str(thread["id"]), "status-thread");
         case "thread-name":
         case "thread-title":
-            return as(str(thread["name"]), "status-thread");
+            return as(str(thread["name"]) ?? str(thread["id"]), "status-thread");
         case "workspace-headline":
             return as(str(record(record(state["account"])["workspace"])["headline"]), "status-metadata");
         case "profile":
@@ -156,10 +168,13 @@ function itemWords(id, state, status, short) {
             return null;
     }
 }
-/** The user's status line items in their order, in short words when the full ones do not all fit. */
-function infoWords(state, status, width, brief = false) {
+/** The ids of the user's own status line items. */
+function itemIds(state) {
     const chosen = record(state["config"])["statusline_items"];
-    const ids = Array.isArray(chosen) ? chosen.filter((id) => typeof id === "string") : [];
+    return Array.isArray(chosen) ? chosen.filter((id) => typeof id === "string") : [];
+}
+/** The items in their order, in short words when the full ones do not all fit. */
+function infoWords(state, branch, ids, width, brief = false) {
     const write = (short) => {
         const join = short ? "  " : " · ";
         const words = [];
@@ -167,9 +182,14 @@ function infoWords(state, status, width, brief = false) {
         let size = 0;
         let whole = true;
         for (const id of ids) {
-            const item = itemWords(id, state, status, short);
+            let item = itemWords(id, state, branch, short);
             if (item === null || seen.has(item.text))
                 continue;
+            const half = Math.floor(width / 2);
+            if (words.length === 0 && displayWidth(item.text) > width && half >= ITEM_MIN) {
+                whole = false;
+                item = { ...item, text: fit(item.text, half) };
+            }
             const need = displayWidth(item.text) + (words.length > 0 ? join.length : 0);
             if (size + need > width) {
                 whole = false;
@@ -201,6 +221,10 @@ function cutWords(words, width) {
         left -= displayWidth(text);
     }
     return out;
+}
+/** Text Codex cannot break inside a word of any script; Codex leaves the joiners out of what it prints. */
+function joined(text) {
+    return Array.from(graphemes.segment(text.normalize("NFC")), ({ segment }) => segment).join("\u2060");
 }
 /** Cells as runs of one look; every `group` cells share the first one's colour, and a blank joins any run. */
 function runsOf(cells, group) {
@@ -259,11 +283,38 @@ function headline(state, status) {
     if (lit !== null)
         words.push({ text: `${lit.mode ?? "lit"} `, color: "primary", bold: true });
     words.push({ text: word, color: tint });
-    if (moving && lit !== null && lit.step !== null) {
-        const step = `${lit.step.tool} ${clock(lit.now - lit.step.startedAt)}`;
-        words.push({ text: ` · ${step}`, color: "status-metadata" });
-    }
-    return { words, moving, waiting };
+    const running = moving ? (lit?.step ?? null) : null;
+    const step = lit === null || running === null ? null : { tool: running.tool, clock: clock(lit.now - running.startedAt) };
+    const look = waiting ? "turn" : done ? stateOf(lit) : null;
+    return { words, step, moving, waiting, look };
+}
+/** The step in `room` cells: its name may be cut, its clock is whole, and without room for both it is left out. */
+function stepWords(step, room) {
+    if (step === null)
+        return [];
+    const [before, after] = [" · ", ` ${step.clock}`];
+    const tool = fit(step.tool, Math.max(0, room - before.length - after.length));
+    if (tool !== step.tool && displayWidth(tool) < TOOL_MIN)
+        return [];
+    return [{ text: `${before}${tool}${after}`, color: "status-metadata" }];
+}
+/** The words of a one-line footer after its pill. A step keeps clear of the context figure that stands without it. */
+function oneLine(state, branch, head, room) {
+    const base = cutWords([{ text: " ", color: "primary" }, ...head.words], room);
+    const left = room - wordsWidth(base);
+    const ids = itemIds(state);
+    const idle = infoWords(state, branch, ids, left - 2);
+    const context = ids.find((id) => id === "context-remaining" || id === "context-used");
+    const forms = [true, false].map((short) => context === undefined ? undefined : itemWords(context, state, branch, short)?.text);
+    const shows = (words) => words.some((word) => forms.includes(word.text));
+    const figure = displayWidth(forms[0] ?? "") + 2;
+    const kept = context !== undefined && (shows(idle) || (head.moving && figure <= left));
+    const step = stepWords(head.step, left - (kept ? figure : 0));
+    const after = left - wordsWidth(step) - 2;
+    let items = infoWords(state, branch, ids, after);
+    if (kept && !shows(items))
+        items = infoWords(state, branch, [context, ...ids.filter((id) => id !== context)], after);
+    return [...base, ...step, ...(items.length > 0 ? [{ text: "  ", color: "primary" }, ...items] : [])];
 }
 /** The footer as Codex's UI tree. */
 export function footerTree(snapshot, options) {
@@ -271,37 +322,39 @@ export function footerTree(snapshot, options) {
     const { status } = options;
     const open = options.size === null;
     const width = Math.min(MAX_WIDTH, Math.max(10, options.size === null ? MAX_WIDTH : options.size.columns - MARGIN));
-    const { words: head, moving, waiting } = headline(state, status);
-    const brand = brandPill(options.caps);
+    const said = headline(state, status);
+    const { words: head, moving, waiting, look } = said;
+    const branch = status?.branch ?? options.branch ?? null;
+    const brand = brandPill(options.caps, look === null ? SUNSET : STATE_COLOURS[look].pill);
     const pill = runsOf(brand, 1).map(runNode);
-    const gap = { text: "  ", color: "primary" };
     const rows = options.size?.rows ?? MIN_SCENE_ROWS;
     if (width < MIN_SCENE_WIDTH || rows < MIN_SCENE_ROWS) {
-        const room = width - brand.length - 1;
-        const said = cutWords([{ text: " ", color: "primary" }, ...head], room);
-        const info = infoWords(state, status, room - wordsWidth(said) - 2);
-        const tail = info.length > 0 ? [gap, ...info] : [];
-        return row([...pill, textLine(wordNodes([...said, ...tail]))]);
+        return row([...pill, textLine(wordNodes(oneLine(state, branch, said, width - brand.length - 1)))]);
     }
     // The map is LIT's; a thread without LIT gets its folder and branch there.
     const cwd = str(record(record(state["thread"])["workspace"])["cwd"]);
-    const place = [cwd === null ? null : basename(cwd), status?.branch ?? null].filter((part) => part !== null);
-    const map = status !== null && status.state !== "ready" ? status.map : null;
-    const second = map !== null
-        ? [{ text: workflowMapText(map), color: "status-progress" }]
-        : [{ text: place.join(" · "), color: "status-path" }];
+    const place = [cwd === null ? null : basename(cwd), branch].filter((part) => part !== null);
+    const map = status !== null && status.state !== "ready" ? spokenMap(status) : null;
     const at = open ? 2 * SUN_CLEAR + SUN_WIDTH : 0;
     const limit = open ? width - at : Math.max(20, sunLeft(width) - SUN_CLEAR);
+    const cut = open || (map !== null && displayWidth(workflowMapText(map)) > limit);
+    const second = map !== null
+        ? [{ text: workflowMapText(cut ? fromCurrent(map) : map), color: "status-progress" }]
+        : [{ text: place.join(" · "), color: "status-path" }];
+    const first = cutWords([{ text: " ", color: "primary" }, ...head], limit - brand.length);
+    const step = limit - brand.length - wordsWidth(first);
+    const info = infoWords(state, branch, itemIds(state), limit, open);
+    // Codex draws fewer lines in a low window, so the items stand above the folder where its height is not known.
+    const below = open && map === null ? [info, cutWords(second, limit)] : [cutWords(second, limit), info];
     const lines = [
-        cutWords([{ text: " ", color: "primary" }, ...head], limit - brand.length),
-        cutWords(second, limit),
-        infoWords(state, status, limit, open),
+        [...first, ...stepWords(said.step, open ? Math.min(step, stepOpen(said.step)) : step)],
+        ...below,
     ];
     // Codex breaks a line at a hyphen before it cuts it, so a line that may be cut has none to break at.
-    const said = open
+    const shown = open
         ? lines.map((words) => words.map((word) => ({ ...word, text: word.text.replaceAll("-", "\u2011") })))
         : lines;
-    const ends = said.map((words, index) => at + wordsWidth(words) + (index === 0 ? brand.length : 0));
+    const ends = shown.map((words, index) => at + wordsWidth(words) + (index === 0 ? brand.length : 0));
     const reach = open ? Math.max(OPEN_WIDTH, ...ends) : width;
     const grid = ends.map((end) => Array.from({ length: reach }, (_, x) => (x >= at && x < end ? { text: "x" } : BLANK)));
     const scene = layoutSunset(grid, 0, reach, {
@@ -313,12 +366,26 @@ export function footerTree(snapshot, options) {
     });
     // A still scene stands at one moment; a moving one keeps small numbers, which the sine waves need.
     scene.paint(grid, moving ? (options.now / 1000) % 3600 : 0, null);
+    const spoken = open ? shown.map((words) => words.map((word) => ({ ...word, text: joined(word.text) }))) : shown;
+    // Blanks past the last lit cell would only make Codex end the line in "…", and the sea has hyphens to break a line at.
+    const last = grid.map((cells, y) => {
+        if (!open)
+            return reach;
+        const end = ends[y] ?? 0;
+        if (map === null && y === SUN_ROWS - 1)
+            return end;
+        return cells.reduce((lit, cell, x) => (cell.text.trim() === "" ? lit : x + 1), end);
+    });
     const build = (group) => {
-        const drawn = said.map((words, y) => {
+        const drawn = spoken.map((words, y) => {
             // Scene cells sit inside one text, which carries no background.
-            const sky = (from, to) => runsOf((grid[y] ?? []).slice(from, to), y === SUN_ROWS - 1 ? group : 1).map((run) => runNode({ ...run, bg: undefined }));
+            const sky = (from, to) => runsOf((grid[y] ?? []).slice(from, to), y === SUN_ROWS - 1 ? group : 1).map((run) => runNode({
+                ...run,
+                text: open && from > 0 ? run.text.replaceAll("-", "\u2011") : run.text,
+                bg: undefined,
+            }));
             const before = at > 0 ? [textLine(sky(0, at))] : [];
-            const after = textLine([...wordNodes(words), ...sky(ends[y] ?? 0)]);
+            const after = textLine([...wordNodes(words), ...sky(ends[y] ?? 0, last[y])]);
             return row([...before, ...(y === 0 ? pill : []), after]);
         });
         return { type: "row", props: { gap: LINE_GAP, wrap: "wrap" }, children: drawn };
@@ -328,20 +395,57 @@ export function footerTree(snapshot, options) {
         tree = build(group);
     return tree;
 }
+/** The path from the stage at work on, so a line that may be cut keeps the stage's name. */
+function fromCurrent(map) {
+    const at = map.cells.findIndex((item) => item.state === "current");
+    return at > 0 ? { ...map, cells: map.cells.slice(at) } : map;
+}
+/** The room of a step whose name is cut to the most it may take on an open line. */
+function stepOpen(step) {
+    return step === null ? 0 : " · ".length + TOOL_OPEN + 1 + step.clock.length;
+}
 const row = (children) => ({ type: "row", props: { gap: 0, wrap: "nowrap" }, children });
-let caps = null;
+/**
+ * Whether the footer's pill ends in round caps. Codex drops the pill's fill where the terminal has no colours for it,
+ * and the caps alone would stay as solid discs. Codex hands the server little more than TERM, so TERM decides until
+ * the person has chosen.
+ */
+export function roundFooter(env) {
+    const chosen = chosenGlyphs(env);
+    return chosen === "auto" ? fillsPills(env) && roundGlyphs(env) : chosen === "round";
+}
+/** Whether the terminal has colours for a pill, as far as TERM says. */
+export function fillsPills(env) {
+    const term = env["TERM"] ?? "";
+    return term === "" || /256color|direct|kitty|ghostty|alacritty|wezterm|foot|contour/iu.test(term);
+}
+const FONT_ANSWER_MS = 60_000;
+let guessed = null;
+/** `roundFooter` once a second: the saved choice at every read, the look through the fonts once a minute. */
+function footerCaps(env, now) {
+    const chosen = chosenGlyphs(env);
+    if (chosen !== "auto")
+        return chosen === "round";
+    if (guessed === null || Math.abs(now - guessed.at) > FONT_ANSWER_MS)
+        guessed = { at: now, round: roundFooter(env) };
+    return guessed.round;
+}
 /** The answer to one `resources/read` of the footer. */
 export function readFooter(params, env, now) {
     const snapshot = record(params["_meta"])[FOOTER_STATE_KEY];
-    const thread = str(record(record(snapshot)["thread"])["id"]);
+    const { id, workspace } = record(record(snapshot)["thread"]);
+    const thread = str(id);
+    const cwd = record(workspace)["cwd"];
     let status = null;
+    let branch = null;
     try {
         // No rollout: the snapshot already has the usage, and this runs every second.
         status = thread === null ? null : readCardStatus(thread, env, now, { rollout: false });
+        if (status?.branch == null && typeof cwd === "string" && isAbsolute(cwd))
+            branch = readBranch(cwd);
     }
     catch {
         // The footer shows what the snapshot says.
     }
-    caps ??= roundGlyphs(env);
-    return footerTree(snapshot, { now, size: terminalSize(), caps, status });
+    return footerTree(snapshot, { now, size: terminalSize(), caps: footerCaps(env, now), status, branch });
 }

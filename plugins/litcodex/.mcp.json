@@ -2,8 +2,13 @@
 	"mcpServers": {
 		"litcodex": {
 			"command": "node",
-			"args": ["components/lit-loop/dist/card-server.js"],
-			"cwd": "."
+			"args": [
+				"components/lit-loop/dist/card-server.js"
+			],
+			"cwd": ".",
+			"env_vars": [
+				"CODEX_HOME"
+			]
 		}
 	}
 }

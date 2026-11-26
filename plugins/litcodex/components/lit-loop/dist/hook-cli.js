@@ -12,8 +12,10 @@ import { adhdSuggestion } from "./adhd-suggest.js";
 import { claimReloadContext, evaluateAutoHandoffStop, recordCompaction, takeReloadContext } from "./auto-handoff.js";
 import { applyAutoHandoffRoute, clearManagedCompactionWhenOff, parseAutoHandoffRoute, } from "./auto-handoff-settings.js";
 import { applyPreToolUseCreateGoalGuard, isLitUserPromptSubmitInput, runUserPromptSubmitHook } from "./codex-hook.js";
+import { hookJson } from "./control-chars.js";
 import { plainGuide } from "./goal-guide.js";
-import { closeOwnedGoal, detectCheck, goalCancelContext, liveConsent, normalizeGoalObjective, ownedGoal, planAnswer, proposeLoopGoal, sweepGoalState, } from "./goal-pipeline.js";
+import { closeOwnedGoal, detectCheck, goalCancelContext, goalQuestionOpen, liveConsent, normalizeGoalObjective, ownedGoal, planAnswer, proposeLoopGoal, startAnswers, sweepGoalState, } from "./goal-pipeline.js";
+import { wrapped } from "./hud.js";
 import { laneScope, subagentEvent, toolLaneEvents } from "./lane-events.js";
 import { recordLaneEvent } from "./lane-state.js";
 import { detectWaitReason, endLiveStep, recordLiveStepEnd, recordLiveStepStart, recordTurnStart, writeThreadPointer, } from "./live-step.js";
@@ -21,13 +23,13 @@ import { evaluatePlanPersistence, formatStopBlockOutput, rearmLitPlanIfSatisfied
 import { clearActiveRoute, isBareLit, isLitContinue, readActiveRoute, readResumeWork, recordActiveRoute, } from "./reentry.js";
 import { isBoundaryAnswer, isGoPrompt, takeGo } from "./rewind-go.js";
 import { outcomeFor, recordRunEnd } from "./run-end.js";
-import { workflowCard } from "./screen-card.js";
-import { screenColor } from "./screen-status.js";
+import { SAFE_WIDTH, workflowCard } from "./screen-card.js";
+import { screenLook } from "./screen-status.js";
 import { recordLiveness } from "./session-liveness.js";
 import { applyPromptToStack, frameToResume } from "./stack-hook.js";
 import { takeSunsetHint } from "./sunset-settings.js";
 import { maskMarkdownCode } from "./trigger.js";
-import { recordWorkflowTurn, workflowStopLine, workflowTurn } from "./workflow-map.js";
+import { continuingWork, recordWorkflowTurn, workflowStopLine, workflowTurn } from "./workflow-map.js";
 /** Hard cap on stdin to bound memory / ReDoS exposure inside the 5 s Codex hook budget. 8 MB. */
 export const MAX_STDIN_BYTES = 8_000_000;
 const INVALID_JSON_MESSAGE = "lit hook: stdin was not valid JSON";
@@ -109,7 +111,7 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
     }
     const route = autoHandoffRouteOutput(parsed, repoRoot, auto);
     if (route !== "") {
-        stdout.write(route);
+        stdout.write(hookJson(route));
         return 0;
     }
     clearManagedCompactionWhenOff(hookCwd(parsed, repoRoot), auto.env ?? process.env);
@@ -120,10 +122,15 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
     let planNote = null;
     if (isLitUserPromptSubmitInput(parsed)) {
         const cwd = hookCwd(parsed, repoRoot);
+        // Any prompt in a LIT thread ends the wait, an answer this hook handles itself included.
+        const live = hookSessionScope(parsed, repoRoot);
+        if (live !== null && workflowTurn(live.cwd, live.sessionId) !== null) {
+            recordTurnStart(live.cwd, live.sessionId, auto.now);
+        }
         if (isBoundaryAnswer(parsed.prompt)) {
             const cancel = /cancel|취소/u.test(parsed.prompt) ? goalCancelContext(cwd) : null;
             if (cancel !== null) {
-                stdout.write(withReloadContext("", cancel) ?? "");
+                stdout.write(hookJson(withReloadContext("", cancel) ?? ""));
                 return 0;
             }
         }
@@ -135,7 +142,7 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
                 now: auto.now ?? Date.now(),
             });
             if (answer !== null && answer.start === null) {
-                stdout.write(withReloadContext("", answer.context) ?? "");
+                stdout.write(hookJson(withReloadContext("", answer.context) ?? ""));
                 return 0;
             }
             // R1: `yes` starts the plan through the same start-work route as typing `start-work <slug>`.
@@ -153,7 +160,7 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
         const scope = hookSessionScope(parsed, repoRoot);
         const go = scope === null ? null : takeGo(scope.cwd, scope.sessionId, auto.now ?? Date.now());
         if (go?.kind === "hint") {
-            stdout.write(withReloadContext("", go.text) ?? "");
+            stdout.write(hookJson(withReloadContext("", go.text) ?? ""));
             return 0;
         }
         if (go?.kind === "run") {
@@ -189,6 +196,9 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
     if (pointer !== null && decision.kind === "inject" && decision.mode !== "lit-adhd") {
         recordActiveRoute(pointer.cwd, pointer.sessionId, spine?.skill ?? decision.mode);
     }
+    if (decision.kind === "inject" && decision.mode === "start-work" && isLitUserPromptSubmitInput(parsed)) {
+        startAnswers(hookCwd(parsed, repoRoot), parsed.prompt, pointer?.sessionId);
+    }
     if (pointer !== null && isLitUserPromptSubmitInput(parsed) && (litContinue || decision.kind === "inject")) {
         applyPromptToStack(pointer.cwd, pointer.sessionId, parsed.prompt, { continued: litContinue, mode: decision.kind === "inject" ? decision.mode : null }, auto.now === undefined ? undefined : new Date(auto.now));
     }
@@ -216,7 +226,7 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
     const noted = goNote === null || hint === "" ? hint : (withReloadContext(hint, goNote) ?? hint);
     const output = withAutoHandoffReload(noted, parsed, repoRoot, auto);
     if (output !== "")
-        stdout.write(output);
+        stdout.write(hookJson(output));
     return 0;
 }
 /** `lit-handoff auto on|off|status` changes a setting and never reaches the model: the prompt is blocked with one plain reply. */
@@ -327,7 +337,8 @@ function withLoopGoal(decision, parsed, cwd, now) {
         const objective = loopObjective(parsed.prompt);
         const check = objective === "" ? null : detectCheck(cwd);
         const open = ownedGoal(cwd) !== null || liveConsent(cwd, now) !== null;
-        const offer = check === null || open ? null : proposeLoopGoal({ cwd, check, objective, now, falsifyNow: false });
+        const sessionId = hookSessionScope(parsed, cwd)?.sessionId ?? null;
+        const offer = check === null || open ? null : proposeLoopGoal({ cwd, check, objective, now, falsifyNow: false, sessionId });
         const note = offer?.consent !== undefined
             ? loopGoalContext(offer.line)
             : open || objective === ""
@@ -337,7 +348,7 @@ function withLoopGoal(decision, parsed, cwd, now) {
             return decision.stdout;
         const output = JSON.parse(decision.stdout);
         if (offer?.consent !== undefined && isRecord(output) && typeof output["systemMessage"] === "string") {
-            output["systemMessage"] = `${output["systemMessage"]}\n${offer.line}\n${plainGuide("loop")}`;
+            output["systemMessage"] = `${output["systemMessage"]}\n${inCard(`${offer.line}\n${plainGuide("loop")}`)}`;
         }
         const base = `${JSON.stringify(output)}\n`;
         return withContextAfterBanner(base, note) ?? withReloadContext(base, note) ?? decision.stdout;
@@ -355,12 +366,19 @@ function withSunsetHint(stdout, env) {
         const line = takeSunsetHint(env);
         if (line === null)
             return stdout;
-        output["systemMessage"] = `${output["systemMessage"]}\n${line}`;
+        output["systemMessage"] = `${output["systemMessage"]}\n${inCard(line)}`;
         return `${JSON.stringify(output)}\n`;
     }
     catch {
         return stdout;
     }
+}
+/** Lines under the card, broken where the card's own rows end: Codex wraps a longer one to the pane's left edge. */
+function inCard(lines) {
+    return lines
+        .split("\n")
+        .flatMap((line) => wrapped(line, SAFE_WIDTH))
+        .join("\n");
 }
 /**
  * Add the LIT card (map and checklist) under the activation banner and remember the turn for the Stop
@@ -377,9 +395,10 @@ function withWorkflowMap(stdout, parsed, mode, env) {
             recordWorkflowTurn(cwd, sessionId, parsed["turn_id"], mode);
         }
         const card = workflowCard(cwd, sessionId, mode, "turn started", {
-            color: screenColor(env),
+            ...screenLook(env),
             quietWhenEmpty: true,
             underBanner: true,
+            repeats: "show",
         });
         if (card === null)
             return stdout;
@@ -486,7 +505,7 @@ export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoR
         endLiveStep(scope.cwd, scope.sessionId, auto.now, false);
         const persistence = evaluatePlanPersistence(scope.cwd, scope.sessionId, auto.now);
         if (persistence.decision === "block") {
-            stdout.write(formatStopBlockOutput(persistence.reason));
+            stdout.write(hookJson(formatStopBlockOutput(persistence.reason)));
             return 0;
         }
         const record = parsed;
@@ -499,40 +518,48 @@ export async function runStopPlanPersistenceHookCli(stdin, stdout, stderr, repoR
             ...(auto.now === undefined ? {} : { now: auto.now }),
         });
         if (handoff.decision === "block") {
-            stdout.write(formatStopBlockOutput(handoff.reason));
+            stdout.write(hookJson(formatStopBlockOutput(handoff.reason)));
             return 0;
         }
         // A subagent's Stop carries the parent's session id; the parent's turn is still running.
         if (isSubagent(parsed))
             return 0;
         const lastMsg = typeof record["last_assistant_message"] === "string" ? record["last_assistant_message"] : null;
-        endLiveStep(scope.cwd, scope.sessionId, auto.now, true, detectWaitReason(lastMsg));
+        // A goal question this session asked waits for its answer, whatever the model said last.
+        const asked = goalQuestionOpen(scope.cwd, scope.sessionId, auto.now ?? Date.now());
+        const turnId = record["turn_id"];
+        const stop = {
+            stopHookActive: record["stop_hook_active"] === true,
+            transcriptPath: typeof record["transcript_path"] === "string" ? record["transcript_path"] : null,
+        };
+        const stopLine = (next) => typeof turnId === "string" ? workflowStopLine(scope.cwd, scope.sessionId, turnId, { ...stop, next }) : null;
+        const line = stopLine(true);
+        // A turn that start-work carries on is not over and waits for nobody, whatever word began it.
+        const continuing = typeof turnId === "string" && continuingWork(scope.cwd, scope.sessionId, turnId, stop) !== null;
+        const waitReason = continuing ? null : (detectWaitReason(lastMsg) ?? (asked ? "question" : null));
+        endLiveStep(scope.cwd, scope.sessionId, auto.now, !continuing, waitReason);
         const env = auto.env ?? process.env;
         if (workflowTurn(scope.cwd, scope.sessionId) !== null)
             recordLiveness(scope.cwd, scope.sessionId, "idle", auto.now);
-        const line = typeof record["turn_id"] === "string"
-            ? workflowStopLine(scope.cwd, scope.sessionId, record["turn_id"], {
-                stopHookActive: record["stop_hook_active"] === true,
-                transcriptPath: typeof record["transcript_path"] === "string" ? record["transcript_path"] : null,
-            })
-            : null;
         const turn = line === null ? null : workflowTurn(scope.cwd, scope.sessionId);
         const card = turn === null || line === null
             ? null
-            : workflowCard(scope.cwd, scope.sessionId, turn.mode, stopNote(line, detectWaitReason(lastMsg)), {
-                color: screenColor(env),
+            : workflowCard(scope.cwd, scope.sessionId, turn.mode, (next) => stopNote((next ? null : stopLine(false)) ?? line, waitReason), {
+                ...screenLook(env),
                 quietMap: true,
-                waiting: detectWaitReason(lastMsg) !== null,
+                waiting: waitReason !== null,
+                ended: !continuing,
+                repeats: "omit",
             });
         // The end of a LIT run: remember whether it reported, had nothing to report, or waits on the user.
         const opened = workflowTurn(scope.cwd, scope.sessionId);
-        const outcome = opened === null ? null : outcomeFor(line, detectWaitReason(lastMsg));
+        const outcome = opened === null || continuing ? null : outcomeFor(line, waitReason);
         if (opened !== null && outcome !== null) {
             recordRunEnd(scope.cwd, scope.sessionId, { mode: opened.mode, outcome }, auto.now);
         }
         // Codex puts its hook label before the first row and indents the rest, so the card reads on from it.
         if (card !== null)
-            stdout.write(`${JSON.stringify({ systemMessage: card })}\n`);
+            stdout.write(hookJson(`${JSON.stringify({ systemMessage: card })}\n`));
     }
     return 0;
 }
@@ -570,7 +597,7 @@ export async function runSessionStartHookCli(stdin, stdout, stderr, repoRoot = p
         const opened = hookSessionScope(record, repoRoot);
         const offer = opened === null ? null : adhdSuggestion(opened.cwd, opened.sessionId);
         if (offer !== null) {
-            stdout.write(`${JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: offer } })}\n`);
+            stdout.write(hookJson(`${JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: offer } })}\n`));
         }
         return 0;
     }
@@ -581,7 +608,7 @@ export async function runSessionStartHookCli(stdin, stdout, stderr, repoRoot = p
         return 0;
     const reload = takeReloadContext(scope.cwd, scope.sessionId, auto.env ?? process.env, true);
     if (reload !== null) {
-        stdout.write(`${JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: reload } })}\n`);
+        stdout.write(hookJson(`${JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: reload } })}\n`));
     }
     return 0;
 }
@@ -622,7 +649,7 @@ export async function runPreToolUseCreateGoalGuardCli(stdin, stdout, stderr) {
     }
     const decision = applyPreToolUseCreateGoalGuard(parsed);
     if (decision.kind === "deny") {
-        stdout.write(decision.stdout);
+        stdout.write(hookJson(decision.stdout));
     }
     return 0;
 }

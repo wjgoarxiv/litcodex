@@ -52,6 +52,16 @@ litcodex install
 지금 쓰는 설정을 건드리지 않고 체험하려면 [격리된 체험 안내](./npm-migration.md#isolated-local-trial)를 따르세요.
 이 안내는 체험용 홈 디렉터리를 통째로 따로 만듭니다. `CODEX_HOME` 하나만 바꾸면 기존 홈의 설정이 여전히 읽힐 수 있기 때문입니다.
 
+### 둥근 끝
+
+LIT의 알약 끝은 대부분의 글꼴에 없는 기호 두 개로 그립니다. `litcodex install --round`는 아이콘 글꼴이 없을 때 사용자
+글꼴 폴더에 하나를 넣고, `--glyphs round`나 `square`, `auto`는 어느 끝을 그릴지 저장합니다. 어떤 글꼴을 쓸지는 터미널이
+정합니다. 네모 글자가 보이면 온전한 Nerd Font를 터미널 글꼴로 고르거나 Symbols Nerd Font Mono를 대체 글꼴로 더하세요.
+Terminal.app에는 대체 글꼴 설정이 없어서 온전한 Nerd Font가 필요합니다. 설치와 업데이트, doctor는 지금 상태와 바꿀 방법
+하나를 적은 `ROUND_ENDS:` 줄로 끝납니다.
+
+코딩 에이전트는 `litcodex install --agent`로 전체 순서를 볼 수 있습니다.
+
 ### Windows
 
 Windows에서도 설치기와 CLI shim은 동작합니다. 다만 POSIX 디렉터리 디스크립터를 쓰는 Python 경로는
@@ -72,8 +82,8 @@ LitFamily 블록을 넣을지 묻고, `y`와 `n`이나 방향키로 답합니다
 
 카드는 가로 40칸, 세로 12줄 이상인 터미널에서 나옵니다. `NO_COLOR`를 켜면 색 없이 나오고, UTF-8이 아닌 로캘에서는 ASCII로
 그립니다. 파이프, CI, `--yes`, `TERM=dumb`, 더 작은 창에서는 예전처럼 글자로만 묻고 출력합니다. 배경이 어두운 트루컬러
-터미널에서는 알약과 강조된 줄, 버튼의 끝이 HUD와 똑같은 기준으로 둥글게 나옵니다. 어긋나면 `LITCODEX_HUD_GLYPHS=nerd`나
-`basic`으로 정하세요.
+터미널에서는 알약과 강조된 줄, 버튼의 끝이 HUD와 똑같은 기준으로 둥글게 나옵니다. 어긋나면 `--glyphs round`나
+`--glyphs square`로 정하세요([둥근 끝](#둥근-끝)).
 
 <p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-questions-dark.webp" /><img src="./assets/screens/screen-install-questions-light.webp" width="688" alt="터미널 창에서 litcodex install을 실행한 화면입니다. LIT 1/6 &quot;Lead model&quot; 카드에는 &quot;Plans and reviews the work; press Enter to take gpt-6-astra · xhigh.&quot;라고 나오고, 40줄 중 첫 열두 줄이 보이며 gpt-6-astra · xhigh가 recommended lead이자 default로 강조되어 있습니다. 그 아래 접힌 답 세 줄은 Lead model gpt-6-astra · xhigh, Helper model gpt-6-luna · max, Output style ELI5 (English)입니다. LIT 4/6 &quot;Ready to install&quot; 카드에는 Provider openai, Lead, Helpers, Writes ~/.codex/config.toml (managed keys only)와 Install 버튼, &quot;Ctrl+C stop, nothing written yet&quot;가 있습니다." /></picture><br /><sub>임시 홈에서 끝을 둥글게 켜고 실제 litcodex install을 실행해 캡처했습니다. 시작 배너와 두 번째, 세 번째 카드는 뺐습니다. …는 뺀 자리입니다.</sub></p>
 

@@ -1,7 +1,7 @@
 // The HUD frame: card states, terminal widths, colour on and off, and record text shown as inert data.
 import { describe, expect, it } from "vitest";
 import type { CardStatus } from "./card-status.js";
-import { displayWidth, type HudView, litPill, renderHud } from "./hud.js";
+import { cells, displayWidth, fit, type HudView, litPill, renderHud } from "./hud.js";
 import { workflowMapCells } from "./workflow-map.js";
 
 const NOW = 1_800_000_000_000;
@@ -70,6 +70,42 @@ describe("hud display width", () => {
 		expect(displayWidth("▰▱ › ✓ ⠹")).toBe(8);
 		expect(displayWidth("\u2764\ufe0f ok")).toBe(5);
 	});
+
+	it("counts a character as the terminal draws it, however many code points spell it", () => {
+		expect(displayWidth("한글".normalize("NFD"))).toBe(4);
+		expect(displayWidth("각".normalize("NFD"))).toBe(2);
+		expect(displayWidth("🇰🇷")).toBe(2);
+		expect(displayWidth("🇰🇷🇯🇵")).toBe(4);
+		expect(displayWidth("👍🏽")).toBe(2);
+		expect(displayWidth("1\ufe0f\u20e3")).toBe(2);
+		expect(displayWidth("cafe\u0301")).toBe(4);
+	});
+
+	it("gives an unseen format character no cell, wherever it stands", () => {
+		for (const code of [0x2060, 0x2061, 0x2064, 0x206a, 0xfeff, 0x061c, 0x200b, 0x200f, 0x2066]) {
+			const unseen = String.fromCodePoint(code);
+			expect(displayWidth(`${unseen}a${unseen}${unseen}b${unseen}`), code.toString(16)).toBe(2);
+			expect(fit(`ab${unseen}cd`, 4)).toBe(`ab${unseen}cd`);
+		}
+		expect(displayWidth("🏴\u{e0067}\u{e0062}\u{e007f}")).toBe(2);
+		// These are drawn: a soft hyphen, an Arabic number sign.
+		for (const code of [0xad, 0x600]) expect(displayWidth(String.fromCodePoint(code)), code.toString(16)).toBe(1);
+	});
+
+	it("leaves Thai and Devanagari at the cells tmux gives them", () => {
+		expect(displayWidth("ภาษาไทย")).toBe(7);
+		expect(displayWidth("น้ำที่")).toBe(3);
+		expect(displayWidth("हिन्दी")).toBe(3);
+		expect(displayWidth("क्ष")).toBe(2);
+	});
+
+	it("cuts between whole characters and spells ASCII as it came", () => {
+		expect(fit("👍🏽👍🏽👍🏽", 5)).toBe("👍🏽👍🏽…");
+		expect(fit("🇰🇷🇯🇵🇫🇷", 4)).toBe("🇰🇷…");
+		expect(fit("한글입력".normalize("NFD"), 5)).toBe("한글…");
+		expect(cells("ab ~").map((cell) => cell.text)).toEqual(["a", "b", " ", "~"]);
+		for (const text of ["", " ", "lit-loop · 2/5", "x".repeat(40)]) expect(cells(text)).toHaveLength(text.length);
+	});
 });
 
 describe("hud render", () => {
@@ -123,7 +159,7 @@ describe("hud render", () => {
 			now: NOW,
 		});
 		expect(frame).not.toMatch(/[\u0000-\u0009\u000b-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/u);
-		expect(frame).toContain("lit-loop[31mRED");
+		expect(frame).toContain("lit-loopRED");
 	});
 
 	it("says when it last heard from the session", () => {

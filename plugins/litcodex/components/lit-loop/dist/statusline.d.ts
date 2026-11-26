@@ -11,7 +11,8 @@ export interface StatuslineIo {
 }
 /** The one line, coloured on request and cut to `width` cells; "" when there is no LIT turn to show. */
 export declare function statuslineText(status: CardStatus | null, options: {
-    width: number;
-    color: boolean;
+    readonly width: number;
+    readonly color: boolean;
+    readonly light?: boolean;
 }): string;
 export declare function statuslineCommand(_args: readonly string[], io: StatuslineIo): Promise<number>;

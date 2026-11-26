@@ -10,8 +10,10 @@
 import { createHash } from "node:crypto";
 import { lstatSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, sep } from "node:path";
+import { clipped, withoutCodes } from "./control-chars.js";
 import { plainDirs, plainDirsOrMissing, writeFileAtomic } from "./live-step.js";
 import { LIT_LOOP_DIR, LIT_LOOP_GOALS, normalizeSessionId } from "./state-paths.js";
+import { DISCIPLINE_ENTRY } from "./workflow-stack.js";
 
 type Stage = "interview" | "plan" | "work" | "review" | "done";
 
@@ -22,20 +24,6 @@ const STAGES: readonly (readonly [Stage, string, string])[] = [
 	["review", "🔍", "REVIEW"],
 	["done", "🏁", "DONE"],
 ];
-
-/** Where each LIT skill sits in the main chain; `research` is its own short family. */
-const MODE_STAGE: Readonly<Record<string, Stage | "research">> = {
-	"deep-interview": "interview",
-	"lit-brainstorm": "interview",
-	"lit-crucible": "interview",
-	"lit-plan": "plan",
-	litgoal: "plan",
-	"start-work": "work",
-	litwork: "work",
-	"lit-loop": "work",
-	"review-work": "review",
-	litresearch: "research",
-};
 
 const MAX_STATE_BYTES = 1_000_000;
 const MAX_TITLE = 48;
@@ -72,6 +60,8 @@ export interface WorkflowSignals {
 export interface StopContext {
 	readonly stopHookActive: boolean;
 	readonly transcriptPath: string | null;
+	/** False leaves the next task out of the line: the card under it names it, or it belongs to other work. */
+	readonly next?: boolean;
 }
 
 const NO_SIGNALS: WorkflowSignals = { work: null, goals: null, plan: null, research: null };
@@ -196,8 +186,8 @@ function isTechnical(word: string): boolean {
  * with fewer than three words left before the cut is dropped.
  */
 export function safeTitle(label: string): string | null {
-	const words = label
-		.replace(/[\u0000-\u001f\u007f-\u009f]/gu, "")
+	const words = withoutCodes(label)
+		.replace(/[\u0000-\u001f\u007f-\u009f\ud800-\udfff]/gu, "")
 		.replace(/^(?:F?\d+\.\s+)/iu, "")
 		.split(/\s+/u)
 		.filter((word) => word.length > 0);
@@ -206,7 +196,7 @@ export function safeTitle(label: string): string | null {
 	if (cut > 0 && cut < MIN_TITLE_WORDS) return null;
 	const title = (cut < 0 ? words : words.slice(0, cut)).join(" ").replace(/[\s,:;(—–-]+$/u, "");
 	if (title.length === 0) return null;
-	if (title.length > MAX_TITLE) return `${title.slice(0, MAX_TITLE - 1)}…`;
+	if (title.length > MAX_TITLE) return `${clipped(title, MAX_TITLE - 1)}…`;
 	return cut < 0 ? title : `${title} …`;
 }
 
@@ -462,15 +452,15 @@ function researchCells(research: ResearchProgress | null): MapCell[] {
 
 /** The map as stages, or null when there is nothing true to draw. */
 export function workflowMapCells(mode: string | null, signals: WorkflowSignals): WorkflowMap | null {
-	const fromMode = mode === null ? undefined : MODE_STAGE[mode];
+	const entry = mode === null ? undefined : DISCIPLINE_ENTRY[mode];
 	const { work } = signals;
 	const progress = work ?? signals.goals;
 	const next = progress === null || progress.next === null ? null : safeTitle(progress.next);
-	if (fromMode === "research") return { family: "research", cells: researchCells(signals.research), next: null };
+	if (entry?.family === "research") return { family: "research", cells: researchCells(signals.research), next: null };
 	const position =
-		fromMode === undefined
+		entry === undefined
 			? stageFromState(signals)
-			: { index: STAGES.findIndex(([stage]) => stage === fromMode), active: true };
+			: { index: STAGES.findIndex(([stage]) => stage === entry.stage), active: true };
 	if (position === null) return null;
 	const planKnown = work !== null || signals.plan === "published";
 	const workFinished = work !== null && (work.status === "completed" || work.done === work.total);
@@ -548,6 +538,8 @@ interface TurnRecord {
 	readonly startedAt: number;
 	readonly workDone: number | null;
 	readonly goalsDone: number | null;
+	/** What the last card of this turn showed, as a hash. */
+	readonly shown?: string;
 }
 
 function turnPath(repoRoot: string, sessionId: string): string | null {
@@ -602,7 +594,23 @@ function readTurn(repoRoot: string, path: string): TurnRecord | null {
 		startedAt: record["startedAt"],
 		workDone: count(record["workDone"]),
 		goalsDone: count(record["goalsDone"]),
+		...(typeof record["shown"] === "string" ? { shown: record["shown"] } : {}),
 	};
+}
+
+/** Remember what a card of this turn shows; true when the card before it already showed the same. Never throws. */
+export function rememberShown(repoRoot: string, sessionId: string, content: string): boolean {
+	const path = turnPath(repoRoot, sessionId);
+	const turn = path === null ? null : readTurn(repoRoot, path);
+	if (path === null || turn === null) return false;
+	const shown = createHash("sha256").update(content).digest("hex");
+	if (turn.shown === shown) return true;
+	try {
+		writeFileAtomic(path, `${JSON.stringify({ ...turn, shown })}\n`);
+	} catch {
+		// Without the record the next card shows everything again.
+	}
+	return false;
 }
 
 /** The LIT activation this session last recorded: its skill and when it started; null when none. */
@@ -650,7 +658,12 @@ function transcriptClear(path: string | null): boolean {
  * work this session owns with authority and open rows, and the lease that nudges each plan state once
  * per turn), so the answer is the same whichever Stop hook the host runs first.
  */
-function continuingWork(repoRoot: string, sessionId: string, turnId: string, stop: StopContext): Progress | null {
+export function continuingWork(
+	repoRoot: string,
+	sessionId: string,
+	turnId: string,
+	stop: StopContext,
+): Progress | null {
 	if (stop.stopHookActive || !transcriptClear(stop.transcriptPath)) return null;
 	const state = readJson(repoRoot, join(repoRoot, ".litcodex/start-work/state.json"));
 	if (!isRecord(state) || !isRecord(state["works"]) || typeof state["active_work_id"] !== "string") return null;
@@ -719,7 +732,7 @@ export function workflowStopLine(
 		const before = signals.work !== null ? turn.workDone : turn.goalsDone;
 		if (before !== null && progress.done > before) parts.push(counted(progress.done - before, unit));
 		if (progress.done >= progress.total) parts.push(`all ${progress.total} ${unit}s ✓`);
-		else {
+		else if (stop.next !== false) {
 			const next = progress.next === null ? null : safeTitle(progress.next);
 			if (next !== null) parts.push(`next ▸ ${next}`);
 		}

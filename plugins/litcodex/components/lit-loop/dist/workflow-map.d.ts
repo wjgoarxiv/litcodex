@@ -20,6 +20,8 @@ export interface WorkflowSignals {
 export interface StopContext {
     readonly stopHookActive: boolean;
     readonly transcriptPath: string | null;
+    /** False leaves the next task out of the line: the card under it names it, or it belongs to other work. */
+    readonly next?: boolean;
 }
 /**
  * Checkbox rows the way start-work counts them: fenced blocks are skipped, and when the plan has a
@@ -87,11 +89,20 @@ export declare function workflowMapText(map: WorkflowMap): string;
 export declare function workflowMapLine(repoRoot: string, sessionId: string | null, mode: string | null): string | null;
 /** Remember that this turn is a LIT activation and where its progress started. Never throws. */
 export declare function recordWorkflowTurn(repoRoot: string, sessionId: string, turnId: string, mode: string, now?: number): void;
+/** Remember what a card of this turn shows; true when the card before it already showed the same. Never throws. */
+export declare function rememberShown(repoRoot: string, sessionId: string, content: string): boolean;
 /** The LIT activation this session last recorded: its skill and when it started; null when none. */
 export declare function workflowTurn(repoRoot: string, sessionId: string): {
     mode: string;
     startedAt: number;
 } | null;
+/**
+ * The plan start-work will carry on with after this Stop, or null when its continuation hook stays
+ * quiet. It repeats that hook's decision read-only (host continuation flag, transcript, the one active
+ * work this session owns with authority and open rows, and the lease that nudges each plan state once
+ * per turn), so the answer is the same whichever Stop hook the host runs first.
+ */
+export declare function continuingWork(repoRoot: string, sessionId: string, turnId: string, stop: StopContext): Progress | null;
 /** The Stop line of a turn that start-work keeps running starts with this mark; it is not the end of the run. */
 export declare const CONTINUING_MARK = "\u23F3";
 /**

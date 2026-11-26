@@ -258,9 +258,39 @@ describe("#given the shipped metadata #when loaded #then the resolver returns ca
 
 	it("registers the LIT card server with a plugin-relative command", () => {
 		const md = loadMarketplaceMetadata(REPO_ROOT);
-		expect(md.mcpServers).toEqual({
-			litcodex: { command: "node", args: ["components/lit-loop/dist/card-server.js"], cwd: "." },
+		expect(Object.keys(md.mcpServers)).toEqual(["litcodex"]);
+		expect(md.mcpServers["litcodex"]).toEqual({
+			command: "node",
+			args: ["components/lit-loop/dist/card-server.js"],
+			cwd: ".",
+			env_vars: ["CODEX_HOME"],
 		});
+	});
+
+	it("lets the card server have CODEX_HOME from Codex's environment and nothing else", () => {
+		const withKeys = (keys: Record<string, unknown>): string => {
+			const root = stageRepo();
+			rewriteJson(pathIn(root, "plugins", "litcodex", ".mcp.json"), (json) => {
+				const servers = json["mcpServers"] as Record<string, Record<string, unknown>>;
+				const { env_vars: _, ...server } = servers["litcodex"] ?? {};
+				servers["litcodex"] = { ...server, ...keys };
+			});
+			return root;
+		};
+		for (const keys of [{}, { env_vars: ["CODEX_HOME"] }]) {
+			expect(loadMarketplaceMetadata(withKeys(keys)).mcpServers["litcodex"]).toMatchObject(keys);
+		}
+		for (const keys of [
+			{ env_vars: [] },
+			{ env_vars: ["HOME"] },
+			{ env_vars: ["CODEX_HOME", "HOME"] },
+			{ env_vars: "CODEX_HOME" },
+			{ env_vars: null },
+			{ env: { CODEX_HOME: "/elsewhere" } },
+			{ url: "https://example.com" },
+		]) {
+			expect(loadErr(withKeys(keys)).code).toBe("METADATA_SCHEMA_INVALID");
+		}
 	});
 
 	it("rejects a card server entry that leaves the plugin folder or names an absolute target", () => {

@@ -282,10 +282,13 @@ LIT가 일하는 동안, 그리고 완료가 기록된 뒤 2초 동안만 움직
 18KB쯤 늘어납니다. 더 좁은 창, `COLORFGBG`로 밝은 배경을 알리는 터미널, 트루컬러가 아닌 터미널, `NO_COLOR`, `--once`에서는
 테두리 없는 줄로 나옵니다.
 
-`LITCODEX_HUD_GLYPHS=auto|nerd|basic`은 알약과 게이지 끝 모양을 정합니다. 기본값 `auto`는 Windows Terminal, VS Code, kitty,
-WezTerm, Ghostty이거나 설치된 글꼴 이름이 Nerd Font이면 둥글게 그리고, SSH에서는 터미널만 봅니다. `nerd`는 항상 둥글게,
-`basic`은 각지게 그립니다. 네모 글자가 보이면 `basic`을 쓰세요. 테두리 카드, 더 좁은 창의 트루컬러 줄, 설치 카드가 모두 이
-기준 하나를 따르므로 둥근 끝과 각진 끝이 섞이지 않습니다.
+`litcodex install --glyphs auto|round|square`는 알약과 게이지 끝 모양을 저장합니다. 기본값 `auto`는 Windows Terminal,
+VS Code, kitty, WezTerm, Ghostty이거나 설치된 글꼴 이름이 Nerd Font이면 둥글게 그리고, SSH에서는 터미널만 봅니다. `round`는
+SSH에서도 항상 둥글게, `square`는 각지게 그립니다. 네모 글자가 보이면 `square`를 쓰세요. 테두리 카드, 더 좁은 창의 트루컬러 줄,
+`litcodex run`, 노을 푸터, 설치 카드가 모두 이 기준 하나를 따르므로 둥근 끝과 각진 끝이 섞이지 않습니다. 훅은 창을 볼 수 없어서
+색을 켠 채팅 카드는 `round`를 저장했을 때만 둥글고 나머지는 각집니다. 같은 낱말을 쓰는 `LITCODEX_HUD_GLYPHS`(`nerd`와
+`basic`도 됩니다)는 HUD와 `litcodex run`, 설치 카드에서 저장한 값보다 먼저이고, 푸터에는 Codex가 이 변수를 넘기지 않습니다.
+`litcodex doctor` 마지막의 `ROUND_ENDS:` 줄이 지금 상태와 바꿀 방법 하나를 알려 줍니다.
 
 테두리 카드의 사용량 숫자를 위해 그 세션의 Codex 로그 끝부분을 5초에 한 번까지만, 파일이 바뀌었을 때만 읽습니다.
 

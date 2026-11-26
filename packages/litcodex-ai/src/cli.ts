@@ -3,6 +3,7 @@
 // `dispatch` is pure; `runCli` owns install/config/loop/hud/hook process routes.
 
 import { createRequire } from "node:module";
+import { GLYPH_CHOICES } from "@litcodex/lit-loop/dist/glyph-choice.js";
 import { runForegroundAutoUpdate } from "./auto-update.js";
 import {
 	readEffortChoice,
@@ -14,8 +15,10 @@ import {
 import { acceptedModelIds, FALLBACK_CATALOG } from "./config-migration/catalog.js";
 import { runConfigMigrateCli } from "./config-migration/cli.js";
 import { runAgentFileProjectCli, runConfigAgentFileCli, runConfigAttributionCli } from "./install/agent-file/cli.js";
+import { AGENT_GUIDE, RUN } from "./install/agent-guide.js";
 import { resolveCodexHome } from "./install/codex.js";
 import { realFs, realSpawn, renderDryRunPlan, runDoctorCli, runInstallCli, runUninstallCli } from "./install/index.js";
+import { VALUE_FLAGS } from "./install/install-options.js";
 import { managedMarketplaceRoot } from "./install/marketplace.js";
 import { buildInstallPlan } from "./install/plan.js";
 import { renderInstallPlan } from "./install/render-plan.js";
@@ -69,6 +72,8 @@ function renderInstallDryRun(rest: readonly string[]): string {
 	return `${renderInstallPlan(plan)}\n`;
 }
 
+const SCREEN_STATUS_VERB = /^(?:on|off|status|light|dark|truecolor|256)$/u;
+
 /**
  * Pure synchronous router. For `install --dry-run` it renders the real plan (pure). For the other
  * side-effecting routes it returns a non-error placeholder (the real work runs in `runCli`), so the
@@ -95,9 +100,13 @@ const ROUTES: Readonly<Record<string, RouteHandler>> = {
 	statusline: () => ok(""),
 	run: () => ok("litcodex run\n"),
 	"screen-status": (rest) =>
-		rest.length === 1 && (rest[0] === "on" || rest[0] === "off" || rest[0] === "status")
+		rest.length === 1 && SCREEN_STATUS_VERB.test(rest[0] ?? "")
 			? ok(`litcodex screen-status ${rest[0]}\n`)
-			: { stdout: "", stderr: "Usage: litcodex screen-status on|off|status\n", exitCode: 64 },
+			: {
+					stdout: "",
+					stderr: "Usage: litcodex screen-status on|off|status or light|dark|truecolor|256\n",
+					exitCode: 64,
+				},
 	sunset: (rest) =>
 		rest.length === 1 && (rest[0] === "on" || rest[0] === "off" || rest[0] === "status")
 			? ok(`litcodex sunset ${rest[0]}\n`)
@@ -134,6 +143,7 @@ function renderHelp(): string {
 	const modelIds = acceptedModelIds().join("|");
 	return [
 		"litcodex — self-contained LitCodex CLI for Codex",
+		`Are you an agent? Run ${RUN} install --agent`,
 		"",
 		"Usage:",
 		"  litcodex install [--dry-run] [options]   Install LitCodex into Codex",
@@ -147,6 +157,8 @@ function renderHelp(): string {
 		"  litcodex loop <sub>                      Run a Lit-Loop subcommand",
 		"  litcodex hud [--session <id>] [--once]   Watch the LIT card live from a second terminal window",
 		"  litcodex screen-status on|off|status     Colour the LIT card; terminal `codex` only (off by default)",
+		"  litcodex screen-status light|dark|truecolor|256",
+		"                                           Fit that colour to a white window, or to 256 colours",
 		"  litcodex statusline                      Print the newest LIT status as one line for a status line command",
 		"  litcodex sunset on|off|status            Show the LIT sunset in the footer of the terminal `codex` (off by default)",
 		"  litcodex run [-- <codex args>]           Run Codex with a live LIT panel in the bottom rows of this terminal",
@@ -162,6 +174,10 @@ function renderHelp(): string {
 		"  --subagent-effort <low|medium|high|xhigh|max|ultra> Select helper effort (catalog validated)",
 		"  --yes                                    Keep defaults; never prompt",
 		"  --no-agent-file                        Skip the global AGENTS.md block for this run",
+		"  --round                                  Add the icon font for round pill ends when none is here",
+		`  --glyphs <${GLYPH_CHOICES.join("|")}>            Save how pills end (auto: by the terminal and the fonts)`,
+		"  --sunset-footer                          Turn on the LIT sunset in the Codex footer (Codex 0.172 or later)",
+		"  --agent                                  Print the install guide for coding agents and stop",
 		"  --reconfigure                           Explicitly apply the choice to the root model/effort",
 		"  --no-auto-update                        Skip the foreground update barrier for this command",
 		"",
@@ -243,6 +259,10 @@ export async function runCli(rawArgv: readonly string[]): Promise<number> {
 	if (own.find((token) => !token.startsWith("--dry-run")) === "run") {
 		return runRoute(own, split < 0 ? [] : rawArgv.slice(split + 1));
 	}
+	if (asksForGuide(own)) {
+		process.stdout.write(AGENT_GUIDE);
+		return 0;
+	}
 	const normalized = normalizeDryRunValue(rawArgv);
 	if (typeof normalized === "string") {
 		process.stderr.write(
@@ -260,7 +280,12 @@ export async function runCli(rawArgv: readonly string[]): Promise<number> {
 	if (head === "hud") {
 		// Read-only, so a dry run is the real run; `hud --help` prints the command's own usage.
 		const { hudCommand } = await import("@litcodex/lit-loop/dist/hud-cli.js");
-		return hudCommand(rest.slice(1), { stdout: process.stdout, stderr: process.stderr, env: process.env });
+		return hudCommand(rest.slice(1), {
+			stdin: process.stdin,
+			stdout: process.stdout,
+			stderr: process.stderr,
+			env: process.env,
+		});
 	}
 
 	if (head === "extensions") {
@@ -284,7 +309,7 @@ export async function runCli(rawArgv: readonly string[]): Promise<number> {
 	if (head === "screen-status") {
 		const { screenStatusCommand } = await import("@litcodex/lit-loop/dist/screen-status.js");
 		const verb = rest[1];
-		if (dryRun && (verb === "on" || verb === "off") && rest.length === 2) {
+		if (dryRun && verb !== "status" && SCREEN_STATUS_VERB.test(verb ?? "") && rest.length === 2) {
 			return writeDryRun(`litcodex screen-status ${verb}`, [
 				`Write ${resolveCodexHome(process.env)}/litcodex/screen-status.json with the card colour ${verb}`,
 			]);
@@ -418,6 +443,14 @@ export async function runCli(rawArgv: readonly string[]): Promise<number> {
 		writeCliBanner(argv);
 	}
 	return exitCode;
+}
+
+/** `--agent` alone or with `install`, beside any other flag. */
+function asksForGuide(own: readonly string[]): boolean {
+	if (!own.includes("--agent")) return false;
+	const isValue = (at: number): boolean => VALUE_FLAGS.some((flag) => flag === own[at - 1]);
+	const command = own.find((token, at) => !token.startsWith("-") && !isValue(at));
+	return own[0] === "install" || own[0] === "--agent" || command === undefined || command === "install";
 }
 
 /** `litcodex run [--dry-run] [--help] [-- <codex args>]`; Codex's own arguments go only after `--`. */

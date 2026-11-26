@@ -1,3 +1,4 @@
+import { GLYPH_CHOICES, type GlyphChoice } from "@litcodex/lit-loop/dist/glyph-choice.js";
 import {
 	acceptedModelIds,
 	canonicalModelId,
@@ -12,7 +13,7 @@ import { InstallError } from "./errors.js";
 import { managedMarketplaceRoot } from "./marketplace.js";
 import type { InstallOptions } from "./types.js";
 
-const KNOWN_FLAGS = new Set([
+export const INSTALL_FLAGS: ReadonlySet<string> = new Set([
 	"--dry-run",
 	"--no-tui",
 	"--no-agent-file",
@@ -25,11 +26,25 @@ const KNOWN_FLAGS = new Set([
 	"--subagent-model",
 	"--subagent-effort",
 	"--style",
+	"--round",
+	"--glyphs",
+	"--sunset-footer",
 	"--yes",
 	"--reconfigure",
 	"--no-auto-update",
 	"--managed-upgrade",
 ]);
+
+/** The flags whose next argument is their value. */
+export const VALUE_FLAGS = [
+	"--repo",
+	"--model",
+	"--effort",
+	"--subagent-model",
+	"--subagent-effort",
+	"--style",
+	"--glyphs",
+] as const;
 
 interface ModelChoice {
 	readonly id: string;
@@ -45,19 +60,16 @@ export function parseInstallOptions(
 	args: readonly string[],
 	context: { readonly env: NodeJS.ProcessEnv; readonly repoRoot: string },
 ): InstallOptions {
-	const valueIndexes = new Set(
-		["--repo", "--model", "--effort", "--subagent-model", "--subagent-effort", "--style"]
-			.map((flag) => args.indexOf(flag) + 1)
-			.filter((index) => index > 0),
-	);
+	const valueIndexes = new Set(VALUE_FLAGS.map((flag) => args.indexOf(flag) + 1).filter((index) => index > 0));
 	for (let index = 0; index < args.length; index += 1) {
 		const token = args[index];
-		if (token !== undefined && !valueIndexes.has(index) && token.startsWith("--") && !KNOWN_FLAGS.has(token)) {
+		if (token !== undefined && !valueIndexes.has(index) && token.startsWith("--") && !INSTALL_FLAGS.has(token)) {
 			throw badFlag(`unknown flag "${token}"`, token);
 		}
 	}
 	const codexHome = resolveCodexHome(context.env);
 	const style = styleChoice(args);
+	const glyphs = glyphsChoice(args);
 	const lead = modelChoice(args);
 	const effort = effortChoice(args, lead);
 	const subagent = subagentModelChoice(args);
@@ -76,6 +88,9 @@ export function parseInstallOptions(
 		subagentModel: subagent.id,
 		subagentEffort,
 		...(style === undefined ? {} : { style }),
+		...(glyphs === undefined ? {} : { glyphs }),
+		round: args.includes("--round"),
+		sunsetFooter: args.includes("--sunset-footer"),
 		reconfigure: args.includes("--reconfigure") || args.includes("--managed-upgrade"),
 		codexHome,
 		repoUrl: repoUrl(args, codexHome),
@@ -186,6 +201,14 @@ function styleChoice(args: readonly string[]): OutputStyleId | undefined {
 		throw badFlag("--style requires one of: off, asd-ste100, asd-ste100-ko, eli5, eli5-ko", "--style");
 	}
 	return value;
+}
+
+function glyphsChoice(args: readonly string[]): GlyphChoice | undefined {
+	const index = args.indexOf("--glyphs");
+	if (index === -1) return undefined;
+	const choice = GLYPH_CHOICES.find((known) => known === args[index + 1]);
+	if (choice === undefined) throw badFlag(`--glyphs requires one of: ${GLYPH_CHOICES.join(", ")}`, "--glyphs");
+	return choice;
 }
 
 function repoUrl(args: readonly string[], codexHome: string): string {

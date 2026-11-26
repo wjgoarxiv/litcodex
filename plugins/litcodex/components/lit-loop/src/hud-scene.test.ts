@@ -5,12 +5,13 @@ import { mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, statSync, wr
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { REVIEW_LANE_IDS } from "./card-looks.js";
 import { type CardStatus, createUsageReader } from "./card-status.js";
 import { clean, displayWidth, fit, type HudView, hudLines } from "./hud.js";
 import { type CardOptions, composeCard } from "./hud-card.js";
 import { createHudLoop, hudCommand } from "./hud-cli.js";
 import { drawsRoundCaps } from "./hud-glyphs.js";
-import { type Cell, changedRuns, rowText, words } from "./hud-paint.js";
+import { type Cell, changedRuns, cut, rowText, words } from "./hud-paint.js";
 import { lightBackground, narrowLines, sceneMood } from "./hud-scene.js";
 import { endLiveStep, recordLiveStepStart, recordTurnStart, writeThreadPointer } from "./live-step.js";
 import type { ThreadRow, ThreadView } from "./threads.js";
@@ -103,6 +104,12 @@ const LANES = view(
 		),
 	}),
 );
+const PAUSED = workflowMapCells("start-work", {
+	work: { done: 2, total: 5, next: "Write the parser tests", status: "paused" },
+	goals: null,
+	plan: "published",
+	research: null,
+});
 const STILL: readonly [string, HudView][] = [
 	["waiting", WAITING],
 	["ready", view(status({ state: "ready", mode: null, map: null, step: null, working: false }))],
@@ -111,6 +118,8 @@ const STILL: readonly [string, HudView][] = [
 	["complete", view(status({ state: "complete", step: null, working: false }))],
 	["done", view(status({ look: "done", step: null, working: false }))],
 	["rewind", view(status({ look: "rewind", mode: "lit-adhd" }))],
+	["paused", view(status({ step: null, working: false, map: PAUSED }))],
+	["blocked", view(status({ step: null, working: false, map: PAUSED, look: "turn" }))],
 ];
 const REVIEW = view(
 	status({ look: "review", mode: "review-work", reviewLanes: ["pass", "running", "fail", "dim", "dim"] }),
@@ -124,6 +133,9 @@ const HOSTILE = [
 	"\u200b\u200d\ufeff\u2028\u00ad",
 	"👩‍👩‍👧‍👦🏳️‍🌈👍🏽⚡️🔥".repeat(10),
 	"\ue0b6\ue0b4\uf8ff\ud800",
+	"한글 폴더 ".normalize("NFD").repeat(12),
+	"🇰🇷🇯🇵".repeat(20),
+	"हिन्दी क्ष्त्र ภาษาไทย ".repeat(8),
 	"",
 ];
 
@@ -235,11 +247,26 @@ describe("hud card frame", () => {
 		["YOUR TURN", STILL[3]?.[1] as HudView, "start-work"],
 		["DONE ✓", STILL[5]?.[1] as HudView, "start-work"],
 		["REWIND <<", STILL[6]?.[1] as HudView, "lit-adhd"],
-		["REVIEW 2/5", REVIEW, "scope ✓ tests ● package ✗ security · surface ·"],
+		["REVIEW 2/5", REVIEW, "goal ✓ quality ● security ✗ qa · context ·"],
 	])("says %s at the right end of the title", (word, card, also) => {
 		const rows = drawn(card);
 		expect(rows[0]).toContain(` ${word} ─╮`);
 		expect(rows.join("\n")).toContain(also);
+	});
+
+	it("puts the cut mark right behind the last whole character, and keeps the cells", () => {
+		const said = (width: number): string =>
+			cut(words("ab한국", 0), width)
+				.map((cell) => cell.text)
+				.join("");
+		expect([6, 5, 4, 3, 2, 1].map(said)).toEqual(["ab한국", "ab한…", "ab… ", "ab…", "a…", "…"]);
+		expect(cut(words("ab한국", 0), 4)).toHaveLength(4);
+	});
+
+	it("lights the review lane that the stack names", () => {
+		const lanes = REVIEW_LANE_IDS.map((id) => (id === "security" ? "running" : "dim"));
+		const card = view(status({ look: "review", mode: "review-work", reviewLanes: lanes }));
+		expect(drawn(card).join("\n")).toContain("goal · quality · security ● qa · context ·");
 	});
 
 	it("never lets the title and the stage row say different things", () => {
@@ -378,7 +405,9 @@ describe("hud card frame", () => {
 		for (let width = 120; width >= 39; width--) {
 			const sunny = drawn(card, { width }).at(-1) ?? "";
 			const lost = order.filter((part) => !sunny.includes(part));
-			expect(lost).toEqual(order.slice(0, lost.length));
+			// Beside the sun a folder that has no room of its own leaves its place to the age.
+			const aged = lost.includes("beta") && !lost.includes("5s ago");
+			expect(lost).toEqual((aged ? order.filter((part) => part !== "5s ago") : order).slice(0, lost.length));
 			const line = drawn(card, { width, rows: 4 }).at(-1) ?? "";
 			const missing = order.filter((part) => !line.includes(part));
 			expect(missing).toEqual(order.slice(0, missing.length));
@@ -406,6 +435,65 @@ describe("hud card frame", () => {
 		expect(drawn(LANES)[1]).toContain("●●● 3 lanes │");
 		const narrow = drawn(LANES, { width: 39 }).join("\n");
 		for (const word of ["Aquinas", "Lagrange", "Hume", "2/5", "1/8"]) expect(narrow).toContain(word);
+	});
+
+	it("shortens the figures beside a folder that has no room, and keeps the age", () => {
+		const usage = { ctx: 24, fiveHour: 22, week: 54 };
+		const long = { id: ID, folder: "/Users/me/work/some-long-project-name", lastSeen: NOW - 42_000 };
+		for (const branch of [null, "main", "feature/a-long-branch-name"]) {
+			for (let width = 76; width <= 120; width++) {
+				const line = drawn(view(status({ branch, usage }), { session: long }), { width }).at(-1) ?? "";
+				expect(line, `${width} ${branch}`).toContain("42s ago");
+			}
+		}
+		const short = { ...long, folder: "~/work/my-app" };
+		expect(drawn(view(status({ usage }), { session: short }), { width: 79 }).at(-1)).toContain("42s ago");
+		// A branch with no room leaves its place to the folder.
+		const both = drawn(view(status({ branch: "a-branch/name-24-cells-x", usage }), { session: short }), {
+			width: 89,
+		});
+		expect(both.at(-1)).toMatch(/1w 54% · ~\/work\/my-app ─+ 42s ago ─╯$/u);
+	});
+
+	it("cuts a long tool's name, and keeps its spinner, its clock and the next task", () => {
+		const step = { tool: "my-gateway · search_documents_with_filters_and_facets", startedAt: NOW - 74_000 };
+		for (let width = 45; width <= 120; width++) {
+			const line = drawn(view(status({ step })), { width })[2] ?? "";
+			expect(line, String(width)).toMatch(/[-\\|/] [a-z][^│]* · 1:14 │$/u);
+		}
+		for (const width of [79, 99]) {
+			const line = drawn(view(status({ step })), { width })[2] ?? "";
+			expect(line).toContain("next ▸ Write");
+			expect(line).toMatch(/- my-gateway · search[^ ]*… · 1:14/u);
+		}
+		const last = status({
+			step: null,
+			working: false,
+			lastTool: step.tool,
+			turnStartedAt: NOW - 9_000,
+			turnEndedAt: NOW,
+		});
+		expect(drawn(view(last), { width: 79 })[2]).toMatch(/last my-gateway · [^│]*… · turn 0:09 │$/u);
+	});
+
+	it("ends a tree the window cuts with the last branch and the number left out", () => {
+		const ten = Array.from({ length: 10 }, (_, index) => row({ key: `l${index}`, name: `helper ${index + 1}` }));
+		const card = view(
+			status({ threads: { ...threads(...ten.slice(0, 4)), laneCount: 10, more: 6 } as unknown as ThreadView }),
+		);
+		let least = 10;
+		for (let rows = 30; rows >= 5; rows--) {
+			for (const docked of [false, true]) {
+				const lines = drawn(card, { rows, docked, width: 79 });
+				const tree = lines.filter((line) => /helper \d/u.test(line));
+				if (tree.length === 0) continue;
+				least = Math.min(least, tree.length);
+				expect(tree.at(-1), String(rows)).toContain("└─");
+				expect(tree.slice(0, -1).join("")).not.toContain("└─ ●");
+				expect(tree.at(-1)).toContain(`+${10 - tree.length} more`);
+			}
+		}
+		expect(least).toBeLessThan(4);
 	});
 
 	it("keeps every word at 4.5:1 or better on its ground", () => {
@@ -571,11 +659,43 @@ describe("hud lines in a window too narrow for the card", () => {
 				const rows = narrowLines(lines, sceneMood(card), { width, caps: false }).map(strip);
 				expect(rows).toHaveLength(lines.length);
 				lines.forEach((line, index) => {
-					if (index > 0) expect(words(rows[index] ?? "")).toBe(words(fit(clean(line.text), width)));
+					// A line may have shorter forms of itself; the first that fits stands whole.
+					const form = [line.text, ...(line.short ?? [])].find((text) => displayWidth(text) <= width);
+					const said = form ?? line.short?.at(-1) ?? line.text;
+					if (index > 0) expect(words(rows[index] ?? "")).toBe(words(fit(clean(said), width)));
 					expect(displayWidth(rows[index] ?? "")).toBeLessThanOrEqual(width);
 				});
 			}
 		}
+	});
+});
+
+describe("what a narrow window says", () => {
+	const narrow = (of: HudView, width: number): string[] =>
+		narrowLines(hudLines(of, NOW), sceneMood(of), { width, caps: false }).map(strip);
+
+	it("says what to type, whole, while nothing runs", () => {
+		for (const card of [WAITING, STILL[1]?.[1] as HudView]) {
+			for (const width of [30, 35, 38]) {
+				const rows = narrow(card, width);
+				expect(rows.join("\n")).toContain("`lit <task>`");
+				expect(rows.slice(1).join("")).not.toContain("…");
+			}
+		}
+	});
+
+	it("ticks the last stage of finished work, and leaves out the ones it skipped", () => {
+		const finished = workflowMapCells("start-work", {
+			work: { done: 5, total: 5, next: null, status: "completed" },
+			goals: null,
+			plan: "published",
+			research: null,
+		});
+		const card = view(status({ state: "complete", look: "done", step: null, working: false, map: finished }));
+		expect(narrow(card, 60)[2]).toBe("✓ interview ── ✓ plan ── ✓ work ── ✓ done");
+		// Work with a task left keeps its place, whatever the turn says.
+		const open = STILL[5]?.[1] as HudView;
+		expect(narrow(open, 60)[2]).toContain("● work 2/5 ── ○ review");
 	});
 });
 
@@ -647,6 +767,15 @@ function harness(env: NodeJS.ProcessEnv) {
 }
 
 describe("hud scene loop", () => {
+	it("clears what an earlier frame left between a row's words and its right edge", () => {
+		const { env } = session();
+		const { writes, loop } = harness(env);
+		loop.tick();
+		const rows = (writes[0] ?? "").split("\n");
+		expect(rows.length).toBeGreaterThan(4);
+		for (const line of rows) expect(line).toMatch(/\u001b\[K\u001b\[110G/u);
+	});
+
 	it("draws the card, and the plain lines in a window under 40 columns", () => {
 		const { env } = session();
 		const { writes, out, loop } = harness(env);
@@ -657,6 +786,22 @@ describe("hud scene loop", () => {
 		expect(writes[1]?.startsWith("\u001b[H")).toBe(true);
 		expect(strip(writes[1] ?? "")).not.toContain("╭");
 		expect(strip(writes[1] ?? "")).toContain("working");
+	});
+
+	it("keeps the first lines in a window lower than they are, and rewrites only what changed", () => {
+		const { env } = session();
+		const { writes, clock, out, loop } = harness(env);
+		out.columns = 39;
+		out.rows = 3;
+		loop.tick();
+		expect((writes[0] ?? "").split("\n")).toHaveLength(3);
+		expect(strip(writes[0] ?? "")).toContain("LIT");
+		clock.now += 1_000;
+		loop.tick();
+		expect(writes.slice(1).join("")).not.toContain("\n");
+		out.rows = 30;
+		loop.tick();
+		expect(strip(writes.at(-1) ?? "")).toContain("Running: Bash, 0:01");
 	});
 
 	it("draws round caps where they are asked for", () => {
@@ -795,7 +940,10 @@ describe("hud scene loop", () => {
 		expect(rows.length).toBeLessThanOrEqual(6);
 	});
 
-	it("celebrates a completion for two seconds, then stands still", () => {
+	it.each([
+		["says so", undefined, "DONE"],
+		["asks something", "question", "YOUR TURN"],
+	])("celebrates a completion that %s for two seconds, then stands still", (_name, reason, label) => {
 		const { env, cwd } = session();
 		const planDir = join(cwd, ".litcodex", "plans");
 		mkdirSync(planDir, { recursive: true });
@@ -825,9 +973,9 @@ describe("hud scene loop", () => {
 		loop.tick();
 		clock.now += 1_000;
 		state(true);
-		endLiveStep(cwd, ID, clock.now, true);
+		endLiveStep(cwd, ID, clock.now, true, reason);
 		loop.tick();
-		expect(strip(writes.join("").replace(/\u001b\[\d+;\d+H/gu, " "))).toContain("DONE");
+		expect(strip(writes.join("").replace(/\u001b\[\d+;\d+H/gu, " "))).toContain(label);
 		expect(loop.moving()).toBe(true);
 		let last = 0;
 		for (let index = 1; index <= 40; index++) {
@@ -836,6 +984,12 @@ describe("hud scene loop", () => {
 		}
 		expect(last).toBeGreaterThan(10);
 		expect(last).toBeLessThanOrEqual(21);
+		expect(loop.moving()).toBe(false);
+		// The turn after it is no second completion.
+		recordTurnStart(cwd, ID, clock.now);
+		clock.now += 1_000;
+		endLiveStep(cwd, ID, clock.now, true);
+		loop.tick();
 		expect(loop.moving()).toBe(false);
 	});
 

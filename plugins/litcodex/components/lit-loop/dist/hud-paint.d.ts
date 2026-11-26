@@ -1,5 +1,5 @@
 export type Color = number;
-/** One terminal cell; a wide character's second cell has an empty `text`. */
+/** One terminal cell; a wide character's further cells have an empty `text`. */
 export interface Cell {
     readonly text: string;
     readonly fg?: Color;
@@ -31,8 +31,8 @@ export declare function brandPill(caps: boolean, stops?: readonly Color[]): Cell
 export declare function gradePill(row: Cell[], from: number, to: number, stops: readonly Color[], caps: boolean, ink?: Color, bold?: boolean): void;
 /** A bar over `size` cells, `filled` of them lit along `stops`; round ends where the terminal draws them. */
 export declare function bar(size: number, filled: number, stops: readonly Color[], caps: boolean): Cell[];
-/** `text` as cells in one style. */
-export declare function words(text: string, fg: Color, style?: {
+/** `text` as cells in one style; null is the terminal's own ink. */
+export declare function words(text: string, fg: Color | null, style?: {
     readonly bold?: boolean;
     readonly bg?: Color;
 }): Cell[];
@@ -42,5 +42,7 @@ export declare function cut(row: readonly Cell[], width: number): Cell[];
 export declare function pill(text: string, stops: readonly Color[], caps: boolean, ink?: Color, bold?: boolean): Cell[];
 /** The escapes that turn `before` into `after` on screen row `y`: only the runs of cells that changed. */
 export declare function changedRuns(before: readonly Cell[], after: readonly Cell[], y: number): string;
+/** Painted text with its 24-bit colours taken to the 256-colour palette. */
+export declare function in256(text: string): string;
 /** The row as text: cells that look alike share one escape, and (unless `whole`) trailing blanks are dropped. */
 export declare function rowText(row: readonly Cell[], whole?: boolean): string;

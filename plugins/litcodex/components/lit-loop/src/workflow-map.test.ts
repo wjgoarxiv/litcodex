@@ -14,8 +14,12 @@ import { PassThrough } from "node:stream";
 import { afterEach, describe, expect, it } from "vitest";
 import { runStopHook } from "../../start-work-continuation/src/codex-hook.js";
 import { analyzePlanProgress } from "../../start-work-continuation/src/plan-progress.js";
+import { readCardStatus } from "./card-status.js";
 import { runStopPlanPersistenceHookCli, runUserPromptSubmitHookCli } from "./hook-cli.js";
 import { activationMessage } from "./lit-mark.js";
+import { writeThreadPointer } from "./live-step.js";
+import { readRunEnds } from "./run-end.js";
+import { workflowCard } from "./screen-card.js";
 import {
 	countPlanRows,
 	progressBar,
@@ -24,9 +28,11 @@ import {
 	recordWorkflowTurn,
 	renderWorkflowMap,
 	safeTitle,
+	workflowMapCells,
 	workflowMapLine,
 	workflowStopLine,
 } from "./workflow-map.js";
+import { recordStackEvent } from "./workflow-stack.js";
 
 const roots: string[] = [];
 
@@ -139,9 +145,19 @@ describe("progress bar and titles", () => {
 
 	it("keeps commands, paths and arguments out of a next-task title", () => {
 		expect(safeTitle("F2. Code quality review")).toBe("Code quality review");
-		expect(safeTitle("\u001b[31mred\u0007 text")).toBe("[31mred text");
+		expect(safeTitle("\u001b[31mred\u0007 text\u001b[0m")).toBe("red text");
+		expect(safeTitle("\u009b1;38;2;1;2;3mred\u001b[2K text")).toBe("red text");
 		expect(safeTitle("a".repeat(80))).toBe(`${"a".repeat(47)}…`);
 		expect(safeTitle("`only code`")).toBeNull();
+	});
+
+	it("never cuts a title inside a character", () => {
+		const rocket = "a".repeat(46);
+		expect(safeTitle(`${rocket}🚀 and more`)).toBe(`${rocket}…`);
+		expect(safeTitle(`${"a".repeat(45)}🚀 and more`)).toBe(`${"a".repeat(45)}🚀…`);
+		expect(safeTitle(`${"a".repeat(45)}👍🏽 and more`)).toBe(`${"a".repeat(45)}…`);
+		expect(safeTitle(`${"ก".repeat(46)}น้ำ and more`)).toBe(`${"ก".repeat(46)}…`);
+		expect(safeTitle("half \ud83d of one")).toBe("half of one");
 	});
 
 	it("cuts a title at its first code span, path, variable or flag instead of deleting words mid-sentence", () => {
@@ -539,7 +555,8 @@ async function submit(root: string, prompt: string, extra: Record<string, unknow
 function stopCard(note: string): string {
 	return [
 		`🔥 LIT · start-work · ${note}`,
-		"✓ interview ── ✓ plan ── ● work 3/7 ── ○ review ── ○ done",
+		"✓ interview ── ✓ plan ── ● work 3/7",
+		"○ review ── ○ done",
 		"✓ Render the map",
 		"▸ Show the map in …",
 		"· Write the docs",
@@ -603,13 +620,48 @@ describe("hook surfaces", () => {
 		expect(output.systemMessage).toBe(
 			[
 				activationMessage("start-work"),
-				"✓ interview ── ✓ plan ── ● work 3/7 ── ○ review ── ○ done",
+				"✓ interview ── ✓ plan ── ● work 3/7",
+				"○ review ── ○ done",
 				"✓ Render the map",
 				"▸ Show the map in …",
 				"· Write the docs",
 			].join("\n"),
 		);
 		expect(output.systemMessage).not.toContain("\u001b");
+	});
+
+	it.each([
+		["an emoji on units 46 and 47", `${"Ship the parser and the reader for the book ".padEnd(46, "x")}🚀 and more`],
+		[
+			"a Thai title with an emoji there",
+			`${"เขียนคู่มือการใช้งานให้ผู้อ่านเข้าใจง่ายและครบ".padEnd(46, "ก").slice(0, 46)}🚀 ต่อ`,
+		],
+	])("prints hook output Codex accepts for %s", async (_name, title) => {
+		const root = repo();
+		writePlan(root, PLAN.replace("4. Show the map in `codex` via /tmp/x --flag", `4. ${title}`));
+		writeWork(root, "active");
+		const start = await submit(root, "$start-work boost");
+		const stop = await drive(runStopPlanPersistenceHookCli, stopEvent(root), root);
+		for (const { stdout } of [start, stop]) {
+			expect(JSON.parse(stdout)).toHaveProperty("systemMessage");
+			expect(stdout).not.toMatch(/\\ud[89a-f]|[\ud800-\udfff]/iu);
+		}
+	});
+
+	it("prints hook output Codex accepts when a record holds half a character", async () => {
+		const root = repo();
+		const dir = join(root, ".litcodex/lit-loop/s1");
+		mkdirSync(dir, { recursive: true });
+		const goals = [{ id: "G001", title: "Ship \ud83d the new reader", status: "pending" }];
+		writeFileSync(join(dir, "goals.json"), JSON.stringify({ version: 1, goals }));
+		const start = await submit(root, "lit-loop ship it");
+		const stop = await drive(runStopPlanPersistenceHookCli, stopEvent(root), root);
+		for (const { stdout } of [start, stop]) {
+			const said = JSON.stringify(JSON.parse(stdout));
+			expect(said).toContain("Ship");
+			expect(said).not.toMatch(/[\ud800-\udfff]/u);
+			expect(stdout).not.toMatch(/\\ud[89a-f]/iu);
+		}
 	});
 
 	it("leaves the banner alone when the event has no absolute cwd", async () => {
@@ -630,11 +682,153 @@ describe("hook surfaces", () => {
 		writePlan(root);
 		const stop = await drive(runStopPlanPersistenceHookCli, stopEvent(root), root);
 		expect(stop.code).toBe(0);
-		expect(JSON.parse(stop.stdout)).toEqual({
-			systemMessage: stopCard("turn done · 1 task done · next: Show the map in …"),
-		});
+		// The checklist under it names the next task, so the note does not.
+		expect(JSON.parse(stop.stdout)).toEqual({ systemMessage: stopCard("turn done · 1 task done") });
 		const later = await drive(runStopPlanPersistenceHookCli, stopEvent(root, "t9"), root);
 		expect(later.stdout).toBe("");
+	});
+
+	const stopped = async (root: string, over: Record<string, unknown> = {}): Promise<string> => {
+		const stop = await drive(runStopPlanPersistenceHookCli, { ...stopEvent(root), ...over }, root);
+		return (JSON.parse(stop.stdout) as { systemMessage: string }).systemMessage;
+	};
+
+	it("leaves out a path and checklist the turn's first card has shown, and shows them once they moved", async () => {
+		const root = repo();
+		writePlan(root);
+		writeWork(root, "active");
+		await submit(root, "$start-work boost");
+		// The path is in the card above; the note alone names the next task.
+		expect(await stopped(root)).toBe("🔥 LIT · start-work · turn done · next: Show the map in …");
+		writePlan(root, PLAN.replace("- [ ] 4.", "- [x] 4."));
+		const moved = await stopped(root);
+		expect(moved).toContain("● work 4/7");
+		expect(moved).not.toContain("next:");
+		// Each Stop remembers what it showed, so a second one at the same place does not repeat it.
+		expect(await stopped(root)).not.toContain("● work");
+		await submit(root, "$start-work boost", { turn_id: "t2" });
+		expect(await stopped(root, { turn_id: "t2" })).not.toContain("● work");
+	});
+
+	it("shows everything again when the turn becomes yours, the plan pauses or a stack stands over it", async () => {
+		const root = repo();
+		writePlan(root);
+		writeWork(root, "active");
+		await submit(root, "$start-work boost");
+		const asked = await stopped(root, { last_assistant_message: "Which way?" });
+		expect(asked).toContain("your turn · answer the question above");
+		expect(asked).toContain("● work 3/7");
+		expect(await stopped(root, { last_assistant_message: "Which way?" })).not.toContain("● work");
+		writeWork(root, "paused");
+		expect(await stopped(root)).toContain("● work paused 3/7");
+		const at = new Date().toISOString();
+		const frame = { family: "main", stage: "work", verdicts: {}, at };
+		mkdirSync(join(root, ".litcodex/workflow-stack"), { recursive: true });
+		writeFileSync(
+			join(root, ".litcodex/workflow-stack/s1.json"),
+			JSON.stringify({
+				version: 1,
+				sessionId: "s1",
+				frames: [
+					{ ...frame, skill: "lit-loop", role: "spine", status: "paused" },
+					{ ...frame, skill: "start-work", role: "side", status: "active" },
+				],
+				history: [],
+			}),
+		);
+		const stacked = await stopped(root);
+		expect(stacked).toContain("● work paused 3/7");
+		expect(stacked).toContain("paused: lit-loop (work)");
+	});
+
+	it("keeps the plan's checklist and next task out while a side run or research has the turn", async () => {
+		const root = repo();
+		writePlan(root);
+		writeWork(root, "active");
+		await submit(root, "$start-work boost");
+		await submit(root, "lit-hijack the parser", { turn_id: "t2" });
+		const side = await stopped(root, { turn_id: "t2" });
+		expect(side).toContain("lit-hijack · turn done");
+		expect(side).not.toContain("Show the map");
+		expect(side).toContain("paused: start-work (work");
+		await submit(root, "litresearch the parser", { turn_id: "t3" });
+		const research = await stopped(root, { turn_id: "t3" });
+		expect(research).toContain("litresearch · turn done");
+		expect(research).not.toContain("Show the map");
+	});
+
+	it("wears done on a turn that ended with nothing open, and your turn on one that asked", () => {
+		const brand = (root: string, options: { readonly ended?: boolean; readonly waiting?: boolean }): string =>
+			(workflowCard(root, "s1", "start-work", "turn done", { color: true, ...options }) ?? "").split("\n")[0] ?? "";
+		const open = repo();
+		writePlan(open);
+		writeWork(open, "active");
+		const finished = repo();
+		writePlan(finished, PLAN.replaceAll("- [ ]", "- [x]"));
+		writeWork(finished, "completed");
+		const [green, amber, sunset] = ["48;2;61;220;132", "48;2;255;175;60", "48;2;255;160;51"];
+		expect(brand(finished, { ended: true })).toContain(green);
+		expect(brand(finished, {})).toContain(sunset);
+		expect(brand(open, { ended: true })).toContain(sunset);
+		expect(brand(open, { ended: true, waiting: true })).toContain(amber);
+	});
+
+	it.each([
+		["asks", "All done. Shall I push?", "your turn · answer the question above", "turn", "ignited"],
+		["asks nothing", "All done.", "turn done", "done", "complete"],
+	])("says the same on the card and in the footer when a finished plan %s", async (_name, said, note, look, state) => {
+		const root = repo();
+		const env = { CODEX_HOME: join(root, ".home") };
+		writePlan(root, PLAN.replaceAll("- [ ]", "- [x]"));
+		writeWork(root, "active");
+		await submit(root, "$start-work boost");
+		writeWork(root, "completed");
+		writeThreadPointer(env, "s1", root, Date.now());
+		expect(await stopped(root, { last_assistant_message: said })).toContain(note);
+		expect(readCardStatus("s1", env)).toMatchObject({ look, state });
+	});
+
+	it("is not your turn while start-work carries the turn on", async () => {
+		const root = repo();
+		const env = { CODEX_HOME: join(root, ".home") };
+		writePlan(root);
+		writeContinuableWork(root);
+		await submit(root, "$start-work boost");
+		writeThreadPointer(env, "s1", root, Date.now());
+		const card = await stopped(root, { last_assistant_message: "Next I write the docs, fine?" });
+		expect(card).toContain("continuing with: Show the map in …");
+		expect(card).not.toContain("your turn");
+		expect(readCardStatus("s1", env)).toMatchObject({ working: true, turnEndedAt: null });
+		// The continuation answers without a tool and asks: now it is your turn, on the card and in the footer.
+		const asked = await stopped(root, { last_assistant_message: "Which way?", stop_hook_active: true });
+		expect(asked).toContain("your turn");
+		expect(readCardStatus("s1", env).look).toBe("turn");
+	});
+
+	it("is not your turn while start-work carries on a turn that no LIT word began", async () => {
+		const root = repo();
+		const env = { CODEX_HOME: join(root, ".home") };
+		writePlan(root);
+		writeContinuableWork(root);
+		await submit(root, "$start-work boost");
+		writeThreadPointer(env, "s1", root, Date.now());
+		await submit(root, "go on", { turn_id: "t2" });
+		const event = { ...stopEvent(root), turn_id: "t2", last_assistant_message: "Next I write the docs, fine?" };
+		await drive(runStopPlanPersistenceHookCli, event, root);
+		expect(readCardStatus("s1", env)).toMatchObject({ working: true, turnEndedAt: null });
+		expect(readRunEnds(root)).toEqual([]);
+	});
+
+	it("names the stage of a skill the same on the path and on the paused row", () => {
+		for (const skill of ["deep-interview", "lit-brainstorm", "lit-crucible", "lit-plan", "litgoal", "lit-loop"]) {
+			const root = repo();
+			const { stack } = recordStackEvent(root, "s1", { type: "start", skill });
+			const stage = stack.frames[0]?.stage;
+			const current = workflowMapCells(skill, readWorkflowSignals(root, "s1"))?.cells.find(
+				(item) => item.state === "current",
+			);
+			expect(current?.key, skill).toBe(stage);
+		}
 	});
 
 	it("prints the continuing line from the real Stop hook at a start-work checkpoint", async () => {
@@ -645,11 +839,11 @@ describe("hook surfaces", () => {
 		writePlan(root);
 		const stop = await drive(runStopPlanPersistenceHookCli, stopEvent(root), root);
 		expect(JSON.parse(stop.stdout)).toEqual({
-			systemMessage: stopCard("3/7 tasks done · continuing with: Show the map in …"),
+			systemMessage: stopCard("3/7 tasks done\ncontinuing with: Show the map in …"),
 		});
 		const last = await drive(runStopPlanPersistenceHookCli, { ...stopEvent(root), stop_hook_active: true }, root);
 		expect(JSON.parse(last.stdout)).toEqual({
-			systemMessage: stopCard("turn done · 1 task done · next: Show the map in …"),
+			systemMessage: "🔥 LIT · start-work · turn done · 1 task done · next: Show the map in …",
 		});
 	});
 

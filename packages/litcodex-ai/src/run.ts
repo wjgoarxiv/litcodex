@@ -8,7 +8,7 @@
 // saved cursor, and once a second when its text changed; after a forced flush or a terminal reset the
 // scroll region is set again first. Keys go to Codex unchanged. A resize waits for a boundary (or ends
 // a flushed, still-open sequence with CAN), then sets the new scroll region, clears the screen, redraws
-// the panel and resizes Codex.
+// the panel and resizes Codex. A light or dark ground that changes the panel's height only moves the fence.
 //
 // Every way out gives the terminal back: cooked mode, no scroll region, empty panel rows and the cursor
 // below Codex. When Codex exits by itself the exit code is Codex's. SIGINT/SIGTERM/SIGHUP to the wrapper
@@ -33,6 +33,8 @@ import { createRequire } from "node:module";
 import { constants as osConstants } from "node:os";
 import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { cardCaps } from "@litcodex/lit-loop/dist/glyph-choice.js";
+import { createGroundReader, drawsTruecolor } from "@litcodex/lit-loop/dist/ground.js";
 import { lightBackground } from "@litcodex/lit-loop/dist/hud-scene.js";
 import { createScreenFilter } from "@litcodex/lit-loop/dist/run-filter.js";
 import {
@@ -265,7 +267,7 @@ export async function runCommand(args: readonly string[], io: RunIo): Promise<nu
 /** Colour is drawn in 24 bits, so a terminal that does not announce it gets the plain panel. */
 function colorAllowed(env: NodeJS.ProcessEnv): boolean {
 	const noColor = env["NO_COLOR"];
-	return (noColor === undefined || noColor === "") && /truecolor|24bit/iu.test(env["COLORTERM"] ?? "");
+	return (noColor === undefined || noColor === "") && drawsTruecolor(env);
 }
 
 /** A dark truecolor terminal, the one `litcodex hud` draws its sunset on. */
@@ -279,12 +281,14 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 	const signals: Events = io.signals ?? process;
 	const startedAt = now();
 	const color = colorAllowed(io.env);
-	const sceneOn = sceneAllowed(io.env);
+	const caps = cardCaps(io.env);
+	let light = lightBackground(io.env);
+	const sceneOn = (): boolean => color && !light;
 	let { rows, columns } = size;
 	let panelOn = true;
-	let height = panelRows({ rows, columns }, sceneOn);
+	let height = panelRows({ rows, columns }, sceneOn());
 	let childRows = rows - height;
-	const scene = sceneOn ? createRunScene(io.env, io.cwd, startedAt, now) : null;
+	const scene = color ? createRunScene(io.env, io.cwd, startedAt, now) : null;
 	const drawsScene = (): boolean => scene !== null && height !== PANEL_ROWS;
 	const filter = createScreenFilter(childRows);
 	const write = (data: string | Uint8Array): void => {
@@ -299,7 +303,8 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 			scene.read({ rows: height, width: columns - 1 });
 			return scene.rows();
 		}
-		return renderRunPanel(readRunPanel(io.env, io.cwd, startedAt, now()), { width: columns - 1, color, now: now() });
+		const view = readRunPanel(io.env, io.cwd, startedAt, now());
+		return renderRunPanel(view, { width: columns - 1, color, light, caps, now: now() });
 	};
 	let lines = render();
 	let shown = lines.join("\n");
@@ -337,13 +342,15 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 		let hold: NodeJS.Timeout | undefined;
 		let grace: NodeJS.Timeout | undefined;
 		let resizePending = false;
+		let groundPending = false;
 
 		/** Applies a held resize once nothing is held; a flushed, still-open sequence is ended with CAN first. */
 		const applyResize = (): void => {
 			if (!resizePending || finished || filter.holding) return;
 			resizePending = false;
+			groundPending = false;
 			panelOn = rows >= MIN_RUN_ROWS && columns >= MIN_RUN_COLUMNS;
-			height = panelRows({ rows, columns }, sceneOn);
+			height = panelRows({ rows, columns }, sceneOn());
 			childRows = panelOn ? rows - height : rows;
 			filter.setRows(childRows);
 			write(`${filter.atBoundary ? "" : CAN}${panelOn ? `\u001b[1;${childRows}r` : "\u001b[r"}\u001b[2J`);
@@ -353,11 +360,41 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 				write(panelFrame(lines, { childRows, cursorVisible: filter.cursorVisible }));
 				shown = lines.join("\n");
 			} else owed = true;
+			resizeChild();
+		};
+		const resizeChild = (): void => {
 			try {
 				child.resize(columns, childRows);
 			} catch {
 				// The pty has just exited; its exit ends the run.
 			}
+		};
+		/**
+		 * Gives the panel the form of a ground that turned. The window is as it was and Codex repaints little of what it
+		 * wrote, so its rows stay: the panel clears only rows it had, and a taller one first scrolls Codex's rows up, with
+		 * the cursor, the way a window that gets lower does.
+		 */
+		const applyGround = (): void => {
+			if (!groundPending || resizePending || finished || !filter.atBoundary || filter.cursorSaved) return;
+			groundPending = false;
+			const before = childRows;
+			height = panelRows({ rows, columns }, sceneOn());
+			childRows = rows - height;
+			lines = render();
+			if (childRows === before) {
+				draw();
+				return;
+			}
+			const taken = Math.max(0, before - childRows);
+			const room = taken === 0 ? "" : `\u001b7\u001b[1;${before}r\u001b8${"\u001bD".repeat(taken)}\u001b[${taken}A`;
+			let freed = "";
+			for (let row = before + 1; row <= childRows; row++) freed += `\u001b[${row};1H\u001b[2K`;
+			filter.setRows(childRows);
+			write(`${room}\u001b7\u001b[1;${childRows}r\u001b[0m${freed}\u001b8`);
+			filter.regionAsserted();
+			write(panelFrame(lines, { childRows, cursorVisible: filter.cursorVisible }));
+			shown = lines.join("\n");
+			resizeChild();
 		};
 		const onResize = (): void => {
 			rows = io.stdout.rows ?? rows;
@@ -365,8 +402,17 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 			resizePending = true;
 			applyResize();
 		};
+		const ground = createGroundReader();
 		const onInput = (...data: unknown[]): void => {
-			child.write(data[0] as Buffer | string);
+			const bytes = data[0] as Buffer | string;
+			child.write(bytes);
+			// Codex asks the terminal for its ground; its answer passes here, and the panel listens along.
+			const said = ground.push(typeof bytes === "string" ? bytes : bytes.toString("latin1")).light;
+			if (!color || said === null || said === light) return;
+			light = said;
+			// Without a panel there is nothing to draw; the resize that brings it back reads the ground.
+			groundPending = panelOn;
+			applyGround();
 		};
 		const tick = setInterval(() => {
 			lines = render();
@@ -454,6 +500,7 @@ function drive(child: PtyProcess, io: RunIo, size: { rows: number; columns: numb
 			clearTimeout(hold);
 			hold = undefined;
 			applyResize();
+			applyGround();
 			draw();
 		});
 		child.onExit(({ exitCode, signal }) => {

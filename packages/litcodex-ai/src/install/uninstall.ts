@@ -67,6 +67,7 @@ export function uninstallPlanSteps(codexHome: string): readonly string[] {
 		`Remove LitCodex agent roles from ${join(codexHome, "agents")} and the native default route ${join(codexHome, NATIVE_DEFAULT_AGENT_FILE)}, when they still match what LitCodex installed`,
 		`Remove the managed [agents] defaults from ${join(codexHome, "config.toml")} and LitCodex-generated profile files from ${codexHome}`,
 		`Remove the LIT sunset footer from ${join(codexHome, "config.toml")} when it is on`,
+		`Remove the icon font files LitCodex added, while they are unchanged, and the saved pill ends in ${join(codexHome, "litcodex", "glyphs.json")}; other products on this machine may then draw square ends`,
 		`Remove the LitFamily block from ${join(codexHome, "AGENTS.md")} (your own text stays; a file the block alone created is deleted)`,
 		`If the marketplace root or config.toml is a symlink or otherwise unsafe, uninstall refuses to change anything`,
 	];

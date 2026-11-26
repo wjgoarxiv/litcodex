@@ -132,9 +132,12 @@ describe("goal question answer guide", () => {
 		const lines = message.split("\n");
 		const at = lines.findIndex((line) => line.startsWith("Set goal for this lit-loop: /goal "));
 		expect(at).toBeGreaterThan(-1);
-		expect(lines[at]).toMatch(/\? \(yes \/ no\)$/u);
-		expect(lines.slice(at + 1, at + 4)).toEqual([
-			"  yes  → set this goal now; the loop keeps going",
+		const guide = lines.findIndex((line) => line.startsWith("  yes "));
+		// The question is broken between words for a narrow pane; the guide stands right under its end.
+		expect(lines.slice(at, guide).join(" ")).toMatch(/^Set goal for this lit-loop: .+\? \(yes \/ no\)$/u);
+		expect(lines.slice(guide, guide + 4)).toEqual([
+			"  yes  → set this goal now; the loop keeps",
+			"         going",
 			"  no   → keep working without a goal",
 			"  Type the word alone.",
 		]);

@@ -10,7 +10,7 @@
 import { closeSync, fstatSync, lstatSync, readdirSync, readSync } from "node:fs";
 import { basename, isAbsolute, join } from "node:path";
 import { lookOf, REVIEW_LANE_IDS } from "./card-looks.js";
-import { cleanDeep, cleanLines } from "./control-chars.js";
+import { clean, cleanDeep, cleanLines, clipped } from "./control-chars.js";
 import { codexHomeFrom, openRegularFile, plainDirs, readLiveStep, readThreadPointer, } from "./live-step.js";
 import { installedPluginVersion, loadedPluginVersion, restartChip } from "./restart-chip.js";
 import { normalizeSessionId } from "./state-paths.js";
@@ -274,21 +274,22 @@ function readSmallText(path, maxBytes) {
             closeSync(fd);
     }
 }
+const MAX_BRANCH = 200;
 /**
  * The checked-out branch, or a short commit when detached, else null. A worktree or submodule keeps a
  * `.git` file that names its git folder (`gitdir: <path>`); HEAD is read from there.
  */
-function readBranch(cwd) {
+export function readBranch(cwd) {
     const pointer = readSmallText(join(cwd, ".git"), 1024)
         ?.trim()
         .match(/^gitdir: (.+)$/u)?.[1];
     const gitDir = pointer === undefined ? join(cwd, ".git") : isAbsolute(pointer) ? pointer : join(cwd, pointer);
-    const text = readSmallText(join(gitDir, "HEAD"), 512)?.trim();
+    const text = readSmallText(join(gitDir, "HEAD"), 1024)?.trim();
     if (text === undefined)
         return null;
-    const ref = text.match(/^ref: refs\/heads\/([\w./-]{1,80})$/u)?.[1];
+    const ref = text.match(/^ref: refs\/heads\/(.+)$/u)?.[1];
     if (ref !== undefined)
-        return ref;
+        return clipped(clean(ref), MAX_BRANCH) || null;
     return /^[0-9a-f]{40,64}$/u.test(text) ? text.slice(0, 7) : null;
 }
 /** A tool name as the card shows it: an MCP tool reads `server · tool` rather than its joined id. */
@@ -374,6 +375,15 @@ function turnWorking(live, lastStepAt, now) {
     }
     return lastStepAt !== null && now - lastStepAt < RECENT_STEP_MS;
 }
+/** Whether the records say the work is done, or a turn that ends now leaves no task or goal open; null for neither. */
+export function completion(map, signals) {
+    const { work, goals } = signals;
+    const stage = map?.cells.find((cell) => cell.state === "current")?.key;
+    if (work?.status === "completed" || stage === "done")
+        return "recorded";
+    const open = (work !== null && work.done < work.total) || (goals !== null && goals.done < goals.total);
+    return !open && map?.family === "main" && stage !== undefined && FINISHING_STAGES.has(stage) ? "nothing open" : null;
+}
 /** The card for one thread. `rollout: false` keeps every Codex rollout file unread; the usage row then stays empty. */
 export function readCardStatus(threadId, env, now = Date.now(), options = {}) {
     const rollout = options.rollout !== false;
@@ -396,30 +406,22 @@ export function readCardStatus(threadId, env, now = Date.now(), options = {}) {
         ? { tool: toolDisplayName(live.tool), startedAt: live.startedAt }
         : null;
     const lastStepAt = live?.endedAt ?? live?.startedAt ?? null;
-    const recorded = signals.work?.status === "completed" ||
-        drawn?.cells.some((cell) => cell.key === "done" && cell.state === "current") === true;
+    const completed = completion(drawn, signals);
+    const recorded = completed === "recorded";
     // A LIT turn that has ended with no task or goal still open is done, even though no stage record says so.
     const turnOver = live !== null &&
         live.turnEndedAt !== null &&
         live.turnEndedAt >= turn.startedAt &&
         (live.turnStartedAt === null || live.turnEndedAt >= live.turnStartedAt);
-    const open = (signals.work !== null && signals.work.done < signals.work.total) ||
-        (signals.goals !== null && signals.goals.done < signals.goals.total);
-    const stage = drawn?.cells.find((cell) => cell.state === "current")?.key;
     const waitReason = live?.waitReason ?? null;
-    // A turn that ended by asking the person something is their turn, not a finished one.
-    const finished = !recorded &&
-        turnOver &&
-        waitReason === null &&
-        !open &&
-        drawn?.family === "main" &&
-        stage !== undefined &&
-        FINISHING_STAGES.has(stage);
-    const map = finished && drawn !== null ? finishedMap(drawn) : drawn;
-    const state = recorded || finished ? "complete" : "ignited";
     const working = step !== null || turnWorking(live, lastStepAt, now);
+    // A turn that ended by asking the person something is their turn, as the Stop card says, even over finished work.
+    const asked = !working && turnOver && waitReason !== null;
+    const finished = completed === "nothing open" && turnOver && waitReason === null;
+    const map = finished && drawn !== null ? finishedMap(drawn) : drawn;
+    const state = (recorded && !asked) || finished ? "complete" : "ignited";
     const cardStack = readCardStack(cwd, thread);
-    // The look: a completion first, then the session waiting on the user, then the skill's own look.
+    // The look: the session waiting on the user first, then a completion, then the skill's own look.
     // When the mode has no look (a scoped or implicit skill load that the hook never routed), the
     // stack's active top frame can carry it: family "main" + stage "review" → "review".
     // The "turn" look fires only when the last assistant message asked something (question mark,
@@ -436,11 +438,10 @@ export function readCardStatus(threadId, env, now = Date.now(), options = {}) {
     catch {
         // The card shows what it can; a missing stack does not break the read.
     }
-    const waitingOnUser = !working && state === "ignited" && turnOver && waitReason !== null;
     // The done look fires only for an explicit plan/goal completion (recorded signal), not for a
     // routine turn that implicitly finishes at a finishing stage.
     const doneLook = state === "complete" && recorded;
-    const look = doneLook ? "done" : waitingOnUser ? "turn" : skillLook;
+    const look = asked ? "turn" : doneLook ? "done" : skillLook;
     // Review lane states from the workflow stack's verdicts.
     let reviewLanes = null;
     if (skillLook === "review" && reviewFrame !== undefined) {
@@ -461,6 +462,7 @@ export function readCardStatus(threadId, env, now = Date.now(), options = {}) {
         thread,
         state,
         mode: turn.mode,
+        recorded,
         look,
         ignitedAt: turn.startedAt,
         map,
@@ -498,16 +500,37 @@ function stateWords(status) {
         return "review";
     return status.working ? "working" : "waiting for your next message";
 }
+/**
+ * The stages as one line of words says them. Under "done ✓" none is at work: finished work and the last stage are ticked
+ * and a stage that was skipped is left out. Work the records still count as open keeps its place.
+ */
+export function spokenMap(status) {
+    const { map } = status;
+    if (map === null || status.state !== "complete")
+        return map;
+    const current = map.cells.find((cell) => cell.state === "current");
+    const full = current?.progress != null && current.progress.done >= current.progress.total;
+    const lastKey = map.cells.at(-1)?.key;
+    if (current !== undefined && !full && current.key !== lastKey)
+        return map;
+    return {
+        ...map,
+        cells: map.cells
+            .filter((cell) => cell.state !== "pending" || cell.key === lastKey)
+            .map((cell) => cell.state === "current" || cell.key === lastKey ? { ...cell, state: "done", label: null } : cell),
+    };
+}
 /** The card as plain text, for hosts that cannot draw it (the terminal `codex`). */
 export function cardStatusText(status) {
     if (status.state === "ready")
         return "🔥 LIT · ready — no LIT skill in this thread yet. Type `lit <task>` to start one, or `lit adhd` after a break.";
     const chip = status.restart ? ` · ${status.restart}` : "";
     const lines = [`🔥 LIT · ${status.mode ?? "lit"} · ${stateWords(status)}${chip}`];
-    if (status.map !== null) {
-        lines.push(workflowMapText(status.map));
-        if (status.map.next !== null)
-            lines.push(`Next: ${status.map.next}`);
+    const map = spokenMap(status);
+    if (map !== null) {
+        lines.push(workflowMapText(map));
+        if (map.next !== null)
+            lines.push(`Next: ${map.next}`);
     }
     if (status.threads)
         lines.push(...threadLines(status.threads));

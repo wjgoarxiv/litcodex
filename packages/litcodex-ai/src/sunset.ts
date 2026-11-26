@@ -10,6 +10,7 @@
 
 import { readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { readScreenStatus } from "@litcodex/lit-loop/dist/screen-status.js";
 import {
 	NO_RECORD,
 	readSunsetRecord,
@@ -166,6 +167,15 @@ export function sunsetSupported(io: SunsetIo): boolean {
 	return new RegExp(`^${SUNSET_FEATURE}\\s`, "m").test(featureList(io) ?? "");
 }
 
+/** What draws the footer now: `on` is the LIT sunset, `other` a status line the person chose themselves. */
+export function sunsetSurface(env: NodeJS.ProcessEnv): "on" | "off" | "other" {
+	const config = readConfig(resolveCodexHome(env));
+	const state = config === null ? "unclear" : sunsetState(config);
+	if (state === "on" || state === "off")
+		return state === "on" && featureValue(config ?? "") !== "false" ? "on" : "off";
+	return "other";
+}
+
 /** Whether the installer should ask: never answered, nothing else draws the status line, and Codex can do it. */
 export function sunsetQuestion(io: SunsetIo): boolean {
 	const home = resolveCodexHome(io.env);
@@ -250,9 +260,11 @@ export function sunsetCommand(
 		return USAGE_EXIT_CODE;
 	}
 	if (verb === "status") {
-		const config = readConfig(resolveCodexHome(io.env));
-		const on = config !== null && sunsetState(config) === "on" && featureValue(config) !== "false";
-		io.stdout.write(`The LIT sunset footer is ${on ? "ON" : "OFF"}.\n`);
+		const on = sunsetSurface(io.env) === "on";
+		const card = readScreenStatus(io.env);
+		io.stdout.write(
+			`The LIT sunset footer is ${on ? "ON" : "OFF"}.\nChat card: for a ${card.light === true ? "white" : "dark"} window, ${card.depth === 256 ? "256 colours" : "24-bit colour"}. Change: litcodex screen-status light|dark|truecolor|256\n`,
+		);
 		return 0;
 	}
 	const result = verb === "on" ? turnSunsetOn(io) : turnSunsetOff(io);

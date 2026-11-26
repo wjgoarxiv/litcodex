@@ -9,12 +9,13 @@
 // The escape strings that place the panel save and restore the cursor around it and leave Codex's own rows alone.
 // Nothing here writes a file.
 import { realpathSync } from "node:fs";
-import { clock, readCardStatus } from "./card-status.js";
-import { clean, cleanStatus, fit, listSessions, tilde } from "./hud.js";
+import { clock, readCardStatus, spokenMap } from "./card-status.js";
+import { clean, cleanStatus, fit, listSessions, tilde, unreadableSince } from "./hud.js";
 import { composeCard } from "./hud-card.js";
 import { roundGlyphs } from "./hud-glyphs.js";
 import { changedRuns, rowText } from "./hud-paint.js";
 import { renderScreenCard } from "./screen-card.js";
+import { stateOf } from "./state-colours.js";
 import { readChecklist } from "./workflow-map.js";
 /** Rows of the plain panel below Codex. */
 export const PANEL_ROWS = 4;
@@ -52,11 +53,12 @@ export function readRunPanel(env, cwd, since, now) {
     try {
         const real = realOrSame(cwd);
         const session = listSessions(env).find((candidate) => (candidate.cwd === cwd || candidate.cwd === real) && candidate.activeAt >= since);
+        const unreadable = unreadableSince(env, session?.id ?? null, since);
         if (session === undefined)
-            return WAITING;
+            return { ...WAITING, unreadable };
         const status = readCardStatus(session.id, env, now, { rollout: false });
         if (status.state === "ready")
-            return WAITING;
+            return { ...WAITING, unreadable };
         const rows = readChecklist(session.cwd, session.id);
         const checklist = rows.find((row) => row.state === "current") ??
             rows.find((row) => row.state === "pending") ??
@@ -67,10 +69,11 @@ export function readRunPanel(env, cwd, since, now) {
             status: cleanStatus(status),
             checklist,
             session: { id: session.id, folder: tilde(session.cwd, env["HOME"]), lastSeen },
+            unreadable,
         };
     }
     catch {
-        return WAITING;
+        return { ...WAITING, unreadable: ["LIT records"] };
     }
 }
 function stepText(status, now) {
@@ -88,27 +91,31 @@ function stepText(status, now) {
 export function renderRunPanel(view, options) {
     const width = Math.max(MIN_WIDTH, Math.floor(options.width));
     const status = view.status;
-    if (status === null) {
-        const rows = ["🔥 LIT · ready", "Type `lit <task>` in Codex to start.", "", ""];
-        return rows.map((row) => {
-            const line = fit(row, width);
-            return options.color && line !== "" ? `${DIM}${line}${RESET}` : line;
-        });
-    }
+    const light = options.light === true;
+    const tinted = options.color && !light;
+    const dim = (text) => {
+        const line = fit(text, width);
+        return tinted && line !== "" ? `${DIM}${line}${RESET}` : line;
+    };
+    const unreadable = view.unreadable ?? [];
+    const alert = unreadable.length > 0 ? dim(clean(`cannot read ${unreadable.join(", ")}`)) : "";
+    if (status === null)
+        return [dim("🔥 LIT · ready"), dim("Type `lit <task>` in Codex to start."), alert, ""];
     const started = status.turnStartedAt ?? status.ignitedAt ?? options.now;
     const elapsed = clock((status.turnEndedAt ?? options.now) - started);
     const hasMap = status.map !== null && status.map.cells.length > 0;
     const card = renderScreenCard({
         mode: status.mode ?? "lit",
         note: status.state === "complete" ? `done ✓ ${elapsed}` : elapsed,
-        look: status.look ?? null,
-        map: status.map,
+        look: stateOf(status) ?? status.look ?? null,
+        map: spokenMap(status),
         checklist: view.checklist === null ? [] : [view.checklist],
-    }, { color: options.color, width, horizon: false }).split("\n");
+    }, { color: options.color, width, horizon: false, fixedRows: true, light, caps: options.caps === true }).split("\n");
     const step = stepText(status, options.now);
     const line = fit(step.text, width);
-    const stepRow = options.color ? `${step.live ? ACCENT : DIM}${line}${RESET}` : line;
-    return [card[0] ?? "", hasMap ? (card[1] ?? "") : "", stepRow, view.checklist === null ? "" : (card.at(-1) ?? "")];
+    const stepRow = tinted ? `${step.live ? ACCENT : DIM}${line}${RESET}` : line;
+    const last = view.checklist === null ? "" : (card.at(-1) ?? "");
+    return [card[0] ?? "", hasMap ? (card[1] ?? "") : "", stepRow, alert === "" ? last : alert];
 }
 export function createRunScene(env, cwd, since, now) {
     // Looked up once: fonts and the terminal do not change under a running panel.
@@ -127,15 +134,15 @@ export function createRunScene(env, cwd, since, now) {
     return {
         read({ rows, width }) {
             advance();
-            const { status, session } = readRunPanel(env, cwd, since, now());
-            const view = { wanted: null, session: session ?? null, status, unreadable: [] };
+            const { status, session, unreadable } = readRunPanel(env, cwd, since, now());
+            const view = { wanted: null, session: session ?? null, status, unreadable: unreadable ?? [] };
             card = composeCard(view, { width, rows, caps, now: now(), docked: true });
         },
         rows() {
             advance();
             drawn = card?.paint(seconds) ?? [];
-            // The frame's right edge is placed by column, so odd-width text never moves it.
-            return drawn.map((row) => `${rowText(row.slice(0, -1), true)}\u001b[${row.length}G${rowText(row.slice(-1), true)}`);
+            // The frame's right edge is placed by column over an erased end, so odd-width text never moves it.
+            return drawn.map((row) => `${rowText(row.slice(0, -1), true)}\u001b[K\u001b[${row.length}G${rowText(row.slice(-1), true)}`);
         },
         changes(top) {
             advance();

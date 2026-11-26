@@ -9,7 +9,8 @@
 // prints an empty line, and the exit code is always 0.
 
 import { type CardStatus, clock } from "./card-status.js";
-import { cleanStatus, fit, listSessions, readHud } from "./hud.js";
+import { cleanStatus, fit, LIGHT_INK, listSessions, readHud } from "./hud.js";
+import { lightBackground } from "./hud-scene.js";
 import { workflowMapText } from "./workflow-map.js";
 
 const MAX_STDIN_BYTES = 64 * 1024;
@@ -91,7 +92,10 @@ function wantedSession(env: NodeJS.ProcessEnv, input: HostInput): string | null 
 }
 
 /** The one line, coloured on request and cut to `width` cells; "" when there is no LIT turn to show. */
-export function statuslineText(status: CardStatus | null, options: { width: number; color: boolean }): string {
+export function statuslineText(
+	status: CardStatus | null,
+	options: { readonly width: number; readonly color: boolean; readonly light?: boolean },
+): string {
 	if (status === null || status.state === "ready") return "";
 	const card = cleanStatus(status);
 	const look = card.look;
@@ -102,9 +106,11 @@ export function statuslineText(status: CardStatus | null, options: { width: numb
 	const rest = parts.filter((part): part is string => part !== null && part !== "").join("  ");
 	const line = fit(rest === "" ? route : `${route}  ${rest}`, Math.max(10, options.width));
 	if (!options.color) return line;
-	const tint = look === "turn" ? AMBER : look === "done" ? GREEN : ACCENT;
+	const light = options.light === true;
+	const inks = light ? LIGHT_INK : { turn: AMBER, done: GREEN, live: ACCENT };
+	const tint = inks[look === "turn" || look === "done" ? look : "live"];
 	return line.startsWith(route)
-		? `${BOLD}${tint}${route}${RESET}${DIM}${line.slice(route.length)}${RESET}`
+		? `${BOLD}${tint}${route}${RESET}${light ? "" : DIM}${line.slice(route.length)}${RESET}`
 		: `${BOLD}${tint}${line}${RESET}`;
 }
 
@@ -118,6 +124,7 @@ export async function statuslineCommand(_args: readonly string[], io: Statusline
 		const line = statuslineText(view.status, {
 			width: Number.isFinite(columns) && columns > 0 ? columns : DEFAULT_WIDTH,
 			color: noColor === undefined || noColor === "",
+			light: lightBackground(io.env),
 		});
 		io.stdout.write(`${line}\n`);
 	} catch {

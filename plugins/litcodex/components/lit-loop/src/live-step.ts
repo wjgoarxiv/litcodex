@@ -24,6 +24,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { basename, isAbsolute, join } from "node:path";
+import { clipped } from "./control-chars.js";
 import { normalizeSessionId } from "./state-paths.js";
 
 const LIVE_STEP_DIR = ".litcodex/live-step";
@@ -168,7 +169,7 @@ export function writeFileAtomic(path: string, text: string): void {
 /** A printable tool label of at most 64 characters. */
 function toolLabel(tool: string): string {
 	const clean = tool.replace(/[\u0000-\u001f\u007f-\u009f]/gu, "").trim();
-	return clean.length > MAX_TOOL_LABEL ? `${clean.slice(0, MAX_TOOL_LABEL - 1)}…` : clean;
+	return clean.length > MAX_TOOL_LABEL ? `${clipped(clean, MAX_TOOL_LABEL - 1)}…` : clean;
 }
 
 export function liveStepPath(repoRoot: string, sessionId: string): string | null {

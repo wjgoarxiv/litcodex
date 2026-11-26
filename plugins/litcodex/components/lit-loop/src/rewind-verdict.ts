@@ -16,6 +16,7 @@
 // Pure: the cursor file is read and written by the CLI.
 
 import { createHash } from "node:crypto";
+import { clipped } from "./control-chars.js";
 import type { RewindResult } from "./rewind.js";
 import type { BoardLang, BoardNow, BoardReminder } from "./rewind-board.js";
 
@@ -66,7 +67,7 @@ const clip = (text: string): string => {
 		.replace(/[`*_<>|]/gu, "")
 		.replace(/\s+/gu, " ")
 		.trim();
-	return flat.length <= TEXT_MAX ? flat : `${flat.slice(0, TEXT_MAX - 1)}…`;
+	return flat.length <= TEXT_MAX ? flat : `${clipped(flat, TEXT_MAX - 1)}…`;
 };
 
 export const fingerprint = (parts: readonly unknown[]): string =>

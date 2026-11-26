@@ -161,6 +161,18 @@ describe("lit deny", () => {
 		expect(work?.denied_boundaries).toMatchObject([{ boundary_id: "boundary-1" }]);
 	});
 
+	it("cuts a long root without leaving half a character", () => {
+		const root = workspace("paused");
+		const path = join(root, ".litcodex", "start-work", "state.json");
+		const stored = JSON.stringify(realpathSync(root));
+		const long = `/${"a".repeat(118)}`;
+		const text = readFileSync(path, "utf8").replaceAll(`"root": ${stored}`, `"root": ${JSON.stringify(`${long}🔥`)}`);
+		writeFileSync(path, text, "utf8");
+		const answer = contextOf(runUserPromptSubmitHook(prompt(root, "lit deny")));
+		expect(answer).toContain(`edit ${long}`);
+		expect(answer).not.toMatch(/[\ud800-\udfff]/u);
+	});
+
 	it("after a deny nothing is left for a later approve", () => {
 		const root = workspace("paused");
 		runUserPromptSubmitHook(prompt(root, "lit deny", "s1", "t1"));

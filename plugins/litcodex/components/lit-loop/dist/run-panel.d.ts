@@ -21,10 +21,16 @@ export interface RunPanelView {
     readonly checklist: ChecklistRow | null;
     /** The session the card is about; null while none is. */
     readonly session?: HudView["session"];
+    /** Records that exist but could not be read, named for the user. */
+    readonly unreadable?: readonly string[];
 }
 export interface RunPanelOptions {
     readonly width: number;
     readonly color: boolean;
+    /** The window is light: words in its own ink. */
+    readonly light?: boolean;
+    /** The pills end round, as the saved choice says. */
+    readonly caps?: boolean;
     readonly now: number;
 }
 /** What the panel shows now for a run started in `cwd` at `since`. Never throws and never writes. */

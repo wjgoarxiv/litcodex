@@ -1,11 +1,19 @@
-import { mkdirSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import type { CardStatus } from "./card-status.js";
 import { displayWidth } from "./hud.js";
 import { recordLiveStepStart, recordTurnStart, writeThreadPointer } from "./live-step.js";
-import { PANEL_ROWS, panelClear, panelFrame, type RunPanelView, readRunPanel, renderRunPanel } from "./run-panel.js";
+import {
+	createRunScene,
+	PANEL_ROWS,
+	panelClear,
+	panelFrame,
+	type RunPanelView,
+	readRunPanel,
+	renderRunPanel,
+} from "./run-panel.js";
 import { recordWorkflowTurn } from "./workflow-map.js";
 
 const ESC = "\u001b";
@@ -89,6 +97,39 @@ describe("renderRunPanel", () => {
 		expect(rows.join("")).not.toContain("\u0007");
 	});
 
+	it("ticks the last stage of finished work", () => {
+		const cells = (STATUS.map?.cells ?? []).map((cell) =>
+			cell.key === "work" ? { ...cell, progress: { done: 7, total: 7 } } : cell,
+		);
+		const done = { key: "done", icon: "", word: "done", state: "pending", label: null, progress: null } as const;
+		const status: CardStatus = {
+			...STATUS,
+			map: { family: "main", next: null, cells: [...cells, done] },
+			state: "complete",
+			look: "done",
+			step: null,
+			working: false,
+		};
+		for (const color of [false, true]) {
+			const rows = renderRunPanel({ status, checklist: null }, { width: 100, color, now: 82_000 });
+			expect(rows[1]?.replace(SGR, "")).toBe("✓ interview ── ✓ work ── ✓ done");
+		}
+	});
+
+	it("says what it cannot read, inside its four rows", () => {
+		for (const width of [40, 80]) {
+			for (const view of [VIEW, { status: null, checklist: null }]) {
+				const rows = renderRunPanel(
+					{ ...view, unreadable: ["workflow record", "live step"] },
+					{ width, color: true, now: 82_000 },
+				);
+				expect(rows).toHaveLength(PANEL_ROWS);
+				expect(rows.join("\n")).toContain("cannot read workflow record");
+				expect(rows[0]?.replace(SGR, "")).toContain("LIT");
+			}
+		}
+	});
+
 	it("keeps the four rows when there is no map, no step and no checklist", () => {
 		const rows = renderRunPanel(
 			{ status: { ...STATUS, map: null, step: null, working: false }, checklist: null },
@@ -159,6 +200,31 @@ describe("readRunPanel", () => {
 		expect(view.status?.thread).toBe(NEW);
 		expect(view.status?.step?.tool).toBe("Bash");
 		expect(renderRunPanel(view, { width: 80, color: false, now: 8_000 })[2]).toBe("Running: Bash, 0:01");
+	});
+
+	it("names the records of its session that it cannot read", () => {
+		const { env, cwd } = setup();
+		writeThreadPointer(env, NEW, cwd, 6_000);
+		recordWorkflowTurn(cwd, NEW, "turn-new", "lit-loop", 6_000);
+		expect(readRunPanel(env, cwd, 5_000, 8_000).unreadable ?? []).toEqual([]);
+		writeFileSync(join(cwd, ".litcodex/workflow-map", `${NEW}.json`), "{bad");
+		const view = readRunPanel(env, cwd, 5_000, 8_000);
+		expect(view.unreadable).toEqual(["workflow record"]);
+		const scene = createRunScene({ ...env, LITCODEX_HUD_GLYPHS: "basic" }, cwd, 5_000, () => 8_000);
+		scene.read({ rows: 7, width: 79 });
+		expect(scene.rows().join("\n").replace(SGR, "")).toContain("cannot read workflow record");
+	});
+
+	it("names a session pointer that broke after the run started, and no older one", () => {
+		const { env, cwd } = setup();
+		const pointers = join(env["CODEX_HOME"] as string, "litcodex/lit-loop/threads");
+		mkdirSync(pointers, { recursive: true });
+		const broken = join(pointers, `${OLD}.json`);
+		writeFileSync(broken, "{bad");
+		utimesSync(broken, 4, 4);
+		expect(readRunPanel(env, cwd, 5_000, 8_000).unreadable ?? []).toEqual([]);
+		utimesSync(broken, 7, 7);
+		expect(readRunPanel(env, cwd, 5_000, 8_000).unreadable).toEqual(["session pointer"]);
 	});
 
 	it("picks up an older session the user resumed in the run folder", () => {

@@ -77,10 +77,14 @@ function parseMcpServers(path: string, servers: Record<string, unknown>): void {
 	if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
 		schemaFail(path, `mcpServers.${CARD_SERVER_NAME}: must be an object`);
 	}
-	const { command, args, cwd, ...rest } = entry as Record<string, unknown>;
+	const { command, args, cwd, env_vars: passed, ...rest } = entry as Record<string, unknown>;
 	if (Object.keys(rest).length > 0) schemaFail(path, `mcpServers.${CARD_SERVER_NAME}: unexpected keys`);
 	expectString(path, command, "node", `mcpServers.${CARD_SERVER_NAME}.command`);
 	expectString(path, cwd, ".", `mcpServers.${CARD_SERVER_NAME}.cwd`);
+	// Codex starts a server with a small environment; CODEX_HOME says where the LIT records are.
+	if ("env_vars" in entry && !(Array.isArray(passed) && passed.length === 1 && passed[0] === "CODEX_HOME")) {
+		schemaFail(path, `mcpServers.${CARD_SERVER_NAME}.env_vars: must be ["CODEX_HOME"]`);
+	}
 	if (!Array.isArray(args) || args.length !== 1 || args[0] !== CARD_SERVER_SCRIPT) {
 		schemaFail(path, `mcpServers.${CARD_SERVER_NAME}.args: must be [${JSON.stringify(CARD_SERVER_SCRIPT)}]`);
 	}

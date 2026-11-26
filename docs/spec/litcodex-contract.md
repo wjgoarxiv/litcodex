@@ -325,10 +325,12 @@ and for two seconds after a recorded completion, a 100 ms timer repaints the com
 that changed, reading no record; it is stopped the rest of the time, and the rewind card never moves. The card's usage
 figures come from the tail of the thread's own rollout, looked at once in five seconds at most and read again only when
 its lstat changed; nothing is written. A narrower window keeps the plain lines with their pills. Gauges and pills end
-in U+E0B6/U+E0B4, in the cells they already had, as LITCODEX_HUD_GLYPHS says: `nerd` always, `basic` never, `auto` (the
-default) in terminals that draw them themselves (WT_SESSION, vscode, kitty, WezTerm, ghostty) or when a font file name
-in the user or system font folders names a Nerd Font, looked up once at start, at most 4000 names and three folders
-deep, never over SSH. The truecolor lines of a narrower window follow the same answer: every pill and gauge, a cut one
+in U+E0B6/U+E0B4, in the cells they already had, as LITCODEX_HUD_GLYPHS says, else as `litcodex install --glyphs` saved
+in `$CODEX_HOME/litcodex/glyphs.json`, else `auto`: `round` (or `nerd`) always, `square` (or `basic`) never, `auto` in
+terminals that draw them themselves (WT_SESSION, vscode, kitty, WezTerm, ghostty) or when a font file name
+in the user or system font folders names a Nerd Font, looked up once at start (by the footer server once a minute), at
+most 4000 names and three folders deep, never over SSH. The footer server reads the saved choice at every read; the
+coloured chat card and the plain panel of `litcodex run` are round only where the saved choice is `round`. The truecolor lines of a narrower window follow the same answer: every pill and gauge, a cut one
 included, ends round, or none does. The install cards ask the same rule and use it only at truecolor on a background
 not reported as light. Under DONE the done
 stage is ticked and a skipped stage reads `-`; when the stages do not fit, only the current and the next are named.

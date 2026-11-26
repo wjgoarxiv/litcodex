@@ -1,0 +1,889 @@
+== card started
+01 ▗▖  ▄▄ █▌
+   9x
+02 ▐▌▗█▀▀▀▀▀▀▘
+   11x
+03 ▐▌ ▄▌▀▝▀▀▘
+   10x
+04 ▐▌▛▘  ▐▌
+   8x
+05 ▝▀▀▘  ▝▘
+   8x
+06 🔥 LIT IGNITED · start-work 🔥
+   30x
+07  🔥 LIT  start-work · turn started
+   1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 10x7cf5b0! 1x 1x8b949e 1x 4xe6edf3 1x 7xe6edf3
+08 ✓ interview ── ✓ plan ──  ● work 2/5 
+   1xffa033 1x 9xffa033 1x 2xff933c 1x 1xff8544 1x 4xff8544 1x 2xff784d 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0!
+09 ○ review ── ○ done
+   1x8b949e 1x 6x8b949e 1x 2x46505c 1x 1x8b949e 1x 4x8b949e
+10 ✓ Read the grammar
+   1x6bdb8f 1x 4x8b949e 1x 3x8b949e 1x 7x8b949e
+11 ▸ Write the parser tests for 한국어 입력
+   1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3
+12 · Wire the command
+   1x8b949e 1x 4x8b949e 1x 3x8b949e 1x 7x8b949e
+13 ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▄▅▆▇▇▆▅▄▂▁▁▁▁▁▁▁
+   1xff2d95 2xf639a2 2xec45b0 2xe351bd 2xda5dca 2xd068d7 2xc774e5 2xbd80f2 1xff4677 1xff6a59 1xff8f3c 1xffa841 2xffc147 1xffa841 1xff8f3c 1xff6a59 1xff4677 2x91cece 2x8adbc4 2x83e8ba 1x7cf5b0
+== card turn
+01 ▗▖  ▄▄ █▌
+   9x
+02 ▐▌▗█▀▀▀▀▀▀▘
+   11x
+03 ▐▌ ▄▌▀▝▀▀▘
+   10x
+04 ▐▌▛▘  ▐▌
+   8x
+05 ▝▀▀▘  ▝▘
+   8x
+06 🔥 LIT IGNITED · start-work 🔥
+   30x
+07  🔥 LIT  start-work · your turn · answer the question above
+   1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffbf59! 1x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 10x7cf5b0! 1x 1x8b949e 1x 4xffaf3c 1x 4xffaf3c 1x 1xffaf3c 1x 6xffaf3c 1x 3xffaf3c 1x 8xffaf3c 1x 5xffaf3c
+08 ✓ interview ── ✓ plan ──  ● work 2/5 
+   1x9a6420 1x 9x9a6420 1x 2xb37727 1x 1xcd8a2e 1x 4xcd8a2e 1x 2xe69c35 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 2x0b0e14/ffd480! 1x0b0e14/ffd98a!
+09 ○ review ── ○ done
+   1x8b949e 1x 6x8b949e 1x 2x46505c 1x 1x8b949e 1x 4x8b949e
+10 ✓ Read the grammar
+   1x6bdb8f 1x 4x8b949e 1x 3x8b949e 1x 7x8b949e
+11 ▸ Write the parser tests for 한국어 입력
+   1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3
+12 · Wire the command
+   1x8b949e 1x 4x8b949e 1x 3x8b949e 1x 7x8b949e
+13 ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▄▅▆▇▇▆▅▄▂▁▁▁▁▁▁▁
+   1x9a6420 2xa76d24 2xb37727 2xc0802b 2xcd8a2e 2xd99332 2xe69c35 2xf2a639 1xe89326 1xf3a131 1xffaf3c 1xffb947 2xffc353 1xffb947 1xffaf3c 1xf3a131 1xe89326 2xffc96d 2xffcf77 2xffd480 1xffd98a
+== card done
+01 ▗▖  ▄▄ █▌
+   9x
+02 ▐▌▗█▀▀▀▀▀▀▘
+   11x
+03 ▐▌ ▄▌▀▝▀▀▘
+   10x
+04 ▐▌▛▘  ▐▌
+   8x
+05 ▝▀▀▘  ▝▘
+   8x
+06 🔥 LIT IGNITED · start-work 🔥
+   30x
+07  🔥 LIT  start-work · turn done · 1 task done · next: Wire the command
+   1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 10x7cf5b0! 1x 1x8b949e 1x 4xe6edf3 1x 4xe6edf3 1x 1xe6edf3 1x 1xe6edf3 1x 4xe6edf3 1x 4xe6edf3 1x 1xe6edf3 1x 5xe6edf3 1x 4xe6edf3 1x 3xe6edf3 1x 7xe6edf3
+08 ✓ interview ── ✓ plan ──  ● work 2/5 
+   1xffa033 1x 9xffa033 1x 2xff933c 1x 1xff8544 1x 4xff8544 1x 2xff784d 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0!
+09 ○ review ── ○ done
+   1x8b949e 1x 6x8b949e 1x 2x46505c 1x 1x8b949e 1x 4x8b949e
+10 ✓ Read the grammar
+   1x6bdb8f 1x 4x8b949e 1x 3x8b949e 1x 7x8b949e
+11 ▸ Write the parser tests for 한국어 입력
+   1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3
+12 · Wire the command
+   1x8b949e 1x 4x8b949e 1x 3x8b949e 1x 7x8b949e
+13 ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▄▅▆▇▇▆▅▄▂▁▁▁▁▁▁▁
+   1xff2d95 2xf639a2 2xec45b0 2xe351bd 2xda5dca 2xd068d7 2xc774e5 2xbd80f2 1xff4677 1xff6a59 1xff8f3c 1xffa841 2xffc147 1xffa841 1xff8f3c 1xff6a59 1xff4677 2x91cece 2x8adbc4 2x83e8ba 1x7cf5b0
+== card stack
+01 ▗▖  ▄▄ █▌
+   9x
+02 ▐▌▗█▀▀▀▀▀▀▘
+   11x
+03 ▐▌ ▄▌▀▝▀▀▘
+   10x
+04 ▐▌▛▘  ▐▌
+   8x
+05 ▝▀▀▘  ▝▘
+   8x
+06 🔥 LIT IGNITED · lit-hijack 🔥
+   30x
+07  🔥 LIT  lit-hijack · turn started
+   1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 10x7cf5b0! 1x 1x8b949e 1x 4xe6edf3 1x 7xe6edf3
+08 ✓ interview ── ✓ plan ──  ● work 2/5 
+   1xffa033 1x 9xffa033 1x 2xff933c 1x 1xff8544 1x 4xff8544 1x 2xff784d 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0!
+09 ○ review ── ○ done
+   1x8b949e 1x 6x8b949e 1x 2x46505c 1x 1x8b949e 1x 4x8b949e
+10 paused: lit-loop (work) · type `lit continue`
+   7x8b949e 1x 8x8b949e 1x 6x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4x8b949e 1x 9x8b949e
+11 ✓ Read the grammar
+   1x6bdb8f 1x 4x8b949e 1x 3x8b949e 1x 7x8b949e
+12 ▸ Write the parser tests for 한국어 입력
+   1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3
+13 · Wire the command
+   1x8b949e 1x 4x8b949e 1x 3x8b949e 1x 7x8b949e
+14 ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▄▅▆▇▇▆▅▄▂▁▁▁▁▁▁▁
+   1xff2d95 2xf639a2 2xec45b0 2xe351bd 2xda5dca 2xd068d7 2xc774e5 2xbd80f2 1xff4677 1xff6a59 1xff8f3c 1xffa841 2xffc147 1xffa841 1xff8f3c 1xff6a59 1xff4677 2x91cece 2x8adbc4 2x83e8ba 1x7cf5b0
+== card research
+01 ▗▖  ▄▄ █▌
+   9x
+02 ▐▌▗█▀▀▀▀▀▀▘
+   11x
+03 ▐▌ ▄▌▀▝▀▀▘
+   10x
+04 ▐▌▛▘  ▐▌
+   8x
+05 ▝▀▀▘  ▝▘
+   8x
+06 🔥 LIT IGNITED · litresearch 🔥
+   31x
+07  🔥 LIT  litresearch · turn started
+   1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 11x7cf5b0! 1x 1x8b949e 1x 4xe6edf3 1x 7xe6edf3
+08 ✓ decompose ──  ● wave 2 expand  ── ○ verify
+   1xffa033 1x 9xffa033 1x 2xff8c40 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 2x0b0e14/a6a6eb! 2x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 2x0b0e14/91cece! 2x0b0e14/8adbc4! 2x0b0e14/83e8ba! 2x0b0e14/7cf5b0! 1x 2x46505c 1x 1x8b949e 1x 6x8b949e
+09 ○ synthesis
+   1x8b949e 1x 9x8b949e
+10 ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▄▅▆▇▇▆▅▄▂▁▁▁▁▁▁▁
+   1xff2d95 2xf639a2 2xec45b0 2xe351bd 2xda5dca 2xd068d7 2xc774e5 2xbd80f2 1xff4677 1xff6a59 1xff8f3c 1xffa841 2xffc147 1xffa841 1xff8f3c 1xff6a59 1xff4677 2x91cece 2x8adbc4 2x83e8ba 1x7cf5b0
+== footer working 54
+00  🔥 LIT  start-work working · Bash 0:12  ctx 76%
+   1x#0B0E14/#FFA033! 2x#0B0E14/#FF8C40! 1x#0B0E14/#FF7E48! 1x#0B0E14/#FF6A55! 1x#0B0E14/#FF5568! 1x#0B0E14/#FF4875! 1x#0B0E14/#FF3388! 1xprimary 11xprimary! 7xaccent 12xstatus-metadata 2xprimary 7xstatus-usage
+== footer turn 54
+00  🔥 LIT  start-work your turn  local-lab high
+   1x#0B0E14/#FFAF3C! 2x#0B0E14/#FFB446! 1x#0B0E14/#FFBF59! 1x#0B0E14/#FFC463! 1x#0B0E14/#FFC96D! 1x#0B0E14/#FFD480! 1x#0B0E14/#FFD98A! 1xprimary 11xprimary! 9xyellow 2xprimary 14xstatus-model
+== footer done 54
+00  🔥 LIT  start-work done ✓  local-lab high  beta
+   1x#0B0E14/#3DDC84! 2x#0B0E14/#55E595! 1x#0B0E14/#64ECA0! 1x#0B0E14/#7CF5B0! 1x#0B0E14/#93F9BF! 1x#0B0E14/#A2FBCA! 1x#0B0E14/#B8FFD9! 1xprimary 11xprimary! 6xgreen 2xprimary 14xstatus-model 2xstatus-metadata 4xstatus-path
+== footer ready 54
+00  🔥 LIT  ready  local-lab high  ctx 76%  5h 78%
+   1x#0B0E14/#FFA033! 2x#0B0E14/#FF8C40! 1x#0B0E14/#FF7E48! 1x#0B0E14/#FF6A55! 1x#0B0E14/#FF5568! 1x#0B0E14/#FF4875! 1x#0B0E14/#FF3388! 1xprimary 5xstatus-metadata 2xprimary 14xstatus-model 2xstatus-metadata 7xstatus-usage 2xstatus-metadata 6xstatus-limit
+== footer working 80
+00  🔥 LIT  start-work working · Bash 0:12          ▁▃▅▆▇████▇▆▅▃▁      .      
+   1x#0B0E14/#FFA033! 2x#0B0E14/#FF8C40! 1x#0B0E14/#FF7E48! 1x#0B0E14/#FF6A55! 1x#0B0E14/#FF5568! 1x#0B0E14/#FF4875! 1x#0B0E14/#FF3388! 1xprimary 11xprimary! 7xaccent 12xstatus-metadata 10x 1x#FFEC95 1x#FFE98B 3x#FFE580 1x#FFEC95 2x#FFF0A0 1x#FFEC95 1x#FFE98B 2x#FFE580 1x#FFE98B 7x#FFEC95 7x#7E5C76
+01 ● work 2/5 ── ○ review ── ○ done          .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .   
+   32xstatus-progress 10x 6x#5D5C86 2x#FFB553 1x#FFBB56 3x#FFC15A 1x#FFBB56 3x#FFB553 1x#FFBB56 3x#FFC15A 1x#FFBB56 9x#FFB553 4x#5D5C86
+02 local-lab high  ctx 76%  5h 78%  beta   ~-  .-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆.     .~~--
+   14xstatus-model 2xstatus-metadata 7xstatus-usage 2xstatus-metadata 6xstatus-limit 2xstatus-metadata 4xstatus-path 3x 1x#FF875A 3x#986448 1x#7E5F44 1x#987149 1x#7E6246 1x#FF358B 1x#FF2D8A 1x#FF358B 1x#FF3D8B 1x#FF448C 1x#FF4C8D 1x#FF448C 1x#FF3D8B 1x#FF358B 1x#FF2D8A 1x#FF358B 1x#FF3D8B 2x#FF4C8D 1x#FF448C 2x#FF358B 1x#FF2D8A 6x#7E6246 1x#985F4C 1x#E57D56 1x#E5755D 1x#CB6C59 1x#B15D5A
+== footer turn 80
+00  🔥 LIT  start-work your turn         +          ▁▃▅▆▇████▇▆▅▃▁      *      
+   1x#0B0E14/#FFAF3C! 2x#0B0E14/#FFB446! 1x#0B0E14/#FFBF59! 1x#0B0E14/#FFC463! 1x#0B0E14/#FFC96D! 1x#0B0E14/#FFD480! 1x#0B0E14/#FFD98A! 1xprimary 11xprimary! 9xyellow 9x 11x#7C75B6 20x#FFD372 7x#E58EC2
+01 ● work 2/5 ── ○ review ── ○ done          *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *   
+   32xstatus-progress 10x 6x#A99BFF 24x#FFBA50 4x#9A8EE7
+02 local-lab high  ctx 76%  5h 78%  beta   -~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .
+   14xstatus-model 2xstatus-metadata 7xstatus-usage 2xstatus-metadata 6xstatus-limit 2xstatus-metadata 4xstatus-path 3x 1x#AC7C38 1x#C88D39 2x#FFAF3C! 1x#FFB446 1x#987847 1x#7E6844 18x#E8962D 1x#B18949 1x#E5AA4E 1x#CB9544 2x#98733D 1x#AF7F3A 4x#7B603A 1x#785D37
+== footer done 80
+00  🔥 LIT  start-work done ✓   .        +          ▁▃▅▆▇████▇▆▅▃▁      *      
+   1x#0B0E14/#3DDC84! 2x#0B0E14/#55E595! 1x#0B0E14/#64ECA0! 1x#0B0E14/#7CF5B0! 1x#0B0E14/#93F9BF! 1x#0B0E14/#A2FBCA! 1x#0B0E14/#B8FFD9! 1xprimary 11xprimary! 6xgreen 3x 9x#B1759C 11x#7C75B6 20x#FFDA60 7x#E58EC2
+01 ● work 2/5 ── ○ review ── ○ done          *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *   
+   32xstatus-progress 10x 6x#A99BFF 24x#FF9C44 4x#9A8EE7
+02 local-lab high  ctx 76%  5h 78%  beta   -~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .
+   14xstatus-model 2xstatus-metadata 7xstatus-usage 2xstatus-metadata 6xstatus-limit 2xstatus-metadata 4xstatus-path 3x 1x#B1694F 1x#CB7A4D 2x#FF9A4A! 1x#FFA24F 1x#987149 1x#7E6246 18x#FF3D8B 1x#B17F4B 1x#E59C51 1x#CB874B 2x#986844 1x#B16F4A 4x#7E5448 1x#7E4E4E
+== footer ready 80
+00  🔥 LIT  ready   .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      
+   1x#0B0E14/#FFA033! 2x#0B0E14/#FF8C40! 1x#0B0E14/#FF7E48! 1x#0B0E14/#FF6A55! 1x#0B0E14/#FF5568! 1x#0B0E14/#FF4875! 1x#0B0E14/#FF3388! 1xprimary 5xstatus-metadata 3x 21x#B1759C 11x#7C75B6 20x#FFDA60 7x#E58EC2
+01 beta · main            .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *   
+   11xstatus-path 12x 11x#B1759C 8x#5D5C86 6x#A99BFF 24x#FF9C44 4x#9A8EE7
+02 local-lab high  ctx 76%  5h 78%  beta   -~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .
+   14xstatus-model 2xstatus-metadata 7xstatus-usage 2xstatus-metadata 6xstatus-limit 2xstatus-metadata 4xstatus-path 3x 1x#B1694F 1x#CB7A4D 2x#FF9A4A! 1x#FFA24F 1x#987149 1x#7E6246 18x#FF3D8B 1x#B17F4B 1x#E59C51 1x#CB874B 2x#986844 1x#B16F4A 4x#7E5448 1x#7E4E4E
+== footer working 110
+00  🔥 LIT  start-work working · Bash 0:12         *        *          ▁▃▅▆▇████▇▆▅▃▁      .      +     +    
+   1x#0B0E14/#FFA033! 2x#0B0E14/#FF8C40! 1x#0B0E14/#FF7E48! 1x#0B0E14/#FF6A55! 1x#0B0E14/#FF5568! 1x#0B0E14/#FF4875! 1x#0B0E14/#FF3388! 1xprimary 11xprimary! 7xaccent 12xstatus-metadata 9x 9x#FF9AD5 11x#A99BFF 1x#FFEC95 1x#FFE98B 3x#FFE580 1x#FFEC95 2x#FFF0A0 1x#FFEC95 1x#FFE98B 2x#FFE580 1x#FFE98B 7x#FFEC95 7x#7E5C76 11x#8B82CF
+01 ✓ interview ── ✓ plan ── ● work 2/5 ── ○ review ── ○ done    .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .      +       
+   57xstatus-progress 4x 6x#5D5C86 2x#FFB553 1x#FFBB56 3x#FFC15A 1x#FFBB56 3x#FFB553 1x#FFBB56 3x#FFC15A 1x#FFBB56 9x#FFB553 7x#5D5C86 8x#CB81AF
+02 local-lab high · context 76% left · 5h 78% left · beta   ~~~-  .-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆.     .~~--~-  .--... 
+   14xstatus-model 3xstatus-metadata 16xstatus-usage 3xstatus-metadata 11xstatus-limit 3xstatus-metadata 4xstatus-path 3x 1x#E5755D 2x#FF875A 3x#986448 1x#7E5F44 1x#987149 1x#7E6246 1x#FF358B 1x#FF2D8A 1x#FF358B 1x#FF3D8B 1x#FF448C 1x#FF4C8D 1x#FF448C 1x#FF3D8B 1x#FF358B 1x#FF2D8A 1x#FF358B 1x#FF3D8B 2x#FF4C8D 1x#FF448C 2x#FF358B 1x#FF2D8A 6x#7E6246 1x#985F4C 1x#E57D56 1x#E5755D 1x#CB6C59 1x#B15D5A 1x#CB5E66 3x#B1575F 1x#7E4357 2x#CB4978 1x#934369 3x#774061
+== footer turn 110
+00  🔥 LIT  start-work your turn       .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .    
+   1x#0B0E14/#FFAF3C! 2x#0B0E14/#FFB446! 1x#0B0E14/#FFBF59! 1x#0B0E14/#FFC463! 1x#0B0E14/#FFC96D! 1x#0B0E14/#FFD480! 1x#0B0E14/#FFD98A! 1xprimary 11xprimary! 9xyellow 7x 21x#B1759C 11x#7C75B6 20x#FFD372 7x#E58EC2 11x#5D5C86
+01 ✓ interview ── ✓ plan ── ● work 2/5 ── ○ review ── ○ done    *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .       
+   57xstatus-progress 4x 6x#A99BFF 24x#FFBA50 7x#9A8EE7 8x#7E5C76
+02 local-lab high · context 76% left · 5h 78% left · beta   ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .  
+   14xstatus-model 3xstatus-metadata 16xstatus-usage 3xstatus-metadata 11xstatus-limit 3xstatus-metadata 4xstatus-path 3x 1x#926C37 2x#AC7C38 1x#C88D39 2x#FFAF3C! 1x#FFB446 1x#987847 1x#7E6844 18x#E8962D 1x#B18949 1x#E5AA4E 1x#CB9544 2x#98733D 1x#AF7F3A 4x#7B603A 1x#785D37 2x#8E6733 1x#BA7C2C 1x#E89326! 1x#E48F22 3x#88602E 3x#6C5232
+== footer done 110
+00  🔥 LIT  start-work done ✓    .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .    
+   1x#0B0E14/#3DDC84! 2x#0B0E14/#55E595! 1x#0B0E14/#64ECA0! 1x#0B0E14/#7CF5B0! 1x#0B0E14/#93F9BF! 1x#0B0E14/#A2FBCA! 1x#0B0E14/#B8FFD9! 1xprimary 11xprimary! 6xgreen 4x 27x#B1759C 11x#7C75B6 20x#FFDA60 7x#E58EC2 11x#5D5C86
+01 ✓ interview ── ✓ plan ── ● work 2/5 ── ○ review ── ○ done    *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .       
+   57xstatus-progress 4x 6x#A99BFF 24x#FF9C44 7x#9A8EE7 8x#7E5C76
+02 local-lab high · context 76% left · 5h 78% left · beta   ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .  
+   14xstatus-model 3xstatus-metadata 16xstatus-usage 3xstatus-metadata 11xstatus-limit 3xstatus-metadata 4xstatus-path 3x 1x#985A50 2x#B1694F 1x#CB7A4D 2x#FF9A4A! 1x#FFA24F 1x#987149 1x#7E6246 18x#FF3D8B 1x#B17F4B 1x#E59C51 1x#CB874B 2x#986844 1x#B16F4A 4x#7E5448 1x#7E4E4E 2x#985158 1x#CB576C 1x#FF627B! 1x#FF5883 3x#984364 3x#774061
+== footer ready 110
+00  🔥 LIT  ready                .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .    
+   1x#0B0E14/#FFA033! 2x#0B0E14/#FF8C40! 1x#0B0E14/#FF7E48! 1x#0B0E14/#FF6A55! 1x#0B0E14/#FF5568! 1x#0B0E14/#FF4875! 1x#0B0E14/#FF3388! 1xprimary 5xstatus-metadata 16x 27x#B1759C 11x#7C75B6 20x#FFDA60 7x#E58EC2 11x#5D5C86
+01 beta · main               .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .       
+   11xstatus-path 15x 16x#7E5C76 11x#B1759C 8x#5D5C86 6x#A99BFF 24x#FF9C44 7x#9A8EE7 8x#7E5C76
+02 local-lab high · context 76% left · 5h 78% left · beta   ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .  
+   14xstatus-model 3xstatus-metadata 16xstatus-usage 3xstatus-metadata 11xstatus-limit 3xstatus-metadata 4xstatus-path 3x 1x#985A50 2x#B1694F 1x#CB7A4D 2x#FF9A4A! 1x#FFA24F 1x#987149 1x#7E6246 18x#FF3D8B 1x#B17F4B 1x#E59C51 1x#CB874B 2x#986844 1x#B16F4A 4x#7E5448 1x#7E4E4E 2x#985158 1x#CB576C 1x#FF627B! 1x#FF5883 3x#984364 3x#774061
+== footer working no tty
+00     ▁▃▅▆▇████▇▆▅▃▁     🔥 LIT  start‑work working · Bash 0:12
+   4x 1x#FFEC95 1x#FFE98B 3x#FFE580 1x#FFEC95 2x#FFF0A0 1x#FFEC95 1x#FFE98B 2x#FFE580 1x#FFE98B 5x#FFEC95 1x#0B0E14/#FFA033! 2x#0B0E14/#FF8C40! 1x#0B0E14/#FF7E48! 1x#0B0E14/#FF6A55! 1x#0B0E14/#FF5568! 1x#0B0E14/#FF4875! 1x#0B0E14/#FF3388! 1xprimary 11xprimary! 7xaccent 12xstatus-metadata
+01    ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅   ● work 2/5 ── ○ review ── ○ done
+   3x 2x#FFB553 1x#FFBB56 3x#FFC15A 1x#FFBB56 3x#FFB553 1x#FFBB56 3x#FFC15A 1x#FFBB56 4x#FFB553 32xstatus-progress
+02 -.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆  local‑lab high  ctx 76%  5h 78%  beta          .
+   1x#987149 1x#7E6246 1x#FF358B 1x#FF2D8A 1x#FF358B 1x#FF3D8B 1x#FF448C 1x#FF4C8D 1x#FF448C 1x#FF3D8B 1x#FF358B 1x#FF2D8A 1x#FF358B 1x#FF3D8B 2x#FF4C8D 1x#FF448C 2x#FF358B 1x#FF2D8A 2x 14xstatus-model 2xstatus-metadata 7xstatus-usage 2xstatus-metadata 6xstatus-limit 2xstatus-metadata 4xstatus-path 10x 1x#403C65
+== footer turn no tty
+00     ▁▃▅▆▇████▇▆▅▃▁     🔥 LIT  start‑work your turn
+   4x 18x#FFD372 1x#0B0E14/#FFAF3C! 2x#0B0E14/#FFB446! 1x#0B0E14/#FFBF59! 1x#0B0E14/#FFC463! 1x#0B0E14/#FFC96D! 1x#0B0E14/#FFD480! 1x#0B0E14/#FFD98A! 1xprimary 11xprimary! 9xyellow
+01    ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅   ● work 2/5 ── ○ review ── ○ done
+   3x 19x#FFBA50 32xstatus-progress
+02 -.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆  local‑lab high  ctx 76%  5h 78%  beta
+   1x#987847 1x#7E6844 18x#E8962D 2x 14xstatus-model 2xstatus-metadata 7xstatus-usage 2xstatus-metadata 6xstatus-limit 2xstatus-metadata 4xstatus-path
+== footer done no tty
+00     ▁▃▅▆▇████▇▆▅▃▁     🔥 LIT  start‑work done ✓
+   4x 18x#FFDA60 1x#0B0E14/#3DDC84! 2x#0B0E14/#55E595! 1x#0B0E14/#64ECA0! 1x#0B0E14/#7CF5B0! 1x#0B0E14/#93F9BF! 1x#0B0E14/#A2FBCA! 1x#0B0E14/#B8FFD9! 1xprimary 11xprimary! 6xgreen
+01    ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅   ● work 2/5 ── ○ review ── ○ done
+   3x 19x#FF9C44 32xstatus-progress
+02 -.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆  local‑lab high  ctx 76%  5h 78%  beta
+   1x#987149 1x#7E6246 18x#FF3D8B 2x 14xstatus-model 2xstatus-metadata 7xstatus-usage 2xstatus-metadata 6xstatus-limit 2xstatus-metadata 4xstatus-path
+== footer ready no tty
+00     ▁▃▅▆▇████▇▆▅▃▁     🔥 LIT  ready
+   4x 18x#FFDA60 1x#0B0E14/#FFA033! 2x#0B0E14/#FF8C40! 1x#0B0E14/#FF7E48! 1x#0B0E14/#FF6A55! 1x#0B0E14/#FF5568! 1x#0B0E14/#FF4875! 1x#0B0E14/#FF3388! 1xprimary 5xstatus-metadata
+01    ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅   local‑lab high  ctx 76%  5h 78%  beta
+   3x 19x#FF9C44 14xstatus-model 2xstatus-metadata 7xstatus-usage 2xstatus-metadata 6xstatus-limit 2xstatus-metadata 4xstatus-path
+02 -.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆  beta · main
+   1x#987149 1x#7E6246 18x#FF3D8B 2x 11xstatus-path
+== footer waiting no tty
+00     ▁▃▅▆▇████▇▆▅▃▁     🔥 LIT  ready
+   4x 18x#FFDA60 1x#0B0E14/#FFA033! 2x#0B0E14/#FF8C40! 1x#0B0E14/#FF7E48! 1x#0B0E14/#FF6A55! 1x#0B0E14/#FF5568! 1x#0B0E14/#FF4875! 1x#0B0E14/#FF3388! 1xprimary 5xstatus-metadata
+01    ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅   local‑lab high  ctx 76%  5h 78%  beta
+   3x 19x#FF9C44 14xstatus-model 2xstatus-metadata 7xstatus-usage 2xstatus-metadata 6xstatus-limit 2xstatus-metadata 4xstatus-path
+02 -.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆  beta
+   1x#987149 1x#7E6246 18x#FF3D8B 2x 4xstatus-path
+== footer working 110 round
+00 🔥 LIT start-work working · Bash 0:12         *        *          ▁▃▅▆▇████▇▆▅▃▁      .      +     +    
+   1x#FFA033 2x#0B0E14/#FF8C40! 1x#0B0E14/#FF7E48! 1x#0B0E14/#FF6A55! 1x#0B0E14/#FF5568! 1x#0B0E14/#FF4875! 1x#FF3388 1xprimary 11xprimary! 7xaccent 12xstatus-metadata 9x 9x#FF9AD5 11x#A99BFF 1x#FFEC95 1x#FFE98B 3x#FFE580 1x#FFEC95 2x#FFF0A0 1x#FFEC95 1x#FFE98B 2x#FFE580 1x#FFE98B 7x#FFEC95 7x#7E5C76 11x#8B82CF
+01 ✓ interview ── ✓ plan ── ● work 2/5 ── ○ review ── ○ done    .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .      +       
+   57xstatus-progress 4x 6x#5D5C86 2x#FFB553 1x#FFBB56 3x#FFC15A 1x#FFBB56 3x#FFB553 1x#FFBB56 3x#FFC15A 1x#FFBB56 9x#FFB553 7x#5D5C86 8x#CB81AF
+02 local-lab high · context 76% left · 5h 78% left · beta   ~~~-  .-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆.     .~~--~-  .--... 
+   14xstatus-model 3xstatus-metadata 16xstatus-usage 3xstatus-metadata 11xstatus-limit 3xstatus-metadata 4xstatus-path 3x 1x#E5755D 2x#FF875A 3x#986448 1x#7E5F44 1x#987149 1x#7E6246 1x#FF358B 1x#FF2D8A 1x#FF358B 1x#FF3D8B 1x#FF448C 1x#FF4C8D 1x#FF448C 1x#FF3D8B 1x#FF358B 1x#FF2D8A 1x#FF358B 1x#FF3D8B 2x#FF4C8D 1x#FF448C 2x#FF358B 1x#FF2D8A 6x#7E6246 1x#985F4C 1x#E57D56 1x#E5755D 1x#CB6C59 1x#B15D5A 1x#CB5E66 3x#B1575F 1x#7E4357 2x#CB4978 1x#934369 3x#774061
+== hud working 54
+00 ╭─  🔥 LIT  · start-work ────────────────── WORK ● ─╮
+   2xff2d95 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 10x7cf5b0! 1x 3xbd80f2 4xb48cff 4xa6a6eb 4x9fb3e1 3x98c1d8 1x 4x7cf5b0! 1x 1x7cf5b0! 1x 2x8adbc4
+01 │ interview ✓ plan ✓  work 2/5  review · done ·     │
+   1xff2d95 1x 9xff7a4a 1x 1xff7a4a 1x 4xff757c 1x 1xff757c 1x 1x0b0e14/b48cff! 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 6x8b949e 1x 1x8b949e 1x 4x8b949e 1x 1x8b949e 5x 1x8adbc4
+02 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write t…  - Bash · 0:12 │
+   1xff2d95 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 2xe6edf3 2x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1x8adbc4
+03 │ skills  start-work                                │
+   1xff2d95 1x 6x8b949e 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 31x 1x8adbc4
+04 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main ──────╯
+   2xff2d95 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 2x91cece 5x8adbc4
+== hud turn 54
+00 ╭─  🔥 LIT  · start-work ─────────────── YOUR TURN ─╮
+   2x9a6420 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffbf59! 1x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 1x8b949e 1x 10xffaf3c! 1x 3xf2a639 4xffaf3c 4xffba50 4xffbf59 1x 4xffaf3c! 1x 4xffaf3c! 1x 2xffcf77
+01 │ interview ✓ plan ✓  work 2/5  review · done ·     │
+   1x9a6420 1x 9xff7a4a 1x 1xff7a4a 1x 4xff757c 1x 1xff757c 1x 1x0b0e14/ffaf3c! 1x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 6x8b949e 1x 1x8b949e 1x 4x8b949e 1x 1x8b949e 5x 1xffcf77
+02 │ └ task 2/5 ▰▰▱▱▱            last Bash · turn 0:56 │
+   1x9a6420 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 12x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1xffcf77
+03 │ skills  start-work                                │
+   1x9a6420 1x 6x8b949e 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 2x0b0e14/ffd480! 1x0b0e14/ffd98a! 31x 1xffcf77
+04 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main ──────╯
+   2x9a6420 1x 3x8b949e 1x 3xffaf3c! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4xffaf3c 1x 2xffc96d 5xffcf77
+== hud done 54
+00 ╭─  🔥 LIT  · start-work ────────────────── DONE ✓ ─╮
+   2x3ddc84 1x 1x0b0e14/3ddc84! 2x0b0e14/55e595! 1x0b0e14/64eca0! 1x0b0e14/7cf5b0! 1x0b0e14/93f9bf! 1x0b0e14/a2fbca! 1x0b0e14/b8ffd9! 1x 1x8b949e 1x 10x7cf5b0! 1x 3x74f2ab 4x7cf5b0 4x8bf8ba 4x93f9bf 3x9afac5 1x 4x6bdb8f! 1x 1x6bdb8f! 1x 2xa9fdcf
+01 │ interview ✓ plan ✓ work 2/5 … review - done ✓     │
+   1x3ddc84 1x 9xff7a4a 1x 1xff7a4a 1x 4xff757c 1x 1xff757c 1x 4xff6fae 1x 3xff6fae 1x 1xff6fae 1x 6x8b949e 1x 1x8b949e 1x 4x7cf5b0 1x 1x7cf5b0 5x 1xa9fdcf
+02 │ └ task 2/5 ▰▰▱▱▱            last Bash · turn 0:56 │
+   1x3ddc84 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 12x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1xa9fdcf
+03 │ skills  start-work                                │
+   1x3ddc84 1x 6x8b949e 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 31x 1xa9fdcf
+04 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main ──────╯
+   2x3ddc84 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 2xa2fbca 5xa9fdcf
+== hud working 80
+00 ╭─  🔥 LIT  · start-work ──────────────────────────────────────────── WORK ● ─╮
+   2xff2d95 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 10x7cf5b0! 1x 3xd068d7 8xc774e5 4xbd80f2 4xb48cff 4xad99f5 4xa6a6eb 8x9fb3e1 4x98c1d8 4x91cece 1x8adbc4 1x 4x7cf5b0! 1x 1x7cf5b0! 1x 2x83e8ba
+01 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                   │
+   1xff2d95 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 1x0b0e14/b48cff! 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 1xef80ae 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 19x 1x83e8ba
+02 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어…  - Bash · 0:12 │
+   1xff2d95 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 3x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1x83e8ba
+03 │ skills  start-work           *        *          ▁▃▅▆▇████▇▆▅▃▁      .      │
+   1xff2d95 1x 6x8b949e 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 10x 1xff9ad5 8x 1xa99bff 10x 1xffec95 2xfff0a0 1xffec95 1xffe98b 1xffe175 1xffe580 1xffe98b 1xffec95 2xfff0a0 1xffec95 1xffe580 1xffe175 6x 1x7e5c76 6x 1x83e8ba
+04 │        .               *          .       .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .   │
+   1xff2d95 8x 1xb1759c 15x 1xff9ad5 10x 1x7c75b6 7x 1x5d5c86 5x 1xff8f3c 1xff9540/1a1030 2xffa247/1a1030 1xff9540/1a1030 3xff8f3c/1a1030 1xff9540/1a1030 1xff9c44/1a1030 1xffa247/1a1030 1xff9c44/1a1030 1xff9540/1a1030 2xff8f3c/1a1030 1xff8f3c 8x 1x5d5c86 3x 1x83e8ba
+05 │                 -----        --   ---~~~~.     ▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆     .~~~~ │
+   1xff2d95 17x 2x834b9d 1x774685 2x7c4680 8x 2xb1466e 3x 1x985158 1xb1575f 1xb15d5a 1xcb6c59 1xff7e62! 1xff875a! 1xcb7353 1x7e5845 5x 1xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 5x 1x7e5845 2xe57d56 2xcb6c59 1x 1x83e8ba
+06 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main ─────────────────────── ~/beta ─╯
+   2xff2d95 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 2xd69499 2xe9c772 2xf4cd5e 2xdbc683 2xc3bfa8 2xcfc396 2xe7ca70 2xbfc7a3 2xccca91 2xe4d16b 2xf1d25b 1xd3ac6f 1x 6xe6edf3 1x 2x83e8ba
+== hud turn 80
+00 ╭─  🔥 LIT  · start-work ───────────────────────────────────────── YOUR TURN ─╮
+   2x9a6420 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffbf59! 1x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 1x8b949e 1x 10xffaf3c! 1x 3xd99332 8xe69c35 4xf2a639 4xffaf3c 4xffb446 4xffba50 8xffbf59 4xffc463 2xffc96d 1x 4xffaf3c! 1x 4xffaf3c! 1x 2xffd480
+01 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                   │
+   1x9a6420 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 1x0b0e14/ffaf3c! 1x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 1xef80ae 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 19x 1xffd480
+02 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests fo…  last Bash · turn 0:56 │
+   1x9a6420 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 2x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1xffd480
+03 │ skills  start-work           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      │
+   1x9a6420 1x 6x8b949e 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 2x0b0e14/ffd480! 1x0b0e14/ffd98a! 10x 1xb1759c 8x 1x7c75b6 10x 14xffd372 6x 1xe58ec2 6x 1xffd480
+04 │        .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *   │
+   1x9a6420 8x 1x7e5c76 15x 1xb1759c 10x 1x5d5c86 7x 1xa99bff 5x 1xffba50 14xffba50/1a1030 1xffba50 8x 1x9a8ee7 3x 1xffd480
+05 │  --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.    │
+   1x9a6420 2x 1x453b2f 1x4a3c2b 17x 1x7e592b 2x835c2a 1x885f2a 1xa16b27 1x7b592e 6x 1x755934 1xa3702f 1xbd802e 1x775b36 2x 1x926c37 2xac7c38 1xc88d39 2xffaf3c! 1xffb446 1x987847 1x7e6844 18xe8962d/1a1030 1xb18949 1xe5aa4e 1xcb9544 2x98733d 1xaf7f3a 1x7b603a 4x 1xffd480
+06 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main ─────────────────────── ~/beta ─╯
+   2x9a6420 1x 3x8b949e 1x 3xffaf3c! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4xffaf3c 1x 2xffa241 4xffc34e 2xffcd4e 10xffd24a 2xffce5c 2xffcb64 1xffb761 1x 6xe6edf3 1x 2xffd480
+== hud done 80
+00 ╭─  🔥 LIT  · start-work ──────────────────────────────────────────── DONE ✓ ─╮
+   2x3ddc84 1x 1x0b0e14/3ddc84! 2x0b0e14/55e595! 1x0b0e14/64eca0! 1x0b0e14/7cf5b0! 1x0b0e14/93f9bf! 1x0b0e14/a2fbca! 1x0b0e14/b8ffd9! 1x 1x8b949e 1x 10x7cf5b0! 1x 3x64eca0 8x6cefa5 4x74f2ab 4x7cf5b0 4x84f6b5 4x8bf8ba 8x93f9bf 4x9afac5 4xa2fbca 1xa9fdcf 1x 4x6bdb8f! 1x 1x6bdb8f! 1x 2xb1fed4
+01 │ interview ✓ ━━ plan ✓ ━━ work 2/5 … ── review - ── done ✓                   │
+   1x3ddc84 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 4xff6fae 1x 3xff6fae 1x 1xff6fae 1x 2x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x7cf5b0 1x 1x7cf5b0 19x 1xb1fed4
+02 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests fo…  last Bash · turn 0:56 │
+   1x3ddc84 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 2x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1xb1fed4
+03 │ skills  start-work           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      │
+   1x3ddc84 1x 6x8b949e 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 10x 1xb1759c 8x 1x7c75b6 10x 14xffda60 6x 1xe58ec2 6x 1xb1fed4
+04 │        .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *   │
+   1x3ddc84 8x 1x7e5c76 15x 1xb1759c 10x 1x5d5c86 7x 1xa99bff 5x 1xff9c44 14xff9c44/1a1030 1xff9c44 8x 1x9a8ee7 3x 1xb1fed4
+05 │  --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.    │
+   1x3ddc84 2x 1x453e73 1x4a4080 17x 1x8e4991 2x94498b 1x9a4886 1xb64b8d 1x8a4472 6x 1x7e4754 1xb15264 1xcb5e66 1x7e4a51 2x 1x985a50 2xb1694f 1xcb7a4d 2xff9a4a! 1xffa24f 1x987149 1x7e6246 18xff3d8b/1a1030 1xb17f4b 1xe59c51 1xcb874b 2x986844 1xb16f4a 1x7e5448 4x 1xb1fed4
+06 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main ─────────────────────── ~/beta ─╯
+   2x3ddc84 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 2x84f6b5 4x8bf8ba 8x93f9bf 4x9afac5 4xa2fbca 1xa9fdcf 1x 6xe6edf3 1x 2xb1fed4
+== hud working 110
+00 ╭─  🔥 LIT  · start-work ────────────────────────────────────────────────────────────────────────── WORK ● ─╮
+   2xff2d95 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 10x7cf5b0! 1x 7xda5dca 8xd068d7 8xc774e5 4xbd80f2 8xb48cff 8xad99f5 4xa6a6eb 8x9fb3e1 8x98c1d8 4x91cece 7x8adbc4 1x 4x7cf5b0! 1x 1x7cf5b0! 1x 2x83e8ba
+01 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                                                 │
+   1xff2d95 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 1x0b0e14/b48cff! 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 1xef80ae 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 49x 1x83e8ba
+02 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                *           - Bash · 0:12 │
+   1xff2d95 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 16x 1xa99bff 11x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1x83e8ba
+03 │ skills  start-work           *     *           *        *          ▁▃▅▆▇████▇▆▅▃▁      .      +     +     │
+   1xff2d95 1x 6x8b949e 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 10x 1xff9ad5 5x 1xff9ad5 11x 1xff9ad5 8x 1xa99bff 10x 1xffec95 2xfff0a0 1xffec95 1xffe98b 1xffe175 1xffe580 1xffe98b 1xffec95 2xfff0a0 1xffec95 1xffe580 1xffe175 6x 1x7e5c76 6x 1x8b82cf 5x 1x8b82cf 5x 1x83e8ba
+04 │                          .               *          .       .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .      +        │
+   1xff2d95 26x 1xb1759c 15x 1xff9ad5 10x 1x7c75b6 7x 1x5d5c86 5x 1xff8f3c 1xff9540/1a1030 2xffa247/1a1030 1xff9540/1a1030 3xff8f3c/1a1030 1xff9540/1a1030 1xff9c44/1a1030 1xffa247/1a1030 1xff9c44/1a1030 1xff9540/1a1030 2xff8f3c/1a1030 1xff8f3c 8x 1x5d5c86 6x 1xcb81af 8x 1x83e8ba
+05 │                .-                 -----        --   ---~~~~.     ▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆     .~~~~~-. .--...   │
+   1xff2d95 16x 2x453e73 17x 2x834b9d 1x774685 2x7c4680 8x 2xb1466e 3x 1x985158 1xb1575f 1xb15d5a 1xcb6c59 1xff7e62! 1xff875a! 1xcb7353 1x7e5845 5x 1xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 5x 1x7e5845 2xe57d56 2xcb6c59 1xe56d65 1xcb5e66 1x64434b 1x 1x7e4754 1xb14b69 1xb1466e 1x984364 1x7a405e 1x8e446e 3x 1x83e8ba
+06 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main · ~/beta ───────────────────────────────── 5s ago · 019a0000 ─╯
+   2xff2d95 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 1xc78dce 4xd08db6 4xc297c7 2xd69499 2xebc475 2xf4cd5e 2xdec286 2xc3bfa8 2xcfc396 2xe7ca70 2xc3bfa8 2xccca91 2xe5ce6e 2xf2d05c 2xd8a277 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x83e8ba
+== hud turn 110
+00 ╭─  🔥 LIT  · start-work ─────────────────────────────────────────────────────────────────────── YOUR TURN ─╮
+   2x9a6420 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffbf59! 1x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 1x8b949e 1x 10xffaf3c! 1x 7xcd8a2e 8xd99332 8xe69c35 4xf2a639 8xffaf3c 8xffb446 4xffba50 8xffbf59 8xffc463 4xffc96d 4xffcf77 1x 4xffaf3c! 1x 4xffaf3c! 1x 2xffd480
+01 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                                                 │
+   1x9a6420 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 1x0b0e14/ffaf3c! 1x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 1xef80ae 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 49x 1xffd480
+02 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                +   last Bash · turn 0:56 │
+   1x9a6420 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 16x 1x8b82cf 3x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1xffd480
+03 │ skills  start-work           .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1x9a6420 1x 6x8b949e 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 2x0b0e14/ffd480! 1x0b0e14/ffd98a! 10x 1xb1759c 5x 1xb1759c 11x 1xb1759c 8x 1x7c75b6 10x 14xffd372 6x 1xe58ec2 6x 1x5d5c86 5x 1x5d5c86 5x 1xffd480
+04 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1x9a6420 26x 1x7e5c76 15x 1xb1759c 10x 1x5d5c86 7x 1xa99bff 5x 1xffba50 14xffba50/1a1030 1xffba50 8x 1x9a8ee7 6x 1x7e5c76 8x 1xffd480
+05 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1x9a6420 20x 1x453b2f 1x4a3c2b 17x 1x7e592b 2x835c2a 1x885f2a 1xa16b27 1x7b592e 6x 1x755934 1xa3702f 1xbd802e 1x775b36 2x 1x926c37 2xac7c38 1xc88d39 2xffaf3c! 1xffb446 1x987847 1x7e6844 18xe8962d/1a1030 1xb18949 1xe5aa4e 1xcb9544 2x98733d 1xaf7f3a 1x7b603a 3x 1x785d37 2x8e6733 1xba7c2c 1xe89326! 1xe48f22 1x88602e 2x 1x6c5232 3x 1xffd480
+06 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main · ~/beta ───────────────────────────────── 5s ago · 019a0000 ─╯
+   2x9a6420 1x 3x8b949e 1x 3xffaf3c! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4xffaf3c 1x 1x8b949e 1x 6xe6edf3 1x 3xffab3c 2xffa73c 2xffa241 2xff9d40 2xffa241 2xffbf48 2xffc34e 2xffcc4c 10xffd24a 2xffcb57 2xffc85d 2xffb054 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2xffd480
+== hud done 110
+00 ╭─  🔥 LIT  · start-work ────────────────────────────────────────────────────────────────────────── DONE ✓ ─╮
+   2x3ddc84 1x 1x0b0e14/3ddc84! 2x0b0e14/55e595! 1x0b0e14/64eca0! 1x0b0e14/7cf5b0! 1x0b0e14/93f9bf! 1x0b0e14/a2fbca! 1x0b0e14/b8ffd9! 1x 1x8b949e 1x 10x7cf5b0! 1x 7x5de99a 8x64eca0 8x6cefa5 4x74f2ab 8x7cf5b0 8x84f6b5 4x8bf8ba 8x93f9bf 8x9afac5 4xa2fbca 7xa9fdcf 1x 4x6bdb8f! 1x 1x6bdb8f! 1x 2xb1fed4
+01 │ interview ✓ ━━ plan ✓ ━━ work 2/5 … ── review - ── done ✓                                                 │
+   1x3ddc84 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 4xff6fae 1x 3xff6fae 1x 1xff6fae 1x 2x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x7cf5b0 1x 1x7cf5b0 49x 1xb1fed4
+02 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                +   last Bash · turn 0:56 │
+   1x3ddc84 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 16x 1x8b82cf 3x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1xb1fed4
+03 │ skills  start-work           .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1x3ddc84 1x 6x8b949e 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 10x 1xb1759c 5x 1xb1759c 11x 1xb1759c 8x 1x7c75b6 10x 14xffda60 6x 1xe58ec2 6x 1x5d5c86 5x 1x5d5c86 5x 1xb1fed4
+04 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1x3ddc84 26x 1x7e5c76 15x 1xb1759c 10x 1x5d5c86 7x 1xa99bff 5x 1xff9c44 14xff9c44/1a1030 1xff9c44 8x 1x9a8ee7 6x 1x7e5c76 8x 1xb1fed4
+05 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1x3ddc84 20x 1x453e73 1x4a4080 17x 1x8e4991 2x94498b 1x9a4886 1xb64b8d 1x8a4472 6x 1x7e4754 1xb15264 1xcb5e66 1x7e4a51 2x 1x985a50 2xb1694f 1xcb7a4d 2xff9a4a! 1xffa24f 1x987149 1x7e6246 18xff3d8b/1a1030 1xb17f4b 1xe59c51 1xcb874b 2x986844 1xb16f4a 1x7e5448 3x 1x7e4e4e 2x985158 1xcb576c 1xff627b! 1xff5883 1x984364 2x 1x774061 3x 1xb1fed4
+06 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main · ~/beta ───────────────────────────────── 5s ago · 019a0000 ─╯
+   2x3ddc84 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 5x7cf5b0 8x84f6b5 4x8bf8ba 8x93f9bf 8x9afac5 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2xb1fed4
+== hud idle 110
+00 ╭─  🔥 LIT  · start-work ──────────────────────────────────────────────────────────────────────────── IDLE ─╮
+   2x983269 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 10xe6edf3! 1x 7x854a84 8x804f8a 8x7c5591 4x775b98 8x72619e 8x6f6899 4x6b6e94 8x68758f 8x647c8b 4x618286 8x5d8981 1x5a8f7c 1x 4x8b949e! 1x 2x5a8f7c
+01 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                                                 │
+   1x983269 1x 9xc58774 1x 1xc58774 1x 1xc5877b 1xc58587 1x 4xc5858d 1x 1xc5858d 1x 1xc58494 1xc582a0 1x 1x0b0e14/9276ce! 1x0b0e14/8d80c7! 1x0b0e14/888abf! 1x0b0e14/8294b8! 2x0b0e14/7d9eb1! 1x0b0e14/78a7a9! 1x0b0e14/73b1a2! 1x0b0e14/6dbb9a! 1x0b0e14/68c593! 1x 1xbd8aa6 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 49x 1x5a8f7c
+02 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                +   last Bash · turn 0:56 │
+   1x983269 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 16x 1x525374 3x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1x5a8f7c
+03 │ skills  start-work           .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1x983269 1x 6x8b949e 1x 1x0b0e14/9276ce! 2x0b0e14/8d80c7! 1x0b0e14/888abf! 1x0b0e14/8294b8! 2x0b0e14/7d9eb1! 1x0b0e14/78a7a9! 1x0b0e14/73b1a2! 2x0b0e14/6dbb9a! 1x0b0e14/68c593! 10x 1x614e61 5x 1x614e61 11x 1x614e61 8x 1x4c4e6b 10x 14x7e744a 6x 1x74576f 6x 1x414458 5x 1x414458 5x 1x5a8f7c
+04 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1x983269 26x 1x4d4452 15x 1x614e61 10x 1x414458 7x 1x5d5c86 5x 1x7e5c40 14x7e5c40/1a1030 1x7e5c40 8x 1x57577d 6x 1x4d4452 8x 1x5a8f7c
+05 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1x983269 20x 1x383951 1x3a3a56 17x 1x533d5d 2x563d5a 1x583d58 1x623e5b 1x523b51 6x 1x4d3c46 1x60414c 1x6a454c 1x4d3e45 2x 1x574444 2x604944 1x6a5043 2x7e5c42! 1x7e5f44 1x574c42 1x4d4740 18x7e395a/1a1030 1x605142 1x745c45 1x6a5442 2x574940 1x604b42 1x4d4141 3x 1x4d3f43 2x574047 1x6a424f 1x7e4754! 1x7e4357 1x573b4c 2x 1x4b3a4b 3x 1x5a8f7c
+06 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main · ~/beta ───────────────────────────────── 5s ago · 019a0000 ─╯
+   2x983269 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3x5a4f68 2x635262 2x745954 2x7d5b4e 2x745954 2x6b635c 2x6a655b 2x85784d 10x988444 2x716f54 2x5e645c 2x675d55 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x5a8f7c
+== hud paused 110
+00 ╭─  🔥 LIT  · start-work ─────────────────────────────────────────────────────────────────────── PAUSED || ─╮
+   2x983269 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 10xe6edf3! 1x 7x854a84 8x804f8a 8x7c5591 4x775b98 8x72619e 8x6f6899 4x6b6e94 8x68758f 8x647c8b 4x618286 4x5d8981 1x 6x8b949e! 1x 2x8b949e! 1x 2x5a8f7c
+01 │ interview ✓ ━━ plan ✓ ━━  || paused 2/5  ━━ review · ── done ·                                            │
+   1x983269 1x 9xc58774 1x 1xc58774 1x 1xc5877b 1xc58587 1x 4xc5858d 1x 1xc5858d 1x 1xc58494 1xc582a0 1x 15xb6bec8/2d333b! 1x 1xbd8aa6 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 44x 1x5a8f7c
+02 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                +   last Bash · turn 0:56 │
+   1x983269 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 16x 1x525374 3x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1x5a8f7c
+03 │ skills  start-work           .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1x983269 1x 6x8b949e 1x 1x0b0e14/9276ce! 2x0b0e14/8d80c7! 1x0b0e14/888abf! 1x0b0e14/8294b8! 2x0b0e14/7d9eb1! 1x0b0e14/78a7a9! 1x0b0e14/73b1a2! 2x0b0e14/6dbb9a! 1x0b0e14/68c593! 10x 1x614e61 5x 1x614e61 11x 1x614e61 8x 1x4c4e6b 10x 14x7e744a 6x 1x74576f 6x 1x414458 5x 1x414458 5x 1x5a8f7c
+04 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1x983269 26x 1x4d4452 15x 1x614e61 10x 1x414458 7x 1x5d5c86 5x 1x7e5c40 14x7e5c40/1a1030 1x7e5c40 8x 1x57577d 6x 1x4d4452 8x 1x5a8f7c
+05 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1x983269 20x 1x383951 1x3a3a56 17x 1x533d5d 2x563d5a 1x583d58 1x623e5b 1x523b51 6x 1x4d3c46 1x60414c 1x6a454c 1x4d3e45 2x 1x574444 2x604944 1x6a5043 2x7e5c42! 1x7e5f44 1x574c42 1x4d4740 18x7e395a/1a1030 1x605142 1x745c45 1x6a5442 2x574940 1x604b42 1x4d4141 3x 1x4d3f43 2x574047 1x6a424f 1x7e4754! 1x7e4357 1x573b4c 2x 1x4b3a4b 3x 1x5a8f7c
+06 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main · ~/beta ───────────────────────────────── 5s ago · 019a0000 ─╯
+   2x983269 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3x5a4f68 2x635262 2x745954 2x7d5b4e 2x745954 2x6b635c 2x6a655b 2x85784d 10x988444 2x716f54 2x5e645c 2x675d55 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x5a8f7c
+== hud review 110
+00 ╭─  🔥 LIT  · review-work ───────────────────────────────────────────────────────────────────────── REVIEW ─╮
+   2xff2d95 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 11x7cf5b0! 1x 6xda5dca 8xd068d7 8xc774e5 4xbd80f2 8xb48cff 8xad99f5 4xa6a6eb 8x9fb3e1 8x98c1d8 4x91cece 7x8adbc4 1x 6x7cf5b0! 1x 2x83e8ba
+01 │ interview ✓ ━━ plan ✓ ━━ work 2/5 … ━━  review  ━━ done ·                                                 │
+   1xff2d95 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 4xff6fae 1x 3xff6fae 1x 1xff6fae 1x 1xef80ae 1xcea1af 1x 1x0b0e14/b48cff! 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 49x 1x83e8ba
+02 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                *           - Bash · 0:12 │
+   1xff2d95 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 16x 1xa99bff 11x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1x83e8ba
+03 │ skills  review-work          *     *           *        *          ▁▃▅▆▇████▇▆▅▃▁      .      +     +     │
+   1xff2d95 1x 6x8b949e 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 2x0b0e14/9fb3e1! 1x0b0e14/98c1d8! 2x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 9x 1xff9ad5 5x 1xff9ad5 11x 1xff9ad5 8x 1xa99bff 10x 1xffec95 2xfff0a0 1xffec95 1xffe98b 1xffe175 1xffe580 1xffe98b 1xffec95 2xfff0a0 1xffec95 1xffe580 1xffe175 6x 1x7e5c76 6x 1x8b82cf 5x 1x8b82cf 5x 1x83e8ba
+04 │                          .               *          .       .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .      +        │
+   1xff2d95 26x 1xb1759c 15x 1xff9ad5 10x 1x7c75b6 7x 1x5d5c86 5x 1xff8f3c 1xff9540/1a1030 2xffa247/1a1030 1xff9540/1a1030 3xff8f3c/1a1030 1xff9540/1a1030 1xff9c44/1a1030 1xffa247/1a1030 1xff9c44/1a1030 1xff9540/1a1030 2xff8f3c/1a1030 1xff8f3c 8x 1x5d5c86 6x 1xcb81af 8x 1x83e8ba
+05 │                .-                 -----        --   ---~~~~.     ▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆     .~~~~~-. .--...   │
+   1xff2d95 16x 2x453e73 17x 2x834b9d 1x774685 2x7c4680 8x 2xb1466e 3x 1x985158 1xb1575f 1xb15d5a 1xcb6c59 1xff7e62! 1xff875a! 1xcb7353 1x7e5845 5x 1xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 5x 1x7e5845 2xe57d56 2xcb6c59 1xe56d65 1xcb5e66 1x64434b 1x 1x7e4754 1xb14b69 1xb1466e 1x984364 1x7a405e 1x8e446e 3x 1x83e8ba
+06 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main · ~/beta ───────────────────────────────── 5s ago · 019a0000 ─╯
+   2xff2d95 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 1xc78dce 4xd08db6 4xc297c7 2xd69499 2xebc475 2xf4cd5e 2xdec286 2xc3bfa8 2xcfc396 2xe7ca70 2xc3bfa8 2xccca91 2xe5ce6e 2xf2d05c 2xd8a277 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x83e8ba
+== hud rewind 110
+00 ╭─  🔥 LIT  · lit-adhd ───────────────────────────────────────────────────────────────────────── REWIND << ─╮
+   2xff5f5f 1x 1x0b0e14/ff8787! 2x0b0e14/ffad87! 1x0b0e14/dde192! 1x0b0e14/96e1c3! 1x0b0e14/87cef4! 1x0b0e14/bca9ff! 1x0b0e14/ff87c3! 1x 1x8b949e 1x 8xe6edf3! 1x 1xff9b5f 4xffaf5f 4xffc35f 4xffd75f 4xe1d769 4xb4d778 4x96d782 4x82d791 4x78d7a5 4x6ed7b9 4x64d7cd 4x5fd2dc 4x5fc8e6 4x5fbef0 4x5fb4fa 4x69aaff 4x7da0ff 4x9196ff 4xa58cff 1x 1xff9b9b! 1xffae9b! 1xffcd9b! 1xe3e6a4! 1xb1e6ba! 1x9ee6e0! 1x 1xb4c1ff! 1xdaaef3! 1x 2xe16ecd
+01 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                                                 │
+   1xff5f5f 1x 9xff8787 1x 1xff8787 1x 1xff9687 1xffbc87 1x 4xffd287 1x 1xffd287 1x 1xe9e18f 1xa1e1ad 1x 1x0b0e14/a1e1ad! 1x0b0e14/9edeb7! 1x0b0e14/9bdbc1! 1x0b0e14/97d7ca! 2x0b0e14/94d4d4! 1x0b0e14/91d1de! 1x0b0e14/8ecee8! 1x0b0e14/8acaf1! 1x0b0e14/87c7fb! 1x 1x87e1e1 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 49x 1xe16ecd
+02 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                +           - Bash · 0:12 │
+   1xff5f5f 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xff7d5f 1xdc9473 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 16x 1x6a86cf 11x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1xe16ecd
+03 │ skills  lit-adhd             .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1xff5f5f 1x 6x8b949e 1x 1x0b0e14/96e1c3! 1x0b0e14/9cdacb! 1x0b0e14/a1d2d2! 1x0b0e14/a7cbda! 2x0b0e14/adc3e1! 1x0b0e14/b2bce9! 1x0b0e14/b8b4f0! 1x0b0e14/bdadf8! 1x0b0e14/c3a5ff! 12x 1xb19452 5x 1x959b5c 11x 1x639b72 8x 1x549b91 10x 1xff9a87 1xffa587 1xffb487 1xffcb87 1xffe187 1xe9e18f 1xc7e19a 1xb0e1a1 1x9ee1b4 1x92e1cb 1x8be1da 1x87dae9 1x87d2f0 1x87c7fb 6x 1x8e86e7 6x 1x67517e 5x 1x724b73 5x 1xe16ecd
+04 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1xff5f5f 26x 1x7e674a 15x 1x799b65 10x 1x497268 7x 1x5fd7d7 5x 1xffa187 1xffb487/1a1030 1xffc387/1a1030 1xffda87/1a1030 1xf4e18b/1a1030 1xd2e196/1a1030 1xb0e1a1/1a1030 1xa1e1ad/1a1030 1x96e1c3/1a1030 1x8fe1d2/1a1030 1x87dde5/1a1030 1x87d2f0/1a1030 1x87cbf8/1a1030 1x8fbfff/1a1030 1x9eb8ff/1a1030 1xb4adff 8x 1x9f7de7 6x 1x6f4d77 8x 1xe16ecd
+05 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1xff5f5f 20x 1xcb8257 1xcb8957 17x 1x9eaf66 2x93af69 2x88af6d 1x7daf71 6x 2x66af8b 2x62af93 2x 2x5bafa2 2x57afa9 1x53afb1! 1x53abb4! 1x53abb4 2x53a7b8 1xffad87/1a1030 1xffc387/1a1030 1xffd287/1a1030 1xf4e18b/1a1030 1xdde192/1a1030 1xbce19e/1a1030 1xa1e1ad/1a1030 1x9ae1bc/1a1030 1x8fe1d2/1a1030 1x87e1e1/1a1030 1x87d6ec/1a1030 1x87cef4/1a1030 1x87c3ff/1a1030 1x9eb8ff/1a1030 1xadb0ff/1a1030 1xc3a5ff/1a1030 1xd29ef0/1a1030 1xe992da/1a1030 1x7182cf 2x797ecf 2x807acf 2x8877cf 3x 2x9e6bc0 2xa668b8 1xad64b1! 1xad64b1 1xb560a9 2x 1xbc5ca2 3x 1xe16ecd
+06 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main · ~/beta ───────────────────────────────── 5s ago · 019a0000 ─╯
+   2xff5f5f 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 1x78d7a5 4x6ed7b9 4x64d7cd 4x5fd2dc 4x5fc8e6 4x5fbef0 4x5fb4fa 4x69aaff 4x7da0ff 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2xe16ecd
+== hud lanes 110
+00 ╭─  🔥 LIT  · lit-loop ──────────────────────────────────────────────────────────────────────────── WORK ● ─╮
+   2xff2d95 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 8x7cf5b0! 1x 1xe351bd 8xda5dca 8xd068d7 8xc774e5 4xbd80f2 8xb48cff 8xad99f5 4xa6a6eb 8x9fb3e1 8x98c1d8 4x91cece 7x8adbc4 1x 4x7cf5b0! 1x 1x7cf5b0! 1x 2x83e8ba
+01 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                                      ●● 2 lanes │
+   1xff2d95 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 1x0b0e14/b48cff! 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 1xef80ae 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 38x 1xa3e9b9 1x8b949e 1x 1xe6edf3! 1x 5x8b949e 1x 1x83e8ba
+02 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                            - Bash · 0:12 │
+   1xff2d95 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 28x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1x83e8ba
+03 │ ● lit-loop    work ▰▰▱▱▱ 2/5     running                                                                  │
+   1xff2d95 1x 1x6bdb8f 1x 8xffffff! 4x 4x8b949e 1x 1x6bdb8f 1x79df9a 3x6a5f8f 1x 3xffffff 5x 7x6bdb8f 66x 1x83e8ba
+04 │ ┬ 2 lanes in parallel                 *                    *                    *               .         │
+   1xff2d95 1x 1x8b949e 1x 1x8b949e 1x 5x8b949e 1x 2x8b949e 1x 8x8b949e 17x 1xa99bff 20x 1xff9ad5 20x 1xa99bff 15x 1x5d5c86 9x 1x83e8ba
+05 │ ├─ ● Aquinas       ▰▰▱▱▱ 2/5     running       *        *          ▁▃▅▆▇████▇▆▅▃▁      .      +     +     │
+   1xff2d95 1x 2x8b949e 1x 1x6bdb8f 1x 7xe6edf3! 7x 1x6bdb8f 1x79df9a 3x6a5f8f 1x 3xffffff 5x 7x6bdb8f 7x 1xff9ad5 8x 1xa99bff 10x 1xffec95 2xfff0a0 1xffec95 1xffe98b 1xffe175 1xffe580 1xffe98b 1xffec95 2xfff0a0 1xffec95 1xffe580 1xffe175 6x 1x7e5c76 6x 1x8b82cf 5x 1x8b82cf 5x 1x83e8ba
+06 │ └─ - Hume                4 steps idle    *          .       .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .      +        │
+   1xff2d95 1x 2x8b949e 1x 1x8b949e 1x 4xe6edf3! 16x 1x8b949e 1x 5x8b949e 1x 4x8b949e 4x 1xff9ad5 10x 1x7c75b6 7x 1x5d5c86 5x 1xff8f3c 1xff9540/1a1030 2xffa247/1a1030 1xff9540/1a1030 3xff8f3c/1a1030 1xff9540/1a1030 1xff9c44/1a1030 1xffa247/1a1030 1xff9c44/1a1030 1xff9540/1a1030 2xff8f3c/1a1030 1xff8f3c 8x 1x5d5c86 6x 1xcb81af 8x 1x83e8ba
+07 │ skills  lit-loop                  -----        --   ---~~~~.     ▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆     .~~~~~-. .--...   │
+   1xff2d95 1x 6x8b949e 1x 1x0b0e14/b48cff! 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 17x 2x834b9d 1x774685 2x7c4680 8x 2xb1466e 3x 1x985158 1xb1575f 1xb15d5a 1xcb6c59 1xff7e62! 1xff875a! 1xcb7353 1x7e5845 5x 1xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 5x 1x7e5845 2xe57d56 2xcb6c59 1xe56d65 1xcb5e66 1x64434b 1x 1x7e4754 1xb14b69 1xb1466e 1x984364 1x7a405e 1x8e446e 3x 1x83e8ba
+08 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main · ~/beta ───────────────────────────────── 5s ago · 019a0000 ─╯
+   2xff2d95 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 1xc78dce 4xd08db6 4xc297c7 2xd69499 2xebc475 2xf4cd5e 2xdec286 2xc3bfa8 2xcfc396 2xe7ca70 2xc3bfa8 2xccca91 2xe5ce6e 2xf2d05c 2xd8a277 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x83e8ba
+== hud ready 110
+00 ╭─  🔥 LIT  · ready ──────────────────────────────────────────────────────────────────────────────── READY ─╮
+   2x983269 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 5xe6edf3! 1x 4x8a447d 8x854a84 8x804f8a 8x7c5591 4x775b98 8x72619e 8x6f6899 4x6b6e94 8x68758f 8x647c8b 4x618286 8x5d8981 1x 5x8b949e! 1x 2x5a8f7c
+01 │ no LIT skill in this thread yet · type lit <task> to start one, or lit adhd after a break       *         │
+   1x983269 1x 2x8b949e 1x 3x8b949e 1x 5x8b949e 1x 2x8b949e 1x 4x8b949e 1x 6x8b949e 1x 3x8b949e 1x 1x8b949e 1x 4x8b949e 1x 3x7cf5b0! 1x 6x7cf5b0! 1x 2x8b949e 1x 5x8b949e 1x 4x8b949e 1x 2x8b949e 1x 3x7cf5b0! 1x 4x7cf5b0! 1x 5x8b949e 1x 1x8b949e 1x 5x8b949e 7x 1x57577d 9x 1x5a8f7c
+02 │                              .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1x983269 30x 1x614e61 5x 1x614e61 11x 1x614e61 8x 1x4c4e6b 10x 14x7e744a 6x 1x74576f 6x 1x414458 5x 1x414458 5x 1x5a8f7c
+03 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1x983269 26x 1x4d4452 15x 1x614e61 10x 1x414458 7x 1x5d5c86 5x 1x7e5c40 14x7e5c40/1a1030 1x7e5c40 8x 1x57577d 6x 1x4d4452 8x 1x5a8f7c
+04 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1x983269 20x 1x383951 1x3a3a56 17x 1x533d5d 2x563d5a 1x583d58 1x623e5b 1x523b51 6x 1x4d3c46 1x60414c 1x6a454c 1x4d3e45 2x 1x574444 2x604944 1x6a5043 2x7e5c42! 1x7e5f44 1x574c42 1x4d4740 18x7e395a/1a1030 1x605142 1x745c45 1x6a5442 2x574940 1x604b42 1x4d4141 3x 1x4d3f43 2x574047 1x6a424f 1x7e4754! 1x7e4357 1x573b4c 2x 1x4b3a4b 3x 1x5a8f7c
+05 ╰─ ctx 24% ▰▱▱▱▱ · 5h 22% · 1w 54% · git main · ~/beta ───────────────────────────────── 5s ago · 019a0000 ─╯
+   2x983269 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 4x6a5f8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3x5a4f68 2x635262 2x745954 2x7d5b4e 2x745954 2x6b635c 2x6a655b 2x85784d 10x988444 2x716f54 2x5e645c 2x675d55 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x5a8f7c
+== hud waiting 110
+00 ╭─  🔥 LIT  · waiting for a LIT session ────────────────────────────────────────────────────────── WAITING ─╮
+   2x983269 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 7xe6edf3! 1x 3xe6edf3! 1x 1xe6edf3! 1x 3xe6edf3! 1x 7xe6edf3! 1x 8x7c5591 4x775b98 8x72619e 8x6f6899 4x6b6e94 8x68758f 8x647c8b 4x618286 6x5d8981 1x 7x8b949e! 1x 2x5a8f7c
+01 │ start codex in a project and type lit <task>   .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1x983269 1x 5x8b949e 1x 5x7cf5b0! 1x 2x8b949e 1x 1x8b949e 1x 7x8b949e 1x 3x8b949e 1x 4x8b949e 1x 3x7cf5b0! 1x 6x7cf5b0! 3x 1x614e61 8x 1x4c4e6b 10x 14x7e744a 6x 1x74576f 6x 1x414458 5x 1x414458 5x 1x5a8f7c
+02 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1x983269 26x 1x4d4452 15x 1x614e61 10x 1x414458 7x 1x5d5c86 5x 1x7e5c40 14x7e5c40/1a1030 1x7e5c40 8x 1x57577d 6x 1x4d4452 8x 1x5a8f7c
+03 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1x983269 20x 1x383951 1x3a3a56 17x 1x533d5d 2x563d5a 1x583d58 1x623e5b 1x523b51 6x 1x4d3c46 1x60414c 1x6a454c 1x4d3e45 2x 1x574444 2x604944 1x6a5043 2x7e5c42! 1x7e5f44 1x574c42 1x4d4740 18x7e395a/1a1030 1x605142 1x745c45 1x6a5442 2x574940 1x604b42 1x4d4141 3x 1x4d3f43 2x574047 1x6a424f 1x7e4754! 1x7e4357 1x573b4c 2x 1x4b3a4b 3x 1x5a8f7c
+04 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+   4x983269 8x933870 8x8e3e77 4x8a447d 8x854a84 8x804f8a 8x7c5591 2x775b98 2x54496b 6x5a4f68 2x635262 2x745954 2x7d5b4e 2x745954 2x6b635c 2x6a655b 2x85784d 10x988444 2x716f54 2x5e645c 2x675d55 4x7a604b 2x656152 6x51605b 2x506359 7x5a8f7c
+== hud working 110 round
+00 ╭─ 🔥 LIT · start-work ────────────────────────────────────────────────────────────────────────── WORK ● ─╮
+   2xff2d95 1x 1xffa033 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1xff3388 1x 1x8b949e 1x 10x7cf5b0! 1x 7xda5dca 8xd068d7 8xc774e5 4xbd80f2 8xb48cff 8xad99f5 4xa6a6eb 8x9fb3e1 8x98c1d8 4x91cece 7x8adbc4 1x 4x7cf5b0! 1x 1x7cf5b0! 1x 2x83e8ba
+01 │ interview ✓ ━━ plan ✓ ━━ work 2/5 ━━ review · ── done ·                                                 │
+   1xff2d95 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 1xb48cff 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x7cf5b0 1x 1xef80ae 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 49x 1x83e8ba
+02 │ └ task 2/5     · next ▸ Write the parser tests for 한국어 입력                *           - Bash · 0:12 │
+   1xff2d95 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1x/ff8544 2x/2a2340 1x2a2340 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 16x 1xa99bff 11x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1x83e8ba
+03 │ skills start-work          *     *           *        *          ▁▃▅▆▇████▇▆▅▃▁      .      +     +     │
+   1xff2d95 1x 6x8b949e 1x 1xb48cff 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x7cf5b0 10x 1xff9ad5 5x 1xff9ad5 11x 1xff9ad5 8x 1xa99bff 10x 1xffec95 2xfff0a0 1xffec95 1xffe98b 1xffe175 1xffe580 1xffe98b 1xffec95 2xfff0a0 1xffec95 1xffe580 1xffe175 6x 1x7e5c76 6x 1x8b82cf 5x 1x8b82cf 5x 1x83e8ba
+04 │                          .               *          .       .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .      +        │
+   1xff2d95 26x 1xb1759c 15x 1xff9ad5 10x 1x7c75b6 7x 1x5d5c86 5x 1xff8f3c 1xff9540/1a1030 2xffa247/1a1030 1xff9540/1a1030 3xff8f3c/1a1030 1xff9540/1a1030 1xff9c44/1a1030 1xffa247/1a1030 1xff9c44/1a1030 1xff9540/1a1030 2xff8f3c/1a1030 1xff8f3c 8x 1x5d5c86 6x 1xcb81af 8x 1x83e8ba
+05 │                .-                 -----        --   ---~~~~.     ▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆     .~~~~~-. .--...   │
+   1xff2d95 16x 2x453e73 17x 2x834b9d 1x774685 2x7c4680 8x 2xb1466e 3x 1x985158 1xb1575f 1xb15d5a 1xcb6c59 1xff7e62! 1xff875a! 1xcb7353 1x7e5845 5x 1xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 5x 1x7e5845 2xe57d56 2xcb6c59 1xe56d65 1xcb5e66 1x64434b 1x 1x7e4754 1xb14b69 1xb1466e 1x984364 1x7a405e 1x8e446e 3x 1x83e8ba
+06 ╰─ ctx 24%     · 5h 22% · 1w 54% · git main · ~/beta ───────────────────────────────── 5s ago · 019a0000 ─╯
+   2xff2d95 1x 3x8b949e 1x 3x7cf5b0! 1x 1xb48cff 3x/2a2340 1x2a2340 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 2x8b949e 1x 3x6bdb8f 1x 1x8b949e 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 1xc78dce 4xd08db6 4xc297c7 2xd69499 2xebc475 2xf4cd5e 2xdec286 2xc3bfa8 2xcfc396 2xe7ca70 2xc3bfa8 2xccca91 2xe5ce6e 2xf2d05c 2xd8a277 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x83e8ba
+== run working 54
+34  🔥 LIT  start-work · 1:00
+   1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 10x7cf5b0! 1x 1x8b949e 1x 4xe6edf3
+35 ✓ interview ── ✓ plan ──  ● work 2/5  ── ○ review ──…
+   1xffa033 1x 9xffa033 1x 2xff933c 1x 1xff8544 1x 4xff8544 1x 2xff784d 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 2x46505c 1x 1x8b949e 1x 6x8b949e 1x 3x46505c
+36 Running: Bash, 0:12
+   8xff9b5e 1x 5xff9b5e 1x 4xff9b5e
+37 ▸ Write the parser tests for 한국어 입력
+   1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3
+== run turn 54
+34  🔥 LIT  start-work · 0:56
+   1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffbf59! 1x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 10x7cf5b0! 1x 1x8b949e 1x 4xffaf3c
+35 ✓ interview ── ✓ plan ──  ● work 2/5  ── ○ review ──…
+   1x9a6420 1x 9x9a6420 1x 2xb37727 1x 1xcd8a2e 1x 4xcd8a2e 1x 2xe69c35 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 2x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 2x46505c 1x 1x8b949e 1x 6x8b949e 1x 3x46505c
+36 Your turn: answer Codex above
+   4x~ 1x 5x~ 1x 6x~ 1x 5x~ 1x 5x~
+37 ▸ Write the parser tests for 한국어 입력
+   1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3
+== run done 54
+34  🔥 LIT  start-work · done ✓ 0:56
+   1x0b0e14/3ddc84! 2x0b0e14/55e595! 1x0b0e14/64eca0! 1x0b0e14/7cf5b0! 1x0b0e14/93f9bf! 1x0b0e14/a2fbca! 1x0b0e14/b8ffd9! 1x 10x7cf5b0! 1x 1x8b949e 1x 4xe6edf3 1x 1xe6edf3 1x 4xe6edf3
+35 ✓ interview ── ✓ plan ──  ● work 2/5  ── ○ review ──…
+   1xffa033 1x 9xffa033 1x 2xff933c 1x 1xff8544 1x 4xff8544 1x 2xff784d 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 2x46505c 1x 1x8b949e 1x 6x8b949e 1x 3x46505c
+36 Turn done
+   4x~ 1x 4x~
+37 ▸ Write the parser tests for 한국어 입력
+   1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3
+== run working 80
+29 ╭─  🔥 LIT  · start-work ──────────────────────────────────────────── WORK ● ─╮
+   2xff2d95 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 10x7cf5b0! 1x 3xd068d7 8xc774e5 4xbd80f2 4xb48cff 4xad99f5 4xa6a6eb 8x9fb3e1 4x98c1d8 4x91cece 1x8adbc4 1x 4x7cf5b0! 1x 1x7cf5b0! 1x 2x83e8ba
+30 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                   │
+   1xff2d95 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 1x0b0e14/b48cff! 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 1xef80ae 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 19x 1x83e8ba
+31 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어…  - Bash · 0:12 │
+   1xff2d95 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 3x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1x83e8ba
+32 │ skills  start-work                                                          │
+   1xff2d95 1x 6x8b949e 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 57x 1x83e8ba
+33 │    .                *                    *                    *             │
+   1xff2d95 4x 1x986889 16x 1xa99bff 20x 1xff9ad5 20x 1xa99bff 13x 1x83e8ba
+34 │            *     *           *        *          ▁▃▅▆▇████▇▆▅▃▁      .      │
+   1xff2d95 12x 1xff9ad5 5x 1xff9ad5 11x 1xff9ad5 8x 1xa99bff 10x 1xffec95 2xfff0a0 1xffec95 1xffe98b 1xffe175 1xffe580 1xffe98b 1xffec95 2xfff0a0 1xffec95 1xffe580 1xffe175 6x 1x7e5c76 6x 1x83e8ba
+35 │        .               *          .       .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .   │
+   1xff2d95 8x 1xb1759c 15x 1xff9ad5 10x 1x7c75b6 7x 1x5d5c86 5x 1xff8f3c 1xff9540/1a1030 2xffa247/1a1030 1xff9540/1a1030 3xff8f3c/1a1030 1xff9540/1a1030 1xff9c44/1a1030 1xffa247/1a1030 1xff9c44/1a1030 1xff9540/1a1030 2xff8f3c/1a1030 1xff8f3c 8x 1x5d5c86 3x 1x83e8ba
+36 │                 -----        --   ---~~~~.     ▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆     .~~~~ │
+   1xff2d95 17x 2x834b9d 1x774685 2x7c4680 8x 2xb1466e 3x 1x985158 1xb1575f 1xb15d5a 1xcb6c59 1xff7e62! 1xff875a! 1xcb7353 1x7e5845 5x 1xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 5x 1x7e5845 2xe57d56 2xcb6c59 1x 1x83e8ba
+37 ╰─ git main · ~/beta ──────────────────────────────────────────────── 5s ago ─╯
+   2xff2d95 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3xda5dca 4xd068d7 6xc774e5 2xce77d0 2xce84c5 2xd686ae 2xd08db6 2xc78dce 2xc297c7 2xd69499 2xe9c772 2xf4cd5e 2xdbc683 2xc3bfa8 2xcfc396 2xe7ca70 2xbfc7a3 2xccca91 2xe4d16b 2xf1d25b 1xd3ac6f 1x 2x8b949e 1x 3x8b949e 1x 2x83e8ba
+== run turn 80
+29 ╭─  🔥 LIT  · start-work ───────────────────────────────────────── YOUR TURN ─╮
+   2x9a6420 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffbf59! 1x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 1x8b949e 1x 10xffaf3c! 1x 3xd99332 8xe69c35 4xf2a639 4xffaf3c 4xffb446 4xffba50 8xffbf59 4xffc463 2xffc96d 1x 4xffaf3c! 1x 4xffaf3c! 1x 2xffd480
+30 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                   │
+   1x9a6420 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 1x0b0e14/ffaf3c! 1x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 1xef80ae 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 19x 1xffd480
+31 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests fo…  last Bash · turn 0:56 │
+   1x9a6420 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 2x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1xffd480
+32 │ skills  start-work                                                          │
+   1x9a6420 1x 6x8b949e 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 2x0b0e14/ffd480! 1x0b0e14/ffd98a! 57x 1xffd480
+33 │    *                .                    +                    +             │
+   1x9a6420 4x 1xff9ad5 16x 1x7c75b6 20x 1xb1759c 20x 1x8b82cf 13x 1xffd480
+34 │            .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      │
+   1x9a6420 12x 1xb1759c 5x 1xb1759c 11x 1xb1759c 8x 1x7c75b6 10x 14xffd372 6x 1xe58ec2 6x 1xffd480
+35 │        .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *   │
+   1x9a6420 8x 1x7e5c76 15x 1xb1759c 10x 1x5d5c86 7x 1xa99bff 5x 1xffba50 14xffba50/1a1030 1xffba50 8x 1x9a8ee7 3x 1xffd480
+36 │  --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.    │
+   1x9a6420 2x 1x453b2f 1x4a3c2b 17x 1x7e592b 2x835c2a 1x885f2a 1xa16b27 1x7b592e 6x 1x755934 1xa3702f 1xbd802e 1x775b36 2x 1x926c37 2xac7c38 1xc88d39 2xffaf3c! 1xffb446 1x987847 1x7e6844 18xe8962d/1a1030 1xb18949 1xe5aa4e 1xcb9544 2x98733d 1xaf7f3a 1x7b603a 4x 1xffd480
+37 ╰─ git main · ~/beta ──────────────────────────────────────────────── 5s ago ─╯
+   2x9a6420 1x 3x8b949e 1x 4xffaf3c 1x 1x8b949e 1x 6xe6edf3 1x 3xcd8a2e 4xd99332 6xe69c35 2xe99a36 4xf4a339 2xffa73c 2xff9f3c 2xff9d40 2xffa241 4xffc34e 2xffcd4e 10xffd24a 2xffce5c 2xffcb64 1xffb761 1x 2x8b949e 1x 3x8b949e 1x 2xffd480
+== run done 80
+29 ╭─  🔥 LIT  · start-work ──────────────────────────────────────────── DONE ✓ ─╮
+   2x3ddc84 1x 1x0b0e14/3ddc84! 2x0b0e14/55e595! 1x0b0e14/64eca0! 1x0b0e14/7cf5b0! 1x0b0e14/93f9bf! 1x0b0e14/a2fbca! 1x0b0e14/b8ffd9! 1x 1x8b949e 1x 10x7cf5b0! 1x 3x64eca0 8x6cefa5 4x74f2ab 4x7cf5b0 4x84f6b5 4x8bf8ba 8x93f9bf 4x9afac5 4xa2fbca 1xa9fdcf 1x 4x6bdb8f! 1x 1x6bdb8f! 1x 2xb1fed4
+30 │ interview ✓ ━━ plan ✓ ━━ work 2/5 … ── review - ── done ✓                   │
+   1x3ddc84 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 4xff6fae 1x 3xff6fae 1x 1xff6fae 1x 2x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x7cf5b0 1x 1x7cf5b0 19x 1xb1fed4
+31 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests fo…  last Bash · turn 0:56 │
+   1x3ddc84 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 2x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1xb1fed4
+32 │ skills  start-work                                                          │
+   1x3ddc84 1x 6x8b949e 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 57x 1xb1fed4
+33 │    *                .                    +                    +             │
+   1x3ddc84 4x 1xff9ad5 16x 1x7c75b6 20x 1xb1759c 20x 1x8b82cf 13x 1xb1fed4
+34 │            .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      │
+   1x3ddc84 12x 1xb1759c 5x 1xb1759c 11x 1xb1759c 8x 1x7c75b6 10x 14xffda60 6x 1xe58ec2 6x 1xb1fed4
+35 │        .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *   │
+   1x3ddc84 8x 1x7e5c76 15x 1xb1759c 10x 1x5d5c86 7x 1xa99bff 5x 1xff9c44 14xff9c44/1a1030 1xff9c44 8x 1x9a8ee7 3x 1xb1fed4
+36 │  --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.    │
+   1x3ddc84 2x 1x453e73 1x4a4080 17x 1x8e4991 2x94498b 1x9a4886 1xb64b8d 1x8a4472 6x 1x7e4754 1xb15264 1xcb5e66 1x7e4a51 2x 1x985a50 2xb1694f 1xcb7a4d 2xff9a4a! 1xffa24f 1x987149 1x7e6246 18xff3d8b/1a1030 1xb17f4b 1xe59c51 1xcb874b 2x986844 1xb16f4a 1x7e5448 4x 1xb1fed4
+37 ╰─ git main · ~/beta ──────────────────────────────────────────────── 5s ago ─╯
+   2x3ddc84 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3x5de99a 4x64eca0 8x6cefa5 4x74f2ab 4x7cf5b0 4x84f6b5 4x8bf8ba 8x93f9bf 4x9afac5 4xa2fbca 1xa9fdcf 1x 2x8b949e 1x 3x8b949e 1x 2xb1fed4
+== run working 110
+29 ╭─  🔥 LIT  · start-work ────────────────────────────────────────────────────────────────────────── WORK ● ─╮
+   2xff2d95 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 10x7cf5b0! 1x 7xda5dca 8xd068d7 8xc774e5 4xbd80f2 8xb48cff 8xad99f5 4xa6a6eb 8x9fb3e1 8x98c1d8 4x91cece 7x8adbc4 1x 4x7cf5b0! 1x 1x7cf5b0! 1x 2x83e8ba
+30 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                                                 │
+   1xff2d95 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 1x0b0e14/b48cff! 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 1xef80ae 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 49x 1x83e8ba
+31 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                            - Bash · 0:12 │
+   1xff2d95 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 28x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1x83e8ba
+32 │ skills  start-work                                                                                        │
+   1xff2d95 1x 6x8b949e 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 87x 1x83e8ba
+33 │                      .                *                    *                    *               .         │
+   1xff2d95 22x 1x986889 16x 1xa99bff 20x 1xff9ad5 20x 1xa99bff 15x 1x5d5c86 9x 1x83e8ba
+34 │                              *     *           *        *          ▁▃▅▆▇████▇▆▅▃▁      .      +     +     │
+   1xff2d95 30x 1xff9ad5 5x 1xff9ad5 11x 1xff9ad5 8x 1xa99bff 10x 1xffec95 2xfff0a0 1xffec95 1xffe98b 1xffe175 1xffe580 1xffe98b 1xffec95 2xfff0a0 1xffec95 1xffe580 1xffe175 6x 1x7e5c76 6x 1x8b82cf 5x 1x8b82cf 5x 1x83e8ba
+35 │                          .               *          .       .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .      +        │
+   1xff2d95 26x 1xb1759c 15x 1xff9ad5 10x 1x7c75b6 7x 1x5d5c86 5x 1xff8f3c 1xff9540/1a1030 2xffa247/1a1030 1xff9540/1a1030 3xff8f3c/1a1030 1xff9540/1a1030 1xff9c44/1a1030 1xffa247/1a1030 1xff9c44/1a1030 1xff9540/1a1030 2xff8f3c/1a1030 1xff8f3c 8x 1x5d5c86 6x 1xcb81af 8x 1x83e8ba
+36 │                .-                 -----        --   ---~~~~.     ▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆     .~~~~~-. .--...   │
+   1xff2d95 16x 2x453e73 17x 2x834b9d 1x774685 2x7c4680 8x 2xb1466e 3x 1x985158 1xb1575f 1xb15d5a 1xcb6c59 1xff7e62! 1xff875a! 1xcb7353 1x7e5845 5x 1xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 5x 1x7e5845 2xe57d56 2xcb6c59 1xe56d65 1xcb5e66 1x64434b 1x 1x7e4754 1xb14b69 1xb1466e 1x984364 1x7a405e 1x8e446e 3x 1x83e8ba
+37 ╰─ git main · ~/beta ─────────────────────────────────────────────────────────────────── 5s ago · 019a0000 ─╯
+   2xff2d95 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3xe351bd 8xda5dca 8xd068d7 8xc774e5 4xbd80f2 2xbd8ce7 2xc78dce 4xd08db6 4xc297c7 2xd69499 2xebc475 2xf4cd5e 2xdec286 2xc3bfa8 2xcfc396 2xe7ca70 2xc3bfa8 2xccca91 2xe5ce6e 2xf2d05c 2xd8a277 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x83e8ba
+== run turn 110
+29 ╭─  🔥 LIT  · start-work ─────────────────────────────────────────────────────────────────────── YOUR TURN ─╮
+   2x9a6420 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffbf59! 1x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 1x8b949e 1x 10xffaf3c! 1x 7xcd8a2e 8xd99332 8xe69c35 4xf2a639 8xffaf3c 8xffb446 4xffba50 8xffbf59 8xffc463 4xffc96d 4xffcf77 1x 4xffaf3c! 1x 4xffaf3c! 1x 2xffd480
+30 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                                                 │
+   1x9a6420 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 1x0b0e14/ffaf3c! 1x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 1xef80ae 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 49x 1xffd480
+31 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                    last Bash · turn 0:56 │
+   1x9a6420 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 20x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1xffd480
+32 │ skills  start-work                                                                                        │
+   1x9a6420 1x 6x8b949e 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 2x0b0e14/ffd480! 1x0b0e14/ffd98a! 87x 1xffd480
+33 │                      *                .                    +                    +               *         │
+   1x9a6420 22x 1xff9ad5 16x 1x7c75b6 20x 1xb1759c 20x 1x8b82cf 15x 1x9a8ee7 9x 1xffd480
+34 │                              .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1x9a6420 30x 1xb1759c 5x 1xb1759c 11x 1xb1759c 8x 1x7c75b6 10x 14xffd372 6x 1xe58ec2 6x 1x5d5c86 5x 1x5d5c86 5x 1xffd480
+35 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1x9a6420 26x 1x7e5c76 15x 1xb1759c 10x 1x5d5c86 7x 1xa99bff 5x 1xffba50 14xffba50/1a1030 1xffba50 8x 1x9a8ee7 6x 1x7e5c76 8x 1xffd480
+36 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1x9a6420 20x 1x453b2f 1x4a3c2b 17x 1x7e592b 2x835c2a 1x885f2a 1xa16b27 1x7b592e 6x 1x755934 1xa3702f 1xbd802e 1x775b36 2x 1x926c37 2xac7c38 1xc88d39 2xffaf3c! 1xffb446 1x987847 1x7e6844 18xe8962d/1a1030 1xb18949 1xe5aa4e 1xcb9544 2x98733d 1xaf7f3a 1x7b603a 3x 1x785d37 2x8e6733 1xba7c2c 1xe89326! 1xe48f22 1x88602e 2x 1x6c5232 3x 1xffd480
+37 ╰─ git main · ~/beta ─────────────────────────────────────────────────────────────────── 5s ago · 019a0000 ─╯
+   2x9a6420 1x 3x8b949e 1x 4xffaf3c 1x 1x8b949e 1x 6xe6edf3 1x 3xc0802b 8xcd8a2e 8xd99332 8xe69c35 4xf2a639 6xffab3c 2xffa73c 2xffa241 2xff9d40 2xffa241 2xffbf48 2xffc34e 2xffcc4c 10xffd24a 2xffcb57 2xffc85d 2xffb054 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2xffd480
+== run done 110
+29 ╭─  🔥 LIT  · start-work ────────────────────────────────────────────────────────────────────────── DONE ✓ ─╮
+   2x3ddc84 1x 1x0b0e14/3ddc84! 2x0b0e14/55e595! 1x0b0e14/64eca0! 1x0b0e14/7cf5b0! 1x0b0e14/93f9bf! 1x0b0e14/a2fbca! 1x0b0e14/b8ffd9! 1x 1x8b949e 1x 10x7cf5b0! 1x 7x5de99a 8x64eca0 8x6cefa5 4x74f2ab 8x7cf5b0 8x84f6b5 4x8bf8ba 8x93f9bf 8x9afac5 4xa2fbca 7xa9fdcf 1x 4x6bdb8f! 1x 1x6bdb8f! 1x 2xb1fed4
+30 │ interview ✓ ━━ plan ✓ ━━ work 2/5 … ── review - ── done ✓                                                 │
+   1x3ddc84 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 4xff6fae 1x 3xff6fae 1x 1xff6fae 1x 2x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x7cf5b0 1x 1x7cf5b0 49x 1xb1fed4
+31 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                    last Bash · turn 0:56 │
+   1x3ddc84 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 20x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1xb1fed4
+32 │ skills  start-work                                                                                        │
+   1x3ddc84 1x 6x8b949e 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 87x 1xb1fed4
+33 │                      *                .                    +                    +               *         │
+   1x3ddc84 22x 1xff9ad5 16x 1x7c75b6 20x 1xb1759c 20x 1x8b82cf 15x 1x9a8ee7 9x 1xb1fed4
+34 │                              .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1x3ddc84 30x 1xb1759c 5x 1xb1759c 11x 1xb1759c 8x 1x7c75b6 10x 14xffda60 6x 1xe58ec2 6x 1x5d5c86 5x 1x5d5c86 5x 1xb1fed4
+35 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1x3ddc84 26x 1x7e5c76 15x 1xb1759c 10x 1x5d5c86 7x 1xa99bff 5x 1xff9c44 14xff9c44/1a1030 1xff9c44 8x 1x9a8ee7 6x 1x7e5c76 8x 1xb1fed4
+36 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1x3ddc84 20x 1x453e73 1x4a4080 17x 1x8e4991 2x94498b 1x9a4886 1xb64b8d 1x8a4472 6x 1x7e4754 1xb15264 1xcb5e66 1x7e4a51 2x 1x985a50 2xb1694f 1xcb7a4d 2xff9a4a! 1xffa24f 1x987149 1x7e6246 18xff3d8b/1a1030 1xb17f4b 1xe59c51 1xcb874b 2x986844 1xb16f4a 1x7e5448 3x 1x7e4e4e 2x985158 1xcb576c 1xff627b! 1xff5883 1x984364 2x 1x774061 3x 1xb1fed4
+37 ╰─ git main · ~/beta ─────────────────────────────────────────────────────────────────── 5s ago · 019a0000 ─╯
+   2x3ddc84 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3x55e595 8x5de99a 8x64eca0 8x6cefa5 4x74f2ab 8x7cf5b0 8x84f6b5 4x8bf8ba 8x93f9bf 8x9afac5 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2xb1fed4
+== run idle 110
+29 ╭─  🔥 LIT  · start-work ──────────────────────────────────────────────────────────────────────────── IDLE ─╮
+   2x983269 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 10xe6edf3! 1x 7x854a84 8x804f8a 8x7c5591 4x775b98 8x72619e 8x6f6899 4x6b6e94 8x68758f 8x647c8b 4x618286 8x5d8981 1x5a8f7c 1x 4x8b949e! 1x 2x5a8f7c
+30 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                                                 │
+   1x983269 1x 9xc58774 1x 1xc58774 1x 1xc5877b 1xc58587 1x 4xc5858d 1x 1xc5858d 1x 1xc58494 1xc582a0 1x 1x0b0e14/9276ce! 1x0b0e14/8d80c7! 1x0b0e14/888abf! 1x0b0e14/8294b8! 2x0b0e14/7d9eb1! 1x0b0e14/78a7a9! 1x0b0e14/73b1a2! 1x0b0e14/6dbb9a! 1x0b0e14/68c593! 1x 1xbd8aa6 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 49x 1x5a8f7c
+31 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                    last Bash · turn 0:56 │
+   1x983269 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 20x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1x5a8f7c
+32 │ skills  start-work                                                                                        │
+   1x983269 1x 6x8b949e 1x 1x0b0e14/9276ce! 2x0b0e14/8d80c7! 1x0b0e14/888abf! 1x0b0e14/8294b8! 2x0b0e14/7d9eb1! 1x0b0e14/78a7a9! 1x0b0e14/73b1a2! 2x0b0e14/6dbb9a! 1x0b0e14/68c593! 87x 1x5a8f7c
+33 │                      *                .                    +                    +               *         │
+   1x983269 22x 1x7e5c76 16x 1x4c4e6b 20x 1x614e61 20x 1x525374 15x 1x57577d 9x 1x5a8f7c
+34 │                              .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1x983269 30x 1x614e61 5x 1x614e61 11x 1x614e61 8x 1x4c4e6b 10x 14x7e744a 6x 1x74576f 6x 1x414458 5x 1x414458 5x 1x5a8f7c
+35 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1x983269 26x 1x4d4452 15x 1x614e61 10x 1x414458 7x 1x5d5c86 5x 1x7e5c40 14x7e5c40/1a1030 1x7e5c40 8x 1x57577d 6x 1x4d4452 8x 1x5a8f7c
+36 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1x983269 20x 1x383951 1x3a3a56 17x 1x533d5d 2x563d5a 1x583d58 1x623e5b 1x523b51 6x 1x4d3c46 1x60414c 1x6a454c 1x4d3e45 2x 1x574444 2x604944 1x6a5043 2x7e5c42! 1x7e5f44 1x574c42 1x4d4740 18x7e395a/1a1030 1x605142 1x745c45 1x6a5442 2x574940 1x604b42 1x4d4141 3x 1x4d3f43 2x574047 1x6a424f 1x7e4754! 1x7e4357 1x573b4c 2x 1x4b3a4b 3x 1x5a8f7c
+37 ╰─ git main · ~/beta ─────────────────────────────────────────────────────────────────── 5s ago · 019a0000 ─╯
+   2x983269 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3x8a447d 8x854a84 8x804f8a 8x7c5591 2x775b98 2x54496b 6x5a4f68 2x635262 2x745954 2x7d5b4e 2x745954 2x6b635c 2x6a655b 2x85784d 10x988444 2x716f54 2x5e645c 2x675d55 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x5a8f7c
+== run paused 110
+29 ╭─  🔥 LIT  · start-work ─────────────────────────────────────────────────────────────────────── PAUSED || ─╮
+   2x983269 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 10xe6edf3! 1x 7x854a84 8x804f8a 8x7c5591 4x775b98 8x72619e 8x6f6899 4x6b6e94 8x68758f 8x647c8b 4x618286 4x5d8981 1x 6x8b949e! 1x 2x8b949e! 1x 2x5a8f7c
+30 │ interview ✓ ━━ plan ✓ ━━  || paused 2/5  ━━ review · ── done ·                                            │
+   1x983269 1x 9xc58774 1x 1xc58774 1x 1xc5877b 1xc58587 1x 4xc5858d 1x 1xc5858d 1x 1xc58494 1xc582a0 1x 15xb6bec8/2d333b! 1x 1xbd8aa6 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 44x 1x5a8f7c
+31 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                    last Bash · turn 0:56 │
+   1x983269 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 20x 4x8b949e 1x 4x8b949e 1x 1x8b949e 1x 4x8b949e 1x 4xe6edf3 1x 1x5a8f7c
+32 │ skills  start-work                                                                                        │
+   1x983269 1x 6x8b949e 1x 1x0b0e14/9276ce! 2x0b0e14/8d80c7! 1x0b0e14/888abf! 1x0b0e14/8294b8! 2x0b0e14/7d9eb1! 1x0b0e14/78a7a9! 1x0b0e14/73b1a2! 2x0b0e14/6dbb9a! 1x0b0e14/68c593! 87x 1x5a8f7c
+33 │                      *                .                    +                    +               *         │
+   1x983269 22x 1x7e5c76 16x 1x4c4e6b 20x 1x614e61 20x 1x525374 15x 1x57577d 9x 1x5a8f7c
+34 │                              .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1x983269 30x 1x614e61 5x 1x614e61 11x 1x614e61 8x 1x4c4e6b 10x 14x7e744a 6x 1x74576f 6x 1x414458 5x 1x414458 5x 1x5a8f7c
+35 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1x983269 26x 1x4d4452 15x 1x614e61 10x 1x414458 7x 1x5d5c86 5x 1x7e5c40 14x7e5c40/1a1030 1x7e5c40 8x 1x57577d 6x 1x4d4452 8x 1x5a8f7c
+36 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1x983269 20x 1x383951 1x3a3a56 17x 1x533d5d 2x563d5a 1x583d58 1x623e5b 1x523b51 6x 1x4d3c46 1x60414c 1x6a454c 1x4d3e45 2x 1x574444 2x604944 1x6a5043 2x7e5c42! 1x7e5f44 1x574c42 1x4d4740 18x7e395a/1a1030 1x605142 1x745c45 1x6a5442 2x574940 1x604b42 1x4d4141 3x 1x4d3f43 2x574047 1x6a424f 1x7e4754! 1x7e4357 1x573b4c 2x 1x4b3a4b 3x 1x5a8f7c
+37 ╰─ git main · ~/beta ─────────────────────────────────────────────────────────────────── 5s ago · 019a0000 ─╯
+   2x983269 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3x8a447d 8x854a84 8x804f8a 8x7c5591 2x775b98 2x54496b 6x5a4f68 2x635262 2x745954 2x7d5b4e 2x745954 2x6b635c 2x6a655b 2x85784d 10x988444 2x716f54 2x5e645c 2x675d55 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x5a8f7c
+== run review 110
+29 ╭─  🔥 LIT  · review-work ───────────────────────────────────────────────────────────────────────── REVIEW ─╮
+   2xff2d95 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 11x7cf5b0! 1x 6xda5dca 8xd068d7 8xc774e5 4xbd80f2 8xb48cff 8xad99f5 4xa6a6eb 8x9fb3e1 8x98c1d8 4x91cece 7x8adbc4 1x 6x7cf5b0! 1x 2x83e8ba
+30 │ interview ✓ ━━ plan ✓ ━━ work 2/5 … ━━  review  ━━ done ·                                                 │
+   1xff2d95 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 4xff6fae 1x 3xff6fae 1x 1xff6fae 1x 1xef80ae 1xcea1af 1x 1x0b0e14/b48cff! 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 49x 1x83e8ba
+31 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                            - Bash · 0:12 │
+   1xff2d95 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 28x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1x83e8ba
+32 │ skills  review-work                                                                                       │
+   1xff2d95 1x 6x8b949e 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 2x0b0e14/9fb3e1! 1x0b0e14/98c1d8! 2x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 86x 1x83e8ba
+33 │                      .                *                    *                    *               .         │
+   1xff2d95 22x 1x986889 16x 1xa99bff 20x 1xff9ad5 20x 1xa99bff 15x 1x5d5c86 9x 1x83e8ba
+34 │                              *     *           *        *          ▁▃▅▆▇████▇▆▅▃▁      .      +     +     │
+   1xff2d95 30x 1xff9ad5 5x 1xff9ad5 11x 1xff9ad5 8x 1xa99bff 10x 1xffec95 2xfff0a0 1xffec95 1xffe98b 1xffe175 1xffe580 1xffe98b 1xffec95 2xfff0a0 1xffec95 1xffe580 1xffe175 6x 1x7e5c76 6x 1x8b82cf 5x 1x8b82cf 5x 1x83e8ba
+35 │                          .               *          .       .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .      +        │
+   1xff2d95 26x 1xb1759c 15x 1xff9ad5 10x 1x7c75b6 7x 1x5d5c86 5x 1xff8f3c 1xff9540/1a1030 2xffa247/1a1030 1xff9540/1a1030 3xff8f3c/1a1030 1xff9540/1a1030 1xff9c44/1a1030 1xffa247/1a1030 1xff9c44/1a1030 1xff9540/1a1030 2xff8f3c/1a1030 1xff8f3c 8x 1x5d5c86 6x 1xcb81af 8x 1x83e8ba
+36 │                .-                 -----        --   ---~~~~.     ▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆     .~~~~~-. .--...   │
+   1xff2d95 16x 2x453e73 17x 2x834b9d 1x774685 2x7c4680 8x 2xb1466e 3x 1x985158 1xb1575f 1xb15d5a 1xcb6c59 1xff7e62! 1xff875a! 1xcb7353 1x7e5845 5x 1xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 5x 1x7e5845 2xe57d56 2xcb6c59 1xe56d65 1xcb5e66 1x64434b 1x 1x7e4754 1xb14b69 1xb1466e 1x984364 1x7a405e 1x8e446e 3x 1x83e8ba
+37 ╰─ git main · ~/beta ─────────────────────────────────────────────────────────────────── 5s ago · 019a0000 ─╯
+   2xff2d95 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3xe351bd 8xda5dca 8xd068d7 8xc774e5 4xbd80f2 2xbd8ce7 2xc78dce 4xd08db6 4xc297c7 2xd69499 2xebc475 2xf4cd5e 2xdec286 2xc3bfa8 2xcfc396 2xe7ca70 2xc3bfa8 2xccca91 2xe5ce6e 2xf2d05c 2xd8a277 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x83e8ba
+== run rewind 110
+29 ╭─  🔥 LIT  · lit-adhd ───────────────────────────────────────────────────────────────────────── REWIND << ─╮
+   2xff5f5f 1x 1x0b0e14/ff8787! 2x0b0e14/ffad87! 1x0b0e14/dde192! 1x0b0e14/96e1c3! 1x0b0e14/87cef4! 1x0b0e14/bca9ff! 1x0b0e14/ff87c3! 1x 1x8b949e 1x 8xe6edf3! 1x 1xff9b5f 4xffaf5f 4xffc35f 4xffd75f 4xe1d769 4xb4d778 4x96d782 4x82d791 4x78d7a5 4x6ed7b9 4x64d7cd 4x5fd2dc 4x5fc8e6 4x5fbef0 4x5fb4fa 4x69aaff 4x7da0ff 4x9196ff 4xa58cff 1x 1xff9b9b! 1xffae9b! 1xffcd9b! 1xe3e6a4! 1xb1e6ba! 1x9ee6e0! 1x 1xb4c1ff! 1xdaaef3! 1x 2xe16ecd
+30 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                                                 │
+   1xff5f5f 1x 9xff8787 1x 1xff8787 1x 1xff9687 1xffbc87 1x 4xffd287 1x 1xffd287 1x 1xe9e18f 1xa1e1ad 1x 1x0b0e14/a1e1ad! 1x0b0e14/9edeb7! 1x0b0e14/9bdbc1! 1x0b0e14/97d7ca! 2x0b0e14/94d4d4! 1x0b0e14/91d1de! 1x0b0e14/8ecee8! 1x0b0e14/8acaf1! 1x0b0e14/87c7fb! 1x 1x87e1e1 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 49x 1xe16ecd
+31 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                            - Bash · 0:12 │
+   1xff5f5f 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xff7d5f 1xdc9473 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 28x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1xe16ecd
+32 │ skills  lit-adhd                                                                                          │
+   1xff5f5f 1x 6x8b949e 1x 1x0b0e14/96e1c3! 1x0b0e14/9cdacb! 1x0b0e14/a1d2d2! 1x0b0e14/a7cbda! 2x0b0e14/adc3e1! 1x0b0e14/b2bce9! 1x0b0e14/b8b4f0! 1x0b0e14/bdadf8! 1x0b0e14/c3a5ff! 89x 1xe16ecd
+33 │                      *                .                    +                    +               *         │
+   1xff5f5f 22x 1xffa55f 16x 1x8c9b5f 20x 1x519b97 20x 1x6a86cf 15x 1xb970cd 9x 1xe16ecd
+34 │                              .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1xff5f5f 30x 1xb19452 5x 1x959b5c 11x 1x639b72 8x 1x549b91 10x 1xff9a87 1xffa587 1xffb487 1xffcb87 1xffe187 1xe9e18f 1xc7e19a 1xb0e1a1 1x9ee1b4 1x92e1cb 1x8be1da 1x87dae9 1x87d2f0 1x87c7fb 6x 1x8e86e7 6x 1x67517e 5x 1x724b73 5x 1xe16ecd
+35 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1xff5f5f 26x 1x7e674a 15x 1x799b65 10x 1x497268 7x 1x5fd7d7 5x 1xffa187 1xffb487/1a1030 1xffc387/1a1030 1xffda87/1a1030 1xf4e18b/1a1030 1xd2e196/1a1030 1xb0e1a1/1a1030 1xa1e1ad/1a1030 1x96e1c3/1a1030 1x8fe1d2/1a1030 1x87dde5/1a1030 1x87d2f0/1a1030 1x87cbf8/1a1030 1x8fbfff/1a1030 1x9eb8ff/1a1030 1xb4adff 8x 1x9f7de7 6x 1x6f4d77 8x 1xe16ecd
+36 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1xff5f5f 20x 1xcb8257 1xcb8957 17x 1x9eaf66 2x93af69 2x88af6d 1x7daf71 6x 2x66af8b 2x62af93 2x 2x5bafa2 2x57afa9 1x53afb1! 1x53abb4! 1x53abb4 2x53a7b8 1xffad87/1a1030 1xffc387/1a1030 1xffd287/1a1030 1xf4e18b/1a1030 1xdde192/1a1030 1xbce19e/1a1030 1xa1e1ad/1a1030 1x9ae1bc/1a1030 1x8fe1d2/1a1030 1x87e1e1/1a1030 1x87d6ec/1a1030 1x87cef4/1a1030 1x87c3ff/1a1030 1x9eb8ff/1a1030 1xadb0ff/1a1030 1xc3a5ff/1a1030 1xd29ef0/1a1030 1xe992da/1a1030 1x7182cf 2x797ecf 2x807acf 2x8877cf 3x 2x9e6bc0 2xa668b8 1xad64b1! 1xad64b1 1xb560a9 2x 1xbc5ca2 3x 1xe16ecd
+37 ╰─ git main · ~/beta ─────────────────────────────────────────────────────────────────── 5s ago · 019a0000 ─╯
+   2xff5f5f 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3xff9b5f 4xffaf5f 4xffc35f 4xffd75f 4xe1d769 4xb4d778 4x96d782 4x82d791 4x78d7a5 4x6ed7b9 4x64d7cd 4x5fd2dc 4x5fc8e6 4x5fbef0 4x5fb4fa 4x69aaff 4x7da0ff 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2xe16ecd
+== run lanes 110
+29 ╭─  🔥 LIT  · lit-loop ──────────────────────────────────────────────────────────────────────────── WORK ● ─╮
+   2xff2d95 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 8x7cf5b0! 1x 1xe351bd 8xda5dca 8xd068d7 8xc774e5 4xbd80f2 8xb48cff 8xad99f5 4xa6a6eb 8x9fb3e1 8x98c1d8 4x91cece 7x8adbc4 1x 4x7cf5b0! 1x 1x7cf5b0! 1x 2x83e8ba
+30 │ interview ✓ ━━ plan ✓ ━━  work 2/5  ━━ review · ── done ·                                      ●● 2 lanes │
+   1xff2d95 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 1x0b0e14/b48cff! 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 1xef80ae 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 38x 1xa3e9b9 1x8b949e 1x 1xe6edf3! 1x 5x8b949e 1x 1x83e8ba
+31 │ └ task 2/5 ▰▰▱▱▱ · next ▸ Write the parser tests for 한국어 입력                            - Bash · 0:12 │
+   1xff2d95 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1xff8544 3x6a5f8f 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 28x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1x83e8ba
+32 │ ● lit-loop    work ▰▰▱▱▱ 2/5     running                                                                  │
+   1xff2d95 1x 1x6bdb8f 1x 8xffffff! 4x 4x8b949e 1x 1x6bdb8f 1x79df9a 3x6a5f8f 1x 3xffffff 5x 7x6bdb8f 66x 1x83e8ba
+33 │ ┬ 2 lanes in parallel                 *                    *                    *               .         │
+   1xff2d95 1x 1x8b949e 1x 1x8b949e 1x 5x8b949e 1x 2x8b949e 1x 8x8b949e 17x 1xa99bff 20x 1xff9ad5 20x 1xa99bff 15x 1x5d5c86 9x 1x83e8ba
+34 │ ├─ ● Aquinas       ▰▰▱▱▱ 2/5     running       *        *          ▁▃▅▆▇████▇▆▅▃▁      .      +     +     │
+   1xff2d95 1x 2x8b949e 1x 1x6bdb8f 1x 7xe6edf3! 7x 1x6bdb8f 1x79df9a 3x6a5f8f 1x 3xffffff 5x 7x6bdb8f 7x 1xff9ad5 8x 1xa99bff 10x 1xffec95 2xfff0a0 1xffec95 1xffe98b 1xffe175 1xffe580 1xffe98b 1xffec95 2xfff0a0 1xffec95 1xffe580 1xffe175 6x 1x7e5c76 6x 1x8b82cf 5x 1x8b82cf 5x 1x83e8ba
+35 │ └─ - Hume                4 steps idle    *          .       .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .      +        │
+   1xff2d95 1x 2x8b949e 1x 1x8b949e 1x 4xe6edf3! 16x 1x8b949e 1x 5x8b949e 1x 4x8b949e 4x 1xff9ad5 10x 1x7c75b6 7x 1x5d5c86 5x 1xff8f3c 1xff9540/1a1030 2xffa247/1a1030 1xff9540/1a1030 3xff8f3c/1a1030 1xff9540/1a1030 1xff9c44/1a1030 1xffa247/1a1030 1xff9c44/1a1030 1xff9540/1a1030 2xff8f3c/1a1030 1xff8f3c 8x 1x5d5c86 6x 1xcb81af 8x 1x83e8ba
+36 │ skills  lit-loop                  -----        --   ---~~~~.     ▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆     .~~~~~-. .--...   │
+   1xff2d95 1x 6x8b949e 1x 1x0b0e14/b48cff! 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 17x 2x834b9d 1x774685 2x7c4680 8x 2xb1466e 3x 1x985158 1xb1575f 1xb15d5a 1xcb6c59 1xff7e62! 1xff875a! 1xcb7353 1x7e5845 5x 1xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 5x 1x7e5845 2xe57d56 2xcb6c59 1xe56d65 1xcb5e66 1x64434b 1x 1x7e4754 1xb14b69 1xb1466e 1x984364 1x7a405e 1x8e446e 3x 1x83e8ba
+37 ╰─ git main · ~/beta ─────────────────────────────────────────────────────────────────── 5s ago · 019a0000 ─╯
+   2xff2d95 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3xe351bd 8xda5dca 8xd068d7 8xc774e5 4xbd80f2 2xbd8ce7 2xc78dce 4xd08db6 4xc297c7 2xd69499 2xebc475 2xf4cd5e 2xdec286 2xc3bfa8 2xcfc396 2xe7ca70 2xc3bfa8 2xccca91 2xe5ce6e 2xf2d05c 2xd8a277 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x83e8ba
+== run ready 110
+29 ╭─  🔥 LIT  · ready ──────────────────────────────────────────────────────────────────────────────── READY ─╮
+   2x983269 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 5xe6edf3! 1x 4x8a447d 8x854a84 8x804f8a 8x7c5591 4x775b98 8x72619e 8x6f6899 4x6b6e94 8x68758f 8x647c8b 4x618286 8x5d8981 1x 5x8b949e! 1x 2x5a8f7c
+30 │ type lit <task> in Codex to start                                                                         │
+   1x983269 1x 4x8b949e 1x 3x7cf5b0! 1x 6x7cf5b0! 1x 2x8b949e 1x 5x8b949e 1x 2x8b949e 1x 5x8b949e 73x 1x5a8f7c
+31 │                                                                                                           │
+   1x983269 107x 1x5a8f7c
+32 │                                                                                                           │
+   1x983269 107x 1x5a8f7c
+33 │                      *                .                    +                    +               *         │
+   1x983269 22x 1x7e5c76 16x 1x4c4e6b 20x 1x614e61 20x 1x525374 15x 1x57577d 9x 1x5a8f7c
+34 │                              .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1x983269 30x 1x614e61 5x 1x614e61 11x 1x614e61 8x 1x4c4e6b 10x 14x7e744a 6x 1x74576f 6x 1x414458 5x 1x414458 5x 1x5a8f7c
+35 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1x983269 26x 1x4d4452 15x 1x614e61 10x 1x414458 7x 1x5d5c86 5x 1x7e5c40 14x7e5c40/1a1030 1x7e5c40 8x 1x57577d 6x 1x4d4452 8x 1x5a8f7c
+36 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1x983269 20x 1x383951 1x3a3a56 17x 1x533d5d 2x563d5a 1x583d58 1x623e5b 1x523b51 6x 1x4d3c46 1x60414c 1x6a454c 1x4d3e45 2x 1x574444 2x604944 1x6a5043 2x7e5c42! 1x7e5f44 1x574c42 1x4d4740 18x7e395a/1a1030 1x605142 1x745c45 1x6a5442 2x574940 1x604b42 1x4d4141 3x 1x4d3f43 2x574047 1x6a424f 1x7e4754! 1x7e4357 1x573b4c 2x 1x4b3a4b 3x 1x5a8f7c
+37 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+   4x983269 8x933870 8x8e3e77 4x8a447d 8x854a84 8x804f8a 8x7c5591 2x775b98 2x54496b 6x5a4f68 2x635262 2x745954 2x7d5b4e 2x745954 2x6b635c 2x6a655b 2x85784d 10x988444 2x716f54 2x5e645c 2x675d55 4x7a604b 2x656152 6x51605b 2x506359 7x5a8f7c
+== run waiting 110
+29 ╭─  🔥 LIT  · ready ──────────────────────────────────────────────────────────────────────────────── READY ─╮
+   2x983269 1x 1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 1x8b949e 1x 5xe6edf3! 1x 4x8a447d 8x854a84 8x804f8a 8x7c5591 4x775b98 8x72619e 8x6f6899 4x6b6e94 8x68758f 8x647c8b 4x618286 8x5d8981 1x 5x8b949e! 1x 2x5a8f7c
+30 │ type lit <task> in Codex to start                                                                         │
+   1x983269 1x 4x8b949e 1x 3x7cf5b0! 1x 6x7cf5b0! 1x 2x8b949e 1x 5x8b949e 1x 2x8b949e 1x 5x8b949e 73x 1x5a8f7c
+31 │                                                                                                           │
+   1x983269 107x 1x5a8f7c
+32 │                                                                                                           │
+   1x983269 107x 1x5a8f7c
+33 │                      *                .                    +                    +               *         │
+   1x983269 22x 1x7e5c76 16x 1x4c4e6b 20x 1x614e61 20x 1x525374 15x 1x57577d 9x 1x5a8f7c
+34 │                              .     .           .        +          ▁▃▅▆▇████▇▆▅▃▁      *      .     .     │
+   1x983269 30x 1x614e61 5x 1x614e61 11x 1x614e61 8x 1x4c4e6b 10x 14x7e744a 6x 1x74576f 6x 1x414458 5x 1x414458 5x 1x5a8f7c
+35 │                          .               .          .       *     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        *      .        │
+   1x983269 26x 1x4d4452 15x 1x614e61 10x 1x414458 7x 1x5d5c86 5x 1x7e5c40 14x7e5c40/1a1030 1x7e5c40 8x 1x57577d 6x 1x4d4452 8x 1x5a8f7c
+36 │                    --                 -----.      .-~.  ---~~~~-.▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆-~----.   .--~~~-  .   │
+   1x983269 20x 1x383951 1x3a3a56 17x 1x533d5d 2x563d5a 1x583d58 1x623e5b 1x523b51 6x 1x4d3c46 1x60414c 1x6a454c 1x4d3e45 2x 1x574444 2x604944 1x6a5043 2x7e5c42! 1x7e5f44 1x574c42 1x4d4740 18x7e395a/1a1030 1x605142 1x745c45 1x6a5442 2x574940 1x604b42 1x4d4141 3x 1x4d3f43 2x574047 1x6a424f 1x7e4754! 1x7e4357 1x573b4c 2x 1x4b3a4b 3x 1x5a8f7c
+37 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+   4x983269 8x933870 8x8e3e77 4x8a447d 8x854a84 8x804f8a 8x7c5591 2x775b98 2x54496b 6x5a4f68 2x635262 2x745954 2x7d5b4e 2x745954 2x6b635c 2x6a655b 2x85784d 10x988444 2x716f54 2x5e645c 2x675d55 4x7a604b 2x656152 6x51605b 2x506359 7x5a8f7c
+== run working 110 round
+29 ╭─ 🔥 LIT · start-work ────────────────────────────────────────────────────────────────────────── WORK ● ─╮
+   2xff2d95 1x 1xffa033 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1xff3388 1x 1x8b949e 1x 10x7cf5b0! 1x 7xda5dca 8xd068d7 8xc774e5 4xbd80f2 8xb48cff 8xad99f5 4xa6a6eb 8x9fb3e1 8x98c1d8 4x91cece 7x8adbc4 1x 4x7cf5b0! 1x 1x7cf5b0! 1x 2x83e8ba
+30 │ interview ✓ ━━ plan ✓ ━━ work 2/5 ━━ review · ── done ·                                                 │
+   1xff2d95 1x 9xff7a4a 1x 1xff7a4a 1x 1xff7957 1xff7670 1x 4xff757c 1x 1xff757c 1x 1xff7389 1xff70a2 1x 1xb48cff 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x7cf5b0 1x 1xef80ae 1x46505c 1x 6x8b949e 1x 1x8b949e 1x 2x46505c 1x 4x8b949e 1x 1x8b949e 49x 1x83e8ba
+31 │ └ task 2/5     · next ▸ Write the parser tests for 한국어 입력                            - Bash · 0:12 │
+   1xff2d95 1x 1x8b949e 1x 4x8b949e 1x 1xffffff! 2x8b949e 1x 1xffa033 1x/ff8544 2x/2a2340 1x2a2340 1x 1x8b949e 1x 4x8b949e 1x 1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3 28x 1x7cf5b0! 1x 4xe6edf3! 1x 1x8b949e 1x 4x8b949e 1x 1x83e8ba
+32 │ skills start-work                                                                                       │
+   1xff2d95 1x 6x8b949e 1x 1xb48cff 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x7cf5b0 87x 1x83e8ba
+33 │                      .                *                    *                    *               .         │
+   1xff2d95 22x 1x986889 16x 1xa99bff 20x 1xff9ad5 20x 1xa99bff 15x 1x5d5c86 9x 1x83e8ba
+34 │                              *     *           *        *          ▁▃▅▆▇████▇▆▅▃▁      .      +     +     │
+   1xff2d95 30x 1xff9ad5 5x 1xff9ad5 11x 1xff9ad5 8x 1xa99bff 10x 1xffec95 2xfff0a0 1xffec95 1xffe98b 1xffe175 1xffe580 1xffe98b 1xffec95 2xfff0a0 1xffec95 1xffe580 1xffe175 6x 1x7e5c76 6x 1x8b82cf 5x 1x8b82cf 5x 1x83e8ba
+35 │                          .               *          .       .     ▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▅        .      +        │
+   1xff2d95 26x 1xb1759c 15x 1xff9ad5 10x 1x7c75b6 7x 1x5d5c86 5x 1xff8f3c 1xff9540/1a1030 2xffa247/1a1030 1xff9540/1a1030 3xff8f3c/1a1030 1xff9540/1a1030 1xff9c44/1a1030 1xffa247/1a1030 1xff9c44/1a1030 1xff9540/1a1030 2xff8f3c/1a1030 1xff8f3c 8x 1x5d5c86 6x 1xcb81af 8x 1x83e8ba
+36 │                .-                 -----        --   ---~~~~.     ▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆▆     .~~~~~-. .--...   │
+   1xff2d95 16x 2x453e73 17x 2x834b9d 1x774685 2x7c4680 8x 2xb1466e 3x 1x985158 1xb1575f 1xb15d5a 1xcb6c59 1xff7e62! 1xff875a! 1xcb7353 1x7e5845 5x 1xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 1xff358b/1a1030 2xff2d8a/1a1030 1xff358b/1a1030 1xff3d8b/1a1030 2xff448c/1a1030 1xff3d8b/1a1030 5x 1x7e5845 2xe57d56 2xcb6c59 1xe56d65 1xcb5e66 1x64434b 1x 1x7e4754 1xb14b69 1xb1466e 1x984364 1x7a405e 1x8e446e 3x 1x83e8ba
+37 ╰─ git main · ~/beta ─────────────────────────────────────────────────────────────────── 5s ago · 019a0000 ─╯
+   2xff2d95 1x 3x8b949e 1x 4x7cf5b0 1x 1x8b949e 1x 6xe6edf3 1x 3xe351bd 8xda5dca 8xd068d7 8xc774e5 4xbd80f2 2xbd8ce7 2xc78dce 4xd08db6 4xc297c7 2xd69499 2xebc475 2xf4cd5e 2xdec286 2xc3bfa8 2xcfc396 2xe7ca70 2xc3bfa8 2xccca91 2xe5ce6e 2xf2d05c 2xd8a277 1x 2x8b949e 1x 3x8b949e 1x 1x8b949e 1x 8x8b949e 1x 2x83e8ba
+== hud working 36
+00  🔥 LIT 019a0000 · ~/beta · update…
+   1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 8x~ 1x 1x~ 1x 6x~ 1x 1x~ 1x 7x~
+01 🔥 LIT · start-work · working
+   2x! 1x 3x! 1x 1x! 1x 10x! 1x 1x! 1x 7x!
+02 ✓ interview ── ✓ plan ── ● work 2/…
+   24x 1x0b0e14/b48cff! 1x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 1x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 3x
+03 Next: Write the parser tests for …
+   34x
+04 Running: Bash, 0:12
+   19x
+== hud plain working 80
+00  🔥 LIT 019a0000 · ~/beta · updated 5s ago
+   1x0b0e14/7cf5b0! 2x0b0e14/83f5b5! 1x0b0e14/8af4bb! 1x0b0e14/92f4c0! 1x0b0e14/99f4c5! 1x0b0e14/a0f3cb! 1x0b0e14/a7f3d0! 8x~ 1x 1x~ 1x 6x~ 1x 1x~ 1x 7x~ 1x 2x~ 1x 3x~
+01 🔥 LIT · start-work · working
+   2x! 1x 3x! 1x 1x! 1x 10x! 1x 1x! 1x 7x!
+02 ✓ interview ── ✓ plan ── ● work 2/5 ── ○ review ── ○ done
+   57x
+03 Next: Write the parser tests for 한국어 입력
+   44x
+04 Running: Bash, 0:12
+   19x
+== hud plain working 80 without truecolor
+00 019a0000 · ~/beta · updated 5s ago
+   8x~ 1x 1x~ 1x 6x~ 1x 1x~ 1x 7x~ 1x 2x~ 1x 3x~
+01 🔥 LIT · start-work · working
+   2x! 1x 3x! 1x 1x! 1x 10x! 1x 1x! 1x 7x!
+02 ✓ interview ── ✓ plan ── ● work 2/5 ── ○ review ── ○ done
+   57x
+03 Next: Write the parser tests for 한국어 입력
+   44x
+04 Running: Bash, 0:12
+   19x
+== run plain working 80
+34  🔥 LIT  start-work · 1:00
+   1x0b0e14/ffa033! 2x0b0e14/ff8c40! 1x0b0e14/ff7e48! 1x0b0e14/ff6a55! 1x0b0e14/ff5568! 1x0b0e14/ff4875! 1x0b0e14/ff3388! 1x 10x7cf5b0! 1x 1x8b949e 1x 4xe6edf3
+35 ✓ interview ── ✓ plan ──  ● work 2/5  ── ○ review ── ○ done
+   1xffa033 1x 9xffa033 1x 2xff933c 1x 1xff8544 1x 4xff8544 1x 2xff784d 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 2x46505c 1x 1x8b949e 1x 6x8b949e 1x 2x46505c 1x 1x8b949e 1x 4x8b949e
+36 Running: Bash, 0:12
+   8xff9b5e 1x 5xff9b5e 1x 4xff9b5e
+37 ▸ Write the parser tests for 한국어 입력
+   1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3
+== hud turn 36
+00  🔥 LIT 019a0000 · ~/beta · update…
+   1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffbf59! 1x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 8x~ 1x 1x~ 1x 6x~ 1x 1x~ 1x 7x~
+01 🔥 LIT · start-work · your turn
+   2xffaf3c! 1x 3xffaf3c! 1x 1xffaf3c! 1x 10xffaf3c! 1x 1xffaf3c! 1x 4xffaf3c! 1x 4xffaf3c!
+02 ✓ interview ── ✓ plan ── ● work 2/…
+   1xffaf3c 1x 9xffaf3c 1x 2xffaf3c 1x 1xffaf3c 1x 4xffaf3c 1x 2xffaf3c 1x0b0e14/ffaf3c! 1x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 3xffaf3c
+03 Next: Write the parser tests for …
+   5xffaf3c 1x 5xffaf3c 1x 3xffaf3c 1x 6xffaf3c 1x 5xffaf3c 1x 3xffaf3c 1x 1xffaf3c
+== hud plain turn 80
+00  🔥 LIT 019a0000 · ~/beta · updated 5s ago
+   1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffbf59! 1x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 8x~ 1x 1x~ 1x 6x~ 1x 1x~ 1x 7x~ 1x 2x~ 1x 3x~
+01 🔥 LIT · start-work · your turn
+   2xffaf3c! 1x 3xffaf3c! 1x 1xffaf3c! 1x 10xffaf3c! 1x 1xffaf3c! 1x 4xffaf3c! 1x 4xffaf3c!
+02 ✓ interview ── ✓ plan ── ● work 2/5 ── ○ review ── ○ done
+   1xffaf3c 1x 9xffaf3c 1x 2xffaf3c 1x 1xffaf3c 1x 4xffaf3c 1x 2xffaf3c 1x 1xffaf3c 1x 4xffaf3c 1x 3xffaf3c 1x 2xffaf3c 1x 1xffaf3c 1x 6xffaf3c 1x 2xffaf3c 1x 1xffaf3c 1x 4xffaf3c
+03 Next: Write the parser tests for 한국어 입력
+   5xffaf3c 1x 5xffaf3c 1x 3xffaf3c 1x 6xffaf3c 1x 5xffaf3c 1x 3xffaf3c 1x 6xffaf3c 1x 4xffaf3c
+== hud plain turn 80 without truecolor
+00 019a0000 · ~/beta · updated 5s ago
+   8x~ 1x 1x~ 1x 6x~ 1x 1x~ 1x 7x~ 1x 2x~ 1x 3x~
+01 🔥 LIT · start-work · your turn
+   2xffaf3c! 1x 3xffaf3c! 1x 1xffaf3c! 1x 10xffaf3c! 1x 1xffaf3c! 1x 4xffaf3c! 1x 4xffaf3c!
+02 ✓ interview ── ✓ plan ── ● work 2/5 ── ○ review ── ○ done
+   1xffaf3c 1x 9xffaf3c 1x 2xffaf3c 1x 1xffaf3c 1x 4xffaf3c 1x 2xffaf3c 1x 1xffaf3c 1x 4xffaf3c 1x 3xffaf3c 1x 2xffaf3c 1x 1xffaf3c 1x 6xffaf3c 1x 2xffaf3c 1x 1xffaf3c 1x 4xffaf3c
+03 Next: Write the parser tests for 한국어 입력
+   5xffaf3c 1x 5xffaf3c 1x 3xffaf3c 1x 6xffaf3c 1x 5xffaf3c 1x 3xffaf3c 1x 6xffaf3c 1x 4xffaf3c
+== run plain turn 80
+34  🔥 LIT  start-work · 0:56
+   1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffbf59! 1x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 10x7cf5b0! 1x 1x8b949e 1x 4xffaf3c
+35 ✓ interview ── ✓ plan ──  ● work 2/5  ── ○ review ── ○ done
+   1x9a6420 1x 9x9a6420 1x 2xb37727 1x 1xcd8a2e 1x 4xcd8a2e 1x 2xe69c35 1x 1x0b0e14/ffaf3c! 2x0b0e14/ffb446! 1x0b0e14/ffba50! 1x0b0e14/ffbf59! 2x0b0e14/ffc463! 1x0b0e14/ffc96d! 1x0b0e14/ffcf77! 2x0b0e14/ffd480! 1x0b0e14/ffd98a! 1x 2x46505c 1x 1x8b949e 1x 6x8b949e 1x 2x46505c 1x 1x8b949e 1x 4x8b949e
+36 Your turn: answer Codex above
+   4x~ 1x 5x~ 1x 6x~ 1x 5x~ 1x 5x~
+37 ▸ Write the parser tests for 한국어 입력
+   1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3
+== hud done 36
+00  🔥 LIT 019a0000 · ~/beta · update…
+   1x0b0e14/3ddc84! 2x0b0e14/55e595! 1x0b0e14/64eca0! 1x0b0e14/7cf5b0! 1x0b0e14/93f9bf! 1x0b0e14/a2fbca! 1x0b0e14/b8ffd9! 8x~ 1x 1x~ 1x 6x~ 1x 1x~ 1x 7x~
+01 🔥 LIT · start-work · done ✓
+   2x6bdb8f! 1x 3x6bdb8f! 1x 1x6bdb8f! 1x 10x6bdb8f! 1x 1x6bdb8f! 1x 4x6bdb8f! 1x 1x6bdb8f!
+02 ✓ interview ── ✓ plan ── ● work 2/…
+   1x6bdb8f 1x 9x6bdb8f 1x 2x6bdb8f 1x 1x6bdb8f 1x 4x6bdb8f 1x 2x6bdb8f 1x0b0e14/9276ce! 1x0b0e14/8d80c7! 1x0b0e14/888abf! 1x0b0e14/8294b8! 1x0b0e14/78a7a9! 1x0b0e14/73b1a2! 1x0b0e14/6dbb9a! 1x0b0e14/68c593! 3x6bdb8f
+03 Next: Write the parser tests for …
+   5x6bdb8f 1x 5x6bdb8f 1x 3x6bdb8f 1x 6x6bdb8f 1x 5x6bdb8f 1x 3x6bdb8f 1x 1x6bdb8f
+== hud plain done 80
+00  🔥 LIT 019a0000 · ~/beta · updated 5s ago
+   1x0b0e14/3ddc84! 2x0b0e14/55e595! 1x0b0e14/64eca0! 1x0b0e14/7cf5b0! 1x0b0e14/93f9bf! 1x0b0e14/a2fbca! 1x0b0e14/b8ffd9! 8x~ 1x 1x~ 1x 6x~ 1x 1x~ 1x 7x~ 1x 2x~ 1x 3x~
+01 🔥 LIT · start-work · done ✓
+   2x6bdb8f! 1x 3x6bdb8f! 1x 1x6bdb8f! 1x 10x6bdb8f! 1x 1x6bdb8f! 1x 4x6bdb8f! 1x 1x6bdb8f!
+02 ✓ interview ── ✓ plan ── ● work 2/5 ── ○ review ── ○ done
+   1x6bdb8f 1x 9x6bdb8f 1x 2x6bdb8f 1x 1x6bdb8f 1x 4x6bdb8f 1x 2x6bdb8f 1x 1x6bdb8f 1x 4x6bdb8f 1x 3x6bdb8f 1x 2x6bdb8f 1x 1x6bdb8f 1x 6x6bdb8f 1x 2x6bdb8f 1x 1x6bdb8f 1x 4x6bdb8f
+03 Next: Write the parser tests for 한국어 입력
+   5x6bdb8f 1x 5x6bdb8f 1x 3x6bdb8f 1x 6x6bdb8f 1x 5x6bdb8f 1x 3x6bdb8f 1x 6x6bdb8f 1x 4x6bdb8f
+== hud plain done 80 without truecolor
+00 019a0000 · ~/beta · updated 5s ago
+   8x~ 1x 1x~ 1x 6x~ 1x 1x~ 1x 7x~ 1x 2x~ 1x 3x~
+01 🔥 LIT · start-work · done ✓
+   2x6bdb8f! 1x 3x6bdb8f! 1x 1x6bdb8f! 1x 10x6bdb8f! 1x 1x6bdb8f! 1x 4x6bdb8f! 1x 1x6bdb8f!
+02 ✓ interview ── ✓ plan ── ● work 2/5 ── ○ review ── ○ done
+   1x6bdb8f 1x 9x6bdb8f 1x 2x6bdb8f 1x 1x6bdb8f 1x 4x6bdb8f 1x 2x6bdb8f 1x 1x6bdb8f 1x 4x6bdb8f 1x 3x6bdb8f 1x 2x6bdb8f 1x 1x6bdb8f 1x 6x6bdb8f 1x 2x6bdb8f 1x 1x6bdb8f 1x 4x6bdb8f
+03 Next: Write the parser tests for 한국어 입력
+   5x6bdb8f 1x 5x6bdb8f 1x 3x6bdb8f 1x 6x6bdb8f 1x 5x6bdb8f 1x 3x6bdb8f 1x 6x6bdb8f 1x 4x6bdb8f
+== run plain done 80
+34  🔥 LIT  start-work · done ✓ 0:56
+   1x0b0e14/3ddc84! 2x0b0e14/55e595! 1x0b0e14/64eca0! 1x0b0e14/7cf5b0! 1x0b0e14/93f9bf! 1x0b0e14/a2fbca! 1x0b0e14/b8ffd9! 1x 10x7cf5b0! 1x 1x8b949e 1x 4xe6edf3 1x 1xe6edf3 1x 4xe6edf3
+35 ✓ interview ── ✓ plan ──  ● work 2/5  ── ○ review ── ○ done
+   1xffa033 1x 9xffa033 1x 2xff933c 1x 1xff8544 1x 4xff8544 1x 2xff784d 1x 1x0b0e14/b48cff! 2x0b0e14/ad99f5! 1x0b0e14/a6a6eb! 1x0b0e14/9fb3e1! 2x0b0e14/98c1d8! 1x0b0e14/91cece! 1x0b0e14/8adbc4! 2x0b0e14/83e8ba! 1x0b0e14/7cf5b0! 1x 2x46505c 1x 1x8b949e 1x 6x8b949e 1x 2x46505c 1x 1x8b949e 1x 4x8b949e
+36 Turn done
+   4x~ 1x 4x~
+37 ▸ Write the parser tests for 한국어 입력
+   1x7cf5b0 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 5xe6edf3 1x 3xe6edf3 1x 6xe6edf3 1x 4xe6edf3

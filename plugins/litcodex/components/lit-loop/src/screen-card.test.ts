@@ -76,6 +76,80 @@ describe("renderScreenCard", () => {
 		for (const row of colored) expect(displayWidth(row.replace(/\u001b\[[0-9;]*m/gu, ""))).toBeLessThanOrEqual(width);
 	});
 
+	it.each([false, true])(
+		"keeps what a wrap would break inside a phone's pane when no width is given (colour %s)",
+		(color) => {
+			const stage = (word: string, state: "done" | "current" | "pending") => ({
+				key: word,
+				icon: "",
+				word,
+				state,
+				label: state === "current" ? word.toUpperCase() : null,
+				progress: null,
+			});
+			const map: WorkflowMap = {
+				...MAP,
+				cells: [
+					stage("interview", "done"),
+					stage("plan", "done"),
+					stage("work", "current"),
+					stage("review", "pending"),
+					stage("done", "pending"),
+				],
+			};
+			const checklist = [
+				{ state: "current" as const, label: "Establish fixtures, capability decisions and families" },
+			];
+			const rows = renderScreenCard({ ...INPUT, map, checklist }, { color })
+				.replace(/\u001b\[[0-9;]*m/gu, "")
+				.split("\n");
+			for (const row of rows) expect(displayWidth(row)).toBeLessThanOrEqual(44);
+			const said = rows.join(" ");
+			for (const word of ["interview", "plan", "work", "review", "done"]) expect(said).toContain(word);
+		},
+	);
+
+	const bare = (card: string): string[] => card.replace(/\u001b\[[0-9;]*m/gu, "").split("\n");
+
+	it("keeps the sun's line to a phone's 32 cells at every width", () => {
+		for (const options of [{ color: true }, { color: true, width: 100 }]) {
+			const horizon = bare(renderScreenCard(INPUT, options)).at(-1) ?? "";
+			expect(horizon).toMatch(/^▁+▂▄▅▆▇▇▆▅▄▂▁+$/u);
+			expect(displayWidth(horizon)).toBeLessThanOrEqual(32);
+		}
+	});
+
+	it("ends a pill that ends a row in a no-break space, which Codex keeps; a pill inside a row stays as it was", () => {
+		const map: WorkflowMap = { ...MAP, cells: MAP.cells.slice(0, 2) };
+		const ends = renderScreenCard({ ...INPUT, map }, { color: true }).split("\n")[1] ?? "";
+		expect(ends.replace(/\u001b\[[0-9;]*m/gu, "")).toBe("✓ interview ──  ● work 3/7\xa0");
+		const inside = renderScreenCard(INPUT, { color: true });
+		expect(inside.replace(/\u001b\[[0-9;]*m/gu, "")).not.toContain("\xa0");
+	});
+
+	it.each([false, true])(
+		"breaks long words inside the card between words, and keeps every one (colour %s)",
+		(color) => {
+			const note =
+				"your turn · answer the question above · next: Write the parser tests for 한국어 입력 and the reader";
+			const stack =
+				"Now: litresearch (wave 2) · paused: start-work (work, 3/7), lit-hijack (plan) · type `lit continue` to go back";
+			const rows = bare(renderScreenCard({ ...INPUT, note, stack }, { color }));
+			for (const row of rows) expect(displayWidth(row), row).toBeLessThanOrEqual(72);
+			expect(rows).toContain("type `lit continue` to go back");
+			const said = rows.join(" ").replace(/[\s·]+/gu, " ");
+			for (const part of [note, stack]) expect(said).toContain(part.replace(/[\s·]+/gu, " "));
+		},
+	);
+
+	it.each([false, true])("gives the way back its own row when the paused row is too long (colour %s)", (color) => {
+		const way = "type `lit continue` to go back";
+		const long = `Now: lit-hijack · paused: start-work (work, 3/7), lit-loop (w, 1/5) · ${way}`;
+		expect(bare(renderScreenCard({ ...INPUT, stack: long }, { color }))).toContain(way);
+		const short = `Now: lit-hijack · paused: lit-loop (work) · ${way}`;
+		expect(bare(renderScreenCard({ ...INPUT, stack: short }, { color, width: 96 }))).toContain(short);
+	});
+
 	it("strips control characters and escapes from record-derived text", () => {
 		const card = renderScreenCard(
 			{

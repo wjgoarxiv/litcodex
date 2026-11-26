@@ -20,6 +20,12 @@ export interface InstallOptions {
 	readonly subagentModel: string;
 	readonly subagentEffort: import("../config-migration/gpt56-policy.js").ReasoningEffort;
 	readonly style?: string;
+	/** Add the icon font when none is here. */
+	readonly round?: boolean;
+	/** The pill ends to save; a run without it keeps the saved choice. */
+	readonly glyphs?: import("@litcodex/lit-loop/dist/glyph-choice.js").GlyphChoice;
+	/** Turn the LIT sunset footer on without asking. */
+	readonly sunsetFooter?: boolean;
 	readonly reconfigure: boolean;
 	/** Resolved absolute Codex home (never relative). */
 	readonly codexHome: string;

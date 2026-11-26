@@ -243,6 +243,7 @@ For report or proposal output, bare `lit` loads `lit-docx`; for slide or present
 | `litcodex run [-- <codex args>]` | Run Codex in this terminal with the live LIT card in the bottom rows |
 | `litcodex sunset on\|off\|status` | Show the LIT sunset in the footer of the terminal `codex` (off by default) |
 | `litcodex screen-status on\|off\|status` | Colour the hook card; terminal `codex` only (off by default) |
+| `litcodex screen-status light\|dark\|truecolor\|256` | Fit that colour to a white window, or to 256 colours |
 
 ## Automatic handoff
 
@@ -290,14 +291,22 @@ On a dark truecolor terminal at least 40 columns wide the HUD is one framed card
   to three rows for them when the window has the rows. A low window keeps the title and the newest rows.
 
 It moves while LIT works and for two seconds after a recorded completion, and stands still otherwise. Moving it reads
-no record and adds about 18 KB a second of terminal output. Narrower windows, a light background reported through
-`COLORFGBG`, terminals without truecolor, `NO_COLOR` and `--once` get the card as plain lines.
+no record and adds about 18 KB a second of terminal output. Narrower windows, a light background, terminals without
+truecolor, `NO_COLOR` and `--once` get the card as plain lines. `COLORTERM` or Windows Terminal's `WT_SESSION` counts as
+truecolor.
 
-`LITCODEX_HUD_GLYPHS=auto|nerd|basic` sets the ends of pills and gauges. `auto`, the default, draws them round in
-Windows Terminal, VS Code, kitty, WezTerm and Ghostty, or when the name of an installed font says it is a Nerd Font;
-over SSH only the terminal counts. `nerd` always draws them round, `basic` never. Use `basic` if boxes appear. One answer
-holds for the framed card, the truecolor lines of a narrower window and the install cards, so round and square ends never
-mix.
+In colour the HUD asks the terminal once for its background (OSC 11), and no answer counts as dark unless `COLORFGBG`
+says light. The answer arrives on the keyboard, so the HUD holds the keyboard raw while it runs and gives it back on the
+way out. Ctrl-C, Ctrl-\ and Ctrl-Z work as usual; other keys do nothing. `NO_COLOR`, `--once` and a pipe ask nothing.
+
+`litcodex install --glyphs auto|round|square` saves the ends of pills and gauges. `auto`, the default, draws them round
+in Windows Terminal, VS Code, kitty, WezTerm and Ghostty, or when the name of an installed font says it is a Nerd Font;
+over SSH only the terminal counts. `round` always draws them round, over SSH too, and `square` never. Use `square` if
+boxes appear. One answer holds for the framed card, the truecolor lines of a narrower window, `litcodex run`, the sunset
+footer and the install cards, so round and square ends never mix. The coloured chat card follows a saved `round` and is
+square otherwise, since a hook cannot see the window. `LITCODEX_HUD_GLYPHS` with the same words (or `nerd` and `basic`)
+wins over the saved choice in the HUD, `litcodex run` and the install cards; the footer gets no such variable from Codex.
+`litcodex doctor` ends with a `ROUND_ENDS:` line that says what holds and the one thing that changes it.
 
 The HUD reads the thread pointers under `$CODEX_HOME/litcodex/lit-loop/threads/` and the session's small records under
 `.litcodex/` in its project. For the usage figures on the framed card it also reads the end of that session's own
@@ -331,6 +340,11 @@ sunset LIT pill, a pill around the current stage and a horizon row with a low su
 on you; `NO_COLOR` keeps it plain, and without colour the words are the same. The hook input does
 not name the client, and the Codex desktop app and IDE show colour codes as raw text, so colour is for terminal
 `codex` users only.
+
+A hook also cannot see the window and runs with the environment of whichever terminal started Codex's server. Its colours
+therefore follow two saved choices. `litcodex screen-status light` is for a white window: words in the window's own ink,
+colour on the pills, the marks and the horizon; `dark`, the default, goes back. `litcodex screen-status 256` is for a
+terminal without 24-bit colour, and `truecolor` goes back. `litcodex sunset status` names both choices.
 
 `litcodex statusline` prints one line for a status line command. It reads optional JSON on stdin (at most
 64 KiB, for at most 200 ms) in the Claude-compatible shape: `session_id`, `cwd` or `workspace.current_dir`. It
@@ -372,8 +386,9 @@ end of a read until the rest arrives. A held tail is written after 50 ms even wh
 On a dark truecolor terminal of at least 60 columns and 24 rows the panel is the framed card of `litcodex hud`: seven
 rows, or nine from 34 terminal rows on. It moves about ten times a second while LIT works and for two seconds after a
 recorded completion; moving it reads no record, and only changed rows are written. Elsewhere (a smaller window, a light
-background reported through `COLORFGBG`, no truecolor, `NO_COLOR`) it is four rows: the route with the turn's
-clock, the stage map, the running step and one checklist row. It is drawn inside a cursor save and restore after each read that ends between whole sequences, never while
+background, no truecolor, `NO_COLOR`) it is four rows: the route with the turn's
+clock, the stage map, the running step and one checklist row. Codex asks the terminal for its background by itself; the
+panel reads that answer as it passes, asks nothing of its own, and falls back to `COLORFGBG`. It is drawn inside a cursor save and restore after each read that ends between whole sequences, never while
 Codex holds a saved cursor of its own (`ESC7` or `ESC[s` not yet restored), and on its own timer when its text
 changed (once a second, or a tenth of one while the card moves). After a held tail was forced out, or after Codex reset the terminal (`ESC c`, `ESC[!p`), the scroll region
 is set again before the next draw. It shows the newest session whose thread pointer names the run's folder and whose

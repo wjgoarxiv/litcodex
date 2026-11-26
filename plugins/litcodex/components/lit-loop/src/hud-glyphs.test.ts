@@ -80,6 +80,9 @@ describe("hasIconFont", () => {
 		const data = root();
 		font(join(data, "fonts", "nf"), "XNerdFont-Regular.ttf");
 		expect(hasIconFont({ HOME: root(), XDG_DATA_HOME: data }, "linux")).toBe(true);
+		const usual = root();
+		font(join(usual, ".local", "share", "fonts"), "XNerdFont-Regular.ttf");
+		expect(hasIconFont({ HOME: usual, XDG_DATA_HOME: "relative" }, "linux")).toBe(true);
 		const local = root();
 		font(join(local, "Microsoft", "Windows", "Fonts"), "XNerdFont-Regular.ttf");
 		expect(hasIconFont({ LOCALAPPDATA: local }, "win32")).toBe(true);

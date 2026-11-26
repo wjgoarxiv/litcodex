@@ -151,22 +151,26 @@ export function matchLitTrigger(prompt) {
 }
 const hasExplicitStartWorkPrefix = (prompt, tokenIndex, allowDollar) => (allowDollar ? /^\s*\$?$/u : /^\s*$/u).test(prompt.slice(0, tokenIndex));
 function hasValidStartWorkGrammar(prompt) {
+    return startWorkSelector(prompt) !== null;
+}
+/** The plan a typed start-work names, "" where it names none, or null where the line is no start-work. */
+export function startWorkSelector(prompt) {
     if (/[^\S ]/u.test(prompt) || prompt.includes("  "))
-        return false;
+        return null;
     const route = prompt.match(/^(?:start-work|\$start-work|lit start work|\$litcodex:start-work)(?: (.+))?$/u);
     if (route === null)
-        return false;
+        return null;
     let rest = route[1] ?? "";
     const worktreeMarkers = [...rest.matchAll(/(?:^| )--worktree /g)];
     if (worktreeMarkers.length > 1)
-        return false;
+        return null;
     if (worktreeMarkers.length === 1) {
         const marker = worktreeMarkers[0];
         if (marker === undefined || marker.index === undefined)
-            return false;
+            return null;
         const worktree = rest.slice(marker.index + marker[0].length);
         if (worktree.length === 0 || !isAbsolute(worktree) || / --\S/.test(worktree)) {
-            return false;
+            return null;
         }
         rest = rest.slice(0, marker.index);
     }
@@ -174,7 +178,7 @@ function hasValidStartWorkGrammar(prompt) {
     const selector = flags?.[1] === undefined ? rest : flags.length === 3 ? "" : flags[1];
     const resume = flags === null ? undefined : flags.length === 3 ? flags[1] : flags[2];
     const grant = flags === null ? undefined : flags.length === 3 ? flags[2] : flags[3];
-    return !selector.includes("--") && (resume === undefined) === (grant === undefined);
+    return !selector.includes("--") && (resume === undefined) === (grant === undefined) ? selector : null;
 }
 function explicitStartWorkPrefix(prompt) {
     for (const prefix of ["$litcodex:start-work", "lit start work", "$start-work", "start-work"]) {
