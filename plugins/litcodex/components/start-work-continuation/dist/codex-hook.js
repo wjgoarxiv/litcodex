@@ -5,7 +5,7 @@ import { ANSWER_MAX_CHARS, codeSpan, denySteps, driveStop, inboxText, loadRun, p
 import { readAutopilot } from "./autopilot-store.js";
 import { START_WORK_CONTINUATION_DIRECTIVE } from "./directive.js";
 import { findLifecycleRoot } from "./lifecycle-root.js";
-import { advanceStopLease, cancelWorkFromUserPrompt, denyParkedBoundaries, dropVanishedParkedBoundary, inspectLifecycleState, LifecycleStoreError, reconcileLifecycleState, selectWorkForSession, takeCancelNotice, transitionWork, } from "./lifecycle-store.js";
+import { advanceStopLease, cancelWorkFromUserPrompt, denyParkedBoundaries, dropVanishedParkedBoundary, inspectLifecycleState, LifecycleStoreError, reconcileLifecycleState, sameFile, selectWorkForSession, takeCancelNotice, transitionWork, } from "./lifecycle-store.js";
 import { readContinuationState } from "./work-state-reader.js";
 const MAX_TRANSCRIPT_BYTES = 2_000_000;
 const MAX_INPUT_STRING = 100_000;
@@ -458,7 +458,7 @@ function inspectTranscript(transcriptPath) {
             return "invalid";
         fd = openSync(transcriptPath, constants.O_RDONLY | O_NOFOLLOW);
         const stat = fstatSync(fd);
-        if (before !== null && (stat.ino !== before.ino || stat.dev !== before.dev))
+        if (before !== null && !sameFile(stat, before))
             return "invalid";
         if (!stat.isFile() || stat.size > MAX_TRANSCRIPT_BYTES)
             return "invalid";

@@ -20,6 +20,7 @@ import {
 	initializeWork,
 	readLifecycleState,
 	reconcileLifecycleState,
+	sameFile,
 	statePathFor,
 	transitionWork,
 } from "../src/lifecycle-store.js";
@@ -794,3 +795,19 @@ function grant(root: string) {
 		root,
 	};
 }
+
+describe("sameFile", () => {
+	it("on Windows the file index decides when lstat reports device 0 and fstat the volume serial", () => {
+		const viaLstat = { dev: 0n, ino: 36873221951320231n };
+		const viaFstat = { dev: 1012667481n, ino: 36873221951320231n };
+		expect(sameFile(viaLstat, viaFstat, "win32")).toBe(true);
+		expect(sameFile(viaLstat, { ...viaFstat, ino: 7n }, "win32")).toBe(false);
+	});
+
+	it("elsewhere the device and the index must both match", () => {
+		const file = { dev: 16777234n, ino: 42n };
+		expect(sameFile(file, { ...file }, "linux")).toBe(true);
+		expect(sameFile(file, { ...file, dev: 0n }, "linux")).toBe(false);
+		expect(sameFile(file, { ...file, ino: 43n }, "darwin")).toBe(false);
+	});
+});

@@ -34,6 +34,7 @@ import {
 	inspectLifecycleState,
 	LifecycleStoreError,
 	reconcileLifecycleState,
+	sameFile,
 	selectWorkForSession,
 	takeCancelNotice,
 	transitionWork,
@@ -531,7 +532,7 @@ function inspectTranscript(transcriptPath: string | null): "clear" | "pressure" 
 		if (before !== null && (before.isSymbolicLink() || !before.isFile())) return "invalid";
 		fd = openSync(transcriptPath, constants.O_RDONLY | O_NOFOLLOW);
 		const stat = fstatSync(fd);
-		if (before !== null && (stat.ino !== before.ino || stat.dev !== before.dev)) return "invalid";
+		if (before !== null && !sameFile(stat, before)) return "invalid";
 		if (!stat.isFile() || stat.size > MAX_TRANSCRIPT_BYTES) return "invalid";
 		const buffer = Buffer.alloc(stat.size);
 		let offset = 0;

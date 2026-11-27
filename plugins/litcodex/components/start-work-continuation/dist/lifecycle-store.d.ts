@@ -233,4 +233,15 @@ export declare function advanceStopLease(cwd: string, request: {
     readonly expectedRevision: number;
 }, options?: StoreOptions): StopLeaseResult;
 export declare function reconcileLifecycleState(cwd: string, options?: StoreOptions): LifecycleState | null;
+/**
+ * Two stats name one file. On Windows an older Node reports device 0 from `lstat` and the volume serial from `fstat`
+ * for the same file, so there the file index alone decides (it is unique within the volume).
+ */
+export declare function sameFile(left: {
+    readonly dev: number | bigint;
+    readonly ino: number | bigint;
+}, right: {
+    readonly dev: number | bigint;
+    readonly ino: number | bigint;
+}, platform?: NodeJS.Platform): boolean;
 export declare function isReleaseClass(action: string): boolean;

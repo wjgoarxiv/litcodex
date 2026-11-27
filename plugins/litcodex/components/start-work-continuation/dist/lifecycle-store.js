@@ -1573,7 +1573,7 @@ function tryRemoveStaleLock(path, nowMs) {
         if (!stale)
             return;
         const current = lstatSync(path, { bigint: true });
-        if (current.dev === fdStat.dev && current.ino === fdStat.ino)
+        if (sameFile(current, fdStat))
             unlinkSync(path);
     }
     finally {
@@ -1598,17 +1598,20 @@ function holderGone(pid) {
         return isCode(error, "ESRCH");
     }
 }
+/**
+ * Two stats name one file. On Windows an older Node reports device 0 from `lstat` and the volume serial from `fstat`
+ * for the same file, so there the file index alone decides (it is unique within the volume).
+ */
+export function sameFile(left, right, platform = process.platform) {
+    return left.ino === right.ino && (platform === "win32" || left.dev === right.dev);
+}
 function releaseLock(path, owner) {
     try {
         if (pathExists(path)) {
             const current = lstatSync(path, { bigint: true });
             const held = fstatSync(owner.fd, { bigint: true });
             const body = readFdText(owner.fd, Number(held.size));
-            if (current.dev === owner.dev &&
-                current.ino === owner.ino &&
-                held.dev === owner.dev &&
-                held.ino === owner.ino &&
-                body === owner.body) {
+            if (sameFile(current, owner) && sameFile(held, owner) && body === owner.body) {
                 unlinkSync(path);
             }
         }
