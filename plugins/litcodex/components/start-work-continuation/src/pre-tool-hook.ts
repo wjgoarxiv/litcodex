@@ -1,8 +1,10 @@
+import { lstatSync, readFileSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
 
+import { guardShellCall, loadRun } from "./autopilot.js";
 import { findLifecycleRoot } from "./lifecycle-root.js";
-import { inspectLifecycleState, type StoreOptions } from "./lifecycle-store.js";
-import { isProtectedFileName, protectedReason } from "./protected-paths.js";
+import { inspectLifecycleState, type StoreOptions, statePathFor } from "./lifecycle-store.js";
+import { containedReason, isProtectedFileName, protectedReason } from "./protected-paths.js";
 
 const MAX_INPUT_STRING = 100_000;
 const PATH_FIELDS = [
@@ -34,7 +36,15 @@ export function runPreToolUseHook(input: unknown, options: StoreOptions = {}): s
 	const env = options.env ?? process.env;
 	const root = findLifecycleRoot(cwd, { wantSession: sessionId });
 	const inspected = inspectLifecycleState(root);
-	if (!inspected.ok) return "";
+	if (!inspected.ok) {
+		// Fail closed for this session only: a lifecycle file that cannot be read but still names it may hold its run.
+		return namesSession(statePathFor(root), sessionId)
+			? deny(
+					"LitCodex start-work could not read the run state that names this session, so it could not check this call and did not run it. Stop making tool calls, and tell the user the start-work state is unreadable; they can end the run with `lit cancel`.",
+					null,
+				)
+			: "";
+	}
 	const state = inspected.state;
 	const notice = state.cancel_notices?.[`codex:${sessionId}`];
 	if (notice !== undefined) {
@@ -51,14 +61,89 @@ export function runPreToolUseHook(input: unknown, options: StoreOptions = {}): s
 		return "";
 	}
 	for (const target of targetsOf(tool, input["tool_input"], cwd, env)) {
-		const reason = protectedReason(target.path, target.kind, env);
+		const reason =
+			protectedReason(target.path, target.kind, env) ??
+			(target.kind === "write" ? containedReason(target.path, env, [root]) : null);
 		if (reason !== null) {
 			return deny(
-				`LitCodex start-work refused this call: ${inert(target.path)} is ${reason}, and a start-work run never reads or edits secrets or Codex settings. Nobody can approve it here, \`lit approve\` included. Do not retry it another way; leave any task that needs it unchecked, give the reason on a \`BLOCKED:\` line in your final message, and continue with the remaining tasks.`,
+				`LitCodex start-work refused this call: ${inert(target.path)} is ${reason}, and a start-work run never reads or edits secrets or Codex settings. Nobody can approve it here, \`lit approve\` included. Do not retry it another way; if a row needs it, write \`BLOCKED: <reason>\` under that row and continue with the next row.`,
+			);
+		}
+	}
+	// The guard follows the lifecycle state alone: a plain prompt, a side `lit` route or a paused boundary leaves it on.
+	if (tool === "Bash") {
+		const command = isRecord(input["tool_input"])
+			? (input["tool_input"]["command"] ?? input["tool_input"]["cmd"])
+			: undefined;
+		if (typeof command !== "string") return "";
+		// Fail closed: this session owns a run, so a plan or state that cannot be read denies the call.
+		const run = loadRun(cwd, sessionId, ["active", "paused"]);
+		if (run === null) {
+			return deny(
+				"LitCodex start-work could not read this run's plan or state, so it could not check this call and did not run it. Stop making tool calls, and tell the user the run's plan is unreadable or has no rows; they can fix the plan or end the run with `lit cancel`.",
+				null,
+			);
+		}
+		try {
+			const parked = guardShellCall(run, command, cwd, { env });
+			if (parked !== null) return deny(parked.reason, parked.ping);
+		} catch (error) {
+			if (!(error instanceof Error)) throw error;
+			return deny(
+				"LitCodex start-work could not check or park this call (its state was busy or unreadable), so it did not run. Continue with the next row and try this step again later.",
+				null,
 			);
 		}
 	}
 	return "";
+}
+
+const UNCHECKED =
+	"LitCodex start-work could not check this call (its hook input was too large, malformed, or the check failed), so it did not run. Split the step into smaller calls; if it keeps failing, write `BLOCKED: <reason>` under the row and continue with the next row.";
+
+/**
+ * The guard's answer when it could not run: hook input over the byte limit, input that is not JSON, or a check that
+ * threw. It denies when the input names a session that owns a run here, or when it names no session and folder at
+ * all; a readable session and folder without a run get no output, so other sessions keep working.
+ */
+export function runPreToolUseFallback(head: string): string {
+	return uncheckedDecision(jsonField(head, "session_id"), jsonField(head, "cwd"));
+}
+
+/** The same answer for parsed input whose check threw. */
+export function uncheckedDecision(sessionId: unknown, cwd: unknown): string {
+	if (!bounded(sessionId) || !bounded(cwd) || !isAbsolute(cwd)) return deny(UNCHECKED, null);
+	try {
+		return sessionOwnsRun(cwd, sessionId) ? deny(UNCHECKED, null) : "";
+	} catch {
+		return deny(UNCHECKED, null);
+	}
+}
+
+function sessionOwnsRun(cwd: string, sessionId: string): boolean {
+	const root = findLifecycleRoot(cwd, { wantSession: sessionId });
+	const inspected = inspectLifecycleState(root);
+	if (!inspected.ok) return namesSession(statePathFor(root), sessionId);
+	const state = inspected.state;
+	if (state.cancel_notices?.[`codex:${sessionId}`] !== undefined) return true;
+	const active = state.active_work_id === null ? undefined : state.works[state.active_work_id];
+	return (
+		active !== undefined &&
+		(active.status === "active" || active.status === "paused") &&
+		active.session_ids.includes(`codex:${sessionId}`)
+	);
+}
+
+/** The first `"name": "<string>"` in raw hook input, decoded; null when it is missing or not a JSON string. */
+function jsonField(raw: string, name: string): string | null {
+	const match = new RegExp(`"${name}"\\s*:\\s*("(?:[^"\\\\]|\\\\.)*")`, "u").exec(raw);
+	if (match?.[1] === undefined) return null;
+	try {
+		const value: unknown = JSON.parse(match[1]);
+		return typeof value === "string" ? value : null;
+	} catch {
+		return null;
+	}
 }
 
 interface Target {
@@ -125,8 +210,9 @@ function unquote(word: string): string {
 	return word.length >= 2 && (first === "'" || first === '"') && word.at(-1) === first ? word.slice(1, -1) : word;
 }
 
-function deny(text: string): string {
+function deny(text: string, ping: string | null = null): string {
 	return `${JSON.stringify({
+		...(ping === null ? {} : { systemMessage: ping }),
 		hookSpecificOutput: {
 			hookEventName: "PreToolUse",
 			permissionDecision: "deny",
@@ -134,6 +220,17 @@ function deny(text: string): string {
 			additionalContext: text,
 		},
 	})}\n`;
+}
+
+function namesSession(path: string, sessionId: string): boolean {
+	try {
+		const stat = lstatSync(path);
+		if (!stat.isFile()) return false;
+		const text = readFileSync(path, "utf8").slice(0, 8_000_000);
+		return text.includes(`codex:${sessionId}`);
+	} catch {
+		return false;
+	}
 }
 
 function inert(text: string): string {

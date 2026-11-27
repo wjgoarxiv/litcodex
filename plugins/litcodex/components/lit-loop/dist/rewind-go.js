@@ -102,11 +102,11 @@ export function takeGo(cwd, sessionId, now) {
     }
     return { kind: "run", prompt: "lit continue", note: `go: ${fresh.text}` };
 }
-const BOUNDARY_ANSWER = /^lit[ \t]+(?:approve|승인|deny|거절|cancel|취소)$/u;
+const BOUNDARY_ANSWER = /^lit[ \t]+(?:(?:approve|승인)(?:[ \t]+x)?|deny|거절|cancel|취소|pause|멈춤|일시정지|resume|재개|skip-row(?:[ \t]+F?\d+)?)$/u;
 /**
- * True for the whole prompt `lit approve`, `lit deny`, `lit cancel`, `lit 승인`, `lit 거절` or `lit 취소`. The
- * start-work lifecycle hook owns these words; this hook stays silent for them so a bare `lit` never starts a loop
- * on top of an answer or a cancel.
+ * True for the whole prompt `lit approve`, `lit approve x`, `lit deny`, `lit cancel`, `lit skip-row [N]`,
+ * `lit pause`, `lit resume` or a Korean form of one. The start-work lifecycle hook owns these words; this hook
+ * stays silent for them so a bare `lit` never starts a loop on top of an answer or a cancel.
  */
 export function isBoundaryAnswer(prompt) {
     return prompt.length <= 512 && BOUNDARY_ANSWER.test(prompt.trim());

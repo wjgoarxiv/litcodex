@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
 	mkdirSync,
 	mkdtempSync,
@@ -451,24 +452,28 @@ describe("stop line while start-work keeps the turn going", () => {
 		expect(runStopHook(stopInput(root, "t1"))).toContain('"decision":"block"');
 	});
 
-	it("says the turn is done once the continuation has already nudged this progress", () => {
+	it("keeps continuing through the one nudge, then says the turn is done once the inbox shows", () => {
 		const root = repo();
 		writePlan(root);
 		writeContinuableWork(root);
 		expect(runStopHook(stopInput(root, "t0"))).toContain('"decision":"block"');
 		recordWorkflowTurn(root, "s1", "t1", "start-work", 1000);
-		expect(runStopHook(stopInput(root, "t1"))).toBe("");
-		expect(workflowStopLine(root, "s1", "t1", quiet)).toBe("✨ turn done · next ▸ Show the map in …");
+		expect(workflowStopLine(root, "s1", "t1", quiet)).toBe("⏳ 3/7 tasks ✓ · continuing ▸ Show the map in …");
+		expect(runStopHook(stopInput(root, "t1"))).toContain("No row changed since the last stop");
+		recordWorkflowTurn(root, "s1", "t2", "start-work", 2000);
+		expect(workflowStopLine(root, "s1", "t2", quiet)).toBe("✨ turn done · next ▸ Show the map in …");
+		expect(runStopHook(stopInput(root, "t2"))).toContain('"systemMessage"');
+		expect(workflowStopLine(root, "s1", "t2", quiet)).toBe("✨ turn done · next ▸ Show the map in …");
 	});
 
-	it("says the turn is done when the host is already inside a continuation", () => {
+	it("keeps the turn going when the host is already inside a continuation", () => {
 		const root = repo();
 		writePlan(root);
 		writeContinuableWork(root);
 		recordWorkflowTurn(root, "s1", "t1", "start-work", 1000);
 		const active = { stopHookActive: true, transcriptPath: null };
-		expect(runStopHook(stopInput(root, "t1", { stop_hook_active: true }))).toBe("");
-		expect(workflowStopLine(root, "s1", "t1", active)).toBe("✨ turn done · next ▸ Show the map in …");
+		expect(workflowStopLine(root, "s1", "t1", active)).toBe("⏳ 3/7 tasks ✓ · continuing ▸ Show the map in …");
+		expect(runStopHook(stopInput(root, "t1", { stop_hook_active: true }))).toContain('"decision":"block"');
 	});
 
 	it("says the turn is done under context pressure or an oversized transcript", () => {
@@ -506,8 +511,11 @@ describe("stop line while start-work keeps the turn going", () => {
 		expect(workflowStopLine(root, "s1", "t1", quiet)).toMatch(/^✨ turn done/u);
 		writeContinuableWork(root);
 		writePlan(root, PLAN.replaceAll("- [ ]", "- [x]"));
-		expect(runStopHook(stopInput(root, "t1"))).toBe("");
 		expect(workflowStopLine(root, "s1", "t1", quiet)).toBe("✨ turn done · 4 tasks ✓ · all 7 tasks ✓");
+		// A finished plan with no Done-when check closes the run with one line, and never blocks.
+		const closing = runStopHook(stopInput(root, "t1"));
+		expect(closing).toContain("is complete: every row is ticked");
+		expect(closing).not.toContain('"decision":"block"');
 	});
 });
 
@@ -799,7 +807,38 @@ describe("hook surfaces", () => {
 		expect(card).toContain("continuing with: Show the map in …");
 		expect(card).not.toContain("your turn");
 		expect(readCardStatus("s1", env)).toMatchObject({ working: true, turnEndedAt: null });
-		// The continuation answers without a tool and asks: now it is your turn, on the card and in the footer.
+		// Inside the continuation the autopilot still nudges once, so a question is not yet the user's turn.
+		const nudged = await stopped(root, { last_assistant_message: "Which way?", stop_hook_active: true });
+		expect(nudged).toContain("continuing with: Show the map in …");
+		// Once the autopilot has spent its two blocks on this unchanged plan, the question is the user's turn.
+		writeFileSync(
+			join(root, ".litcodex/start-work/autopilot.json"),
+			JSON.stringify({
+				version: 1,
+				consents: {},
+				works: {
+					w1: {
+						session: "codex:s1",
+						steps: [],
+						refused: [],
+						snapshot: null,
+						paused: false,
+						check: null,
+						overflow: 0,
+						budget: {
+							state: "s",
+							blocks: 2,
+							inbox: true,
+							turn: "earlier",
+							last: '{"systemMessage":"inbox"}\n',
+							plan: createHash("sha256")
+								.update(readFileSync(join(root, ".litcodex/plans/boost.md")))
+								.digest("hex"),
+						},
+					},
+				},
+			}),
+		);
 		const asked = await stopped(root, { last_assistant_message: "Which way?", stop_hook_active: true });
 		expect(asked).toContain("your turn");
 		expect(readCardStatus("s1", env).look).toBe("turn");
@@ -841,9 +880,10 @@ describe("hook surfaces", () => {
 		expect(JSON.parse(stop.stdout)).toEqual({
 			systemMessage: stopCard("3/7 tasks done\ncontinuing with: Show the map in …"),
 		});
+		// The autopilot drives the re-entry turn-end too, so the card still says the turn goes on.
 		const last = await drive(runStopPlanPersistenceHookCli, { ...stopEvent(root), stop_hook_active: true }, root);
 		expect(JSON.parse(last.stdout)).toEqual({
-			systemMessage: "🔥 LIT · start-work · turn done · 1 task done · next: Show the map in …",
+			systemMessage: "🔥 LIT · start-work · 3/7 tasks done\ncontinuing with: Show the map in …",
 		});
 	});
 

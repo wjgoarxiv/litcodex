@@ -90,13 +90,26 @@ describe("no external skill hint", () => {
 			},
 		);
 
-		// One comparison, so a regression shows every symptom at once: exit code, added hint, request, record.
+		// One comparison, so a regression shows every symptom at once: exit code, added hint, request, record. The only
+		// context allowed is LitCodex's own local catalog line from the suggestion tier, built without any request.
+		const context =
+			result.stdout === ""
+				? ""
+				: (JSON.parse(result.stdout) as { hookSpecificOutput: { additionalContext: string } }).hookSpecificOutput
+						.additionalContext;
 		expect({
 			status: result.status,
-			stdout: result.stdout,
+			context,
+			external: REMOVED.test(result.stdout),
 			requests: existsSync(fetchLog) ? readFileSync(fetchLog, "utf8") : "",
 			record: existsSync(join(cwd, ".litcodex", HINT)),
-		}).toEqual({ status: 0, stdout: "", requests: "", record: false });
+		}).toEqual({
+			status: 0,
+			context: expect.stringMatching(/^LitCodex skills, none suggested for this prompt; /u),
+			external: false,
+			requests: "",
+			record: false,
+		});
 	});
 
 	it("no shipped runtime file names the retired hint, its switch, its key or its API", () => {

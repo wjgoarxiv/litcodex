@@ -232,7 +232,7 @@ describe("start-work Stop hook", () => {
 		expect(parsed.reason).toMatch(/When unsure[^.]{0,30}HEAVY/);
 		expect(parsed.reason).toMatch(/mirrors its implementation/);
 		expect((parsed.reason.match(/malformed input, prompt injection/g) ?? []).length).toBe(1);
-		expect(parsed.reason.split(/\s+/).filter(Boolean).length).toBeLessThanOrEqual(1100);
+		expect(parsed.reason.split(/\s+/).filter(Boolean).length, parsed.reason).toBeLessThanOrEqual(1100);
 	});
 
 	it("#given active work belongs to another harness #when hook runs #then returns empty output", () => {

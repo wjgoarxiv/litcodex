@@ -34,8 +34,13 @@ const guard = (p: Project, tool: string, toolInput: unknown, session = "s1") =>
 
 function denial(out: string): string {
 	expect(out.endsWith("\n")).toBe(true);
-	const parsed = JSON.parse(out) as { hookSpecificOutput: Record<string, string> };
-	expect(Object.keys(parsed)).toEqual(["hookSpecificOutput"]);
+	const parsed = JSON.parse(out) as { systemMessage?: string; hookSpecificOutput: Record<string, string> };
+	// A parked call also pings the user with one line; a refusal has no ping.
+	if (parsed.systemMessage === undefined) expect(Object.keys(parsed)).toEqual(["hookSpecificOutput"]);
+	else {
+		expect(Object.keys(parsed)).toEqual(["systemMessage", "hookSpecificOutput"]);
+		expect(parsed.systemMessage).toMatch(/^LIT parked \((?:tier B|tier X|held)\): /u);
+	}
 	expect(Object.keys(parsed.hookSpecificOutput).sort()).toEqual([
 		"additionalContext",
 		"hookEventName",
@@ -51,7 +56,7 @@ function denial(out: string): string {
 const patch = (header: string) => `*** Begin Patch\n*** ${header}\n+x\n*** End Patch\n`;
 
 describe("start-work PreToolUse guard", () => {
-	it("29. Bash words naming a secret are denied; a $HOME expansion is not expanded", () => {
+	it("29. Bash words naming a secret are denied; a $HOME expansion is held, never expanded or replayed", () => {
 		const p = project();
 		startRun(p);
 		mkdirSync(join(p.root, "x"), { recursive: true });
@@ -60,7 +65,8 @@ describe("start-work PreToolUse guard", () => {
 			expect(reason).toContain("LitCodex start-work refused this call");
 			expect(reason).toContain("`lit approve` included");
 		}
-		expect(guard(p, "Bash", { command: 'cat "$HOME"/.ssh/config' })).toBe("");
+		const held = denial(guard(p, "Bash", { command: 'cat "$HOME"/.ssh/config' }));
+		expect(held).toContain("parked this call (held");
 	});
 
 	it("30. apply_patch headers, edit-tool path fields and bare key names are checked", () => {
@@ -96,11 +102,17 @@ describe("start-work PreToolUse guard", () => {
 		expect(reason).toContain("was ended by `lit cancel` from another Codex session");
 	});
 
-	it("33. the CLI stays silent with exit 0 on malformed or foreign input", () => {
+	it("33. the CLI denies input that is not JSON and stays silent with exit 0 on foreign input", () => {
 		const p = project();
 		startRun(p);
+		const malformed = spawnSync(execPath, [CLI_PATH, "hook", "pre-tool-use"], {
+			input: "{not json",
+			encoding: "utf8",
+			env: { ...process.env, ...p.env },
+		});
+		expect(malformed.status).toBe(0);
+		expect(denial(malformed.stdout)).toContain("could not check this call");
 		for (const input of [
-			"{not json",
 			JSON.stringify({ ...call(p.root, "Bash", { command: "cat .env" }), cwd: undefined }),
 			JSON.stringify({ ...call(p.root, "Bash", { command: "cat .env" }), hook_event_name: "PostToolUse" }),
 		]) {

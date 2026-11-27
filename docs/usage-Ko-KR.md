@@ -230,7 +230,7 @@ Codex의 native goal과 로컬 루프 기록은 별도로 관리됩니다. nativ
 | `lit-comprehend` 또는 `comprehend` | **lit-comprehend** | 작업 트리 밖에 자체 완결형 설명 자료 생성 |
 | `review-work` 또는 `lit review` | **review-work** | Start Work 전에는 계획 검토, 뒤에는 작업 검토(읽기 전용). 있는 것을 보고 모드를 고르며 `lit review plan` 또는 `lit review work`로 지정 |
 | `litresearch`, `/litresearch` 또는 `lit research` | **litresearch** | 사실·가설·출처·불확실성을 나누는 연구 저널 |
-| `lit start work <plan-name>` | **Start Work** | 승인된 계획을 증거와 함께 실행. 어느 창에서든 `lit cancel`(`lit 취소`)을 입력하면 실행을 끝냅니다. |
+| `lit start work <plan-name>` | **Start Work** | 승인된 계획을 증거와 함께 실행. 위험한 단계는 보관했다가 끝에 한 번 묻고(`lit approve`, 정확히 `lit approve x`, `lit deny`, `lit skip-row`, `lit pause`/`lit resume`), `## Done when`의 `check:`가 통과하면 스스로 끝납니다. 어느 창에서든 `lit cancel`(`lit 취소`)을 입력하면 실행을 끝냅니다. |
 | 정확히 단독으로 입력한 `handoff` | **lit-handoff** | 비밀값을 보호하는 재개 패킷 생성 또는 갱신 |
 | 정확히 단독으로 입력한 `lit-scientific-visualization` | **lit-scientific-visualization** | 훅을 통해 출판용 시각화 어댑터 로드 |
 
@@ -342,6 +342,18 @@ litcodex loop doctor
 - 진단은 읽기 전용입니다. 조건에 맞는 대화형 관리 명령은 별도 업데이트 실행기를 통해 새 전역 패키지를 설치할 수 있습니다. [개인정보·업데이트 설정](privacy.md)을 확인하세요.
 - `~/.codex/config.toml`의 관련 없는 키는 보존합니다. 재구성 전에는 `--dry-run`으로 확인하세요.
 - 플러그인 제거는 LitCodex가 관리하는 항목만 대상으로 합니다.
+
+### 호스트 한계
+
+Codex 자체의 성질이라 Start Work 자동 실행이 우회만 할 수 있는 점들입니다.
+
+- `BLOCKED: codex exec는 훅의 systemMessage를 보여 주지 않습니다.` exec 모드에서는 보류된 단계 목록과 보류 알림이
+  모델의 답을 거쳐서만 전달됩니다. `lit approve`나 `lit approve x`를 입력하기 전에 그 답을 읽어 보세요.
+- `BLOCKED: Codex는 훅을 샌드박스 밖에서 실행합니다.` Stop 훅, `lit approve`가 다시 실행하는 단계, `## Done when`
+  확인 명령은 모두 사용자 계정 권한으로 돕니다. LitCodex는 보여 준 목록의 다이제스트, 동의, Done-when 줄을
+  `CODEX_HOME` 아래에 봉인하고, 사용자가 본 뒤 바뀐 목록이나 확인 줄은 실행 전에 거부합니다.
+- `BLOCKED: 가드는 명령 글자만 읽고, 프로그램이 실제로 하는 일은 보지 못합니다.` 프로젝트 안의 스크립트는 작성자가
+  쓴 대로 무엇이든 할 수 있으니, 그런 스크립트를 부르는 실행을 승인하기 전에 내용을 확인하세요.
 
 ## 더 깊은 문서
 

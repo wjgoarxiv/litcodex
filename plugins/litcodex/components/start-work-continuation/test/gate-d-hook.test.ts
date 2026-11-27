@@ -14,21 +14,24 @@ afterEach(() => {
 });
 
 describe("Gate D Stop lease", () => {
-	it("issues once, replays the same turn without writes, then keeps unchanged later turns silent", () => {
+	it("S-A1-03: issues once, replays the same turn, nudges once, then shows one inbox and goes silent", () => {
 		const root = workspace("active");
 		const first = runStopHook(stop(root, "t1"));
 		const revisionAfterFirst = readLifecycleState(root)?.revision;
 		const replay = runStopHook(stop(root, "t1"));
 		const second = runStopHook(stop(root, "t2"));
 		const revisionAfterSecond = readLifecycleState(root)?.revision;
-		const later = runStopHook(stop(root, "t3"));
+		const inbox = runStopHook(stop(root, "t3"));
+		const later = runStopHook(stop(root, "t4"));
 
 		expect(JSON.parse(first)).toMatchObject({ decision: "block" });
 		expect(replay).toBe(first);
 		expect(readLifecycleState(root)?.works["w1"]?.status).toBe("active");
 		expect(revisionAfterFirst).toBe(1);
 		expect(revisionAfterSecond).toBe(1);
-		expect(second).toBe("");
+		expect(JSON.parse(second)).toMatchObject({ decision: "block" });
+		expect((JSON.parse(second) as { reason: string }).reason).toContain("No row changed since the last stop");
+		expect(JSON.parse(inbox)).toHaveProperty("systemMessage");
 		expect(later).toBe("");
 		expect(events(root).map((event) => event["kind"])).toEqual(["start_work_continuation_issued"]);
 	});
@@ -53,7 +56,7 @@ describe("Gate D Stop lease", () => {
 		expect(runStopHook(stop(root, "t1"))).not.toBe("");
 		writeFileSync(planPath(root), "# Changed prose\n\n##   Todos\n- [ ] First\n", "utf8");
 		const second = runStopHook(stop(root, "t2"));
-		expect(second).toBe("");
+		expect((JSON.parse(second) as { reason: string }).reason).toContain("No row changed since the last stop");
 		expect(events(root).map((event) => event["kind"])).toEqual(["start_work_continuation_issued"]);
 	});
 

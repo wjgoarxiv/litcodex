@@ -206,7 +206,7 @@ blocked native goal needs the documented recovery step below; a handoff does not
 | `lit-comprehend` or `comprehend` | **lit-comprehend** | Build a self-contained explainer outside the worktree |
 | `review-work` or `lit review` | **review-work** | Read-only plan review before Start Work and work review after it; auto-picked from what exists, or forced with `lit review plan` or `lit review work` |
 | `litresearch`, `/litresearch`, or `lit research` | **litresearch** | Research journal separating facts, hypotheses, sources, and uncertainty |
-| `lit start work <plan-name>` | **Start Work** | Execute an approved plan with durable evidence. Type `lit cancel` (`lit 취소`) to end a run from any window. |
+| `lit start work <plan-name>` | **Start Work** | Execute an approved plan with durable evidence. Risky steps are parked and asked about once at the end (`lit approve`, exactly `lit approve x`, `lit deny`, `lit skip-row`, `lit pause`/`lit resume`), and the run closes itself when its `## Done when` `check:` passes. Type `lit cancel` (`lit 취소`) to end a run from any window. |
 | exact bare `handoff` | **lit-handoff** | Create or refresh a secret-safe continuation packet |
 | exact bare `lit-scientific-visualization` | **lit-scientific-visualization** | Load the publication plotting adapter through the hook |
 
@@ -457,6 +457,19 @@ and require a healthy `litcodex doctor --json`; model execution is `NOT_REQUESTE
 - An eligible interactive doctor may show a cached advisory notice. A detached worker performs a fixed registry
   refresh and records it at `~/.litcodex/update-check.json`; it never installs an update automatically.
 - Failed, `--json`, `--dry-run`, non-TTY, CI, and opt-out paths stay side-effect-free.
+
+### Host limits
+
+These are facts about Codex that the Start Work autopilot works around. It cannot remove them.
+
+- `BLOCKED: codex exec does not show a hook's systemMessage.` In exec mode, the parked-step inbox and the park ping
+  reach you only through the model's reply, so read that reply before you type `lit approve` or `lit approve x`.
+- `BLOCKED: Codex runs hooks outside its sandbox.` The Stop hook, the steps that `lit approve` replays, and the
+  `## Done when` check all run with your account's rights. LitCodex limits what they can do: it seals the shown list's
+  digest, the consent and the Done-when line under `CODEX_HOME`, and it does not run a list or check line that
+  changed after you saw it.
+- `BLOCKED: the guard reads command text, not what a program does.` A script inside the project can do whatever
+  its author wrote, so review project scripts before you approve a run that calls them.
 
 <details>
 <summary>Managed model and config compatibility</summary>

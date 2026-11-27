@@ -9,6 +9,7 @@ import { spawnSync } from "node:child_process";
 import { PassThrough, Writable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { routeOutput } from "../test/route-output.js";
 import { MAX_STDIN_BYTES, runPreToolUseCreateGoalGuardCli, runUserPromptSubmitHookCli } from "./hook-cli.js";
 
 interface Capture {
@@ -147,10 +148,10 @@ describe("runUserPromptSubmitHookCli activation #given/#when/#then", () => {
 });
 
 describe("runUserPromptSubmitHookCli no-op branches #given/#when/#then", () => {
-	it("no-op on a split substring collision → exit 0, ZERO bytes on stdout", async () => {
+	it("no-op on a split substring collision → exit 0, no route on stdout", async () => {
 		const r = await run('{"hook_event_name":"UserPromptSubmit","prompt":"please split this"}');
 		expect(r.code).toBe(0);
-		expect(r.stdoutBytes()).toBe(0);
+		expect(routeOutput(r.stdout())).toBe("");
 		expect(r.stderr()).toBe("");
 	});
 
@@ -182,7 +183,7 @@ describe("runUserPromptSubmitHookCli no-op branches #given/#when/#then", () => {
 	it.each(LITRESEARCH_NOOP_PROMPTS)("no-op on a slash research near miss or path: %s", async (prompt) => {
 		const r = await run(JSON.stringify({ hook_event_name: "UserPromptSubmit", prompt }));
 		expect(r).toMatchObject({ code: 0 });
-		expect(r.stdout()).toBe("");
+		expect(routeOutput(r.stdout())).toBe("");
 		expect(r.stderr()).toBe("");
 	});
 
@@ -191,7 +192,7 @@ describe("runUserPromptSubmitHookCli no-op branches #given/#when/#then", () => {
 		async (payload) => {
 			const r = await run(JSON.stringify(payload));
 			expect(r).toMatchObject({ code: 0 });
-			expect(r.stdout()).toBe("");
+			expect(routeOutput(r.stdout())).toBe("");
 			expect(r.stderr()).toBe("");
 		},
 	);
@@ -209,23 +210,19 @@ describe("public litcodex hook user-prompt-submit litresearch route", () => {
 		}
 	});
 
-	it.each(LITRESEARCH_NOOP_PROMPTS)(
-		"writes exactly zero stdout bytes for slash near misses and path occurrences: %s",
-		(prompt) => {
-			expect(runPublicHook({ hook_event_name: "UserPromptSubmit", prompt })).toEqual({
-				status: 0,
-				stdout: "",
-				stderr: "",
-			});
-		},
-	);
+	it.each(LITRESEARCH_NOOP_PROMPTS)("writes no route for slash near misses and path occurrences: %s", (prompt) => {
+		const r = runPublicHook({ hook_event_name: "UserPromptSubmit", prompt });
+		expect({ ...r, stdout: routeOutput(r.stdout) }).toEqual({
+			status: 0,
+			stdout: "",
+			stderr: "",
+		});
+	});
 
-	it.each(LITRESEARCH_INERT_PAYLOADS)(
-		"writes exactly zero stdout bytes for inert payload occurrences: %#",
-		(payload) => {
-			expect(runPublicHook(payload)).toEqual({ status: 0, stdout: "", stderr: "" });
-		},
-	);
+	it.each(LITRESEARCH_INERT_PAYLOADS)("writes no route for inert payload occurrences: %#", (payload) => {
+		const r = runPublicHook(payload);
+		expect({ ...r, stdout: routeOutput(r.stdout) }).toEqual({ status: 0, stdout: "", stderr: "" });
+	});
 });
 
 describe("runUserPromptSubmitHookCli malformed input #given/#when/#then", () => {

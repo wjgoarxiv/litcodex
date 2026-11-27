@@ -4,9 +4,11 @@ import { runStopHook, runUserPromptSubmitHook } from "./codex-hook.js";
 import { initializeWork, isBoundedLifecycleText, LifecycleStoreError, START_WORK_MAX_DISPLAY_BYTES, START_WORK_MAX_STDIN_BYTES, transitionWork, } from "./lifecycle-store.js";
 import { analyzePlanProgress } from "./plan-progress.js";
 import { PlanPublisherError, publishPlan } from "./plan-publisher.js";
-import { runPreToolUseHook } from "./pre-tool-hook.js";
+import { runPreToolUseFallback, runPreToolUseHook, uncheckedDecision } from "./pre-tool-hook.js";
 import { diagnoseLifecycle } from "./work-state-reader.js";
 const USAGE = "Usage: litcodex-start-work-continuation init | analyze-plan | publish-plan --cwd <path> --slug <slug> | hook <stop|user-prompt-submit|pre-tool-use> | transition <pause|cancel|complete> | doctor --cwd <path> --json\n";
+// Declared before the dispatch below: its top-level awaits run before any later `const` is initialised.
+const STDIN_HEAD_BYTES = 65_536;
 const command = process.argv[2];
 const subcommand = process.argv[3];
 const publishPlanArgs = command === "publish-plan" ? parsePublishPlanArgs(process.argv.slice(3)) : null;
@@ -40,21 +42,28 @@ else {
     process.exitCode = 1;
 }
 async function runHookCli(kind) {
-    const raw = await readStdin();
-    if (raw === null || raw.trim().length === 0)
+    const { text: raw, head } = await readStdinParts();
+    if (raw !== null && raw.trim().length === 0)
         return;
-    const parsed = parseJson(raw);
-    if (parsed === undefined)
-        return;
+    const parsed = raw === null ? undefined : parseJson(raw);
     let output = "";
     if (kind === "pre-tool-use") {
-        // The guard fails open for the hook process; the lifecycle store's own checks stay authoritative.
-        try {
-            output = runPreToolUseHook(parsed);
+        // Input the guard cannot check is denied for a session that owns a run, or when it names no session.
+        if (parsed === undefined) {
+            output = runPreToolUseFallback(head);
         }
-        catch {
-            output = "";
+        else {
+            try {
+                output = runPreToolUseHook(parsed);
+            }
+            catch {
+                const record = typeof parsed === "object" && parsed !== null ? parsed : {};
+                output = uncheckedDecision(record["session_id"], record["cwd"]);
+            }
         }
+    }
+    else if (parsed === undefined) {
+        return;
     }
     else {
         output = kind === "stop" ? runStopHook(parsed) : runUserPromptSubmitHook(parsed);
@@ -272,13 +281,20 @@ function parseJson(raw) {
         throw error;
     }
 }
-function readStdin() {
+async function readStdin() {
+    return (await readStdinParts()).text;
+}
+/** Standard input up to its byte limit (`text` null past it), plus its first 64 KiB kept either way. */
+function readStdinParts() {
     return new Promise((resolve) => {
         const chunks = [];
+        let headBuffer = Buffer.alloc(0);
         let bytes = 0;
         let oversized = false;
         processStdin.on("data", (chunk) => {
             const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+            if (headBuffer.byteLength < STDIN_HEAD_BYTES)
+                headBuffer = Buffer.concat([headBuffer, buffer]).subarray(0, STDIN_HEAD_BYTES);
             bytes += buffer.byteLength;
             if (bytes > START_WORK_MAX_STDIN_BYTES) {
                 oversized = true;
@@ -288,8 +304,12 @@ function readStdin() {
             if (!oversized)
                 chunks.push(buffer);
         });
-        processStdin.once("error", () => resolve(oversized ? null : Buffer.concat(chunks).toString("utf8")));
-        processStdin.once("end", () => resolve(oversized ? null : Buffer.concat(chunks).toString("utf8")));
+        const finish = () => resolve({
+            text: oversized ? null : Buffer.concat(chunks).toString("utf8"),
+            head: headBuffer.toString("utf8"),
+        });
+        processStdin.once("error", finish);
+        processStdin.once("end", finish);
     });
 }
 function isBoundedStringArray(value) {

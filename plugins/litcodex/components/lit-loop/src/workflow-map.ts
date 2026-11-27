@@ -654,9 +654,9 @@ function transcriptClear(path: string | null): boolean {
 
 /**
  * The plan start-work will carry on with after this Stop, or null when its continuation hook stays
- * quiet. It repeats that hook's decision read-only (host continuation flag, transcript, the one active
- * work this session owns with authority and open rows, and the lease that nudges each plan state once
- * per turn), so the answer is the same whichever Stop hook the host runs first.
+ * quiet. It repeats that hook's decision read-only (transcript, the one active work this session owns with
+ * authority and open rows, a pause, and the autopilot's block budget), so the answer is the same whichever Stop
+ * hook the host runs first.
  */
 export function continuingWork(
 	repoRoot: string,
@@ -664,7 +664,7 @@ export function continuingWork(
 	turnId: string,
 	stop: StopContext,
 ): Progress | null {
-	if (stop.stopHookActive || !transcriptClear(stop.transcriptPath)) return null;
+	if (!transcriptClear(stop.transcriptPath)) return null;
 	const state = readJson(repoRoot, join(repoRoot, ".litcodex/start-work/state.json"));
 	if (!isRecord(state) || !isRecord(state["works"]) || typeof state["active_work_id"] !== "string") return null;
 	const owner = `codex:${sessionId}`;
@@ -688,11 +688,21 @@ export function continuingWork(
 	const rows = planRows(text);
 	const done = rows.filter((row) => row.done).length;
 	if (rows.length === 0 || done === rows.length) return null;
-	const token = createHash("sha256")
-		.update(JSON.stringify(rows.map((row) => [row.done ? 1 : 0, row.label])))
-		.digest("hex");
-	const lease = work["continuation_lease"];
-	if (isRecord(lease) && lease["progress_token"] === token && lease["turn_id"] !== turnId) return null;
+	// The autopilot blocks at most twice per plan state, then shows its inbox; a repeat Stop in the same turn replays
+	// the last answer. The plan digest stands in for its state digest here, which also counts parked steps and lanes.
+	const autopilot = readJson(repoRoot, join(repoRoot, ".litcodex/start-work/autopilot.json"));
+	const own = isRecord(autopilot) && isRecord(autopilot["works"]) ? autopilot["works"][entry[0]] : undefined;
+	if (isRecord(own) && own["paused"] === true) return null;
+	const budget = isRecord(own) && isRecord(own["budget"]) ? own["budget"] : null;
+	if (budget !== null) {
+		const last = budget["last"];
+		const digest = createHash("sha256").update(text).digest("hex");
+		if (!stop.stopHookActive && budget["turn"] === turnId && typeof last === "string" && last !== "") {
+			if (!last.includes('"decision":"block"')) return null;
+		} else if (budget["plan"] === digest && typeof budget["blocks"] === "number" && budget["blocks"] >= 2) {
+			return null;
+		}
+	}
 	return { done, total: rows.length, next: rows.find((row) => !row.done)?.label ?? null };
 }
 

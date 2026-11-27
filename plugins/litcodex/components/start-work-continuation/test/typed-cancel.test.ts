@@ -1,8 +1,8 @@
 // `lit cancel` / `lit 취소` typed as the whole prompt ends the project's start-work run from any Codex session of
 // the project, subfolders and linked worktrees included; the owner hears about it on its next prompt.
 
-import { mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { parseTypedRunCommand, runUserPromptSubmitHook } from "../src/codex-hook.js";
@@ -230,22 +230,26 @@ describe("lit cancel ends the run", () => {
 		expect(runPreToolUseHook(bash(own.root, "s1", "ls"), own.options)).toBe("");
 	});
 
-	it("11. a corrupt state answers BLOCKED and stays as it was", () => {
+	it("11. a corrupt state is moved aside unchanged and the run ends", () => {
 		const p = project();
 		startRun(p);
 		writeFileSync(statePathFor(p.root), "{not json", "utf8");
 		const out = contextOf(cancel(p));
-		expect(out.startsWith("BLOCKED:")).toBe(true);
-		expect(out).toContain("STATE_INVALID");
-		expect(readFileSync(statePathFor(p.root), "utf8")).toBe("{not json");
+		expect(out).toContain("STATE_INVALID_JSON");
+		expect(out).toContain("moved it aside");
+		expect(existsSync(statePathFor(p.root))).toBe(false);
+		const aside = readdirSync(dirname(statePathFor(p.root))).filter((name) => name.startsWith("state.json.corrupt-"));
+		expect(aside).toHaveLength(1);
+		expect(readFileSync(join(dirname(statePathFor(p.root)), aside[0] ?? ""), "utf8")).toBe("{not json");
 		const q = project();
 		startRun(q);
 		const state = JSON.parse(stateBytes(q)) as Record<string, unknown>;
 		writeFileSync(statePathFor(q.root), JSON.stringify({ ...state, revision: "x" }), "utf8");
 		const before = stateBytes(q);
-		const blocked = contextOf(cancel(q));
-		expect(blocked.startsWith("BLOCKED:")).toBe(true);
-		expect(stateBytes(q)).toBe(before);
+		expect(contextOf(cancel(q))).toContain("moved it aside");
+		const moved = readdirSync(dirname(statePathFor(q.root))).find((name) => name.startsWith("state.json.corrupt-"));
+		expect(readFileSync(join(dirname(statePathFor(q.root)), moved ?? ""), "utf8")).toBe(before);
+		expect(contextOf(cancel(q))).toContain("no start-work in progress");
 	});
 
 	it("12. a cancel writes no parked or denied entry and no other lit-loop file", () => {

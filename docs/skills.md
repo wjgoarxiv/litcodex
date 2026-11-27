@@ -31,7 +31,7 @@ short LitCodex stub that says where the skill went and gives the copy command.
 <tr>
 <td><img src="./assets/skills/start-approved-plan.webp" width="240" alt="Runs an approved plan through five gates and finishes only when all five reviews pass." /></td>
 <td>Start Work<br /><sub><code>lit start work &lt;approved-plan&gt;</code></sub></td>
-<td>Runs an approved plan through five gates and finishes only when all five reviews pass.</td>
+<td>Runs an approved plan through five gates and finishes only when all five reviews pass. Steps it should not take alone are parked, not asked about; you answer them once at the end (<code>lit approve</code>, <code>lit approve x</code>, <code>lit deny</code>), and the run closes itself when every row is ticked and its <code>## Done when</code> check passes.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/review-work.webp" width="240" alt="Plan review before Start Work, work review after it: five separate checks, and any one of them can hold back approval. It picks the mode from what exists." /></td>

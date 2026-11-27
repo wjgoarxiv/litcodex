@@ -13,7 +13,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { LEGACY_TOKENS, scanText } from "../../tools/scan-legacy-tokens.mjs";
-import { checkContains, checkEqual, checkExit, checkMatches, isContained } from "./assert.mjs";
+import { checkContains, checkEqual, checkExit, checkMatches, checkNotContains, isContained } from "./assert.mjs";
 import { diffNewPaths, snapshotPaths } from "./fs-snapshot.mjs";
 
 const DIRECTIVE_MARKER = "<lit-loop-mode>";
@@ -83,7 +83,10 @@ function probeHookActivate(ctx) {
 	return probeResult("hook-activate", run, failures);
 }
 
-/** hook-noop: `split the file` must NOT fire the bounded trigger (zero-byte stdout) under hostile paths. */
+/**
+ * hook-noop: `split the file` must NOT fire the bounded trigger under hostile paths. The only output is the
+ * suggestion tier's catalog line, which is local text and no route.
+ */
 function probeHookNoop(ctx) {
 	const run = runNode(
 		ctx.nodeBin,
@@ -94,7 +97,10 @@ function probeHookNoop(ctx) {
 	);
 	return probeResult("hook-noop", run, [
 		checkExit("hook-noop", run.exitCode, 0),
-		checkEqual("hook-noop.stdout", run.stdout, ""),
+		checkContains("hook-noop.stdout", run.stdout, "LitCodex skills, none suggested for this prompt"),
+		checkNotContains("hook-noop.stdout", run.stdout, "<lit-loop-mode>"),
+		checkNotContains("hook-noop.stdout", run.stdout, "systemMessage"),
+		checkEqual("hook-noop.lines", run.stdout.trimEnd().split("\n").length, 1),
 	]);
 }
 

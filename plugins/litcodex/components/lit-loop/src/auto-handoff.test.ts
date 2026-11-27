@@ -16,6 +16,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PassThrough } from "node:stream";
 import { afterEach, describe, expect, it } from "vitest";
+import { routeOutput } from "../test/route-output.js";
 import {
 	HANDOFF_MARKER_LABEL,
 	readContextPercent,
@@ -404,7 +405,7 @@ describe("the UserPromptSubmit route keeps the model out of a settings change", 
 	it("leaves every other prompt alone", async () => {
 		const root = workspace();
 		const result = await submit(root, "fix the failing test", NO_ENV);
-		expect(result.stdout).toBe("");
+		expect(routeOutput(result.stdout)).toBe("");
 	});
 });
 
@@ -657,7 +658,7 @@ describe("reload after compaction", () => {
 		expect(context(first)).toContain("halfway through the parser");
 		expect(context(first)).toContain("HANDOFF.md");
 		expect(context(first)).not.toContain(HANDOFF_MARKER_LABEL);
-		expect((await submit(root, "and again", ON_60)).stdout).toBe("");
+		expect(routeOutput((await submit(root, "and again", ON_60)).stdout)).toBe("");
 	});
 
 	it("reloads at SessionStart(compact) when the compaction happened inside the turn", async () => {

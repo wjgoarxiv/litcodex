@@ -287,10 +287,12 @@ describe("old paused states", () => {
 		expect(first.state.works["w1"]?.last_transition?.transitionId).toBe(
 			`stop-continue:${sha("s1").slice(0, 16)}:${sha("t1").slice(0, 16)}:${progress.progressToken}`,
 		);
-		expect(runStopHook(stopInput(p.root, "t2"))).toBe("");
+		expect(runStopHook(stopInput(p.root, "t2"))).toContain('"decision":"block"');
 		pause(p, boundaryFor(outside(p, "late")));
-		expect(runStopHook(stopInput(p.root, "t3"))).toContain('"decision":"block"');
-		expect(runStopHook(stopInput(p.root, "t4"))).toBe("");
+		expect(runStopHook(stopInput(p.root, "t3"))).toContain("START_WORK_CONTEXT");
+		expect(runStopHook(stopInput(p.root, "t4"))).toContain("No row changed since the last stop");
+		expect(runStopHook(stopInput(p.root, "t5"))).toContain('"systemMessage"');
+		expect(runStopHook(stopInput(p.root, "t6"))).toBe("");
 	});
 
 	it("23. replaying a stored start_work_paused transition id is not a conflict", () => {

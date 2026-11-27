@@ -148,6 +148,10 @@ export type CancelResult = {
     readonly workId: string;
     readonly plan: string;
 } | {
+    readonly outcome: "set-aside";
+    readonly code: string;
+    readonly aside: string;
+} | {
     readonly outcome: "cancelled";
     readonly workId: string;
     readonly plan: string;

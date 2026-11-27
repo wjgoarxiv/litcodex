@@ -21,6 +21,7 @@ import { dirname, join } from "node:path";
 import { PassThrough } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+import { routeOutput } from "../test/route-output.js";
 import { type CardStatus, readCardStatus } from "./card-status.js";
 import { runUserPromptSubmitHookCli } from "./hook-cli.js";
 import { renderHud } from "./hud.js";
@@ -155,7 +156,7 @@ describe("route: a scoped `$litcodex:lit-adhd` mention (native skill load, the h
 describe("route: Codex loads skills/lit-adhd/SKILL.md by itself (no hook route)", () => {
 	it("a plain prompt followed by the collector the skill runs turns the look on", async () => {
 		const s = scratch();
-		expect(await prompt(s, "where was I before the break?")).toBe("");
+		expect(routeOutput(await prompt(s, "where was I before the break?"))).toBe("");
 		expect(statusOf(s).state).toBe("ready");
 		expect(collect(s, ["--json", "--max", "5"]).code).toBe(0);
 		expectLook(s);

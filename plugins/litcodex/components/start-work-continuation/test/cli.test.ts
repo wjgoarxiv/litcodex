@@ -67,7 +67,7 @@ describe("start-work continuation CLI", () => {
 		expect(invalidResult.stderr).toContain("doctor --cwd <path> --json");
 	});
 
-	it("#given active stop hook stdin #when CLI runs #then stdout is empty and exit is zero", () => {
+	it("S-A1-01: #given a re-entry Stop (stop_hook_active) #when CLI runs #then the run is still driven", () => {
 		// given
 		const cwd = createWorkspace(["codex:s1"]);
 		const payload = JSON.stringify(makePayload(cwd, true, "Stop"));
@@ -78,7 +78,7 @@ describe("start-work continuation CLI", () => {
 		// then
 		if (result.error !== undefined) throw result.error;
 		expect(result.status).toBe(0);
-		expect(result.stdout).toBe("");
+		expect(JSON.parse(result.stdout)).toMatchObject({ decision: "block" });
 	});
 
 	it("#given unrelated session stdin #when CLI runs #then stdout is empty and exit is zero", () => {
@@ -609,6 +609,23 @@ describe("start-work continuation CLI", () => {
 		const legacy = spawnSync(execPath, [CLI_PATH, "doctor", "--cwd", cwd, "--json"], { encoding: "utf8" });
 		expect(legacy.status).toBe(2);
 		expect(JSON.parse(legacy.stdout)).toMatchObject({ ok: false, code: "UNSUPPORTED_SCHEMA" });
+	});
+
+	it("pre-tool-use denies input it cannot check for the run's session, and stays quiet for other sessions", () => {
+		const cwd = realpathSync(createWorkspace(["codex:s1"]));
+		const preTool = (input: string) =>
+			spawnSync(execPath, [CLI_PATH, "hook", "pre-tool-use"], { input, encoding: "utf8", maxBuffer: 8_000_000 });
+		const head = (session: string) =>
+			`{"session_id":${JSON.stringify(session)},"cwd":${JSON.stringify(cwd)},"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"`;
+		const big = (session: string) => `${head(session)}${"x".repeat(START_WORK_MAX_STDIN_BYTES + 10)}"}}`;
+		const decision = (stdout: string) =>
+			(JSON.parse(stdout) as { hookSpecificOutput: { permissionDecision: string } }).hookSpecificOutput
+				.permissionDecision;
+		expect(decision(preTool(big("s1")).stdout)).toBe("deny");
+		expect(decision(preTool(`${head("s1")}unterminated`).stdout)).toBe("deny");
+		expect(decision(preTool("{not-json").stdout)).toBe("deny");
+		expect(preTool(big("other")).stdout).toBe("");
+		expect(preTool(`${head("other")}unterminated`).stdout).toBe("");
 	});
 });
 

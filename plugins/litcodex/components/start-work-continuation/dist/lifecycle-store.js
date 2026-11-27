@@ -51,6 +51,7 @@ export class LifecycleStoreError extends Error {
         this.name = "LifecycleStoreError";
     }
 }
+const CORRUPT_STATE_CODES = new Set(["STATE_INVALID_JSON", "STATE_INVALID", "STATE_REVISION_INVALID"]);
 export function statePathFor(cwd) {
     return join(cwd, ".litcodex", "start-work", "state.json");
 }
@@ -351,7 +352,20 @@ export function cancelWorkFromUserPrompt(cwd, request, options = {}) {
     if (!pathExists(paths.state))
         return { outcome: "nothing" };
     return withStateLock(paths, options, () => {
-        const loaded = loadState(paths);
+        let loaded;
+        try {
+            loaded = loadState(paths);
+        }
+        catch (error) {
+            // A state file that does not parse or validate keeps the guard denying every call; the user's typed cancel
+            // moves it aside so the run ends, and the moved file stays for inspection.
+            if (!(error instanceof LifecycleStoreError) || !CORRUPT_STATE_CODES.has(error.code))
+                throw error;
+            const at = (options.now?.() ?? new Date().toISOString()).replace(/[^0-9A-Za-z]/gu, "");
+            const aside = `${paths.state}.corrupt-${at}`;
+            renameSync(paths.state, aside);
+            return { outcome: "set-aside", code: error.code, aside };
+        }
         reconcileAllLastTransitions(paths, loaded.state, options);
         const activeId = loaded.state.active_work_id;
         const current = activeId === null ? undefined : loaded.state.works[activeId];

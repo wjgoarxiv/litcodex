@@ -30,7 +30,7 @@
 <tr>
 <td><img src="./assets/skills/start-approved-plan.webp" width="240" alt="승인된 계획을 다섯 관문으로 실행합니다. 끝에는 리뷰 다섯 개를 모두 통과해야 합니다." /></td>
 <td>Start Work<br /><sub><code>lit start work &lt;approved-plan&gt;</code></sub></td>
-<td>승인된 계획을 다섯 관문으로 실행합니다. 끝에는 리뷰 다섯 개를 모두 통과해야 합니다.</td>
+<td>승인된 계획을 다섯 관문으로 실행합니다. 끝에는 리뷰 다섯 개를 모두 통과해야 합니다. 혼자 해서는 안 되는 단계는 묻지 않고 보관해 두었다가 끝에 한 번에 답을 받고(<code>lit approve</code>, <code>lit approve x</code>, <code>lit deny</code>), 모든 줄이 체크되고 <code>## Done when</code> 확인이 통과하면 스스로 끝납니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/review-work.webp" width="240" alt="Start Work 전에는 계획 검토, 뒤에는 작업 검토를 합니다. 검사 다섯 개가 따로 돌고 하나라도 통과하지 못하면 승인이 나지 않으며, 모드는 있는 것을 보고 고릅니다." /></td>

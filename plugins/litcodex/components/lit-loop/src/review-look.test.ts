@@ -20,6 +20,7 @@ import { join } from "node:path";
 import { PassThrough } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+import { routeOutput } from "../test/route-output.js";
 import { type CardStatus, readCardStatus } from "./card-status.js";
 import { runUserPromptSubmitHookCli } from "./hook-cli.js";
 import { stageCommand } from "./rewind-cli.js";
@@ -152,7 +153,7 @@ describe("route: implicit skill load (no hook route), model calls stageCommand",
 		await prompt(s, "lit refactor the sync job");
 		// This prompt does not trigger a LIT route, but Codex loads review-work implicitly.
 		const out = await prompt(s, "review the diff please", "t2");
-		expect(out).toBe("");
+		expect(routeOutput(out)).toBe("");
 		expect(statusOf(s).look).not.toBe("review");
 		expect(stage(s, ["--family", "main", "--stage", "review"]).code).toBe(0);
 		expect(statusOf(s).look).toBe("review");

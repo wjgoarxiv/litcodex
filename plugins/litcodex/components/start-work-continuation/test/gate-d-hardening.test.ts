@@ -224,7 +224,7 @@ describe("Gate D strict authority and boundary ownership", () => {
 });
 
 describe("Gate D stop, route, transcript, and diagnostics", () => {
-	it("issues once per progress, replays the same turn, and leaves later unchanged Stops silent", () => {
+	it("issues once per progress, replays the same turn, then nudges instead of repeating the directive", () => {
 		const root = initialized(
 			rootWithPlan("## Todos\n- [ ] 1. First\n- [ ] 2. Second\n\n## Final verification wave\n- [ ] F1. Verify\n"),
 		);
@@ -232,7 +232,7 @@ describe("Gate D stop, route, transcript, and diagnostics", () => {
 		const replay = runStopHook(stopInput(root, "turn-1"));
 		const later = runStopHook(stopInput(root, "turn-2"));
 		expect(replay).toBe(first);
-		expect(later).toBe("");
+		expect((JSON.parse(later) as { reason: string }).reason).toContain("No row changed since the last stop");
 		expect(readLifecycleState(root)?.revision).toBe(2);
 		expect(readLifecycleState(root)?.works["w1"]?.status).toBe("active");
 

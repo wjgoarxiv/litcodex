@@ -6,6 +6,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Start Work runs itself to the end. A shell call that is outward or cannot be undone (`git push`, `git tag`,
+  `npm publish`, `gh pr merge`, a delete outside the project, a network tool), a write outside the run's roots, a commit
+  without a consented charter, or a command whose effect cannot be read from its text is denied and **parked** with its
+  exact text and folder, and the model is told to continue with the next row. Ordinary project work (reads, edits,
+  the repo's own test, check, lint and build commands, scripts inside the run's roots) runs as before under Codex's own
+  sandbox. Any other command parks too: an unknown verb, or a known one in a form that writes or runs something (`awk`,
+  `sed` with `w`/`e`/`r`, `sort -o`, `uniq` with an output file, `tree -o`, `git diff --output`, `rg --pre`,
+  `git grep -O`, `dd`, `ln`, `chmod`, `tar`, `go run`, `npm install`). Secrets, Codex settings, the Codex home (also
+  the account's real one when `HOME` is replaced), `.git/hooks`, `.git/config` and the run's own state are refused,
+  never parked, for redirects and writer verbs alike, after every link in the path is followed (a dangling or looping
+  link included).
+- The parked list is tamper-evident. The inbox shows its short digest, the hook seals that digest, the consent
+  from a typed `lit start work` and the first Done-when line under the Codex home, outside the workspace, and a list, consent or
+  check line changed in the project afterwards is not used. Approved steps and the Done-when check run from the hooks,
+  outside Codex's sandbox, and a script inside the project can still do whatever it was written to do; both are
+  documented limits. A replay or check past its time limit is killed with its whole process group.
+- A typed `lit start work` consents only to the plan it selects (the one it names, else the session's run, else the
+  only plan), binds that plan's Done-when line, and shows its `Run charter:` lines to the user; a charter added later
+  is not consented. The inbox stays under 12,000 characters and lists only the parked steps that fit, so an answer
+  never runs a step the user did not see. After a replay the new list is sized first and output tails are cut.
+  The guard stays on through plain prompts, side `lit` routes and `lit pause`, and it denies the call when it
+  cannot read the run's plan or state. A remove or move of a folder that holds the run state, the Codex home or a
+  secret folder is refused, for shell commands and file-edit tools alike, as is a `REV:path` naming a secret file
+  and any command over 4,096 characters. After an approved step runs for a BLOCKED row, the next turn-end tells
+  Codex to clear that row's `BLOCKED:` line and go on. Writes into any `.git` internal are refused; path checks
+  follow `cd`; a recursive read of the home folder, the Codex home or a folder above a secret folder is refused;
+  `sort` and `file` pass only with read-only flags, abbreviated long options included; `lit deny` refusals are
+  also sealed outside the workspace, so a corrupt run state keeps them. `git remote`, `git remote -v` and
+  `git remote get-url` read only the local config and pass, so they never hold a finished run open; `git remote
+  show` and `git fetch` still park as outward. The suggestion eval's held-out half is
+  only digest-checked in the test suite and is scored once by `npm run eval:suggest-heldout`. A Done-when line whose record
+  LitCodex could not keep counts as changed and is skipped. The recursive-read refusal also covers `cp -R`/`-r`/`-a`
+  sources and `diff -r` operands, and `find -delete` from a folder that holds the run state is refused. Hook input
+  the guard cannot check (over 1 MB, malformed JSON, or a check that throws) is denied for the session that owns
+  the run, or when it names no session. A typed `lit cancel` on a state file that no longer parses moves the file
+  aside as `state.json.corrupt-<time>` and ends the run.
+- One inbox at the end. After at most two continuations per plan state (the directive, then one "no row changed since
+  the last stop" nudge) the user sees one message: waiting rows, impossible rows, path boundaries and up to 8 parked
+  steps tagged `[B]`, `[X]` or `[held]`. New typed answers: `lit approve` runs the shown `[B]` steps and grants the
+  path boundaries, `lit approve x` (exactly) runs the shown `[X]` steps, `lit deny` drops them all, `lit skip-row [N]`
+  ticks waiting rows as skipped, `lit pause` / `lit resume` stop and restart the autopilot. Every replayed step is
+  checked again first, in its stored folder, inside a 50 s budget, and its output reaches the model labelled as
+  untrusted data.
+- A run closes itself: when every row is ticked, no lane is running and the plan's `## Done when` line
+  `check: <cmd>` exits 0 (one allowlisted program, no shell, 50 s cap), the run completes with one line. A parked
+  outward step keeps it open for its answer; local parked steps are named as set aside.
+- Plans may carry `BLOCKED: <reason>` and `IMPOSSIBLE: <reason>` notes under a row, a `Run charter: commit on <branch>
+  in <repo>` line (commits on that branch once the user typed `lit start work`; never push, tag or amend) and a
+  `goal: native` line (the native goal is armed only then, and its objective always ends itself).
+- Prompts without `lit` get a suggestion tier: five local detectors (scientific plots, diagrams, schematics, vague
+  requests, option questions) offer a skill plus "none" for the model to decide, and any other prompt gets one
+  catalog line of 15 skills (under 512 bytes). No request leaves the machine. Each detector shipped only after
+  recall >= 0.85 and near-miss false positives <= 0.10 on its dev half and on a sealed held-out half
+  (`plugins/litcodex/components/lit-loop/test/fixtures/suggest-eval`).
+
+### Changed
+
+- The Start Work `Stop` hook now runs on the re-entry turn-end too (`stop_hook_active`), which Codex 0.172 honours, so
+  a row ticked during a continuation can close the run right there.
+- The Start Work `UserPromptSubmit` and `Stop` hooks now have a 60 s timeout (was 5 s) to fit the Done-when check and
+  replays. Codex asks once more to trust these two hooks after the update.
+- The park notice is on by default: each parked call shows the user one `LIT parked (tier …)` line. It approves nothing.
+- No LitCodex message suggests `lit cancel` any more; it stays the user's own word.
+
 ## [1.0.52] - 2026-11-26
 
 ### Added

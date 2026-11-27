@@ -14,8 +14,8 @@ export type GoDecision = {
  */
 export declare function takeGo(cwd: string, sessionId: string, now: number): GoDecision | null;
 /**
- * True for the whole prompt `lit approve`, `lit deny`, `lit cancel`, `lit 승인`, `lit 거절` or `lit 취소`. The
- * start-work lifecycle hook owns these words; this hook stays silent for them so a bare `lit` never starts a loop
- * on top of an answer or a cancel.
+ * True for the whole prompt `lit approve`, `lit approve x`, `lit deny`, `lit cancel`, `lit skip-row [N]`,
+ * `lit pause`, `lit resume` or a Korean form of one. The start-work lifecycle hook owns these words; this hook
+ * stays silent for them so a bare `lit` never starts a loop on top of an answer or a cancel.
  */
 export declare function isBoundaryAnswer(prompt: string): boolean;

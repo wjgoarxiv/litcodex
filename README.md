@@ -721,6 +721,42 @@ The loop CLI also prints instructions for Codex's native goal tools, and the age
 there; LitCodex itself never calls them. Sign-in, model access, permissions and every run stay in Codex on your
 machine, so judge a piece of work by what it produced and which checks ran. The [usage reference](./docs/usage.md) goes deeper.
 
+## Let a plan run to the end
+
+You can start a plan with `lit start work` and walk away. When the agent reaches a step it should not take on its own,
+such as a `git push`, a publish or a delete outside the project, LitCodex does not stop the run to ask. It parks that
+command with its exact text and folder, tells the agent to carry on with the next row, and shows you one short
+`LIT parked` line. Ordinary work inside the project runs as before under Codex's own sandbox: reading, editing, the
+repo's own test, check, lint and build commands, and scripts that live in the project. Any other command is parked
+the same way, whether LitCodex does not know it or knows it in a form that writes or runs something (`awk`, `sed`
+with `w` or `e`, `sort -o`, `rg --pre`, `go run`, `npm install`). Secrets, Codex settings, the Codex home, `.git/hooks`,
+`.git/config` and the run's own state stay refused and are never parked.
+
+When the agent has done what it can, you get one message instead of a string of questions. It lists the rows that wait
+on you, the rows that cannot be done, and up to eight parked commands, each tagged `[B]` for a plain local file step,
+`[X]` for anything else, or `[held]` for a command whose effect LitCodex cannot read and will never replay. You answer
+once:
+
+- `lit approve` runs the `[B]` steps you were shown; `lit approve x`, typed exactly, runs the `[X]` steps.
+- `lit deny` drops them all; `lit skip-row` (or `lit skip-row 3`) ticks waiting rows as skipped.
+- `lit pause` stops the autopilot and `lit resume` starts it again.
+
+Two limits are worth knowing. LitCodex reads the text of a command, not what a script does, so a script inside the
+project can do whatever its author wrote, a push included. And the steps you approve, like the Done-when check below,
+run from LitCodex's hooks, outside Codex's sandbox. That is why the message shows a short digest of the parked list:
+a list changed in the run state after you saw it does not run, and neither does a check line changed after the run
+started.
+
+If nothing needs you, the run closes by itself. Give the plan a `## Done when` section with a line such as
+``check: `npm test` ``; once every row is ticked and that check passes, LitCodex marks the run complete and says so in
+one line. A plan can also carry `Run charter: commit on feat/x in .` to let the run commit on that branch, and
+`goal: native` to arm Codex's own goal with a condition that always ends.
+
+Prompts without `lit` get a light touch too. A few local detectors notice a request to plot data, draw a diagram or a
+P&ID, a vague brief or an open "what are my options" question, and offer the matching skill for the agent to take or
+leave; any other prompt gets one short line listing common skills. Nothing loads by itself and nothing leaves your
+machine.
+
 ## Commands
 
 ### In the Codex composer

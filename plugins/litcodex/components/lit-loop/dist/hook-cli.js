@@ -27,6 +27,7 @@ import { SAFE_WIDTH, workflowCard } from "./screen-card.js";
 import { screenLook } from "./screen-status.js";
 import { recordLiveness } from "./session-liveness.js";
 import { applyPromptToStack, frameToResume } from "./stack-hook.js";
+import { suggestionContext } from "./suggest.js";
 import { takeSunsetHint } from "./sunset-settings.js";
 import { maskMarkdownCode } from "./trigger.js";
 import { continuingWork, recordWorkflowTurn, workflowStopLine, workflowTurn } from "./workflow-map.js";
@@ -115,8 +116,8 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
         return 0;
     }
     clearManagedCompactionWhenOff(hookCwd(parsed, repoRoot), auto.env ?? process.env);
-    // `lit approve` / `lit deny` settle parked start-work steps and `lit cancel` ends the run; the lifecycle hook
-    // owns all three, so this one stays out.
+    // The start-work run words (`lit approve`, `lit approve x`, `lit deny`, `lit skip-row`, `lit pause`, `lit resume`,
+    // `lit cancel`) belong to the lifecycle hook, so this one stays out.
     // `yes` / `edit` / `no` right after lit-plan's goal question answer it (S4); `lit cancel` also hands the user
     // the `/goal clear` line for a goal LitCodex armed.
     let planNote = null;
@@ -227,6 +228,13 @@ export async function runUserPromptSubmitHookCli(stdin, stdout, stderr, repoRoot
     const output = withAutoHandoffReload(noted, parsed, repoRoot, auto);
     if (output !== "")
         stdout.write(hookJson(output));
+    else if (decision.kind === "noop" && isLitUserPromptSubmitInput(parsed)) {
+        // A prompt without `lit` gets the suggestion tier: a skill offer the model may decline, or the catalog line.
+        const suggestion = suggestionContext(parsed.prompt);
+        if (suggestion !== "") {
+            stdout.write(hookJson(`${JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: suggestion } })}\n`));
+        }
+    }
     return 0;
 }
 /** `lit-handoff auto on|off|status` changes a setting and never reaches the model: the prompt is blocked with one plain reply. */

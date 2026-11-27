@@ -25,6 +25,7 @@
 		"postbuild": "node scripts/vendor-rules-deps.mjs && node scripts/mark-cli-executable.mjs",
 		"typecheck": "tsc --build tsconfig.json",
 		"typecheck:tests": "tsc --noEmit -p packages/litcodex-ai/tsconfig.json && tsc --noEmit -p plugins/litcodex/tsconfig.json && tsc --noEmit -p plugins/litcodex/components/lit-loop/tsconfig.json && tsc --noEmit -p plugins/litcodex/components/git-bash/tsconfig.json && tsc --noEmit -p plugins/litcodex/components/comment-checker/tsconfig.json && tsc --noEmit -p plugins/litcodex/components/lsp/tsconfig.json && tsc --noEmit -p plugins/litcodex/components/start-work-continuation/tsconfig.json && tsc --noEmit -p plugins/litcodex/components/telemetry/tsconfig.json && tsc --noEmit -p plugins/litcodex/components/rules/tsconfig.json && tsc --noEmit -p plugins/litcodex/components/auto-update/tsconfig.json && tsc --noEmit -p plugins/litcodex/components/wikify-knowledge/tsconfig.json",
+		"eval:suggest-heldout": "node scripts/score-suggest-heldout.mjs",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"build:release-tools": "tsc -p tools/release/tsconfig.runtime.json",

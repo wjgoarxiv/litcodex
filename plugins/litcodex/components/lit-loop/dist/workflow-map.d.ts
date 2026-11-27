@@ -98,9 +98,9 @@ export declare function workflowTurn(repoRoot: string, sessionId: string): {
 } | null;
 /**
  * The plan start-work will carry on with after this Stop, or null when its continuation hook stays
- * quiet. It repeats that hook's decision read-only (host continuation flag, transcript, the one active
- * work this session owns with authority and open rows, and the lease that nudges each plan state once
- * per turn), so the answer is the same whichever Stop hook the host runs first.
+ * quiet. It repeats that hook's decision read-only (transcript, the one active work this session owns with
+ * authority and open rows, a pause, and the autopilot's block budget), so the answer is the same whichever Stop
+ * hook the host runs first.
  */
 export declare function continuingWork(repoRoot: string, sessionId: string, turnId: string, stop: StopContext): Progress | null;
 /** The Stop line of a turn that start-work keeps running starts with this mark; it is not the end of the run. */
