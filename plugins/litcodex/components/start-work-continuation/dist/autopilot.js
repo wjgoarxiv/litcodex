@@ -7,6 +7,7 @@ import { emptyWork, parkStep, readAutopilot, updateAutopilot, withWork, workOf, 
 import { findLifecycleRoot } from "./lifecycle-root.js";
 import { inspectLifecycleState, resolveCanonicalPlan, selectWorkForSession, transitionWork, } from "./lifecycle-store.js";
 import { openRows, readPlanFacts, skipRows } from "./plan-rows.js";
+import { canonical as foldedCanonical } from "./protected-paths.js";
 import { assessCommand, parkedTier } from "./shell-tier.js";
 /** hooks.json gives the start-work Stop hook 60 s; the Done-when check gets 50 s of it. */
 export const CHECK_CAP_MS = 50_000;
@@ -79,7 +80,8 @@ export function shellContextFor(run, cwd, file, env) {
         roots: run.roots,
         env,
         commitAllowed: (repoRoot, branch) => consented &&
-            run.facts.charters.some((charter) => charter.branch === branch && canonical(resolve(run.project, charter.repo)) === canonical(repoRoot)),
+            run.facts.charters.some((charter) => charter.branch === branch &&
+                foldedCanonical(resolve(run.project, charter.repo)) === foldedCanonical(repoRoot)),
     };
 }
 // ── the guard: park instead of stop ─────────────────────────────────────────

@@ -37,6 +37,7 @@ import {
 	type WorkStateEntry,
 } from "./lifecycle-store.js";
 import { openRows, type PlanFacts, type PlanRow, readPlanFacts, skipRows } from "./plan-rows.js";
+import { canonical as foldedCanonical } from "./protected-paths.js";
 import { assessCommand, parkedTier, type ShellContext } from "./shell-tier.js";
 
 /** hooks.json gives the start-work Stop hook 60 s; the Done-when check gets 50 s of it. */
@@ -133,7 +134,8 @@ export function shellContextFor(run: RunView, cwd: string, file: AutopilotFile, 
 			consented &&
 			run.facts.charters.some(
 				(charter) =>
-					charter.branch === branch && canonical(resolve(run.project, charter.repo)) === canonical(repoRoot),
+					charter.branch === branch &&
+					foldedCanonical(resolve(run.project, charter.repo)) === foldedCanonical(repoRoot),
 			),
 	};
 }

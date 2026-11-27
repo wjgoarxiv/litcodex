@@ -161,7 +161,8 @@ describe("lit deny", () => {
 		expect(work?.denied_boundaries).toMatchObject([{ boundary_id: "boundary-1" }]);
 	});
 
-	it("cuts a long root without leaving half a character", () => {
+	// Skip on Windows: the forged root is a POSIX path, and the store rejects it there as a root that does not exist.
+	it.skipIf(process.platform === "win32")("cuts a long root without leaving half a character", () => {
 		const root = workspace("paused");
 		const path = join(root, ".litcodex", "start-work", "state.json");
 		const stored = JSON.stringify(realpathSync(root));

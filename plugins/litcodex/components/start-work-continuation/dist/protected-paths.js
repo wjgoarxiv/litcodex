@@ -45,8 +45,9 @@ export function protectedReason(path, kind, env = process.env) {
     if (codexHome !== null && within(codexHome, p))
         return "the Codex home";
     // Every Git internal (HEAD, refs, index, packed-refs, hooks, config) and the `.git` entry itself; git commands
-    // change them through the git verb, never through a path operand.
-    if (segments.includes(".git"))
+    // change them through the git verb, never through a path operand. Folded on every OS: Git itself refuses a
+    // `.GIT` entry on any file system, and a case-sensitive one may still be read by a case-insensitive checkout.
+    if (segments.some((segment) => segment.toLowerCase() === ".git"))
         return "the repository's git internals";
     const litcodex = segments.lastIndexOf(".litcodex");
     if (litcodex !== -1 && segments[litcodex + 1] === "start-work") {
@@ -159,7 +160,9 @@ export function resolveLinks(path) {
             isLink = lstatSync(next).isSymbolicLink();
         }
         catch {
-            return join(next, ...pending);
+            // The rest does not exist yet. Its existing head still resolves to the file system's own spelling (on
+            // Windows that expands 8.3 short names such as RUNNER~1), so a new file compares equal to its folder.
+            return join(realHead(head), part, ...pending);
         }
         if (!isLink) {
             head = next;
@@ -179,6 +182,9 @@ export function resolveLinks(path) {
         pending = [...split(absolute), ...pending];
         head = parse(absolute).root;
     }
+    return realHead(head);
+}
+function realHead(head) {
     try {
         return realpathSync.native(head);
     }

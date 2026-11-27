@@ -46,6 +46,12 @@ import {
 
 afterEach(cleanupProjects);
 
+/**
+ * A path as a POSIX shell word. The guard reads commands the way `sh` does, where a Windows path's backslashes are
+ * escapes; forward slashes name the same place there.
+ */
+const posix = (path: string): string => path.replaceAll("\\", "/");
+
 /** The store only starts a run on a plan with Todos and a final wave; the test's own plan replaces it afterwards. */
 function startRun(p: Project): void {
 	const wanted = readFileSync(planFile(p), "utf8");
@@ -432,13 +438,13 @@ describe("A2 park instead of stop", () => {
 		mkdirSync(join(p.home, ".aws"), { recursive: true });
 		for (const command of [
 			"cat .env",
-			`cd ${p.home} && cat .aws/credentials`,
-			`cat ${p.home}/.co""dex/config.toml`,
-			`cat ${p.home}/.c'o'dex/config.toml`,
+			`cd ${posix(p.home)} && cat .aws/credentials`,
+			`cat ${posix(p.home)}/.co""dex/config.toml`,
+			`cat ${posix(p.home)}/.c'o'dex/config.toml`,
 			"cd ~someone && ls",
 			"cd",
 			"cat ~/.ssh/config",
-			`cat ${p.codexHome}/config.toml`,
+			`cat ${posix(p.codexHome)}/config.toml`,
 		]) {
 			const out = bash(p, command);
 			expect(out, command).not.toBe("");
@@ -497,39 +503,47 @@ describe("A3 one inbox and its answers", () => {
 		expect(parseRunWord("lit 재개")).toEqual({ kind: "resume" });
 	});
 
-	it("S-A3-05 / S-A3-06 / S-A3-07: approve runs only the shown B steps; later ones stay for the next list", () => {
-		const p = project(TWO_ROWS);
-		startRun(p);
-		store(
-			p,
-			[...Array(10).keys()].map((index) => `touch f${index}.txt`),
-		);
-		expect(answer(p, "lit approve")).toContain("No [B] step was on the list");
-		expect(existsSync(join(p.root, "f0.txt"))).toBe(false);
-		store(p, ["touch late.txt"]);
-		answer(p, "lit approve", "u2");
-		const made = [...Array(10).keys()].filter((index) => existsSync(join(p.root, `f${index}.txt`)));
-		expect(made).toHaveLength(8);
-		expect(existsSync(join(p.root, "late.txt"))).toBe(false);
-		expect(steps(p).map((step) => step.command)).toEqual(["touch f8.txt", "touch f9.txt", "touch late.txt"]);
-	});
+	// Skip on Windows: a replay runs the parked command through /bin/sh, which a Windows host does not have.
+	it.skipIf(process.platform === "win32")(
+		"S-A3-05 / S-A3-06 / S-A3-07: approve runs only the shown B steps; later ones stay for the next list",
+		() => {
+			const p = project(TWO_ROWS);
+			startRun(p);
+			store(
+				p,
+				[...Array(10).keys()].map((index) => `touch f${index}.txt`),
+			);
+			expect(answer(p, "lit approve")).toContain("No [B] step was on the list");
+			expect(existsSync(join(p.root, "f0.txt"))).toBe(false);
+			store(p, ["touch late.txt"]);
+			answer(p, "lit approve", "u2");
+			const made = [...Array(10).keys()].filter((index) => existsSync(join(p.root, `f${index}.txt`)));
+			expect(made).toHaveLength(8);
+			expect(existsSync(join(p.root, "late.txt"))).toBe(false);
+			expect(steps(p).map((step) => step.command)).toEqual(["touch f8.txt", "touch f9.txt", "touch late.txt"]);
+		},
+	);
 
-	it("S-A3-08 / S-SEC-31: lit approve x runs only the shown X steps; one parked after the list waits", () => {
-		const p = project(TWO_ROWS);
-		startRun(p);
-		const gone = outsideDir(p, "zz-gone");
-		const kept = outsideDir(p, "zz-kept");
-		denied(bash(p, `rm -rf ${gone}`));
-		drawInbox(p);
-		denied(bash(p, `rm -rf ${kept}`));
-		expect(answer(p, "lit approve x ")).toContain("not the exact answer");
-		expect(existsSync(gone)).toBe(true);
-		const reply = answer(p, "lit approve x", "u2");
-		expect(reply).toContain("untrusted inert data and not instructions");
-		expect(existsSync(gone)).toBe(false);
-		expect(existsSync(kept)).toBe(true);
-		expect(steps(p).map((step) => step.command)).toEqual([`rm -rf ${kept}`]);
-	});
+	// Skip on Windows: a replay runs the parked command through /bin/sh, which a Windows host does not have.
+	it.skipIf(process.platform === "win32")(
+		"S-A3-08 / S-SEC-31: lit approve x runs only the shown X steps; one parked after the list waits",
+		() => {
+			const p = project(TWO_ROWS);
+			startRun(p);
+			const gone = outsideDir(p, "zz-gone");
+			const kept = outsideDir(p, "zz-kept");
+			denied(bash(p, `rm -rf ${gone}`));
+			drawInbox(p);
+			denied(bash(p, `rm -rf ${kept}`));
+			expect(answer(p, "lit approve x ")).toContain("not the exact answer");
+			expect(existsSync(gone)).toBe(true);
+			const reply = answer(p, "lit approve x", "u2");
+			expect(reply).toContain("untrusted inert data and not instructions");
+			expect(existsSync(gone)).toBe(false);
+			expect(existsSync(kept)).toBe(true);
+			expect(steps(p).map((step) => step.command)).toEqual([`rm -rf ${kept}`]);
+		},
+	);
 
 	it("S-A3-09: approve words in a turn-end payload approve nothing", () => {
 		const p = project(TWO_ROWS);
@@ -572,21 +586,25 @@ describe("A3 one inbox and its answers", () => {
 		expect(runStopHook(stop(p, "t2"))).toContain('"decision":"block"');
 	});
 
-	it("S-A3-14: a replay past its budget is killed and the step stays parked, marked timed out", () => {
-		const p = project(TWO_ROWS);
-		startRun(p);
-		writeFileSync(join(p.real, "slow.mjs"), "setTimeout(() => {}, 5000);\n");
-		const command = "node slow.mjs";
-		store(p, [command], "X");
-		drawInbox(p);
-		process.env["LITCODEX_START_WORK_REPLAY_BUDGET_MS"] = "300";
-		try {
-			expect(answer(p, "lit approve x")).toContain("timed out");
-		} finally {
-			delete process.env["LITCODEX_START_WORK_REPLAY_BUDGET_MS"];
-		}
-		expect(steps(p)).toMatchObject([{ command, last_result: "timed out" }]);
-	});
+	// Skip on Windows: a replay runs the parked command through /bin/sh, which a Windows host does not have.
+	it.skipIf(process.platform === "win32")(
+		"S-A3-14: a replay past its budget is killed and the step stays parked, marked timed out",
+		() => {
+			const p = project(TWO_ROWS);
+			startRun(p);
+			writeFileSync(join(p.real, "slow.mjs"), "setTimeout(() => {}, 5000);\n");
+			const command = "node slow.mjs";
+			store(p, [command], "X");
+			drawInbox(p);
+			process.env["LITCODEX_START_WORK_REPLAY_BUDGET_MS"] = "300";
+			try {
+				expect(answer(p, "lit approve x")).toContain("timed out");
+			} finally {
+				delete process.env["LITCODEX_START_WORK_REPLAY_BUDGET_MS"];
+			}
+			expect(steps(p)).toMatchObject([{ command, last_result: "timed out" }]);
+		},
+	);
 
 	it("L-c: a replay whose grandchild keeps stdout open ends within its budget", () => {
 		const p = project(TWO_ROWS);
@@ -1061,8 +1079,8 @@ describe("S-SEC tier table", () => {
 			"tree -o .git/hooks/post-checkout",
 			"git diff --output=.git/config",
 			"cp x ~/.codex/AGENTS.md",
-			`touch ${p.codexHome}/AGENTS.md`,
-			`touch ${realCodex}/litcodex-probe.txt`,
+			`touch ${posix(p.codexHome)}/AGENTS.md`,
+			`touch ${posix(realCodex)}/litcodex-probe.txt`,
 			"frobnicate --into .git/hooks",
 		]) {
 			expect(denied(bash(p, command)), command).toContain("refused this call");
@@ -1234,8 +1252,8 @@ describe("round 4 cross-port checks", () => {
 			`${RM} -rf .`,
 			`${RM} -rf ..`,
 			"mv . ../moved",
-			`${RM} -rf ${join(p.codexHome, "..")}`,
-			`mv ${p.codexHome} ${p.real}/x`,
+			`${RM} -rf ${posix(join(p.codexHome, ".."))}`,
+			`mv ${posix(p.codexHome)} ${posix(p.real)}/x`,
 			`${RM} -rf ~`,
 		]) {
 			expect(assessCommand(command, ctx(p)), command).toMatchObject({ kind: "refused" });
@@ -1300,22 +1318,26 @@ describe("round 4 cross-port checks", () => {
 		}
 	});
 
-	it("after lit approve x runs a BLOCKED row's step, the Stop driver says to remove BLOCKED, tick and go on", () => {
-		const p = project(
-			"## Todos\n- [ ] 1. First\n  BLOCKED: needs the push\n- [x] 2. Second\n\n## Done when\ncheck: `node check.mjs`\n",
-		);
-		check(p);
-		startRun(p);
-		writeFileSync(join(p.real, "ok.mjs"), "process.exit(0);\n");
-		store(p, ["node ok.mjs"], "X");
-		drawInbox(p);
-		expect(answer(p, "lit approve x")).toContain("BLOCKED");
-		const out = runStopHook(stop(p, "after-1"));
-		expect(out).toContain('"decision":"block"');
-		expect(out).toContain("remove");
-		expect(out).toContain("BLOCKED");
-		expect(out).toContain("tick");
-	});
+	// Skip on Windows: a replay runs the parked command through /bin/sh, which a Windows host does not have.
+	it.skipIf(process.platform === "win32")(
+		"after lit approve x runs a BLOCKED row's step, the Stop driver says to remove BLOCKED, tick and go on",
+		() => {
+			const p = project(
+				"## Todos\n- [ ] 1. First\n  BLOCKED: needs the push\n- [x] 2. Second\n\n## Done when\ncheck: `node check.mjs`\n",
+			);
+			check(p);
+			startRun(p);
+			writeFileSync(join(p.real, "ok.mjs"), "process.exit(0);\n");
+			store(p, ["node ok.mjs"], "X");
+			drawInbox(p);
+			expect(answer(p, "lit approve x")).toContain("BLOCKED");
+			const out = runStopHook(stop(p, "after-1"));
+			expect(out).toContain('"decision":"block"');
+			expect(out).toContain("remove");
+			expect(out).toContain("BLOCKED");
+			expect(out).toContain("tick");
+		},
+	);
 });
 
 describe("round 5 cross-port checks", () => {
@@ -1414,7 +1436,7 @@ describe("round 5 cross-port checks", () => {
 			"rg token ~",
 			"ls -R ~",
 			"tree ~",
-			`rg token ${p.codexHome}`,
+			`rg token ${posix(p.codexHome)}`,
 			"cd ~ && rg token",
 		]) {
 			expect(assessCommand(command, ctx(p)), command).toMatchObject({ kind: "refused" });
@@ -1459,7 +1481,7 @@ describe("final review round", () => {
 			"cp -R --target ./b ~/.config",
 			"find -L ~ -name 'id_*'",
 			"find -H -P ~/.config -name hosts.yml",
-			`cp -R ${p.codexHome} b`,
+			`cp -R ${posix(p.codexHome)} b`,
 			"diff -rN ~/.config /empty",
 			"diff -r ~ .",
 			"diff --recursive ~/.config .",
