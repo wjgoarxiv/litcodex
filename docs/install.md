@@ -9,7 +9,7 @@ This page has the whole install story: the variants, what a global install downl
 You need Node.js 22 or later and Codex CLI. Then run:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.53 -- litcodex install
 ```
 
 The installer sets LitCodex up inside Codex. It registers the plugin, its hooks and its agents, and
@@ -27,8 +27,8 @@ Codex sign-in and model access once real model work starts.
 
 Two variants are worth knowing:
 
-- If you want to see what would change before anything does, run `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex --dry-run install`.
-- If you are setting up a machine without anyone at the keyboard, run `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex install --yes`. A `--style <id>` you pass is still used.
+- If you want to see what would change before anything does, run `npm exec --yes --package @litfamily/litcodex@1.0.53 -- litcodex --dry-run install`.
+- If you are setting up a machine without anyone at the keyboard, run `npm exec --yes --package @litfamily/litcodex@1.0.53 -- litcodex install --yes`. A `--style <id>` you pass is still used.
 
 Want to see what the installer prints before you run it? [What you will see on screen](#what-you-will-see-on-screen) shows the questions, the receipt and the doctor check.
 
@@ -47,7 +47,7 @@ A global install also runs a short setup script. Unless `CI` is set, it prints a
 steps. It downloads nothing. Add `--ignore-scripts` to `npm install -g`, or set `CI=1` for that one
 command, to leave it out.
 
-> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex doctor`.
+> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.53 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.53 -- litcodex doctor`.
 
 ### Trying it apart from your setup
 
@@ -99,7 +99,7 @@ card names the stage, the reason, the code, what was left untouched and what to 
 `litcodex uninstall` in a terminal prints one card with what was removed. When Codex refuses, everything Codex printed
 comes first, unchanged, and a red card follows.
 
-<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-receipt-dark.webp" /><img src="./assets/screens/screen-install-receipt-light.webp" width="620" alt="A terminal window with two moments of litcodex install. The card &quot;Installing LitCodex 1.0.52&quot; ticks Host check, Config check, Package and Marketplace, shows a spinner at Plugin, and lists Hooks, Subagents, Config and Health check as waiting. Below it three folded lines say Install steps 9 of 9 checked, LitFamily block add and No-attribution line no. The card &quot;LitCodex 1.0.52 is installed&quot; shows Status Ready for Codex, Plugin, Plugin path, Marketplace, Subagents, Config, Steps and AGENTS.md, and under Next says to restart Codex, approve the LitCodex hooks and start a request with lit." /></picture><br /><sub>Captured from the same install, at two moments. The Settings rows of the receipt card and the extensions notice below it are cut; each … marks a cut.</sub></p>
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/screens/screen-install-receipt-dark.webp" /><img src="./assets/screens/screen-install-receipt-light.webp" width="620" alt="A terminal window with two moments of litcodex install. The card &quot;Installing LitCodex 1.0.53&quot; ticks Host check, Config check, Package and Marketplace, shows a spinner at Plugin, and lists Hooks, Subagents, Config and Health check as waiting. Below it three folded lines say Install steps 9 of 9 checked, LitFamily block add and No-attribution line no. The card &quot;LitCodex 1.0.53 is installed&quot; shows Status Ready for Codex, Plugin, Plugin path, Marketplace, Subagents, Config, Steps and AGENTS.md, and under Next says to restart Codex, approve the LitCodex hooks and start a request with lit." /></picture><br /><sub>Captured from the same install, at two moments. The Settings rows of the receipt card and the extensions notice below it are cut; each … marks a cut.</sub></p>
 
 `litcodex doctor` is the quickest way to check the result. Most rows answer yes or no, and a clean run ends with
 All checks passed.

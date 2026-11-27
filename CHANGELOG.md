@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.53] - 2026-11-27
+
 ### Added
 
 - Start Work runs itself to the end. A shell call that is outward or cannot be undone (`git push`, `git tag`,

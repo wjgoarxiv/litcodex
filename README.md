@@ -71,7 +71,7 @@ Install with one line, restart Codex, and approve the LitCodex hooks when Codex 
 ([Install](#install) has the details):
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.53 -- litcodex install
 ```
 
 ## Pick your path
@@ -91,7 +91,7 @@ npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex install
 You need Node.js 22 or later and Codex CLI. Run from any folder:
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex install
+npm exec --yes --package @litfamily/litcodex@1.0.53 -- litcodex install
 ```
 
 The installer asks which model leads, which model helps, and which output style you like; Enter keeps the recommended
@@ -112,14 +112,14 @@ anything the model reads.
 
 | You want | Run | What changes |
 | --- | --- | --- |
-| The plan first | `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex --dry-run install` | Prints every step and writes nothing |
+| The plan first | `npm exec --yes --package @litfamily/litcodex@1.0.53 -- litcodex --dry-run install` | Prints every step and writes nothing |
 | The defaults, no questions | Add `--yes` after `install` | Keeps the defaults without asking |
 | `litcodex` on your `PATH` | `npm install -g @litfamily/litcodex`, then `litcodex install` | Also readies the video skill's rendering tools |
 
 A global install fetches a few pinned downloads for those rendering tools; the
 [install guide](./docs/install.md#a-global-command) lists them and shows how to skip them.
 
-> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex doctor`.
+> Without a global install, use `npm exec --yes --package @litfamily/litcodex@1.0.53 -- litcodex <command>`, such as `npm exec --yes --package @litfamily/litcodex@1.0.53 -- litcodex doctor`.
 
 The [install guide](./docs/install.md) also covers trying LitCodex in a home of its own, Windows, and pictures of
 every screen the installer shows. Coming from the old unscoped package (`litcodex-ai`)? The
@@ -850,7 +850,7 @@ kept as `.bak` so you can recover it. The state stays on your machine, out of Gi
 ## Check the install
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex doctor
+npm exec --yes --package @litfamily/litcodex@1.0.53 -- litcodex doctor
 ```
 
 `litcodex doctor` checks registration, hooks, config and host capabilities, and a clean run ends with
@@ -884,7 +884,7 @@ To remove LitCodex, run this from any folder. It removes the plugin and the conf
 other settings alone.
 
 ```sh
-npm exec --yes --package @litfamily/litcodex@1.0.52 -- litcodex uninstall
+npm exec --yes --package @litfamily/litcodex@1.0.53 -- litcodex uninstall
 ```
 
 ## Troubleshooting
