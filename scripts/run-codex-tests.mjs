@@ -10,7 +10,8 @@
 //
 // Asserts the exact Codex wire contract (M06):
 //   - bare `lit`            -> stdout contains `<lit-loop-mode>` AND the 🔥 **LIT IGNITED · lit-loop** 🔥 probe, exit 0
-//   - `please split this`   -> zero-byte stdout, exit 0 (no-op)
+//   - `please split this`   -> no activation, exit 0 (no-op): empty stdout or only the suggestion tier's note
+//                              (no mode tag, no skill route line; see `isNoActivation`)
 //   - malformed JSON        -> exit 2, machine-readable `LIT_HOOK_STDIN_INVALID_JSON` on stderr
 //   - snake_case + camelCase input both accepted (A3 C12)
 //   - transcript already carrying a prior hook envelope -> suppressed (zero-byte stdout, exit 0)
@@ -180,7 +181,7 @@ const cases = [
 				'{"hook_event_name":"UserPromptSubmit","prompt":"open the browser and inspect this page"}',
 			);
 			check(f, exitCode === 0, `exit ${exitCode} != 0`);
-			check(f, stdout.length === 0, `stdout not zero-byte (${stdout.length} bytes)`);
+			check(f, isNoActivation(stdout), `prompt activated a workflow: ${stdout.slice(0, 120)}`);
 			check(f, stderr === "", `stderr not empty: ${stderr.slice(0, 80)}`);
 			return f;
 		},
@@ -194,8 +195,21 @@ const cases = [
 			);
 			writeEvidence("task-23-split-noop.json", stdout);
 			check(f, exitCode === 0, `exit ${exitCode} != 0`);
-			check(f, stdout.length === 0, `stdout not zero-byte (${stdout.length} bytes)`);
+			check(f, isNoActivation(stdout), `prompt activated a workflow: ${stdout.slice(0, 120)}`);
 			check(f, stderr === "", `stderr not empty: ${stderr.slice(0, 80)}`);
+			return f;
+		},
+	},
+	{
+		name: "noop-check-rejects-activation",
+		run() {
+			const f = [];
+			// The no-activation check must still fail for a real route, so it is run against live activation output.
+			for (const prompt of ["lit", "lit browser-drive open the page", "lit-plan", "$lit-plan x y"]) {
+				const { stdout } = runHook(JSON.stringify({ hook_event_name: "UserPromptSubmit", prompt }));
+				if (stdout.length === 0) continue; // a prompt that does nothing is not an activation sample
+				check(f, !isNoActivation(stdout), `isNoActivation accepted the output of "${prompt}"`);
+			}
 			return f;
 		},
 	},
@@ -283,6 +297,21 @@ const cases = [
 		},
 	},
 ];
+
+/**
+ * True when the hook activated nothing: empty stdout, or only the suggestion tier's `additionalContext`
+ * (a skill offer the model may decline, or the catalog line). A mode tag, a `skill <id>:` route line,
+ * a SKILL.md path or the ignition banner means a workflow route fired, so it is false.
+ */
+function isNoActivation(stdout) {
+	if (stdout.length === 0) return true;
+	const context = tryParse(stdout)?.hookSpecificOutput?.additionalContext;
+	if (typeof context !== "string") return false;
+	const suggestion =
+		/^LitCodex (?:skills, none suggested for this prompt;|suggestion \(nothing loads by itself\):)/u.test(context);
+	const activation = /<[a-z][a-z0-9-]*-mode>|^skill [\w-]+:|SKILL\.md|LIT IGNITED/mu.test(context);
+	return suggestion && !activation;
+}
 
 /** True when `context` names an existing browser-drive SKILL.md by path (routes stopped inlining bodies in 1.0.26). */
 function namesBrowserDriveSkill(context) {
