@@ -1,10 +1,14 @@
 version: 2
+# open-pull-requests-limit: 0 switches version-update pull requests off. Security updates have their own limit
+# and keep working. Routine bumps are a manual look in docs/release/publish-checklist.md.
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0

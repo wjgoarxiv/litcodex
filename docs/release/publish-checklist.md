@@ -97,6 +97,11 @@ install card whose images load from jsDelivr at the exact package version. The r
 full GitHub page and loads everything by relative path. A version bump moves the jsDelivr pins in both package
 READMEs; `node --test tools/readme.test.mjs` fails on a stale pin, a relative target or a missing GitHub guide link.
 
+Dependabot opens no version-update pull requests in this repository (`open-pull-requests-limit: 0` in
+`.github/dependabot.yml`); its security updates still arrive. Look at the dependencies by hand at each release, and
+at least monthly: run `npm outdated --workspaces --include-workspace-root` and decide each bump on its own, and
+review the commit pins on the `uses:` lines under `.github/workflows/`, which nothing else refreshes now.
+
 9. Confirm factual repository metadata and exact refs. The configured remote must be
    `https://github.com/wjgoarxiv/litcodex.git`, the branch must be `main`, and all three hashes must
    match. `git status --short` must print nothing.

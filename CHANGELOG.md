@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Dependabot no longer opens version-update pull requests (`open-pull-requests-limit: 0` for npm and GitHub Actions);
+  security updates are unchanged. The publish checklist asks for a manual dependency look at each release, and at
+  least monthly.
+
 ## [1.0.53] - 2026-11-27
 
 ### Added
